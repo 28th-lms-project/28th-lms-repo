@@ -1,14 +1,20 @@
+/* 사이드메뉴 컨테이너 */
 .sideMenu {
+  position: relative;
   width: 260px;
   min-width: 260px;
   height: 100vh;
-  background-color: #212529;
+  background-color: #212529; /* 다크 배경 */
   color: #f1f3f5;
   padding: 1.5rem 1rem;
   overflow-y: auto;
   box-sizing: border-box;
+  transition:
+    width 0.25s ease,
+    min-width 0.25s ease;
 }
 
+/* 스크롤바 디자인 (다크 테마 맞춤) */
 .sideMenu::-webkit-scrollbar {
   width: 6px;
 }
@@ -18,6 +24,41 @@
 }
 .sideMenu::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* 사이드바를 접었을 때 (Collapsed) */
+.sideMenu.collapsed {
+  width: 60px;
+  min-width: 60px;
+  overflow: hidden;
+}
+.sideMenu.collapsed .menuBody {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 메뉴 본문 래퍼 */
+.menuBody {
+  transition: opacity 0.15s ease;
+}
+
+/* 접기/펼치기 토글 버튼 */
+.collapseBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #f1f3f5;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0.25rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.collapseBtn:hover {
+  color: #ced4da;
 }
 
 /* 대분류 제목 (Main, My Page, System Management) */
@@ -36,13 +77,53 @@
   margin-top: 0;
 }
 
-/* 중분류 제목 (Home, 수강 과정, 과정 관리 등) */
+/* 중분류 토글 버튼 (Home, 수강 과정 등) */
 .listItemTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
   font-size: 0.875rem;
   font-weight: 600;
   color: #ced4da;
   padding: 0.5rem 0.5rem 0.25rem 0.5rem;
-  cursor: default;
+  border-radius: 4px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.listItemTitle:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+}
+
+/* 아코디언 화살표 */
+.arrow {
+  display: inline-block;
+  font-size: 0.85rem;
+  transition: transform 0.2s ease;
+}
+
+.arrowOpen {
+  transform: rotate(90deg);
+}
+
+/* 아코디언 서브메뉴 감싸개 (Grid 높이 애니메이션) */
+.submenuWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.submenuWrap > ul {
+  overflow: hidden;
+}
+
+.submenuOpen {
+  grid-template-rows: 1fr;
 }
 
 /* 서브메뉴 리스트 ul */
@@ -52,12 +133,12 @@
   padding-left: 0.5rem;
 }
 
-/* 서브메뉴 li */
+/* 서브메뉴 항목 li */
 .listItem {
   margin: 2px 0;
 }
 
-/* 서브메뉴 내부 링크 (NavLink) */
+/* 서브메뉴 링크 a (NavLink) */
 .listItem a {
   display: block;
   font-size: 0.85rem;
@@ -70,13 +151,12 @@
     color 0.15s ease;
 }
 
-/* 마우스 올렸을 때 (Hover) */
 .listItem a:hover {
   background-color: rgba(255, 255, 255, 0.06);
   color: #ffffff;
 }
 
-/* 현재 활성화된 메뉴 (NavLink active) */
+/* 현재 선택된 메뉴 활성화 (스크린샷의 붉은 폰트) */
 .listItem a:global(.active) {
   color: #ff5252;
   font-weight: 700;

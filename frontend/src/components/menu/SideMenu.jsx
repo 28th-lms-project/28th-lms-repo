@@ -1,95 +1,101 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
+
 import styles from "./SideMenu.module.css";
+import { useState } from "react";
+import { MENU } from "./menuData";
+
+// 메뉴 항목이 현재 주소와 일치하는지 확인
+function isActiveItem(item, pathname) {
+  if (item.to === "/") {
+    return pathname === "/";
+  }
+  return pathname.startsWith(item.to);
+}
+
+// 현재 주소에 해당하는 그룹만 처음에 펼침
+function getInitialOpenGroups(pathname) {
+  return MENU.flatMap((section) => section.groups)
+    .filter((group) => group.items.some((item) => isActiveItem(item, pathname)))
+    .map((group) => group.title);
+}
 
 export default function SideMenu() {
+  const { pathname } = useLocation();
+  const [collapsed, setCollapsed] = useState(false);
+  const [openGroups, setOpenGroups] = useState(() =>
+    getInitialOpenGroups(pathname),
+  );
+
+  function toggleGroup(title) {
+    setOpenGroups((prev) => {
+      if (prev.includes(title)) {
+        return prev.filter((t) => t !== title); // 닫기
+      }
+      return [...prev, title]; // 열기
+    });
+  }
+
+  let navClass = styles.sideMenu;
+  let toggleLabel = "메뉴 접기";
+  if (collapsed) {
+    navClass += ` ${styles.collapsed}`;
+    toggleLabel = "메뉴 펼치기";
+  }
+
   return (
-    <nav className={styles.sideMenu}>
-      <h4 className={styles.listTitle}>Main</h4>
-      <div className={styles.listItemTitle}>Home</div>
-      <ul className={styles.listSubmenu}>
-        <li className={styles.listItem}>
-          <NavLink to="/">Dashboard</NavLink>
-        </li>
-      </ul>
+    <nav className={navClass}>
+      <button
+        type="button"
+        className={styles.collapseBtn}
+        onClick={() => setCollapsed((c) => !c)}
+        aria-label={toggleLabel}
+      >
+        {collapsed && "›"}
+        {!collapsed && "‹"}
+      </button>
 
-      <h4 className={styles.listTitle}>My Page</h4>
-      <div className={styles.listItemTitle}>수강 과정</div>
-      <ul className={styles.listSubmenu}>
-        <li className={styles.listItem}>
-          <NavLink to="/my/course/list">수강 과정</NavLink>
-        </li>
-      </ul>
+      <div className={styles.menuBody}>
+        {MENU.map((section) => (
+          <div key={section.section}>
+            <h4 className={styles.listTitle}>{section.section}</h4>
+            {section.groups.map((group) => {
+              const isOpen = openGroups.includes(group.title);
 
-      <div className={styles.listItemTitle}>내 정보 수정</div>
-      <ul className={styles.listSubmenu}>
-        <li className={styles.listItem}>
-          <NavLink to="/my/info">내 정보 수정</NavLink>
-        </li>
-      </ul>
+              let arrowClass = styles.arrow;
+              let submenuClass = styles.submenuWrap;
+              if (isOpen) {
+                arrowClass += ` ${styles.arrowOpen}`;
+                submenuClass += ` ${styles.submenuOpen}`;
+              }
 
-      <h4 className={styles.listTitle}>System Management</h4>
-      <div className={styles.listItemTitle}>과정 관리</div>
-      <ul className={styles.listSubmenu}>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/course" end>
-            과정 목록
-          </NavLink>
-        </li>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/course/add">과정 등록</NavLink>
-        </li>
-      </ul>
-
-      <div className={styles.listItemTitle}>설문 관리</div>
-      <ul className={styles.listSubmenu}>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/survey">설문 관리</NavLink>
-        </li>
-      </ul>
-
-      <div className={styles.listItemTitle}>시험 문제 관리</div>
-      <ul className={styles.listSubmenu}>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/test">시험 문제 관리</NavLink>
-        </li>
-      </ul>
-
-      <div className={styles.listItemTitle}>수강생 관리</div>
-      <ul className={styles.listSubmenu}>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/students">수강생 목록</NavLink>
-        </li>
-      </ul>
-
-      <div className={styles.listItemTitle}>시스템 관리</div>
-      <ul className={styles.listSubmenu}>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/system/account">관리자 관리</NavLink>
-        </li>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/system/tutor">강사 관리</NavLink>
-        </li>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/system/menu">메뉴 관리</NavLink>
-        </li>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/system/role">권한 관리</NavLink>
-        </li>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/system/access">접근 권한 조회</NavLink>
-        </li>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/system/access-role">
-            권한별 접근 권한 관리
-          </NavLink>
-        </li>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/system/code">환경 변수 관리</NavLink>
-        </li>
-        <li className={styles.listItem}>
-          <NavLink to="/admin/system/db">DB 관리</NavLink>
-        </li>
-      </ul>
+              return (
+                <div key={group.title}>
+                  <button
+                    type="button"
+                    className={styles.listItemTitle}
+                    onClick={() => toggleGroup(group.title)}
+                    aria-expanded={isOpen}
+                  >
+                    <span className={arrowClass}>›</span>
+                    {group.title}
+                  </button>
+                  <div className={submenuClass}>
+                    <ul className={styles.listSubmenu}>
+                      {group.items.map((item) => (
+                        <li key={item.to} className={styles.listItem}>
+                          <NavLink to={item.to} end={item.end}>
+                            {item.label}
+                          </NavLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
     </nav>
   );
 }
