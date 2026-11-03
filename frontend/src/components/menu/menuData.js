@@ -3,6 +3,7 @@ export const MENU = [
     section: "Main",
     groups: [
       { title: "Home", items: [{ to: "/", label: "Dashboard", end: true }] },
+      { title: "Sample", items: [{ to: "/sample", label: "Sample", end: true }] },
     ],
   },
   {

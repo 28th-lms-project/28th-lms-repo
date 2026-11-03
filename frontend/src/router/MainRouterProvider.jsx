@@ -22,6 +22,7 @@ import Access from "../components/admin/system/access/Access";
 import AccessRole from "../components/admin/system/access-role/AccessRole";
 import Code from "../components/admin/system/code/Code";
 import SideMenu from "../components/menu/SideMenu";
+import Sample from "../components/sample/Sample.jsx";
 
 const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
     errorElement: <div>404 Not Found</div>,
     children: [
       { index: true, element: <Main /> },
+      { path: "sample", index: true, element: <Sample /> },
       {
         path: "my",
         children: [
