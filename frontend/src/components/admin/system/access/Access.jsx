@@ -1,3 +1,9 @@
+import PageContainer from "../../../common/PageContainer";
+
 export default function Access() {
-  return <div>Access</div>;
+  return (
+    <PageContainer>
+      <div>Access</div>
+    </PageContainer>
+  );
 }

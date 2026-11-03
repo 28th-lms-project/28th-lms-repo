@@ -1,3 +1,9 @@
+import PageContainer from "../../../common/PageContainer";
+
 export default function CourseAdd() {
-  return <div>CourseAdd</div>;
+  return (
+    <PageContainer>
+      <div>CourseAdd</div>
+    </PageContainer>
+  );
 }

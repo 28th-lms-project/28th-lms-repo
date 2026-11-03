@@ -1,3 +1,9 @@
+import PageContainer from "../../../common/PageContainer";
+
 export default function Tutor() {
-  return <div>Tutor</div>;
+  return (
+    <PageContainer>
+      <div>Tutor</div>
+    </PageContainer>
+  );
 }
