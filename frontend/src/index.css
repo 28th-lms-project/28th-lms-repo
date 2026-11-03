@@ -1,3 +1,4 @@
+
 * {
   box-sizing: border-box;
 }
@@ -15,4 +16,48 @@ ul {
 
 .main_container {
   display: flex;
+  width: 100%;
+  min-height: 100vh;
+  min-width: 0;
+}
+
+/* 사이드바 */
+.sidebar_container {
+  width: 260px;
+  min-width: 260px;
+  flex-shrink: 0;
+}
+
+/* 메인 콘텐츠 */
+.main_content {
+  flex: 1;
+  min-width: 0;
+  width: 0;
+  overflow-x: auto;
+}
+
+/* 태블릿 */
+@media screen and (max-width: 1024px) {
+  .sidebar_container {
+    width: 220px;
+    min-width: 220px;
+  }
+}
+
+/* 모바일 */
+@media screen and (max-width: 768px) {
+  .main_container {
+    flex-direction: column;
+  }
+
+  .sidebar_container {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .main_content {
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+  }
 }
