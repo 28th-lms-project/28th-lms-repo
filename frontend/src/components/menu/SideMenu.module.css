@@ -1,0 +1,84 @@
+.sideMenu {
+  width: 260px;
+  min-width: 260px;
+  height: 100vh;
+  background-color: #212529;
+  color: #f1f3f5;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.sideMenu::-webkit-scrollbar {
+  width: 6px;
+}
+.sideMenu::-webkit-scrollbar-thumb {
+  background-color: #495057;
+  border-radius: 3px;
+}
+.sideMenu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 대분류 제목 (Main, My Page, System Management) */
+.listTitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #868e96;
+  text-transform: uppercase;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+  letter-spacing: 0.05em;
+}
+
+.listTitle:first-of-type {
+  margin-top: 0;
+}
+
+/* 중분류 제목 (Home, 수강 과정, 과정 관리 등) */
+.listItemTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ced4da;
+  padding: 0.5rem 0.5rem 0.25rem 0.5rem;
+  cursor: default;
+}
+
+/* 서브메뉴 리스트 ul */
+.listSubmenu {
+  list-style: none;
+  margin: 0 0 0.5rem 0;
+  padding-left: 0.5rem;
+}
+
+/* 서브메뉴 li */
+.listItem {
+  margin: 2px 0;
+}
+
+/* 서브메뉴 내부 링크 (NavLink) */
+.listItem a {
+  display: block;
+  font-size: 0.85rem;
+  color: #adb5bd;
+  text-decoration: none;
+  padding: 0.45rem 0.75rem;
+  border-radius: 4px;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* 마우스 올렸을 때 (Hover) */
+.listItem a:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+/* 현재 활성화된 메뉴 (NavLink active) */
+.listItem a:global(.active) {
+  color: #ff5252;
+  font-weight: 700;
+  background-color: rgba(255, 82, 82, 0.08);
+}
