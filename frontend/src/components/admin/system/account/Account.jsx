@@ -1,3 +1,9 @@
+import PageContainer from "../../../common/PageContainer";
+
 export default function Account() {
-  return <div>Account</div>;
+  return (
+    <PageContainer>
+      <div>Account</div>
+    </PageContainer>
+  );
 }

@@ -1,3 +1,9 @@
+import PageContainer from "../../../common/PageContainer";
+
 export default function Survey() {
-  return <div>Survey</div>;
+  return (
+    <PageContainer>
+      <div>Survey</div>
+    </PageContainer>
+  );
 }

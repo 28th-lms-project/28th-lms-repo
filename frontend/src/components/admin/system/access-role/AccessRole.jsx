@@ -1,3 +1,9 @@
+import PageContainer from "../../../common/PageContainer";
+
 export default function AccessRole() {
-  return <div>AccessRole</div>;
+  return (
+    <PageContainer>
+      <div>AccessRole</div>
+    </PageContainer>
+  );
 }

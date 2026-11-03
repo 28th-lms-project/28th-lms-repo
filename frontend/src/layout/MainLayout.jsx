@@ -1,17 +1,14 @@
-
 import { Outlet } from "react-router-dom";
-import { NavigationBar } from "../router/MainRouterProvider";
+import SideMenu from "../components/menu/SideMenu";
+import styles from "./MainLayout.module.css";
 
 export default function MainLayout() {
-    return (
-        <div className="main_container">
-            <aside className="sidebar_container">
-                <NavigationBar />
-            </aside>
-
-            <main className="main_content">
-                <Outlet />
-            </main>
-        </div>
-    );
+  return (
+    <div className={styles.container}>
+      <SideMenu />
+      <main className={styles.content}>
+        <Outlet />
+      </main>
+    </div>
+  );
 }

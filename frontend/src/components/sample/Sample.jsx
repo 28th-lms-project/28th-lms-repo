@@ -1,3 +1,4 @@
+import PageContainer from '../common/PageContainer';
 import { Chart } from "./Chart.jsx";
 import { PollList } from "./Poll.jsx";
 import { chartData } from "../../assets/mocks/chart.json.js";
@@ -38,7 +39,7 @@ const SampleDashboard = () => {
         });
     };
     return (
-        <>
+        <PageContainer>
             <div>
                 <Section title="Sample Buttons">
                     <IconButton color="#666" icon={icons.add}>
@@ -302,7 +303,7 @@ const SampleDashboard = () => {
                     />
                 </Section>
             </div>
-        </>
+        </PageContainer>
     );
 };
 export default SampleDashboard;
