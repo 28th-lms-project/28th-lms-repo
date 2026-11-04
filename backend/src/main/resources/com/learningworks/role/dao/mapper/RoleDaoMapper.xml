@@ -20,5 +20,30 @@
          , PARENT_ROLE_ID
       FROM "ROLE"
   </select>
+  
+  <!-- RoleVO selectRoleByRoleId(String roleId); -->
+  <select id="selectRoleByRoleId"
+          parameterType="string"
+          resultType="com.learningworks.role.vo.response.RoleVO">
+    SELECT ROLE_ID
+         , ROLE_DISPLAY_NAME
+         , PARENT_ROLE_ID
+      FROM "ROLE"
+     WHERE ROLE_ID = #{_parameter}
+  </select>
+  
+  <!-- int insertNewRole(RegistRoleVO registRoleVO); -->
+  <insert id="insertNewRole"
+          parameterType="com.learningworks.role.vo.request.RegistRoleVO">
+    INSERT INTO "ROLE" 
+     (ROLE_ID
+    , ROLE_DISPLAY_NAME
+    , PARENT_ROLE_ID)
+    VALUES 
+     (#{roleId}
+    , #{roleDisplayName}
+    , #{parentRoleId})
+  </insert>
+  
 
 </mapper>
