@@ -22,7 +22,8 @@ class SHATest {
       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
   private static final String HEX_64 = "^[0-9a-f]{64}$";
-  private static final String HEX_16 = "^[0-9a-f]{16}$";
+  // SALT.SALT 컬럼이 CHAR(20) 이므로 정확히 20자여야 공백 패딩이 붙지 않는다
+  private static final String HEX_20 = "^[0-9a-f]{20}$";
 
   // ===== 실패 케이스 =====
 
@@ -174,13 +175,13 @@ class SHATest {
   }
 
   @Test
-  @DisplayName("salt 는 소문자 hex 16자다")
+  @DisplayName("salt 는 소문자 hex 20자다 (SALT.SALT CHAR(20) 컬럼 길이와 일치)")
   void generateSaltFormat() {
     // When
     String salt = SHA.generateSalt();
 
     // Then
-    Assertions.assertThat(salt).matches(SHATest.HEX_16);
+    Assertions.assertThat(salt).matches(SHATest.HEX_20);
   }
 
   @Test

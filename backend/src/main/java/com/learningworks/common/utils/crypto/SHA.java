@@ -8,7 +8,7 @@ import java.util.HexFormat;
 
 public final class SHA {
   private static final String ALGORITHM = "SHA-256";
-  private static final int SALT_LENGTH_BYTE = 8;
+  private static final int SALT_LENGTH_BYTE = 10;
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private static final HexFormat HEX = HexFormat.of();
 
@@ -48,9 +48,9 @@ public final class SHA {
   }
 
   /**
-   * 8바이트 랜덤 salt 를 만든다.
+   * 10바이트 랜덤 salt 를 만든다.
    *
-   * @return 소문자 hex 16자
+   * @return 소문자 hex 20자
    */
   public static String generateSalt() {
     byte[] salt = new byte[SHA.SALT_LENGTH_BYTE];
