@@ -1,13 +1,18 @@
+logging:
+  level:
+    root: debug
+
 spring:
   application:
     name: learningworks
+  # DB 설정
   datasource:
     driver-class-name: oracle.jdbc.OracleDriver
-    url:
-    username:
-    password:
+    url: jdbc:oracle:thin:@192.168.211.20:1521:XE
+    username: LEARNING_WORKS
+    password: LEARNING_WORKS_1234
 
+# MyBatis 설정
 mybatis:
-  mapper-locations: classpath:com/learningworks/**/dao/mapper/*.xml
-  configuration:
-    map-underscore-to-camel-case: true
+  config-location: classpath:config/mybatis-config.xml
+  mapper-locations: classpath*:com/learningworks/**/dao/mapper/*DaoMapper.xml
