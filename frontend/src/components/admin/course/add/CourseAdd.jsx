@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Students from "../../students/students/Students";
 import { IconButton } from "../../../sample/input/IconButton";
 import { icons } from "../../../sample/input/icons";
@@ -13,17 +13,24 @@ export default function CourseAdd() {
   const endDateRef = useRef();
   const uploadFileRef = useRef();
 
-  const title = titleRef.current.value;
-  const count = countRef.current.value;
-  const startDate = startDateRef.current.value;
-  const endDate = endDateRef.current.value;
-  const newGroup = { title, count, startDate, endDate };
+  useEffect(() => {
+    (async () => {
+      const fetchresult = await fetch("http://localhost:8080/course/view");
+      console(fetchresult);
+    })();
+  });
   const onClickAddGroupButtonHandler = () => {
     console.log(group);
     setGroup(!group);
     console.log("test");
   };
-  const onClickAddGroupOkButtonHandler = () => {};
+  const onClickAddGroupOkButtonHandler = () => {
+    const title = titleRef.current.value;
+    const count = countRef.current.value;
+    const startDate = startDateRef.current.value;
+    const endDate = endDateRef.current.value;
+    const newGroup = { title, count, startDate, endDate };
+  };
   const onClickAddGroupCancleButtonHandler = () => {
     setGroup(!group);
   };

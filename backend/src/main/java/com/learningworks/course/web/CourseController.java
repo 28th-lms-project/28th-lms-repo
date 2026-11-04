@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.learningworks.course.service.CourseService;
+import com.learningworks.course.vo.response.CourseVO;
 
 @RestController
 public class CourseController {
@@ -15,8 +16,9 @@ public class CourseController {
 	}
 	
 	
-	@GetMapping("/course/add")
-	public CourseVO addCourse() {
-		return null ;
+	@GetMapping("/course/view")
+	public CourseVO viewCourse() {
+		CourseVO course = this.courseService.viewCourse();
+		return course ;
 	}
 }
