@@ -16,3 +16,10 @@ spring:
 mybatis:
   config-location: classpath:config/mybatis-config.xml
   mapper-locations: classpath*:com/learningworks/**/dao/mapper/*DaoMapper.xml
+
+# 암호화 설정
+app:
+  crypto:
+    # AES-256 키(32바이트)를 Base64 로 인코딩한 값. 팀 공용 키이므로 임의로 변경 금지
+    # (변경 시 기존에 암호화된 DB 데이터를 복호화할 수 없게 됨)
+    aes-key: "qLozw3xJT8NBSFo7Rz/I6nxYFmC2pkcyhmxM+f0Y6To="
