@@ -3,9 +3,9 @@ spring:
     name: learningworks
   datasource:
     driver-class-name: oracle.jdbc.OracleDriver
-    url:
-    username:
-    password:
+    url: jdbc:oracle:thin:@//192.168.211.20:1521:XE
+    username: LEARNING_WORKS
+    password: LEARNING_WORKS_1234
 
 mybatis:
   mapper-locations: classpath:com/learningworks/**/dao/mapper/*.xml
