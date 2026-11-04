@@ -32,7 +32,7 @@ public class ExamController {
 	@PostMapping("admin/system/test")
 	@ResponseBody
 	public ExamQuestionVO makeNewQuestion(
-			@RequestBody RegistExamQuestionVO registExamQuestionVO) {
+			@Valid @RequestBody RegistExamQuestionVO registExamQuestionVO) {
 		ExamQuestionVO examQuestion = this.examService.createNewExam(registExamQuestionVO);
 		return examQuestion;
 	}
@@ -58,7 +58,7 @@ public class ExamController {
 	
 	@PutMapping("admin/system/test/{examId}")
 	@ResponseBody
-	public ExamQuestionVO updateExamQuestion(@PathVariable String examId, ModifyExamQuestionVO modifyExamQuestionVO) {
+	public ExamQuestionVO updateExamQuestion(@PathVariable String examId, @Valid @RequestBody ModifyExamQuestionVO modifyExamQuestionVO) {
 		ExamQuestionVO examQuestionVO = this.examService.updateExamQuestion(examId, modifyExamQuestionVO);
 		return examQuestionVO;
 	}

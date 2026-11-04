@@ -33,7 +33,8 @@
 	</select> -->
 	
 	<select id="selectQuestionById"
-			parameterType="string">
+			parameterType="string"
+			resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
 		SELECT T.ID
 			 , T.SUBJECT_ID
 			 , T.QUESTION
@@ -182,23 +183,23 @@
 			   AND DEL_YN = 'N'
 		</delete>
 
-	<!-- 	<update id="">
+	<update id="updateExamQuestion">
 		UPDATE TESTS 
-		   SET QUESTION
-		     , ANSWER_TYPE
-		     , ANSWER_SHEET_1
-			 , ANSWER_SHEET_2
-			 , ANSWER_SHEET_3
-			 , ANSWER_SHEET_4
-			 , ANSWER_SHEET_5
-			 , ANSWER_COUNT
-			 , POINT_ALLOC
+		   SET QUESTION = #{modifyExamQuestionVO.question}
+		     , ANSWER_TYPE = #{modifyExamQuestionVO.answerType}
+		     , ANSWER_SHEET_1 = #{modifyExamQuestionVO.answerSheet1}
+			 , ANSWER_SHEET_2 = #{modifyExamQuestionVO.answerSheet2}
+			 , ANSWER_SHEET_3 = #{modifyExamQuestionVO.answerSheet3}
+			 , ANSWER_SHEET_4 = #{modifyExamQuestionVO.answerSheet4}
+			 , ANSWER_SHEET_5 = #{modifyExamQuestionVO.answerSheet5}
+			 , ANSWER_COUNT = #{modifyExamQuestionVO.answerCount}
+			 , POINT_ALLOC = #{modifyExamQuestionVO.pointAlloc}
 			 , MDFY_DT = SYSDATE
 			 , MDFYR_ID = 'admin'
-			 , CORRECT_ANSWER
-			 , SUB_QUESTION
-		 WHERE ID = #{_parameter}
+			 , CORRECT_ANSWER = #{modifyExamQuestionVO.correctAnswer}
+			 , SUB_QUESTION = #{modifyExamQuestionVO.subQuestion}
+		 WHERE ID = #{examId}
 		   AND DEL_YN = 'N'
-		</update> -->
+		</update> 
 
 </mapper>

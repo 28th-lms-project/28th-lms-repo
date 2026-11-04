@@ -3,6 +3,7 @@ package com.learningworks.exam.dao;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.learningworks.exam.vo.request.ModifyExamQuestionVO;
 import com.learningworks.exam.vo.request.RegistExamQuestionVO;
@@ -26,7 +27,7 @@ public interface ExamDao {
 
 	int deleteExamQuestion(String examId);
 
-	int updateExamQuestion(String examId, ModifyExamQuestionVO modifyExamQuestionVO);
+	int updateExamQuestion(@Param("examId")String examId, @Param("modifyExamQuestionVO") ModifyExamQuestionVO modifyExamQuestionVO);
 
 
 //	String getTestSetIdByCourseName(String courseName);
