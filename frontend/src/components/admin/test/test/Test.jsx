@@ -1,3 +1,9 @@
+import PageContainer from "../../../common/PageContainer";
+
 export default function Test() {
-  return <div>Test</div>;
+  return (
+    <PageContainer>
+      <div>Test</div>
+    </PageContainer>
+  );
 }

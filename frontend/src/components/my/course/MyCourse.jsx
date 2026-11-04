@@ -8,6 +8,7 @@ import MyInterview from "./MyInterview";
 import MyStudyFiles from "./MyStudyFiles";
 import MySurvey from "./MySurvey";
 import MyCounsel from "./MyCounsel";
+import PageContainer from "../../common/PageContainer";
 
 // 배열 인덱스 = URL 의 ?tab 값
 const TABS = [
@@ -31,21 +32,23 @@ export default function MyCourse() {
   const { Component } = TABS[tab];
 
   return (
-    <div>
-      <ul className="tab-list">
-        {TABS.map(({ label }, index) => (
-          <li key={label}>
-            <button
-              type="button"
-              className={index === tab ? "active" : undefined}
-              onClick={() => setSearchParams({ tab: String(index) })}
-            >
-              {label}
-            </button>
-          </li>
-        ))}
-      </ul>
-      <Component courseId={courseId} />
-    </div>
+    <PageContainer>
+      <div>
+        <ul className="tab-list">
+          {TABS.map(({ label }, index) => (
+            <li key={label}>
+              <button
+                type="button"
+                className={index === tab ? "active" : undefined}
+                onClick={() => setSearchParams({ tab: String(index) })}
+              >
+                {label}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <Component courseId={courseId} />
+      </div>
+    </PageContainer>
   );
 }

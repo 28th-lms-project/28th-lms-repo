@@ -1,3 +1,9 @@
+import PageContainer from "../../../common/PageContainer";
+
 export default function Menu() {
-  return <div>Menu</div>;
+  return (
+    <PageContainer>
+      <div>Menu</div>
+    </PageContainer>
+  );
 }
