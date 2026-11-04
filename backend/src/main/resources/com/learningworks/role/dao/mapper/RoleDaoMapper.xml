@@ -1,1 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+  namespace="com.learningworks.role.dao.RoleDao">
+  
+  <!-- long selectRoleCount(); -->
+  <select id="selectRoleCount"
+          resultType="_long">
+    SELECT COUNT(ROLE_ID)
+      FROM "ROLE"
+  </select>
+  
+  <!-- List<RoleVO> selectAllRoles(); -->
+  <select id="selectAllRoles"
+          resultType="com.learningworks.role.vo.response.RoleVO">
+    SELECT ROLE_ID
+         , ROLE_DISPLAY_NAME
+         , PARENT_ROLE_ID
+      FROM "ROLE"
+  </select>
+
+</mapper>

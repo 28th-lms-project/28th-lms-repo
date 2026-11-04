@@ -1,8 +1,14 @@
 package com.learningworks.role.dao;
 
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
+import com.learningworks.role.vo.response.RoleVO;
 
 @Mapper
-public class RoleDao {
+public interface RoleDao {
+
+  long selectRoleCount();
+
+  List<RoleVO> selectAllRoles();
 
 }
