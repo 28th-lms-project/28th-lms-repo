@@ -1,3 +1,7 @@
+logging:
+  level:
+    root: debug
+
 spring:
   application:
     name: learningworks
@@ -6,7 +10,7 @@ spring:
     driver-class-name: oracle.jdbc.driver.OracleDriver
     url: jdbc:oracle:thin:@192.168.211.20:1521:XE
     username: LEARNING_WORKS
-    password:
+    password: LEARNING_WORKS_1234
 
 # MyBatis 설정
 mybatis:
