@@ -1,0 +1,22 @@
+body {
+  width: 100%;
+  margin: 0;
+}
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  margin: 1rem auto;
+  background-color: #fff;
+  width: 100%;
+}
+.survey_list {
+  display: flex;
+  /* grid-template-columns: 1fr 1fr 1fr; */
+  justify-content: space-evenly;
+  flex-direction: row;
+}
+.survey_type {
+  display: flex;
+  justify-content: space-evenly;
+  flex-direction: row;
+}
