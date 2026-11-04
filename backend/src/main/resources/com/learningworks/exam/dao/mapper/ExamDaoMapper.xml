@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.exam.dao.ExamDao">
+
+	<select id="selectQuestionsCount" resultType="_long">
+		SELECT COUNT(ID)
+		FROM TESTS
+	</select>
+
+<!-- 	<select id="selectAllQuestions"
+		resultMap="ExamSetVOMap">
+		SELECT ID
+			 , SUBJECT_ID
+			 , QUESTION
+			 , ANSWER_TYPE
+			 , ANSWER_SHEET_1
+			 , ANSWER_SHEET_2
+			 , ANSWER_SHEET_3
+			 , ANSWER_SHEET_4
+			 , ANSWER_SHEET_5
+			 , ANSWER_COUNT
+			 , POINT_ALLOC
+			 , CRT_DT
+			 , MDFY_DT
+			 , CRTR_ID
+			 , MDFYR_ID
+			 , DEL_YN
+			 , CORRECT_ANSWER
+			 , SUB_QUESTION
+		FROM TESTS
+	</select> -->
+	
+	<select id="selectQuestionById"
+			parameterType="string">
+		SELECT T.ID
+			 , T.SUBJECT_ID
+			 , T.QUESTION
+			 , T.ANSWER_TYPE
+			 , T.ANSWER_SHEET_1
+			 , T.ANSWER_SHEET_2
+			 , T.ANSWER_SHEET_3
+			 , T.ANSWER_SHEET_4
+			 , T.ANSWER_SHEET_5
+			 , T.ANSWER_COUNT
+			 , T.POINT_ALLOC
+			 , T.CRT_DT
+			 , T.MDFY_DT
+			 , T.CRTR_ID
+			 , T.MDFYR_ID
+			 , T.DEL_YN
+			 , T.CORRECT_ANSWER
+			 , T.SUB_QUESTION
+		  FROM TESTS T
+		 WHERE T.ID = #{_parameter}
+		</select>
+
+	<select id="selectAllExamSet"
+		resultMap="ExamSetVOMap">
+		SELECT TS.ID AS SET_ID
+			 , TS.COURSE_ID
+			 , TS.TEST_TYPE
+			 , TS.SET_NAME
+			 , T.ID AS TEST_ID
+			 , T.SUBJECT_ID
+			 , T.QUESTION
+			 , T.ANSWER_TYPE
+			 , T.ANSWER_SHEET_1
+			 , T.ANSWER_SHEET_2
+			 , T.ANSWER_SHEET_3
+			 , T.ANSWER_SHEET_4
+			 , T.ANSWER_SHEET_5
+			 , T.ANSWER_COUNT
+			 , T.POINT_ALLOC
+			 , T.CRT_DT
+			 , T.MDFY_DT
+			 , T.CRTR_ID
+			 , T.MDFYR_ID
+			 , T.CORRECT_ANSWER
+			 , T.SUB_QUESTION
+		  FROM TEST_SET TS
+		 LEFT JOIN TEST_SET_TESTS TST
+		 	ON TS.ID = TST.TEST_SET_ID 
+		 LEFT JOIN TESTS T
+		 	ON TST.TEST_ID = T.ID
+	</select>
+
+	<resultMap type="com.learningworks.exam.vo.response.ExamSetVO"
+	 id="ExamSetVOMap"
+	 autoMapping="false">
+	 <id column="SET_ID" property="id"/>
+	<!--  <result property="courseId" column="COURSE_ID"/>
+	 <result property="testType" column="TEST_TYPE"/>
+	 <result property="setName" column="SET_NAME"/> -->
+	 
+	 <association property="questionList" 
+	 			  javaType="com.learningworks.exam.vo.response.ExamQuestionListVO">
+	 			  <id column="SET_ID"/>
+	 			  <collection property="examList"
+	 			  ofType="com.learningworks.exam.vo.response.ExamQuestionVO"
+	 			  javaType="list"
+	 			  autoMapping="true">
+	 			  <id column="TEST_ID" property="id"/>
+	 			  <!-- <result property="subjectId" column="SUBJECT_ID"/>
+	 			  <result property="question" column="QUESTION"/>
+	 			  <result property="answerType" column="ANSWER_TYPE"/>
+	 			  <result property="answerSheet1" column="ANSWER_SHEET_1"/>
+	 			  <result property="answerSheet2" column="ANSWER_SHEET_2"/>
+	 			  <result property="answerSheet3" column="ANSWER_SHEET_3"/>
+	 			  <result property="answerSheet4" column="ANSWER_SHEET_4"/>
+	 			  <result property="answerSheet5" column="ANSWER_SHEET_5"/>
+	 			  <result property="answerCount" column="ANSWER_COUNT"/>
+	 			  <result property="pointAlloc" column="POINT_ALLOC"/>
+	 			  <result property="crtDt" column="CRT_DT"/>
+	 			  <result property="mdfyDt" column="MDFY_DT"/>
+	 			  <result property="crtrId" column="CRTR_ID"/>
+	 			  <result property="mdfyrId" column="MDFYR_ID"/>
+	 			  <result property="correctAnswer" column="CORRECT_ANSWER"/>
+	 			  <result property="subQuestion" column="SUB_QUESTION"/> -->
+	 			  </collection>
+	 			  </association>
+	 </resultMap>
+
+
+
+<insert id="insertNewExam"
+		parameterType="com.learningworks.exam.vo.request.RegistExamQuestionVO">
+		<selectKey order="BEFORE" keyProperty="id" resultType="string">
+		SELECT ('TT-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+		FROM DUAL
+		</selectKey>
+
+	INSERT INTO TESTS
+		 (ID
+		 , SUBJECT_ID
+		 , QUESTION
+		 , ANSWER_TYPE
+		 , ANSWER_SHEET_1
+		 , ANSWER_SHEET_2
+		 , ANSWER_SHEET_3
+		 , ANSWER_SHEET_4
+		 , ANSWER_SHEET_5
+		 , ANSWER_COUNT
+		 , POINT_ALLOC
+		 , CRT_DT
+		 , MDFY_DT
+		 , CRTR_ID
+		 , MDFYR_ID
+		 , DEL_YN
+		 , CORRECT_ANSWER
+		 , SUB_QUESTION)
+  	VALUES (
+		 	#{id}          
+		  , #{subjectId}    
+		  , #{question}
+		  , #{answerType}
+		  , #{answerSheet1}
+		  , #{answerSheet2}
+		  , #{answerSheet3}
+		  , #{answerSheet4}
+		  , #{answerSheet5}
+		  , #{answerCount}
+		  , #{pointAlloc}
+		  , SYSDATE
+		  , SYSDATE
+		  , 'admin'
+		  , 'admin'
+		  , 'N'
+		  , #{correctAnswer}
+		  , #{subQuestion}
+		 )
+		
+		</insert>
+		
+		<delete id="deleteExamQuestion"
+		parameterType="string">
+			UPDATE TESTS
+			   SET DEL_YN = 'Y'
+			     , MDFY_DT = SYSDATE
+			 WHERE ID = #{_parameter}
+			   AND DEL_YN = 'N'
+		</delete>
+
+	<!-- 	<update id="">
+		UPDATE TESTS 
+		   SET QUESTION
+		     , ANSWER_TYPE
+		     , ANSWER_SHEET_1
+			 , ANSWER_SHEET_2
+			 , ANSWER_SHEET_3
+			 , ANSWER_SHEET_4
+			 , ANSWER_SHEET_5
+			 , ANSWER_COUNT
+			 , POINT_ALLOC
+			 , MDFY_DT = SYSDATE
+			 , MDFYR_ID = 'admin'
+			 , CORRECT_ANSWER
+			 , SUB_QUESTION
+		 WHERE ID = #{_parameter}
+		   AND DEL_YN = 'N'
+		</update> -->
+
+</mapper>
