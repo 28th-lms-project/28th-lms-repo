@@ -109,12 +109,12 @@ public class RoleController {
 3. 페이징 목록은 `ApiResponse.OK(list, paginate)` 또는 `ApiResponse.OK(list, paginate, search)`를 사용합니다. `PaginationVO.calculatePageCount()`를 먼저 호출해야 합니다.
 4. 요청 데이터는 아래 기준으로 받습니다.
 
-| 요청 종류                    | 받는 방법                                                     |
-| ---------------------------- | ------------------------------------------------------------- |
-| 등록 / 수정 (JSON body)      | `@Valid @RequestBody XxxVO`                                   |
-| 검색 / 페이징 (query string) | `@Valid @ModelAttribute SearchXxxVO`                          |
-| 파일 업로드 (multipart)      | `@Valid @ModelAttribute XxxVO` (VO 안에 `MultipartFile` 필드) |
-| 경로 값                      | `@PathVariable`                                               |
+   | 요청 종류                    | 받는 방법                                                     |
+   | ---------------------------- | ------------------------------------------------------------- |
+   | 등록 / 수정 (JSON body)      | `@Valid @RequestBody XxxVO`                                   |
+   | 검색 / 페이징 (query string) | `@Valid @ModelAttribute SearchXxxVO`                          |
+   | 파일 업로드 (multipart)      | `@Valid @ModelAttribute XxxVO` (VO 안에 `MultipartFile` 필드) |
+   | 경로 값                      | `@PathVariable`                                               |
 
 5. 컨트롤러에서 **try-catch로 예외를 잡지 마세요.** 그대로 던지면 공통 핸들러가 처리합니다.
 
@@ -152,12 +152,12 @@ public class RegistRoleVO {
 1. 검증 메시지는 어노테이션의 `message`에 **한글로** 작성합니다. 이 문구가 그대로 `validations`에 담겨 응답됩니다.
 2. **DB 컬럼 제약은 VO에서 먼저 검증합니다.** 검증하지 않으면 DB 단계에서 실패해 500이 됩니다.
 
-| DB 제약                       | VO 어노테이션        |
-| ----------------------------- | -------------------- |
-| `NOT NULL` (문자열)           | `@NotBlank`          |
-| `NOT NULL` (숫자 · 날짜 등)   | `@NotNull`           |
-| `VARCHAR2(n CHAR)`            | `@Size(max = n)`     |
-| 형식 규칙 (코드값, 이메일 등) | `@Pattern`, `@Email` |
+   | DB 제약                       | VO 어노테이션        |
+   | ----------------------------- | -------------------- |
+   | `NOT NULL` (문자열)           | `@NotBlank`          |
+   | `NOT NULL` (숫자 · 날짜 등)   | `@NotNull`           |
+   | `VARCHAR2(n CHAR)`            | `@Size(max = n)`     |
+   | 형식 규칙 (코드값, 이메일 등) | `@Pattern`, `@Email` |
 
 3. `@Pattern` 정규식 앞의 `^$|`는 빈 값일 때 `@NotBlank` 메시지만 나오도록 하기 위한 장치입니다. 함께 쓸 때 붙여주세요.
 4. 숫자·날짜 필드에 잘못된 형식의 값이 들어오면 `"올바른 형식의 값이 아닙니다."`가 자동으로 응답됩니다.
@@ -231,14 +231,14 @@ ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), /
 3. 추가하기 전에 이미 있는 코드를 먼저 확인합니다. `GLOBAL_*`는 공통 코드입니다.
 4. 상태 코드는 아래 기준으로 고릅니다.
 
-| 상황                      | 상태 코드                 | 예시                        |
-| ------------------------- | ------------------------- | --------------------------- |
-| 입력값 · 요청 오류        | 400 BAD_REQUEST           | `FILES_BAD_REQUEST`         |
-| 로그인 필요 · 인증 실패   | 401 UNAUTHORIZED          | `USER_NOT_MATCHED_IDENTIFY` |
-| 로그인은 했지만 권한 없음 | 403 FORBIDDEN             | `COURSE_NOT_AUTHORIZED`     |
-| 대상 데이터 없음          | 404 NOT_FOUND             | `USER_NOT_EXISTS`           |
-| 중복 · 상태 충돌          | 409 CONFLICT              | `ROLE_ID_USED`              |
-| 서버에서 처리 실패        | 500 INTERNAL_SERVER_ERROR | `ROLE_FAILURE_CREATE`       |
+   | 상황                      | 상태 코드                 | 예시                        |
+   | ------------------------- | ------------------------- | --------------------------- |
+   | 입력값 · 요청 오류        | 400 BAD_REQUEST           | `FILES_BAD_REQUEST`         |
+   | 로그인 필요 · 인증 실패   | 401 UNAUTHORIZED          | `USER_NOT_MATCHED_IDENTIFY` |
+   | 로그인은 했지만 권한 없음 | 403 FORBIDDEN             | `COURSE_NOT_AUTHORIZED`     |
+   | 대상 데이터 없음          | 404 NOT_FOUND             | `USER_NOT_EXISTS`           |
+   | 중복 · 상태 충돌          | 409 CONFLICT              | `ROLE_ID_USED`              |
+   | 서버에서 처리 실패        | 500 INTERNAL_SERVER_ERROR | `ROLE_FAILURE_CREATE`       |
 
 ---
 
