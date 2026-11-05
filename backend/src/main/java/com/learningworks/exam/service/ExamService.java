@@ -10,13 +10,15 @@ import com.learningworks.exam.vo.response.ExamSetVO;
 
 public interface ExamService {
 
-	List<ExamSetVO> readAllExamSet();
+	List<ExamSetVO> readAllExamInExamSet();
 
 	ExamQuestionVO createNewExam(RegistExamQuestionVO registExamQuestionVO);
 
 	String deleteExamQuestion(String examId);
 
 	ExamQuestionVO updateExamQuestion(String examId, ModifyExamQuestionVO modifyExamQuestionVO);
+
+	ExamQuestionListVO readAllExamQuestion(String subjectId);
 
 //	ExamQuestionListVO readAllQuestions();
 

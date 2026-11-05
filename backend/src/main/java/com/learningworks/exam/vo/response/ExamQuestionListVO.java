@@ -7,8 +7,8 @@ import lombok.Data;
 @Data
 public class ExamQuestionListVO {
 	
-//	public long questionCount;
+	private long questionCount;
 	
-	public List<ExamQuestionVO> examList;
+	private List<ExamQuestionVO> examList;
 
 }

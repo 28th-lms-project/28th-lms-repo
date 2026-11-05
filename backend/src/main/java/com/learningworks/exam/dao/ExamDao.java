@@ -13,12 +13,11 @@ import com.learningworks.exam.vo.response.ExamSetVO;
 @Mapper
 public interface ExamDao {
 
-	List<ExamQuestionVO> selectAllQuestions();
+	List<ExamQuestionVO> selectAllQuestions(@Param("subjectId") String subjectId);
 
-	long selectQuestionsCount();
-	
+	long selectQuestionsCount(@Param("subjectId") String subjectId);
 
-	List<ExamSetVO> selectAllExamSet();
+	List<ExamSetVO> selectAllExamInExamSet();
 
 	int insertNewExam(RegistExamQuestionVO registExamQuestionVO);
 

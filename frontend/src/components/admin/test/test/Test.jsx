@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import PageContainer from "../../../common/PageContainer";
 import {
   deleteTestQuestion,
@@ -11,39 +11,64 @@ import { useDispatch, useSelector } from "react-redux";
 import { testActions } from "../../../../store/slices/testSliceStore";
 
 export default function Test() {
-  const { id, courseId, setName, testType, questions } = useSelector(
-    (state) => state.test,
-  );
+  const subjects = [
+    { id: "JAVA", name: "JAVA " },
+    { id: "React", name: "React " },
+    { id: "Spring Boot", name: "Spring Boot " },
+    { id: "HTML", name: "HTML " },
+  ];
+
+  let firstSubjectId = "";
+
+  if (subjects.length > 0) {
+    firstSubjectId = subjects[0].id;
+  }
+
+  const [selectedSubjectId, setSelectedSubjectId] = useState(firstSubjectId);
+
+  const { questionCount, questions } = useSelector((state) => state.test);
   console.log(questions.length, questions);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
     let ignoreUpdateState = false;
-    (async () => {
-      const response = await searchTest();
+    if (!selectedSubjectId) {
+      return;
+    }
 
-      if (!ignoreUpdateState) {
-        dispatch(testActions.setTestList(response[0]));
+    (async () => {
+      try {
+        const response = await searchTest(selectedSubjectId);
+
+        if (!ignoreUpdateState) {
+          dispatch(testActions.setTestList(response));
+        }
+      } catch (e) {
+        if (!ignoreUpdateState) {
+          alert(e.message);
+        }
       }
     })();
     return () => {
       ignoreUpdateState = true;
     };
-  }, [dispatch]);
+  }, [dispatch, selectedSubjectId]);
 
   const onClickDeleteButtonHandler = (questionId) => {
-    console.log(questionId, "삭제");
+    if (confirm("삭제하시겠습니까?")) {
+      dispatch(testActions.deleteTestQuestion(questionId));
 
-    (async () => {
-      try {
-        await deleteTestQuestion(questionId); // 실패하면 즉시 catch로 점프
-        dispatch(testActions.deleteTestQuestion(questionId)); // 성공했을 때만 실행
-        alert("삭제 완료");
-      } catch (e) {
-        alert(e.message); // 실패했을 때만 실행
-      }
-    })();
+      (async () => {
+        try {
+          await deleteTestQuestion(questionId);
+          dispatch(testActions.deleteTestQuestion(questionId));
+          alert("삭제 완료");
+        } catch (e) {
+          alert(e.message);
+        }
+      })();
+    }
   };
 
   return (
@@ -51,18 +76,29 @@ export default function Test() {
       <div className={style.testContainer}>
         <div className={style.testHeader}>
           <ul className={style.testCourseList}>
-            <li>Test Course</li>
-            <li>Test Course</li>
-            <li>Test Course</li>
-            <li>Test Course</li>
-            <li>Test Course</li>
-            <li>Test Course</li>
-            <li>Test Course</li>
-            <li>Test Course</li>
-            <li>Test Course</li>
-            <li>Test Course</li>
-            <li>Test Course</li>
+            {subjects.map((subject) => (
+              <li
+                key={subject.id}
+                onClick={() => setSelectedSubjectId(subject.id)}
+                aria-pressed={selectedSubjectId === subject.id}
+              >
+                {subject.name}
+              </li>
+            ))}
           </ul>
+          {/* <ul className={style.testCourseList}>
+            <li>JAVA</li>
+            <li>Test Course</li>
+            <li>Test Course</li>
+            <li>Test Course</li>
+            <li>Test Course</li>
+            <li>Test Course</li>
+            <li>Test Course</li>
+            <li>Test Course</li>
+            <li>Test Course</li>
+            <li>Test Course</li>
+            <li>Test Course</li>
+          </ul> */}
         </div>
         <div className={style.testSection}>
           <IconButton icon={icons.add}>추가</IconButton>
@@ -94,7 +130,7 @@ export default function Test() {
                 </div>
 
                 <div>
-                  {question.crtDt} - {question.crtId}1에 의해 작성됨
+                  {question.crtDt} - {question.crtrId}에 의해 작성됨
                 </div>
 
                 <div className={style.testQuestionStats}>

@@ -7,11 +7,11 @@ import lombok.Data;
 @Data
 public class ExamSetVO {
 	
-	public String id;
-	public String courseId;
-	public String testType;
-	public String setName;
+	private String id;
+	private String courseId;
+	private String testType;
+	private String setName;
 	
-	ExamQuestionListVO questionList;
+	private ExamQuestionListVO questionList;
 
 }

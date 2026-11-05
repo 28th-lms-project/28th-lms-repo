@@ -37,10 +37,16 @@ public class ExamController {
 		return examQuestion;
 	}
 
-	@GetMapping("admin/system/test")
+	@GetMapping("admin/system/testSet")
 	@ResponseBody
-	public List<ExamSetVO> getAllExamSet() {
-		return this.examService.readAllExamSet();
+	public List<ExamSetVO> getAllExamInExamSet() {
+		return this.examService.readAllExamInExamSet();
+	}
+	
+	@GetMapping("admin/system/tests/{subjectId}")
+	@ResponseBody
+	public ExamQuestionListVO getAllExamQuestion(@PathVariable String subjectId){
+		return this.examService.readAllExamQuestion(subjectId);
 	}
 	
 	@DeleteMapping("admin/system/test/{examId}")

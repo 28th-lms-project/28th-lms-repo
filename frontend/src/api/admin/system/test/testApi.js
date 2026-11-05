@@ -1,8 +1,8 @@
 const host = "http://localhost:8080";
 
-export const searchTest = async () => {
+export const searchTest = async (subjectId) => {
   try {
-    const response = await fetch(`${host}/admin/system/test`);
+    const response = await fetch(`${host}/admin/system/tests/${subjectId}`);
     if (!response.ok) {
       throw Error("잘못된 요청입니다.");
     }

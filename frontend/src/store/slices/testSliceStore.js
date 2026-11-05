@@ -3,24 +3,16 @@ import { createSlice } from "@reduxjs/toolkit";
 export const testSliceStore = createSlice({
   name: "testSliceStore",
   initialState: {
-    id: "",
-    courseId: null,
-    setName: null,
-    testType: null,
+    subjectId: "",
+    questionCount: 0,
     questions: [],
   },
   reducers: {
     setTestList(state, action) {
-      state.id = action.payload.id;
-      state.courseId = action.payload.courseId;
-      state.setName = action.payload.setName;
-      state.testType = action.payload.testType;
+      console.log(action.payload);
+      state.questionCount = action.payload.questionCount;
 
-      let examList = [];
-      if (action.payload.questionList && action.payload.questionList.examList) {
-        examList = action.payload.questionList.examList;
-      }
-      state.questions = examList.map((q) => ({
+      state.questions = action.payload.examList.map((q) => ({
         ...q,
         answers: [
           q.answerSheet1,
@@ -30,7 +22,7 @@ export const testSliceStore = createSlice({
           q.answerSheet5,
         ]
           .map((text, i) => ({ no: String(i + 1), text }))
-          .filter((a) => a.text),
+          .filter((answer) => answer.text),
       }));
     },
     deleteTestQuestion(state, action) {
