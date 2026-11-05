@@ -1,5 +1,6 @@
 package com.learningworks.role.web;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -51,6 +52,13 @@ public class RoleController {
     return ApiResponse.OK(result);
   }
 
+  @DeleteMapping("/{roleId}")
+  public ApiResponse<RoleVO> deleteRole(
+      @Pattern(regexp = "^$|^ROLE_[A-Z0-9]+(_[A-Z0-9]+)*$",
+          message = "잘못된 요청입니다.") @PathVariable String roleId) {
+    RoleVO result = this.roleService.deleteRole(roleId);
 
+    return ApiResponse.OK(result);
+  }
 
 }

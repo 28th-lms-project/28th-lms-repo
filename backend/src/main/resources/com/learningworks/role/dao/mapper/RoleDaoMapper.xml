@@ -48,4 +48,46 @@
      WHERE ROLE_ID = #{roleId}
   </update>
 
+  <!-- long selectActiveUserCountByRoleId(String roleId); -->
+  <select id="selectActiveUserCountByRoleId"
+          parameterType="string"
+          resultType="_long">
+    SELECT COUNT(1)
+      FROM "USER"
+     WHERE BASE_ROLE = #{_parameter}
+       AND DEL_YN = 'N'
+  </select>
+
+  <!-- int updateDeletedUserBaseRole(String roleId, String replaceRoleId); -->
+  <update id="updateDeletedUserBaseRole">
+    UPDATE "USER"
+       SET BASE_ROLE = #{replaceRoleId}
+     WHERE BASE_ROLE = #{roleId}
+       AND DEL_YN = 'Y'
+  </update>
+
+  <!-- int deleteRoleActionByRoleId(String roleId); -->
+  <delete id="deleteRoleActionByRoleId"
+          parameterType="string">
+    DELETE
+      FROM ROLE_ACTION
+     WHERE ROLE_ID = #{_parameter}
+  </delete>
+
+  <!-- int deleteMenuRoleByRoleId(String roleId); -->
+  <delete id="deleteMenuRoleByRoleId"
+          parameterType="string">
+    DELETE
+      FROM MENU_ROLE
+     WHERE ROLE_ID = #{_parameter}
+  </delete>
+
+  <!-- int deleteRole(String roleId); -->
+  <delete id="deleteRole"
+          parameterType="string">
+    DELETE
+      FROM "ROLE"
+     WHERE ROLE_ID = #{_parameter}
+  </delete>
+
 </mapper>

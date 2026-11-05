@@ -13,4 +13,6 @@ public interface RoleService {
 
   RoleVO updateRole(String roleId, ModifyRoleVO modifyRoleVO);
 
+  RoleVO deleteRole(String roleId);
+
 }
