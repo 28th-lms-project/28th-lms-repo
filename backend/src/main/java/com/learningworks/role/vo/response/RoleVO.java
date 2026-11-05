@@ -7,6 +7,5 @@ public class RoleVO {
 
   private String roleId;
   private String roleDisplayName;
-  private String parentRoleId;
 
 }

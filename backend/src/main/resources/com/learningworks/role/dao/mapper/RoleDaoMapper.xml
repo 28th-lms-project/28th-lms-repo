@@ -17,7 +17,6 @@
           resultType="com.learningworks.role.vo.response.RoleVO">
     SELECT ROLE_ID
          , ROLE_DISPLAY_NAME
-         , PARENT_ROLE_ID
       FROM "ROLE"
   </select>
   
@@ -27,7 +26,6 @@
           resultType="com.learningworks.role.vo.response.RoleVO">
     SELECT ROLE_ID
          , ROLE_DISPLAY_NAME
-         , PARENT_ROLE_ID
       FROM "ROLE"
      WHERE ROLE_ID = #{_parameter}
   </select>
@@ -37,12 +35,10 @@
           parameterType="com.learningworks.role.vo.request.RegistRoleVO">
     INSERT INTO "ROLE" 
      (ROLE_ID
-    , ROLE_DISPLAY_NAME
-    , PARENT_ROLE_ID)
+    , ROLE_DISPLAY_NAME)
     VALUES 
      (#{roleId}
-    , #{roleDisplayName}
-    , #{parentRoleId})
+    , #{roleDisplayName})
   </insert>
   
 

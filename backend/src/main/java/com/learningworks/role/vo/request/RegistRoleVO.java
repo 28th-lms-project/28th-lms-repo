@@ -10,6 +10,5 @@ public class RegistRoleVO {
   private String roleId;
   @NotBlank(message = "역할 이름을 입력해주세요.")
   private String roleDisplayName;
-  private String parentRoleId;
 
 }

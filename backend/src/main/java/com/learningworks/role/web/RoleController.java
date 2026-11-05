@@ -34,7 +34,7 @@ public class RoleController {
   public ApiResponse<RoleVO> createRole(@Valid @ModelAttribute RegistRoleVO registRoleVO) {
     RoleVO result = this.roleService.createRole(registRoleVO);
 
-    return ApiResponse.OK(result);
+    return ApiResponse.CREATED(result);
 
   }
 
