@@ -1,0 +1,47 @@
+
+/** @format */
+
+.icon {
+    margin-right: 5px;
+
+    @media (max-width: 600px) {
+        margin-right: 0 !important;
+    }
+}
+
+.iconButton {
+    vertical-align: middle;
+    cursor: pointer;
+    font-weight: 400;
+    display: inline-flex;
+    padding: 7px;
+    padding-right: 5px;
+    align-items: center;
+    border: 0;
+    border-radius: 5px;
+    background-color: buttonface;
+
+    @media (max-width: 600px) {
+        padding: 3px 5px !important;
+        font-size: 0.8rem;
+        padding-right: 7px !important;
+    }
+}
+
+.iconSpan {
+    font-family: "Roboto Mono", "Noto Sans KR", sans-serif;
+    display: inline-block;
+    color: #666;
+    align-self: center;
+    opacity: 1;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
