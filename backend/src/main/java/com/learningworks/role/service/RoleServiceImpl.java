@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.role.dao.RoleDao;
+import com.learningworks.role.vo.request.ModifyRoleVO;
 import com.learningworks.role.vo.request.RegistRoleVO;
 import com.learningworks.role.vo.response.RoleListVO;
 import com.learningworks.role.vo.response.RoleVO;
@@ -43,6 +44,20 @@ public class RoleServiceImpl implements RoleService {
     RoleVO result = this.roleDao.selectRoleByRoleId(registRoleVO.getRoleId());
 
     // TODO USER_ROLE 테이블 갱신 필요할까?
+
+    return result;
+  }
+
+  @Override
+  public RoleVO updateRole(String roleId, ModifyRoleVO modifyRoleVO) {
+    int updatedRow = this.roleDao.updateRoleDisplayName(roleId, modifyRoleVO);
+
+    // PK 조건 UPDATE가 0건 = 해당 roleId가 존재하지 않음 (DB 에러가 아니라 정상 실행 결과)
+    if (updatedRow == 0) {
+      throw new LearningworksException(ErrorCode.ROLE_NOT_EXISTS);
+    }
+
+    RoleVO result = this.roleDao.selectRoleByRoleId(roleId);
 
     return result;
   }

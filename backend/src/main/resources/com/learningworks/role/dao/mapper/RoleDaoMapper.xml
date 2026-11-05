@@ -41,5 +41,11 @@
     , #{roleDisplayName})
   </insert>
   
+  <!-- int updateRoleDisplayName(String roleId, ModifyRoleVO modifyRoleVO); -->
+  <update id="updateRoleDisplayName">
+    UPDATE "ROLE"
+       SET ROLE_DISPLAY_NAME = #{modifyRoleVO.roleDisplayName} 
+     WHERE ROLE_ID = #{roleId}
+  </update>
 
 </mapper>
