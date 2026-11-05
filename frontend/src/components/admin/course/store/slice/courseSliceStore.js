@@ -18,7 +18,7 @@ export const courseSlice = createSlice({
     },
     loadShowCourse(state, action) {
       state.showCourse = action.payload;
-      console.log(state.showCourse);
+      // console.log(state.showCourse);
     },
   },
 });

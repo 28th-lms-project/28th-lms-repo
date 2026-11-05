@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 import { courseActions } from "../store/slice/courseSliceStore";
 
 export default function CourseItem() {
-  const { showCourse, isLoading } = useSelector((store) => store.courses);
+  const { showCourse } = useSelector((store) => store.courses);
   const { id } = useParams();
   const dispatch = useDispatch();
 
@@ -16,7 +16,6 @@ export default function CourseItem() {
       const fetchResult = await fetch(
         `http://localhost:8080/course/list/${id}`,
       );
-
       const resultJson = await fetchResult.json();
       if (!ignore) {
         console.log(resultJson);
@@ -30,7 +29,7 @@ export default function CourseItem() {
       // showArticle 제거.
       ignore = true;
     };
-  }, [id, showCourse, dispatch]);
+  }, [id]);
   const finishCourse = (courseStartDate, courseEndDated) => {
     console.log(courseStartDate);
     console.log(courseEndDated);
@@ -56,11 +55,15 @@ export default function CourseItem() {
 
   return (
     <>
-      {!isLoading && (
-        <>
-          <div>{showCourse.courseName}</div>
-        </>
-      )}
+      <div className="section">
+        {!showCourse && <div>..로딩중입니다.</div>}
+        {showCourse && (
+          <>
+            <p>과정명: {showCourse.courseName}</p>
+            <div>{finishCourse(showCourse.startDate, showCourse.endDated)}</div>
+          </>
+        )}
+      </div>
     </>
   );
 }

@@ -1,18 +1,21 @@
 import { Fragment, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { courseActions } from "./store/slice/courseSliceStore";
-import CourseList from "./list/CourseList";
-import CourseAdd from "./add/CourseAdd";
+
 import { IconButton } from "../../sample/input/IconButton";
 import { icons } from "../../sample/input/icons";
-import { useNavigate, useParams } from "react-router-dom";
-import CourseItem from "./list/CourseItem";
+import { useLocation, useNavigate } from "react-router-dom";
+
+import PageContainer from "../../common/PageContainer";
 
 export default function CourseMain() {
   const dispatch = useDispatch();
   const { courseList } = useSelector((store) => store.courses);
+  const { pathname } = useLocation();
+  const isAddActive = pathname === "/admin/course/add";
 
   const navigate = useNavigate();
+
   useEffect(() => {
     let ignore = false;
     dispatch(courseActions.startLoading());
@@ -31,21 +34,31 @@ export default function CourseMain() {
     };
   }, [dispatch]);
 
-  const click = (urlId) => {
-    console.log(urlId);
+  const onClickAddGroupButtonHandler = () => {
+    navigate("/admin/course/add");
+  };
+  const clickCourseIdButtonHandler = (urlId) => {
     navigate(`/admin/course/list/${urlId}`);
   };
   return (
     <>
+      <PageContainer />
       <IconButton
-        color="#666"
+        backgroundColor={isAddActive ? "#fff" : "buttonface"}
         icon={icons.add}
-        // onClick={onClickAddGroupButtonHandler}
+        onClick={onClickAddGroupButtonHandler}
       />
       {courseList.map((course) => {
         return (
           <Fragment key={course.id}>
-            <IconButton color="#666" onClick={click.bind(this, course.id)}>
+            <IconButton
+              backgroundColor={
+                pathname === `/admin/course/list/${course.id}`
+                  ? "#fff"
+                  : "buttonface"
+              }
+              onClick={clickCourseIdButtonHandler.bind(this, course.id)}
+            >
               {course.id}
             </IconButton>
           </Fragment>

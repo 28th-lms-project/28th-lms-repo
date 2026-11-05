@@ -9,6 +9,7 @@ function isActiveItem(item, pathname) {
   if (item.to === "/") {
     return pathname === "/";
   }
+
   return pathname.startsWith(item.to);
 }
 

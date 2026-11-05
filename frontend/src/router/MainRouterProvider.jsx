@@ -2,6 +2,7 @@ import {
   createBrowserRouter,
   Navigate,
   Outlet,
+  redirect,
   RouterProvider,
 } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
@@ -10,7 +11,7 @@ import Main from "../components/main/Main";
 import MyInfo from "../components/my/info/MyInfo";
 import MyCourseList from "../components/my/course/MyCourseList";
 import MyCourse from "../components/my/course/MyCourse";
-import CourseList from "../components/admin/course/list/CourseList";
+
 import CourseAdd from "../components/admin/course/add/CourseAdd";
 import Survey from "../components/admin/survey/survey/Survey";
 import Test from "../components/admin/test/test/Test";
@@ -24,7 +25,7 @@ import AccessRole from "../components/admin/system/access-role/AccessRole";
 import Code from "../components/admin/system/code/Code";
 import Sample from "../components/sample/Sample.jsx";
 import CourseMain from "../components/admin/course/CourseMain.jsx";
-import PageContainer from "../components/common/PageContainer.jsx";
+
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 
 const router = createBrowserRouter([
@@ -65,10 +66,8 @@ const router = createBrowserRouter([
         path: "admin",
         element: (
           <>
-            <PageContainer>
-              <CourseMain />
-              <Outlet />
-            </PageContainer>
+            <CourseMain />
+            <Outlet />
           </>
         ),
         handle: { crumb: "System Management" },
@@ -76,21 +75,39 @@ const router = createBrowserRouter([
           {
             path: "course",
             handle: { crumb: "과정 관리" },
+            element: (
+              <>
+                <Outlet />
+              </>
+            ),
             children: [
               {
                 path: "list",
                 element: (
                   <>
-                    <CourseList />
+                    {/* <CourseItem /> */}
                     <Outlet />
                   </>
                 ),
                 handle: { crumb: "과정 목록" },
-                children: [{ path: ":id", element: <CourseItem /> }],
+                children: [
+                  {
+                    index: true,
+                    loader: async () => {
+                      const res = await fetch(
+                        "http://localhost:8080/course/view",
+                      );
+                      const list = await res.json();
+                      return redirect(list[0].id);
+                    },
+                  },
+                  { path: ":id", element: <CourseItem /> },
+                ],
               },
               {
                 path: "add",
                 element: <CourseAdd />,
+
                 handle: { crumb: "과정 등록" },
               },
             ],
