@@ -42,7 +42,7 @@ public class RoleController {
   }
 
   @PutMapping("/{roleId}")
-  public ApiResponse<RoleVO> modifyRoleDisplayName(
+  public ApiResponse<RoleVO> modifyRole(
       @Pattern(regexp = "^$|^ROLE_[A-Z0-9]+(_[A-Z0-9]+)*$",
           message = "잘못된 요청입니다.") @PathVariable String roleId,
       @Valid @RequestBody ModifyRoleVO modifyRoleVO) {

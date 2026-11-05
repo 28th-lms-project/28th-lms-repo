@@ -50,7 +50,7 @@ public class RoleServiceImpl implements RoleService {
 
   @Override
   public RoleVO updateRole(String roleId, ModifyRoleVO modifyRoleVO) {
-    int updatedRow = this.roleDao.updateRoleDisplayName(roleId, modifyRoleVO);
+    int updatedRow = this.roleDao.updateRole(roleId, modifyRoleVO);
 
     // PK 조건 UPDATE가 0건 = 해당 roleId가 존재하지 않음 (DB 에러가 아니라 정상 실행 결과)
     if (updatedRow == 0) {

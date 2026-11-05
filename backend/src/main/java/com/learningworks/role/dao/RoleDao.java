@@ -18,7 +18,7 @@ public interface RoleDao {
 
   RoleVO selectRoleByRoleId(String roleId);
 
-  int updateRoleDisplayName(@Param("roleId") String roleId,
+  int updateRole(@Param("roleId") String roleId,
       @Param("modifyRoleVO") ModifyRoleVO modifyRoleVO);
 
 }
