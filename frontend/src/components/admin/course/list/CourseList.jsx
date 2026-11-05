@@ -1,9 +1,9 @@
-import PageContainer from "../../../common/PageContainer";
+import CourseItem from "./CourseItem";
 
 export default function CourseList() {
   return (
-    <PageContainer>
-      <div>CourseList</div>
-    </PageContainer>
+    <>
+      <CourseItem />
+    </>
   );
 }

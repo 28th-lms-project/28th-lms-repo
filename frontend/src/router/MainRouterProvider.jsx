@@ -1,6 +1,7 @@
 import {
   createBrowserRouter,
   Navigate,
+  Outlet,
   RouterProvider,
 } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
@@ -22,6 +23,9 @@ import Access from "../components/admin/system/access/Access";
 import AccessRole from "../components/admin/system/access-role/AccessRole";
 import Code from "../components/admin/system/code/Code";
 import Sample from "../components/sample/Sample.jsx";
+import CourseMain from "../components/admin/course/CourseMain.jsx";
+import PageContainer from "../components/common/PageContainer.jsx";
+import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 
 const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
@@ -59,6 +63,14 @@ const router = createBrowserRouter([
       },
       {
         path: "admin",
+        element: (
+          <>
+            <PageContainer>
+              <CourseMain />
+              <Outlet />
+            </PageContainer>
+          </>
+        ),
         handle: { crumb: "System Management" },
         children: [
           {
@@ -66,9 +78,15 @@ const router = createBrowserRouter([
             handle: { crumb: "과정 관리" },
             children: [
               {
-                index: true,
-                element: <CourseList />,
+                path: "list",
+                element: (
+                  <>
+                    <CourseList />
+                    <Outlet />
+                  </>
+                ),
                 handle: { crumb: "과정 목록" },
+                children: [{ path: ":id", element: <CourseItem /> }],
               },
               {
                 path: "add",
@@ -106,8 +124,16 @@ const router = createBrowserRouter([
                 element: <Tutor />,
                 handle: { crumb: "강사 관리" },
               },
-              { path: "menu", element: <Menu />, handle: { crumb: "메뉴 관리" } },
-              { path: "role", element: <Role />, handle: { crumb: "권한 관리" } },
+              {
+                path: "menu",
+                element: <Menu />,
+                handle: { crumb: "메뉴 관리" },
+              },
+              {
+                path: "role",
+                element: <Role />,
+                handle: { crumb: "권한 관리" },
+              },
               {
                 path: "access",
                 element: <Access />,

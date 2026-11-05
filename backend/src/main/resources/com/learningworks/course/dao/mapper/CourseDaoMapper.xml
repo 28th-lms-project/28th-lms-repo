@@ -9,9 +9,19 @@
 	resultType="com.learningworks.course.vo.response.CourseVO">
 	 SELECT ID 
 		  , COURSE_NAME 
-		  , START_DATE 
-	      , END_DATED 
+		  , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
+	      , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
 	      , "NO" 
 	   FROM COURSE
+	</select>
+	
+	<select id="readOneCourse" resultType="com.learningworks.course.vo.response.CourseVO" parameterType="string">
+	 SELECT ID 
+          , COURSE_NAME 
+          , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
+          , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
+          , "NO" 
+       FROM COURSE
+      WHERE ID = #{_parameter}
 	</select>
 </mapper>

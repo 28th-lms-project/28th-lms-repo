@@ -1,35 +1,28 @@
-import { useEffect, useRef, useState } from "react";
-import Students from "../../students/students/Students";
+import { useRef, useState } from "react";
 import { IconButton } from "../../../sample/input/IconButton";
 import { icons } from "../../../sample/input/icons";
 import { FileField } from "../../../sample/input/Input";
 
 export default function CourseAdd() {
-  const [group, setGroup] = useState(true);
-
   const titleRef = useRef();
   const countRef = useRef();
   const startDateRef = useRef();
   const endDateRef = useRef();
   const uploadFileRef = useRef();
 
-  useEffect(() => {
-    (async () => {
-      const fetchresult = await fetch("http://localhost:8080/course/view");
-      console(fetchresult);
-    })();
-  });
+  const [group, setGroup] = useState(true);
+
   const onClickAddGroupButtonHandler = () => {
-    console.log(group);
     setGroup(!group);
-    console.log("test");
   };
+
   const onClickAddGroupOkButtonHandler = () => {
     const title = titleRef.current.value;
     const count = countRef.current.value;
     const startDate = startDateRef.current.value;
     const endDate = endDateRef.current.value;
     const newGroup = { title, count, startDate, endDate };
+    console.log(newGroup);
   };
   const onClickAddGroupCancleButtonHandler = () => {
     setGroup(!group);
@@ -37,11 +30,6 @@ export default function CourseAdd() {
 
   return (
     <div>
-      <IconButton
-        color="#666"
-        icon={icons.add}
-        onClick={onClickAddGroupButtonHandler}
-      />
       {!group && (
         <>
           <div className="section">
@@ -58,8 +46,6 @@ export default function CourseAdd() {
               <input type="date" ref={startDateRef} />
               ~
               <input type="date" ref={endDateRef} />
-              <h3>과정 일정</h3>
-              <Students />
               <h3>시간표</h3>
               <div>
                 <FileField
