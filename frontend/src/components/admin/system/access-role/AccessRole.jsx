@@ -1,6 +1,6 @@
 /** @format */
 
-import {useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import PageContainer from "../../../common/PageContainer";
 
 import {
@@ -9,46 +9,6 @@ import {
     getDeniedPermissionList,
     saveRolePermission,
 } from "../../../../api/admin/system/access-role/accessRoleApi";
-
-
-const roleList = [
-    {id: "SUPER", name: "슈퍼관리자"},
-    {id: "ADMIN", name: "관리자"},
-    {id: "LECTURER", name: "강사"},
-    {id: "STUDENT", name: "수강생"},
-    {id: "TEST", name: "테스트 역할"},
-];
-
-const permissionList = [
-    {id: 1, name: "강사 내용 조회", lvl1: "System Management", lvl2: "강사 관리", lvl3: "강사 관리"},
-    {id: 2, name: "강사 목록 조회", lvl1: "System Management", lvl2: "강사 관리", lvl3: "강사 관리"},
-    {id: 3, name: "강사 삭제", lvl1: "System Management", lvl2: "강사 관리", lvl3: "강사 관리"},
-    {id: 4, name: "과제 내용 수정", lvl1: "My Page", lvl2: "수강 과정", lvl3: "수강 과정"},
-    {id: 5, name: "과제 내용 조회", lvl1: "My Page", lvl2: "수강 과정", lvl3: "수강 과정"},
-    {id: 6, name: "과제 댓글 삭제", lvl1: "My Page", lvl2: "수강 과정", lvl3: "수강 과정"},
-    {id: 7, name: "과제 댓글 수정", lvl1: "My Page", lvl2: "수강 과정", lvl3: "수강 과정"},
-    {id: 8, name: "과제 댓글 새로고침", lvl1: "My Page", lvl2: "수강 과정", lvl3: "수강 과정"},
-    {id: 9, name: "수강생 본인 시험 성적 보기", lvl1: "My Page", lvl2: "수강 과정", lvl3: "수강 과정"},
-    {id: 10, name: "수강생 본인 차트 보기", lvl1: "My Page", lvl2: "수강 과정", lvl3: "수강 과정"},
-    {id: 11, name: "수강생 본인 출결 조회", lvl1: "My Page", lvl2: "수강 과정", lvl3: "수강 과정"},
-    {id: 12, name: "시험 응시", lvl1: "My Page", lvl2: "시험 관리", lvl3: "시험 응시"},
-    {id: 13, name: "설문 응답", lvl1: "My Page", lvl2: "설문 관리", lvl3: "설문 응답"},
-    {id: 14, name: "관리자 삭제", lvl1: "System Management", lvl2: "관리자 관리", lvl3: "관리자 관리"},
-    {id: 15, name: "로그인 초기화", lvl1: "System Management", lvl2: "관리자 관리", lvl3: "관리자 관리"},
-    {id: 16, name: "비밀번호 초기화", lvl1: "System Management", lvl2: "관리자 관리", lvl3: "관리자 관리"},
-    {id: 17, name: "새 관리자 추가", lvl1: "System Management", lvl2: "관리자 관리", lvl3: "관리자 관리"},
-    {id: 18, name: "메뉴 관리", lvl1: "System Management", lvl2: "메뉴 관리", lvl3: "메뉴 관리"},
-    {id: 19, name: "권한 관리", lvl1: "System Management", lvl2: "시스템 관리", lvl3: "권한 관리"},
-    {id: 20, name: "접근 권한 조회", lvl1: "System Management", lvl2: "시스템 관리", lvl3: "접근 권한 조회"},
-];
-
-const initialRolePermissions = {
-    SUPER: permissionList.map((item) => item.id),
-    ADMIN: [1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16, 17, 18, 19, 20],
-    LECTURER: [1, 2, 3, 4, 5, 6, 7, 8],
-    STUDENT: [9, 10, 11, 12, 13],
-    TEST: [4, 5],
-};
 
 const selectStyle = {
     width: "100%",
@@ -76,31 +36,33 @@ const buttonStyle = {
 };
 
 export default function AccessRole() {
-    // const [roleList, setRoleList] = useState([]);
-    // const [allowedList, setAllowedList] = useState([]);
-    // const [deniedList, setDeniedList] = useState([]);
+    const [roleList, setRoleList] = useState([]);
+    const [allowedList, setAllowedList] = useState([]);
+    const [deniedList, setDeniedList] = useState([]);
 
     // 기본적으로 아무 역할도 선택하지 않음
     const [selectedRole, setSelectedRole] = useState("");
 
+
+
     // DB 저장 기준 데이터
-    const [savedPermissions, setSavedPermissions] = useState(() =>
-        Object.fromEntries(
-            Object.entries(initialRolePermissions).map(([key, value]) => [
-                key,
-                [...value],
-            ]),
-        ),
+    const [savedPermissions, setSavedPermissions] = useState(// (  =>
+        // Object.fromEntries(
+        //     Object.entries(initialRolePermissions).map(([key, value]) => [
+        //         key,
+        //         [...value],
+        //     ]),
+        // ),
     );
 
     // 화면에서 수정 중인 데이터
-    const [rolePermissions, setRolePermissions] = useState(() =>
-        Object.fromEntries(
-            Object.entries(initialRolePermissions).map(([key, value]) => [
-                key,
-                [...value],
-            ]),
-        ),
+    const [rolePermissions, setRolePermissions] = useState(// () =>
+        // Object.fromEntries(
+        //     Object.entries(initialRolePermissions).map(([key, value]) => [
+        //         key,
+        //         [...value],
+        //     ]),
+        // ),
     );
 
     const [selectedLvl1, setSelectedLvl1] = useState("");
@@ -109,60 +71,76 @@ export default function AccessRole() {
 
     const [selectedPermissionIds, setSelectedPermissionIds] = useState([]);
 
-    // // 역할 목록 조회
-    // const fetchRoleList = async () => {
-    //     try {
-    //         const response = await getRoleList();
-    //
-    //         if (response.responseCode === "SUCCESS") {
-    //             setRoleList(response.data || []);
-    //         }
-    //     } catch (error) {
-    //         console.error("역할 목록 조회 실패", error);
-    //     }
-    // };
-    //
-    // // 역할 선택 시 권한 조회
-    // const fetchPermissionList = async (roleId) => {
-    //     if (!roleId) return;
-    //
-    //     try {
-    //         const params = { roleId };
-    //
-    //         const [allowed, denied] = await Promise.all([
-    //             getAllowedPermissionList(params),
-    //             getDeniedPermissionList(params),
-    //         ]);
-    //
-    //         if (
-    //             allowed.responseCode === "SUCCESS" &&
-    //             denied.responseCode === "SUCCESS"
-    //         ) {
-    //             setAllowedList(allowed.data || []);
-    //             setDeniedList(denied.data || []);
-    //         }
-    //     } catch (error) {
-    //         console.error("권한 목록 조회 실패", error);
-    //     }
-    // };
-    //
-    // // 권한 저장
-    // const handleSave = async (params) => {
-    //     try {
-    //         const response = await saveRolePermission(params);
-    //
-    //         if (response.responseCode === "SUCCESS") {
-    //             alert("저장되었습니다.");
-    //             fetchPermissionList(selectedRole);
-    //         }
-    //     } catch (error) {
-    //         console.error("권한 저장 실패", error);
-    //     }
-    // };
-    //
-    // useEffect(() => {
-    //     fetchRoleList();
-    // }, []);
+    // 역할 목록 조회
+    const fetchRoleList = async () => {
+        try {
+            const response = await getRoleList();
+
+            if (response.responseCode === "SUCCESS") {
+                setRoleList(response.data || []);
+            }
+        } catch (error) {
+            console.error("역할 목록 조회 실패", error);
+        }
+    };
+
+    // 역할 선택 시 권한 조회
+    const fetchPermissionList = async (roleId) => {
+        if (!roleId) return;
+
+        try {
+            const params = { roleId };
+
+            const [allowed, denied] = await Promise.all([
+                getAllowedPermissionList(params),
+                getDeniedPermissionList(params),
+            ]);
+
+            if (
+                allowed.responseCode === "SUCCESS" &&
+                denied.responseCode === "SUCCESS"
+            ) {
+                const allowedData = allowed.data || [];
+                const deniedData = denied.data || [];
+
+                setAllowedList(allowedData);
+                setDeniedList(deniedData);
+
+                const permissionIds = allowedData.map(
+                    (item) => item.actionId
+                );
+
+                setSavedPermissions(permissionIds);
+                setRolePermissions(permissionIds);
+            }
+        } catch (error) {
+            console.error("권한 목록 조회 실패", error);
+            alert(error.message);
+        }
+    };
+
+    const permissionList = useMemo(
+        () => [...allowedList, ...deniedList],
+        [allowedList, deniedList]
+    );
+
+    // 권한 저장
+    const handleSave = async (params) => {
+        try {
+            const response = await saveRolePermission(params);
+
+            if (response.responseCode === "SUCCESS") {
+                alert("저장되었습니다.");
+                fetchPermissionList(selectedRole);
+            }
+        } catch (error) {
+            console.error("권한 저장 실패", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchRoleList();
+    }, []);
 
     const lvl1Options = useMemo(
         () => [...new Set(permissionList.map((item) => item.lvl1))],
@@ -209,25 +187,33 @@ export default function AccessRole() {
         [selectedLvl1, selectedLvl2, selectedLvl3],
     );
 
-    const currentAllowedIds = selectedRole
-        ? rolePermissions[selectedRole] || []
-        : [];
+    const currentAllowedIds = rolePermissions;
 
     const allowedPermissions = filteredPermissions.filter((item) =>
-        currentAllowedIds.includes(item.id),
+        currentAllowedIds.includes(item.actionId)
     );
 
     const deniedPermissions = filteredPermissions.filter(
-        (item) => !currentAllowedIds.includes(item.id),
+        (item) => !currentAllowedIds.includes(item.actionId)
     );
 
     // 역할 선택
-    const roleClickHandler = (roleId) => {
+    const roleClickHandler = async (roleId) => {
         setSelectedRole(roleId);
+
         setSelectedPermissionIds([]);
+
         setSelectedLvl1("");
         setSelectedLvl2("");
         setSelectedLvl3("");
+
+        setAllowedList([]);
+        setDeniedList([]);
+
+        setSavedPermissions([]);
+        setRolePermissions([]);
+
+        await fetchPermissionList(roleId);
     };
 
     // 허용되지 않은 권한 클릭 -> 권한 부여
@@ -292,28 +278,35 @@ export default function AccessRole() {
     };
 
     // 저장
-    const saveHandler = () => {
+    const saveHandler = async () => {
         if (!selectedRole) return;
 
-        const currentIds = rolePermissions[selectedRole] || [];
+        try {
+            const params = {
+                roleId: selectedRole,
+                permissionIds: rolePermissions,
+            };
 
-        // TODO: 실제 권한 저장 API 연결
-        setSavedPermissions((prev) => ({
-            ...prev,
-            [selectedRole]: [...currentIds],
-        }));
+            const response = await saveRolePermission(params);
 
-        alert("권한이 저장되었습니다.");
+            if (response.responseCode === "SUCCESS") {
+                alert("권한이 저장되었습니다.");
+
+                await fetchPermissionList(selectedRole);
+
+                setSelectedPermissionIds([]);
+            }
+        } catch (error) {
+            console.error("권한 저장 실패", error);
+            alert(error.message);
+        }
     };
 
     // 전체 삭제: 저장된 데이터로 롤백
     const rollbackHandler = () => {
         if (!selectedRole) return;
 
-        setRolePermissions((prev) => ({
-            ...prev,
-            [selectedRole]: [...(savedPermissions[selectedRole] || [])],
-        }));
+        setRolePermissions([...savedPermissions]);
 
         setSelectedPermissionIds([]);
     };
@@ -444,10 +437,10 @@ export default function AccessRole() {
                                     {allowedPermissions.length > 0 ? (
                                         allowedPermissions.map((item) => (
                                             <div
-                                                key={item.id}
+                                                key={item.actionId}
                                                 onClick={() =>
                                                     revokePermissionHandler(
-                                                        item.id,
+                                                        item.actionId,
                                                     )
                                                 }
                                                 style={{
@@ -456,7 +449,7 @@ export default function AccessRole() {
                                                 }}
                                                 title="클릭하면 권한이 해제됩니다."
                                             >
-                                                {item.name}
+                                                {item.actionName}
                                             </div>
                                         ))
                                     ) : (
@@ -562,10 +555,10 @@ export default function AccessRole() {
                                     {deniedPermissions.length > 0 ? (
                                         deniedPermissions.map((item) => (
                                             <div
-                                                key={item.id}
+                                                key={item.actionId}
                                                 onClick={() =>
                                                     grantPermissionHandler(
-                                                        item.id,
+                                                        item.actionId,
                                                     )
                                                 }
                                                 style={{
@@ -580,7 +573,7 @@ export default function AccessRole() {
                                                 }}
                                                 title="클릭하면 권한이 부여됩니다."
                                             >
-                                                {item.name}
+                                                {item.actionName}
                                             </div>
                                         ))
                                     ) : (
