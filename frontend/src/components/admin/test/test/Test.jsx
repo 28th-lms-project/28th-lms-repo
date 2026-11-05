@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import PageContainer from "../../../common/PageContainer";
-import { searchTest } from "../../../../api/admin/system/test/testApi";
+import {
+  deleteTestQuestion,
+  searchTest,
+} from "../../../../api/admin/system/test/testApi";
 import style from "./Test.module.css";
 import { IconButton } from "../../../sample/input/IconButton";
 import { icons } from "../../../sample/input/icons";
@@ -11,7 +14,7 @@ export default function Test() {
   const { id, courseId, setName, testType, questions } = useSelector(
     (state) => state.test,
   );
-  console.log(questions);
+  console.log(questions.length, questions);
 
   const dispatch = useDispatch();
 
@@ -28,6 +31,20 @@ export default function Test() {
       ignoreUpdateState = true;
     };
   }, [dispatch]);
+
+  const onClickDeleteButtonHandler = (questionId) => {
+    console.log(questionId, "삭제");
+
+    (async () => {
+      try {
+        await deleteTestQuestion(questionId); // 실패하면 즉시 catch로 점프
+        dispatch(testActions.deleteTestQuestion(questionId)); // 성공했을 때만 실행
+        alert("삭제 완료");
+      } catch (e) {
+        alert(e.message); // 실패했을 때만 실행
+      }
+    })();
+  };
 
   return (
     <PageContainer>
@@ -58,7 +75,14 @@ export default function Test() {
                     <IconButton icon={icons.edit}>수정</IconButton>
                   </div>
                   <div className={style.testButtonContainer}>
-                    <IconButton icon={icons.delete}>삭제</IconButton>
+                    <IconButton
+                      icon={icons.delete}
+                      onClick={() => {
+                        onClickDeleteButtonHandler(question.id);
+                      }}
+                    >
+                      삭제
+                    </IconButton>
                   </div>
                 </div>
 

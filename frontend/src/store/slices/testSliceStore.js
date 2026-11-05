@@ -10,7 +10,7 @@ export const testSliceStore = createSlice({
     questions: [],
   },
   reducers: {
-    setTestList: (state, action) => {
+    setTestList(state, action) {
       state.id = action.payload.id;
       state.courseId = action.payload.courseId;
       state.setName = action.payload.setName;
@@ -32,6 +32,11 @@ export const testSliceStore = createSlice({
           .map((text, i) => ({ no: String(i + 1), text }))
           .filter((a) => a.text),
       }));
+    },
+    deleteTestQuestion(state, action) {
+      state.questions = state.questions.filter(
+        (question) => question.id != action.payload,
+      );
     },
   },
 });
