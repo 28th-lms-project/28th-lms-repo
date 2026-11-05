@@ -15,6 +15,13 @@ import lombok.Data;
 
 @Data
 @JsonInclude(Include.NON_NULL)
+/**
+ * 수업 중 진행한 Articles에서 ApiResponseV2 코드
+ * PaginationVO와 검색 VO를 넣는 Object가 분리되어 있음!
+ * ==> 검색VO는 PaginationVO를 extend할 필요 없다!
+ * 
+ * @param <T> Response Body에 담길 객체
+ */
 public class ApiResponse<T> {
 
   private int httpStatusCode;
@@ -25,6 +32,11 @@ public class ApiResponse<T> {
   private String error;
 
   private PaginationVO paginate;
+  /**
+   * 검색 기능에서, 검색어에 해당하는 VO를 넣음
+   * 예> SearchMemberVO, SearchArticleVO, ...
+   * response에서 검색어를 확인할 수 있다.
+   */
   private Object search;
 
   private Map<String, List<String>> validations;
