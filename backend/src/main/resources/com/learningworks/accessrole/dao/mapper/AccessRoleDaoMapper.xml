@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.learningworks.accessrole.dao.AccessRoleDao">
+
+    <!-- 역할 목록 조회 -->
+    <select id="selectRoleList"
+            resultType="com.learningworks.accessrole.vo.response.AccessRoleVO">
+
+        SELECT R.ROLE_ID AS roleId
+             , R.ROLE_DISPLAY_NAME AS roleDisplayName
+          FROM ROLE R
+         ORDER BY R.ROLE_ID
+
+    </select>
+
+
+    <!-- 역할별 허용 권한 목록 조회 -->
+    <select id="selectAllowedPermissionList"
+            resultType="com.learningworks.accessrole.vo.response.AccessRolePermissionVO">
+
+        SELECT R.ROLE_ID AS roleId
+             , R.ROLE_DISPLAY_NAME AS roleDisplayName
+             , A.ACTION_ID AS actionId
+             , A.ACTION_NAME AS actionName
+             , TOP_M.TITLE AS lvl1
+             , MID_M.TITLE AS lvl2
+             , BTM_M.TITLE AS lvl3
+          FROM ROLE_ACTION RA
+         INNER JOIN ROLE R
+            ON RA.ROLE_ID = R.ROLE_ID
+         INNER JOIN ACTION A
+            ON RA.ACTION_ID = A.ACTION_ID
+          LEFT JOIN MENU TOP_M
+            ON A.TOP_MENU_ID = TOP_M.ID
+          LEFT JOIN MENU MID_M
+            ON A.MID_MENU_ID = MID_M.ID
+          LEFT JOIN MENU BTM_M
+            ON A.BTM_MENU_ID = BTM_M.ID
+         WHERE R.ROLE_ID = #{roleId}
+           AND RA.ACTION_ID IS NOT NULL
+         ORDER BY A.TOP_MENU_ID, A.MID_MENU_ID, A.BTM_MENU_ID, A.ACTION_ID DESC
+
+    </select>
+
+
+    <!-- 역할별 미허용 권한 목록 조회 -->
+    <select id="selectDeniedPermissionList"
+            resultType="com.learningworks.accessrole.vo.response.AccessRolePermissionVO">
+
+        SELECT R.ROLE_ID AS roleId
+             , R.ROLE_DISPLAY_NAME AS roleDisplayName
+             , A.ACTION_ID AS actionId
+             , A.ACTION_NAME AS actionName
+             , TOP_M.TITLE AS lvl1
+             , MID_M.TITLE AS lvl2
+             , BTM_M.TITLE AS lvl3
+          FROM ROLE R
+         CROSS JOIN ACTION A
+          LEFT JOIN ROLE_ACTION RA
+            ON RA.ROLE_ID = R.ROLE_ID
+           AND RA.ACTION_ID = A.ACTION_ID
+          LEFT JOIN MENU TOP_M
+            ON A.TOP_MENU_ID = TOP_M.ID
+          LEFT JOIN MENU MID_M
+            ON A.MID_MENU_ID = MID_M.ID
+          LEFT JOIN MENU BTM_M
+            ON A.BTM_MENU_ID = BTM_M.ID
+         WHERE R.ROLE_ID = #{roleId}
+           AND RA.ACTION_ID IS NULL
+         ORDER BY A.TOP_MENU_ID, A.MID_MENU_ID, A.BTM_MENU_ID, A.ACTION_ID
+
+    </select>
+
+
+    <!-- 역할 존재 여부 확인 -->
+    <select id="selectRoleCount"
+            resultType="int">
+
+        SELECT COUNT(*)
+          FROM ROLE
+         WHERE ROLE_ID = #{roleId}
+
+    </select>
+
+
+    <!-- 실제 존재하는 ACTION 개수 확인 -->
+    <select id="selectActionCount"
+            resultType="int">
+
+        SELECT COUNT(DISTINCT ACTION_ID)
+          FROM ACTION
+         WHERE ACTION_ID IN
+        <foreach collection="permissionIds"
+                 item="actionId"
+                 open="("
+                 separator=","
+                 close=")">
+            #{actionId}
+        </foreach>
+
+    </select>
+
+
+    <!-- 기존 역할 권한 삭제 -->
+    <delete id="deleteRolePermission">
+
+        DELETE FROM ROLE_ACTION
+         WHERE ROLE_ID = #{roleId}
+
+    </delete>
+
+
+    <!-- 선택한 역할 권한 등록 -->
+    <insert id="insertRolePermission">
+
+        INSERT INTO ROLE_ACTION (
+               ROLE_ID
+             , ACTION_ID
+        )
+        VALUES
+        <foreach collection="permissionIds"
+                 item="actionId"
+                 separator=",">
+            (
+            #{roleId},
+            #{actionId}
+            )
+        </foreach>
+
+    </insert>
+
+</mapper>
