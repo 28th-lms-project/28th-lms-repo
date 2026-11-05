@@ -93,11 +93,11 @@
             parameterType="com.learningworks.access.vo.response.AccessVO">
 
         UPDATE ACTION
-           SET(
+           SET
                 ACTION_NAME = #{actionName}
               , TOP_MENU_ID = #{topMenuId}
               , MID_MENU_ID = #{midMenuId}
-              , BTM_MENU_ID = #{btmMenuId})
+              , BTM_MENU_ID = #{btmMenuId}
           WHERE ACTION_ID = #{actionId}
 
     </update>
