@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.learningworks.course.service.CourseService;
+import com.learningworks.course.vo.request.CourseMemberVO;
 import com.learningworks.course.vo.request.ViewCourseVO;
 import com.learningworks.course.vo.response.CourseVO;
 
@@ -33,5 +34,18 @@ public class CourseController {
 	public CourseVO readOneCourse(@PathVariable String courseId) {
 		CourseVO course = this.courseService.readOneCourse(courseId);
 		return course;
+	}
+	
+	@GetMapping("/my/course/list/{courseId}")
+	public CourseVO readMyCourse(@PathVariable String courseId) {
+		CourseVO course = this.courseService.readMyCourse(courseId);
+		return course;
+	}
+	
+	//나중에 분리할 endpoint
+	@GetMapping("/student/list")
+	public List<CourseMemberVO> courseMemberList() {
+		List<CourseMemberVO> courseMemberVO = this.courseService.courseMemberList();
+		return courseMemberVO;
 	}
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Select from "react-select";
 
-export default function CourseSelect() {
+export default function CourseTutorSelect() {
   const [options, setOptions] = useState([]);
 
   useEffect(() => {

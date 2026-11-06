@@ -2,7 +2,9 @@ import { useRef, useState } from "react";
 import { IconButton } from "../../../sample/input/IconButton";
 import { icons } from "../../../sample/input/icons";
 import { FileField } from "../../../sample/input/Input";
-import CourseSelect from "../selector/CourseSelect";
+import CourseSelect from "../selector/CourseTutorSelect";
+import CourseTutorSelect from "../selector/CourseTutorSelect";
+import CourseStudentSelect from "../selector/CourseStudentSelect";
 
 export default function CourseAdd() {
   const titleRef = useRef();
@@ -33,11 +35,13 @@ export default function CourseAdd() {
           <input type="text" ref={titleRef} placeholder="과정 명" />
           <h3>과정 정보</h3>
           <input type="text" ref={countRef} placeholder="과정 기수" />
-          <CourseSelect />
+          <CourseTutorSelect />
           <h3>과정 일정</h3>
           <input type="date" ref={startDateRef} />
           ~
           <input type="date" ref={endDateRef} />
+          <h3>수강생</h3>
+          <CourseStudentSelect />
           <h3>시간표</h3>
           <div>
             <FileField

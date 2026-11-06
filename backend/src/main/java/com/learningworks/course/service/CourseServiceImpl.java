@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.learningworks.course.dao.CourseDao;
+import com.learningworks.course.vo.request.CourseMemberVO;
 import com.learningworks.course.vo.request.ViewCourseVO;
 import com.learningworks.course.vo.response.CourseVO;
 
@@ -33,5 +34,22 @@ public class CourseServiceImpl implements CourseService{
 			
 		return result;
 	}
+
+	@Override
+	public CourseVO readMyCourse(String courseId) {
+		CourseVO result = this.courseDao.readMyCourse(courseId);
+		return result;
+	}
+	
+	//나중에 분리할 endpoint
+	@Override
+	public List<CourseMemberVO> courseMemberList() {
+		List<CourseMemberVO> CourseMemberVO = this.courseDao.courseMemeberList();
+		return CourseMemberVO;
+	}
+	
+	
+	
+	
 
 }

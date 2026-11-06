@@ -24,4 +24,31 @@
        FROM COURSE
       WHERE ID = #{_parameter}
 	</select>
+	
+	
+	<select
+	 id="readMyCourse"
+	 resultType="com.learningworks.course.vo.response.CourseVO" 
+	 parameterType="string">
+	 SELECT C."NO" 
+          , C.COURSE_NAME 
+          , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
+          , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
+          , C.ID 
+        FROM COURSE c 
+       WHERE C.ID = (SELECT COURSE_ID 
+                       FROM COURSE_STUDENT  
+                      WHERE USER_ID IN (SELECT ID 
+                                             FROM "USER"
+                                         WHERE ID = #{_parameter}))
+	</select>
+	
+	<select id="courseMemeberList"
+	resultType="com.learningworks.course.vo.request.CourseMemberVO">
+	   SELECT U.NAME 
+         FROM "USER" u 
+        WHERE U.BASE_ROLE =(SELECT R.ROLE_ID 
+                              FROM "ROLE" r 
+                             WHERE R.ROLE_ID = 'ROLE_STUDENT')
+	</select>
 </mapper>

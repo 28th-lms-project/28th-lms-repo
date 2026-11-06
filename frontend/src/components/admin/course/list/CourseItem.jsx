@@ -30,6 +30,7 @@ export default function CourseItem() {
       ignore = true;
     };
   }, [id]);
+
   const finishCourse = (courseStartDate, courseEndDated) => {
     console.log(courseStartDate);
     console.log(courseEndDated);
@@ -44,8 +45,8 @@ export default function CourseItem() {
 
     const progress = Math.min(100, Math.max(0, (elapsedDays / totalDay) * 100));
     console.log(progress);
-    if (progress > 100) {
-      console.log("이미 완료된 과정입니다.");
+    if (progress >= 100) {
+      return "이미 완료된 과정입니다 ";
     } else {
       console.log(totalDay);
       console.log(Math.round(progress));
@@ -59,8 +60,14 @@ export default function CourseItem() {
         {!showCourse && <div>..로딩중입니다.</div>}
         {showCourse && (
           <>
-            <p>과정명: {showCourse.courseName}</p>
+            <h3>{showCourse.courseName}</h3>
+
+            <span>
+              {showCourse.startDate} ~ {showCourse.endDated}
+            </span>
+
             <div>{finishCourse(showCourse.startDate, showCourse.endDated)}</div>
+            <div>강사 이름</div>
           </>
         )}
       </div>
