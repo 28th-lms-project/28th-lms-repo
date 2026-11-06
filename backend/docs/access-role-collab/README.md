@@ -3,6 +3,11 @@
 - 작성: ROLE 모듈 담당자
 - 대상: ACCESS(`/access`) · ACCESS_ROLE(`/access-role`) 모듈 담당자, 그리고 담당자의 Claude Code
 - 작성 기준 코드: `feature/role` 브랜치 (ROLE 백엔드 PR → `dev`)
+- 최신화: 2026-11-06, `feature/role` 커밋 `644fe80` 기준 (`feature/access-role`의 `fafc7bc`, `a6961c3`과 `dev`의 `0e71877`까지 반영)
+  - R-04, R-05는 이미 반영되어 **완료**로 기록했습니다.
+  - R-06의 현재 상태(행 번호 등)를 최신 코드에 맞게 수정했습니다.
+  - R-03에 검색 조건을 `@ModelAttribute`로 받는 선택 항목을 추가했습니다.
+  - D 항목은 변동 없습니다.
 
 이 디렉토리의 문서는 **"요청"과 "협의"** 두 종류입니다. 담당자(또는 담당자의 Claude Code)가 각 항목을 검토하고, 수락 · 반려 · 보류를 판단해 **각 항목의 `처리 결과`란에 기록**해 주세요.
 
@@ -96,7 +101,9 @@ ROLE API 목록:
 ## 권장 처리 순서
 
 1. `discussions.md`의 **D-01, D-02** 결정 (나머지 항목의 방향이 여기서 정해짐)
-2. `requests.md`의 **R-04, R-05** (버그)
+2. ~~`requests.md`의 **R-04, R-05** (버그)~~ — 완료
 3. `requests.md`의 **R-01 ~ R-03** (공통 응답 · 예외 · 검증 전환)
-4. `requests.md`의 **R-06** (프론트 전환, 공통 API 클라이언트 제공 후)
+4. `requests.md`의 **R-06** (프론트 전환. 공통 API 클라이언트는 제공 완료: `frontend/src/api/common/apiClient.js`, 가이드 `frontend/docs/api-client-guide.md`)
 5. 나머지 R · D 항목
+
+R-01과 R-06은 **함께 진행**해 주세요. 백엔드 응답 형식만 먼저 바꾸면 기존 프론트가 `responseCode`를 찾지 못해 화면이 동작하지 않습니다.

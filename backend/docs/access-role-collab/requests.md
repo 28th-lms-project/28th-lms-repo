@@ -2,16 +2,18 @@
 
 처리 규칙은 `README.md`를 따릅니다. 각 항목의 `현재 상태`를 코드에서 직접 확인한 뒤 판단해 주세요.
 
-| ID | 제목 | 분류 | 우선순위 | 선행 조건 |
-| --- | --- | --- | --- | --- |
-| R-01 | 컨트롤러 공통 응답(ApiResponse) 전환 | 공통화 | 높음 | 없음 |
-| R-02 | 예외를 LearningworksException으로 전환 | 공통화 · 버그 | 높음 | R-01 |
-| R-03 | 요청 VO 입력값 검증(@Valid) 적용 | 공통화 | 중간 | R-01 |
-| R-04 | ACTION_ID 타입을 String으로 통일 | 버그 | 높음 | 없음 |
-| R-05 | `updateAccess` SQL 문법 확인 | 버그 의심 | 높음 | 없음 |
-| R-06 | 프론트 응답 처리 전환 | 공통화 | 높음 | R-01, 공통 API 클라이언트 제공 |
-| R-07 | 역할 목록 API를 `GET /roles`로 통합 | 중복 제거 | 중간 | D-01 논의 불필요, 단독 진행 가능 |
-| R-08 | 사용하지 않는 import 정리 | 정리 | 낮음 | 없음 |
+> 최신화: 2026-11-06, `feature/role` 커밋 `644fe80` 기준 (`feature/access-role`의 `fafc7bc`, `a6961c3`과 `dev`의 `0e71877`까지 반영)
+
+| ID | 제목 | 분류 | 우선순위 | 선행 조건 | 진행 상태 |
+| --- | --- | --- | --- | --- | --- |
+| R-01 | 컨트롤러 공통 응답(ApiResponse) 전환 | 공통화 | 높음 | 없음 | 대기 |
+| R-02 | 예외를 LearningworksException으로 전환 | 공통화 · 버그 | 높음 | R-01 | 대기 |
+| R-03 | 요청 VO 입력값 검증(@Valid) 적용 | 공통화 | 중간 | R-01 | 대기 |
+| R-04 | ACTION_ID 타입을 String으로 통일 | 버그 | 높음 | 없음 | **완료** (`fafc7bc`) |
+| R-05 | `updateAccess` SQL 문법 확인 | 버그 의심 | 높음 | 없음 | **완료** (`0e71877`) |
+| R-06 | 프론트 응답 처리 전환 | 공통화 | 높음 | R-01, 공통 API 클라이언트 제공 | 대기 (클라이언트 제공 완료) |
+| R-07 | 역할 목록 API를 `GET /roles`로 통합 | 중복 제거 | 중간 | D-01 논의 불필요, 단독 진행 가능 | 대기 |
+| R-08 | 사용하지 않는 import 정리 | 정리 | 낮음 | 없음 | 대기 |
 
 ---
 
@@ -143,6 +145,15 @@ private List<@NotBlank String> actionIds;           // R-04 참고
 4. 컨트롤러의 `@RequestBody` 앞에 `@Valid`
 5. `@RequestParam String roleId` 앞에 `@NotBlank @Pattern(regexp = RoleConstants.ROLE_ID_PATTERN)`
 6. **컨트롤러 클래스에 `@Validated`를 붙이지 마세요.** (가이드 참고)
+7. (선택) `AccessController.selectAccessList`는 검색 조건 4개를 `@RequestParam`으로 받아 `AccessSearchRequestVO`에 직접 옮겨 담고 있습니다. 가이드의 검색 요청 규칙대로 `@ModelAttribute AccessSearchRequestVO`로 받으면 옮겨 담는 코드가 필요 없습니다.
+
+```java
+@GetMapping("/actions")
+public ApiResponse<List<AccessListVO>> selectAccessList(
+        @ModelAttribute AccessSearchRequestVO request) {
+    return ApiResponse.OK(accessService.selectAccessList(request));
+}
+```
 
 참고: `AccessVO`가 `vo.response` 패키지에 있지만 요청 본문으로도 쓰이고 있습니다. 요청용 VO를 `vo.request`로 분리할지는 담당자 판단에 맡깁니다.
 
@@ -168,10 +179,12 @@ private List<@NotBlank String> actionIds;           // R-04 참고
 - `frontend/src/components/admin/system/access-role/AccessRole.jsx` — 저장 시 `permissionIds` 전송 (287행 부근)
 
 ### 현재 상태
+**반영 완료** (커밋 `fafc7bc`). 아래는 요청 당시의 상태입니다.
+
 - ACCESS 모듈은 ACTION을 등록할 때 `ACTION_ID`를 `SUBSTR(RAWTOHEX(SYS_GUID()), 1, 20)`로 생성합니다 (`AccessDaoMapper.xml`의 `selectKey`). **영문자(A~F)가 섞인 문자열**이며, `AccessListVO.actionId`도 `String`입니다.
-- ACCESS_ROLE 모듈은 같은 값을 **`Long`**으로 다룹니다.
+- ACCESS_ROLE 모듈은 같은 값을 **`Long`**으로 다뤘습니다.
 - 예상 결과
-  - 기존 데이터의 ACTION_ID가 숫자뿐이면 현재는 동작합니다.
+  - 기존 데이터의 ACTION_ID가 숫자뿐이면 동작합니다.
   - **화면에서 새로 등록한 ACTION**은
     - 허용 · 미허용 목록 조회 시 `Long` 변환 실패 → 500
     - 권한 저장 시 JSON의 문자열 ID를 `Long`으로 변환 실패 → 400 `GLOBAL_INVALID_JSON`
@@ -188,10 +201,11 @@ private List<@NotBlank String> actionIds;           // R-04 참고
 - 새로 등록한 ACTION을 역할에 허용 · 해제 · 조회할 수 있음
 
 ### 처리 결과
-- 상태:
-- 판단 근거:
-- 변경 내용:
-- ROLE 담당자에게 요청:
+- 상태: 수락 (완료)
+- 판단 근거: ROLE 담당자가 `644fe80` 기준 코드로 확인. `AccessRolePermissionVO.actionId`가 `String`이고, `AccessRoleSaveRequestVO`, `AccessRoleDao`, `AccessRoleServiceImpl`, `AccessRoleDaoMapper.xml`이 `List<String> actionIds`를 사용함. 프론트 `AccessRole.jsx`도 `actionIds`로 전송함.
+- 변경 내용: `fafc7bc` 권한별 접근 관리 - 권한 부여/철회. 같은 커밋에서 `ROLE_ACTION`에 `ROLE_ACTION_ID`(SYS_GUID 기반 PK)를 추가하고, 등록을 `INSERT ALL`로 변경함.
+- ROLE 담당자에게 요청: 없음
+- 남은 확인: 위 `검증 방법`대로 새로 등록한 ACTION을 허용 · 해제할 수 있는지 화면에서 한 번 확인해 주세요.
 
 ---
 
@@ -201,6 +215,7 @@ private List<@NotBlank String> actionIds;           // R-04 참고
 - `backend/src/main/resources/com/learningworks/access/dao/mapper/AccessDaoMapper.xml` — `<update id="updateAccess">` (96행 부근)
 
 ### 현재 상태
+**반영 완료** (커밋 `0e71877`, `SET(...)` 괄호 제거). 아래는 요청 당시의 코드입니다.
 
 ```sql
 UPDATE ACTION
@@ -232,10 +247,10 @@ UPDATE ACTION
 정상 동작한다면 반려로 기록해 주세요.
 
 ### 처리 결과
-- 상태:
-- 판단 근거:
-- 변경 내용:
-- ROLE 담당자에게 요청:
+- 상태: 수락 (완료)
+- 판단 근거: ROLE 담당자가 `644fe80` 기준 코드로 확인. `AccessDaoMapper.xml`의 `updateAccess`가 `SET ACTION_NAME = ..., ...` 형식으로 수정됨.
+- 변경 내용: `0e71877` 접근 관리 조회/저장/수정
+- ROLE 담당자에게 요청: 없음
 
 ---
 
@@ -252,11 +267,12 @@ UPDATE ACTION
 - **공통 API 클라이언트 `frontend/src/api/common/apiClient.js`** — 작성 완료. 사용법: `frontend/docs/api-client-guide.md`, 사용 예: `frontend/src/api/admin/system/role/roleApi.js`. 현재 브랜치에 없다면 보류로 기록해 주세요.
 
 ### 현재 상태
-- 두 API 파일에 같은 `get` / `post` / `handleResponse`가 중복되어 있습니다.
-- `handleResponse`는 실패 시 `result.message`를 읽지만, 공통 응답에는 `message`가 없고 `error`가 있습니다. 그래서 서버가 보낸 에러 메시지가 표시되지 않고 항상 `요청 실패 (상태코드)`가 표시됩니다.
+- 두 API 파일에 `BASE_URL`, `get` / `post` / `handleResponse`가 각각 중복되어 있습니다. (응답을 text로 읽은 뒤 JSON으로 변환하는 처리가 추가됨)
+- `handleResponse`는 실패 시 `result.message`를 읽지만, 공통 응답에는 `message`가 없고 `error`가 있습니다. 그래서 R-01 이후에는 서버가 보낸 에러 메시지가 표시되지 않고 항상 `요청 실패 (상태코드)`가 표시됩니다.
 - 컴포넌트는 `response.responseCode === "SUCCESS"`, `response.data`를 확인합니다.
-  - `AccessRole.jsx`: 79, 103~104, 132, 292행 부근
-  - `Access.jsx`: 74~75, 87~88, 103, 128~129, 154~156, 369행 부근
+  - `AccessRole.jsx`: 40~41행(역할 목록), 61~65행(허용 · 미허용 목록), 239행(저장)
+  - `Access.jsx`: 65~66행(메뉴 목록), 78~81행(접근 권한 목록), 205 · 224행(추가), 259 · 278행(수정)
+- `Access.jsx`의 81 · 224 · 278행은 `responseCode`가 `"SUCCESS"`가 아닐 때 `response.message`를 표시하지만, 공통 클라이언트로 바꾸면 실패는 모두 `catch`로 들어오므로 이 분기는 삭제합니다.
 
 ### 공통 API 클라이언트 동작
 - `api.get` / `api.post` / `api.put` / `api.delete`: HTTP 2xx이면 응답의 `body`를 반환
