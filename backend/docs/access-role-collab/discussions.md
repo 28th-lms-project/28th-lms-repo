@@ -2,18 +2,18 @@
 
 처리 규칙은 `README.md`를 따릅니다.
 
-> 최신화: 2026-11-06, `feature/role` 커밋 `644fe80` 기준으로 재검토. 모든 항목이 아직 결정 전이며, 배경으로 적힌 코드 상태(`SYS_GUID` 기반 `ACTION_ID`, `MENU` 정렬 `ORDER BY ID DESC`, ACTION의 메뉴 컬럼 3개, 성공 메시지 포함 응답 등)도 변동 없습니다.
+> 최신화: 2026-11-06, `feature/role` 커밋 `cfa0da0` 기준. D-01(세부 사항 포함), D-02, D-03, D-06이 결정되었습니다. D-06의 배경(성공 메시지 포함 응답)은 R-01로 해소되었고, 나머지 배경 코드 상태(`SYS_GUID` 기반 `ACTION_ID`, `MENU` 정렬 `ORDER BY ID DESC`, ACTION의 메뉴 컬럼 3개)는 변동 없습니다.
 
 **D 항목은 설계 결정입니다.** Claude Code는 선택지와 추천안을 담당자에게 설명하고, **담당자가 결정하기 전에는 코드를 수정하지 마세요.** 결정이 나면 `결정 결과`란에 기록하고, 필요한 작업은 새 R 항목으로 정리하거나 담당자와 ROLE 담당자가 나눠서 진행합니다.
 
-| ID | 제목 | 우선순위 | 영향 범위 |
-| --- | --- | --- | --- |
-| D-01 | 새로 만든 역할의 접근 권한 판단 방식 | 매우 높음 | 전체 API 권한 체크, ACTION 테이블 |
-| D-02 | MENU_ROLE과 ROLE_ACTION의 역할 분담 | 매우 높음 | MENU / MENU_ROLE 구현 (ROLE 담당자) |
-| D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` |
-| D-04 | 권한 설정 API의 URL 규칙 | 낮음 (선택) | ACCESS_ROLE API, 프론트 |
-| D-05 | MENU 테이블 공동 사용 방식 | 중간 | ACCESS 모듈, MENU 구현 |
-| D-06 | 성공 메시지를 응답에 포함할지 | 낮음 | R-01, R-06 |
+| ID | 제목 | 우선순위 | 영향 범위 | 진행 상태 |
+| --- | --- | --- | --- | --- |
+| D-01 | 새로 만든 역할의 접근 권한 판단 방식 | 매우 높음 | 전체 API 권한 체크, ACTION 테이블 | **결정** (A안, 세부 사항 포함). ACCESS 작업은 R-09 |
+| D-02 | MENU_ROLE과 ROLE_ACTION의 역할 분담 | 매우 높음 | MENU / MENU_ROLE 구현 (ROLE 담당자) | **결정** (B안, MENU_ROLE 유지) |
+| D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` | **결정**. 구현 대기 |
+| D-04 | 권한 설정 API의 URL 규칙 | 낮음 (선택) | ACCESS_ROLE API, 프론트 | 결정 대기 |
+| D-05 | MENU 테이블 공동 사용 방식 | 중간 | ACCESS 모듈, MENU 구현 | 결정 대기 |
+| D-06 | 성공 메시지를 응답에 포함할지 | 낮음 | R-01, R-06 | **결정 · 반영 완료** |
 
 ---
 
@@ -50,11 +50,13 @@ public ApiResponse<RoleVO> deleteRole(...) { ... }
 
 **ACTION에 코드에서 가리킬 고정 식별자가 필요합니다.** 현재 `ACTION_ID`는 `SYS_GUID` 기반 무작위 값이라 코드에 적을 수 없습니다. → `ACTION_CODE VARCHAR2(n) NOT NULL UNIQUE` 컬럼 추가를 제안합니다 (예: `ROLE_DELETE`, `COURSE_CREATE`). ACTION 등록 화면에도 코드 입력란이 필요합니다.
 
+> 이 제안은 채택되지 않았습니다. `ACTION_CODE` 컬럼 대신 `ACTION_ID`를 고정 권한 코드로 쓰기로 결정했습니다 (아래 결정 결과 참고).
+
 ### 결정이 필요한 것
-- [ ] A / B 중 선택
-- [ ] (A 선택 시) `ACTION_CODE` 추가 여부와 이름 규칙
-- [ ] (A 선택 시) `accessChecker` 구현 담당 (추천: ACCESS 담당자 + JWT 담당자)
-- [ ] (A 선택 시) 요청자 역할을 JWT에서 읽을지 DB에서 읽을지 (DB 추천: 역할 변경이 즉시 반영됨)
+- [x] A / B 중 선택 → A
+- [x] (A 선택 시) `ACTION_CODE` 추가 여부와 이름 규칙 → `ACTION_CODE` 컬럼 없이 **`ACTION_ID`(PK)를 그대로 사용**
+- [x] (A 선택 시) `accessChecker` 구현 담당 → **ROLE 담당자**
+- [x] (A 선택 시) 요청자 역할을 JWT에서 읽을지 DB에서 읽을지 → **DB**
 
 ### 참고
 - 회원에게 역할을 지정하는 규칙(자기보다 아래 순위만 지정)은 `ROLE_RANK` 기반 `RoleAssignPolicy`로 별도 처리되며, 이 결정과 무관하게 유지됩니다.
@@ -63,6 +65,37 @@ public ApiResponse<RoleVO> deleteRole(...) { ... }
 - 결정: A. ROLE_ACTION 기반 검사 (`@accessChecker.can(actionCode)`)
 - 결정일 · 참석자: 2026-11-06, ACCESS · ACCESS_ROLE 담당자
 - 후속 작업: `ACTION_CODE` 컬럼 이름 규칙, `accessChecker` 구현 담당, 요청자 역할을 JWT / DB 중 어디서 읽을지는 아직 미정 (ROLE · JWT 담당자와 협의 필요)
+
+#### 세부 사항 결정 (2026-11-06, ROLE 담당자)
+
+| 항목 | 결정 | 이유 |
+| --- | --- | --- |
+| 코드에서 가리킬 식별자 | `ACTION_CODE` 컬럼을 추가하지 않고 **`ACTION_ID`(PK)를 그대로 사용**. 예: `@accessChecker.can('ASSIGNMENT_CREATE')` | 현재 `SYS_GUID` 기반 `ACTION_ID`는 임시 값이며, 의미 있는 고정 ID로 바꿀 예정 |
+| `accessChecker` 구현 | **ROLE 담당자** | JWT 담당자까지 협의에 참여하기 어려움 |
+| 요청자 역할 조회 | **DB** (`USER.BASE_ROLE`) | `RoleAssignPolicy`와 같은 기준. 역할 변경이 즉시 반영됨 |
+
+**`ACTION_ID`를 권한 코드로 쓰기 위한 조건** — 코드에 ID가 직접 적히므로 아래를 지켜야 합니다. ACCESS 모듈 작업은 `requests.md`의 **R-09**로 요청합니다.
+
+1. **의미 있는 고정 문자열**: 대문자 · 숫자 · 언더스코어, `{도메인}_{행위}` 형식 (예: `ASSIGNMENT_CREATE`, `ROLE_DELETE`). 정규식 `^[A-Z0-9]+(_[A-Z0-9]+)*$`
+2. **최대 20자** (`VARCHAR2(20 CHAR)`): `ASSIGNMENT_SUBMIT_UPDATE`(24자)처럼 넘칠 수 있으므로 이름을 짧게 짓거나, 필요하면 컬럼 길이 확장을 검토
+3. **등록 후 변경 불가**: ID를 바꾸면 코드의 `can('...')`과 연결이 끊겨 SUPER_ADMIN 외 모든 역할이 해당 기능을 쓸 수 없게 됨. 수정 API · 화면에서 ID 변경을 허용하지 않음
+4. **ACTION은 개발자가 정의**: API를 만들 때 개발자가 ACTION_ID를 정하고 코드에 적습니다. 관리자가 화면에서 새 ACTION을 등록해도 그 ID를 검사하는 코드가 없으면 효과가 없으므로, ACTION 관리 화면(`/access/save`)의 사용 범위를 다시 정해야 합니다 (R-09 참고)
+5. **기존 데이터 전환**: GUID로 저장된 ACTION과 그것을 참조하는 `ROLE_ACTION` 행은 새 ID 체계로 바꿀 때 함께 정리 (FK가 없으므로 수동으로 맞춰야 함)
+
+**`accessChecker` 구현 방향 (ROLE 담당자)**
+
+```text
+@accessChecker.can('ASSIGNMENT_CREATE')
+ 1. 로그인 사용자 ID 확인 (없으면 거부)
+ 2. DB에서 BASE_ROLE 조회
+ 3. ROLE_SUPER_ADMIN이면 허용
+ 4. ROLE_ACTION에 (역할, ACTION_ID)가 있으면 허용
+ 5. 역할별 허용 ACTION 목록은 캐시. 권한 저장(/access-role/save) 성공 시 해당 역할 캐시 초기화
+```
+
+- 5번의 캐시 초기화는 `AccessRoleServiceImpl.saveRolePermission`에서 호출해야 합니다. `accessChecker` 구현 후 ROLE 담당자가 호출할 메서드를 공유하고 별도 R 항목으로 요청합니다.
+- 실제 동작은 JWT 인증과 `@EnableMethodSecurity`가 적용된 뒤 확인할 수 있습니다. 그 전에는 구현과 단위 테스트까지 진행합니다.
+- `RoleController`의 TODO 주석(SUPER_ADMIN 전용 `@PreAuthorize`)도 `@accessChecker.can('...')` 방식으로 바꿀 예정입니다.
 
 ---
 
@@ -84,14 +117,30 @@ public ApiResponse<RoleVO> deleteRole(...) { ... }
 | B. MENU_ROLE 유지 | 메뉴 노출은 MENU_ROLE, 기능 허용은 ROLE_ACTION | 메뉴 노출을 기능과 별개로 제어 가능 | 관리자가 두 곳을 맞춰야 함. 일관성 규칙 추가 필요 (예: 노출이 꺼진 메뉴의 ACTION은 저장 시 거부) |
 
 ### 결정이 필요한 것
-- [ ] A / B 중 선택
-- [ ] (A 선택 시) MENU_ROLE 테이블 삭제 여부. 삭제하면 ROLE 모듈의 역할 삭제 로직에서 `deleteMenuRoleByRoleId` 제거 필요 (ROLE 담당자 작업)
-- [ ] (B 선택 시) 두 테이블 간 일관성 규칙
+- [x] A / B 중 선택 → **B**
+- [ ] ~~(A 선택 시) MENU_ROLE 테이블 삭제 여부~~ — 해당 없음
+- [x] (B 선택 시) 두 테이블 간 일관성 규칙 → 아래 결정 결과 참고
 
 ### 결정 결과
-- 결정:
-- 결정일 · 참석자:
-- 후속 작업:
+- 결정: **B. MENU_ROLE 유지.** 두 테이블은 역할이 다르므로 모두 사용합니다.
+
+  | 테이블 | 역할 | 예시 |
+  | --- | --- | --- |
+  | `MENU_ROLE` | 사이드바에 메뉴를 보여줄지 (화면 이동 제어) | '시스템 설정' 대메뉴는 SUPER_ADMIN · ADMIN에게만 표시 |
+  | `ROLE_ACTION` | 페이지 안에서 할 수 있는 행동 (기능 권한) | 과제 페이지는 TUTOR · STUDENT 모두 접근하지만, TUTOR는 과제 CRUD 전부, STUDENT는 조회만 |
+
+- 결정일 · 참석자: 2026-11-06, ROLE 담당자
+- 운영 원칙
+  1. **보안 검사는 `ROLE_ACTION`(`accessChecker`)으로만 합니다.** `MENU_ROLE`은 사이드바 · 화면 이동 제어용이며, 메뉴를 숨겨도 API는 직접 호출할 수 있으므로 API 보호 수단이 아닙니다.
+  2. 주소창에 URL을 직접 입력하는 경우를 막기 위해, 프론트 라우터에서도 `MENU_ROLE` 기준으로 화면 접근을 막습니다. (MENU 구현 시 ROLE 담당자)
+  3. 두 테이블이 어긋나는 경우의 동작
+     - 메뉴는 보이는데 조회 ACTION이 없음 → 화면은 열리지만 데이터 조회가 403. 설정 실수이지만 안전한 방향
+     - 메뉴는 숨겼는데 ACTION은 허용 → 화면으로는 못 들어가지만 API는 호출 가능. 관리자가 알고 있어야 함
+     - 저장 시 강제로 막지는 않습니다. 필요해지면 권한 설정 화면에 "이 역할에게 숨겨진 메뉴의 권한" 경고를 추가하는 방식으로 보완합니다.
+- 후속 작업
+  - MENU · MENU_ROLE 구현 (ROLE 담당자). 메뉴 계층 규칙(예: 하위 메뉴가 하나라도 허용되면 대메뉴 표시)은 구현 시 정합니다.
+  - 역할 삭제 시 `MENU_ROLE` 정리(`deleteMenuRoleByRoleId`)는 그대로 유지합니다.
+  - ACCESS · ACCESS_ROLE 쪽 추가 작업은 없습니다.
 
 ---
 
@@ -114,6 +163,10 @@ public ApiResponse<RoleVO> deleteRole(...) { ... }
 - 결정: `/access/save`, `/access-role/save` 모두 `ROLE_SUPER_ADMIN` 전용. `ROLE_SUPER_ADMIN`은 권한 설정 대상에서 제외
 - 결정일 · 참석자: 2026-11-06, ACCESS · ACCESS_ROLE 담당자
 - 후속 작업: 두 저장 API에 TODO 주석 추가 완료. JWT · 메서드 보안 적용 시 권한 제한, SUPER_ADMIN 제외(목록에서 숨김 또는 저장 거부) 구현 예정
+- ROLE 담당자 확인 (2026-11-06)
+  - 현재 권한 설정 화면은 `GET /roles` 결과를 그대로 쓰므로 **`ROLE_SUPER_ADMIN`이 역할 목록에 표시**됩니다.
+  - SUPER_ADMIN 제외는 JWT 없이도 구현할 수 있습니다. 프론트에서 목록에서 제외하고, `/access-role/save`에서 `roleId`가 `RoleConstants.SUPER_ADMIN_ROLE`이면 저장을 거부하세요. 화면을 거치지 않는 직접 요청도 막으려면 백엔드 거부가 필요합니다.
+  - 저장 거부용 ErrorCode는 새로 추가해 주세요. 기존 `ROLE_PROTECTED`는 문구가 "시스템 기본 역할은 삭제할 수 없습니다."라서 맞지 않습니다. 예: `ACTION_ROLE_PROTECTED(HttpStatus.CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다.")` (409 섹션, 상수 추가만)
 
 ---
 

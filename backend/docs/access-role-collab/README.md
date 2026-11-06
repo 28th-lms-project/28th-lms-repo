@@ -3,11 +3,17 @@
 - 작성: ROLE 모듈 담당자
 - 대상: ACCESS(`/access`) · ACCESS_ROLE(`/access-role`) 모듈 담당자, 그리고 담당자의 Claude Code
 - 작성 기준 코드: `feature/role` 브랜치 (ROLE 백엔드 PR → `dev`)
-- 최신화: 2026-11-06, `feature/role` 커밋 `644fe80` 기준 (`feature/access-role`의 `fafc7bc`, `a6961c3`과 `dev`의 `0e71877`까지 반영)
-  - R-04, R-05는 이미 반영되어 **완료**로 기록했습니다.
-  - R-06의 현재 상태(행 번호 등)를 최신 코드에 맞게 수정했습니다.
-  - R-03에 검색 조건을 `@ModelAttribute`로 받는 선택 항목을 추가했습니다.
-  - D 항목은 변동 없습니다.
+- 최신화 이력
+  - 2026-11-06 (1차): `feature/role` 커밋 `644fe80` 기준. R-04, R-05 완료 기록, R-06 현재 상태 수정, R-03에 `@ModelAttribute` 선택 항목 추가
+  - 2026-11-06 (2차): `feature/role` 커밋 `cfa0da0` 기준. ACCESS · ACCESS_ROLE 담당자가 **R-01 ~ R-08 전부 처리**(`0014d42`에 포함)하고 **D-01, D-03, D-06을 결정**한 내용을 반영. ROLE 담당자가 코드와 대조해 처리 결과가 실제 코드와 일치함을 확인
+  - 2026-11-06 (3차): ROLE 담당자가 **D-01 세부 사항**(`ACTION_ID`를 권한 코드로 사용, `accessChecker`는 ROLE 담당자 구현, 요청자 역할은 DB 조회)과 **D-02**(MENU_ROLE 유지)를 결정. **R-09 추가**, R-03에 `ACTION` 컬럼 길이 답변
+
+## 현재 진행 상황
+
+| 구분 | 완료 | 남음 |
+| --- | --- | --- |
+| 요청 (R) | R-01 ~ R-08 | R-03의 `ACTION_NAME` `@Size(max = 40)`, **R-09** (ACTION_ID 고정 권한 코드 전환) |
+| 협의 (D) | D-01(세부 사항 포함), D-02, D-03, D-06 결정 | D-03 구현, D-04 · D-05 결정 |
 
 이 디렉토리의 문서는 **"요청"과 "협의"** 두 종류입니다. 담당자(또는 담당자의 Claude Code)가 각 항목을 검토하고, 수락 · 반려 · 보류를 판단해 **각 항목의 `처리 결과`란에 기록**해 주세요.
 
@@ -98,12 +104,19 @@ ROLE API 목록:
 
 ---
 
-## 권장 처리 순서
+## 남은 작업 (권장 순서)
 
-1. `discussions.md`의 **D-01, D-02** 결정 (나머지 항목의 방향이 여기서 정해짐)
-2. ~~`requests.md`의 **R-04, R-05** (버그)~~ — 완료
-3. `requests.md`의 **R-01 ~ R-03** (공통 응답 · 예외 · 검증 전환)
-4. `requests.md`의 **R-06** (프론트 전환. 공통 API 클라이언트는 제공 완료: `frontend/src/api/common/apiClient.js`, 가이드 `frontend/docs/api-client-guide.md`)
-5. 나머지 R · D 항목
+### ACCESS · ACCESS_ROLE 담당자
 
-R-01과 R-06은 **함께 진행**해 주세요. 백엔드 응답 형식만 먼저 바꾸면 기존 프론트가 `responseCode`를 찾지 못해 화면이 동작하지 않습니다.
+1. **R-09 검토** (ACTION_ID를 고정 권한 코드로 전환) — D-01 세부 결정에 대한 동의 여부와, ACTION 관리 화면의 사용 범위를 판단해 주세요.
+2. **R-03 남은 작업**: `AccessVO.actionName`에 `@Size(max = 40)` 추가 (컬럼 길이 확인 완료)
+3. **D-03 구현**
+   - JWT 없이 지금 할 수 있는 것: `ROLE_SUPER_ADMIN`을 권한 설정 화면 역할 목록에서 숨기기(`GET /roles` 결과에서 프론트가 제외), `/access-role/save`에서 `roleId`가 `ROLE_SUPER_ADMIN`이면 저장 거부
+   - JWT · 메서드 보안 적용 후: 두 저장 API를 `ROLE_SUPER_ADMIN` 전용으로 제한 (TODO 주석 위치)
+4. **D-04** 결정 (선택)
+
+### ROLE 담당자
+
+1. MENU · MENU_ROLE 구현 (D-02 결정: MENU_ROLE 유지, 프론트 라우터에서도 MENU_ROLE 기준으로 화면 접근 제한). **D-05**는 이때 함께 결정
+2. `accessChecker` 구현 (D-01). 구현 후 권한 저장 시 캐시 초기화 호출을 ACCESS_ROLE 담당자에게 R 항목으로 요청
+3. JWT 적용 후 `RoleController`의 권한 TODO를 `@accessChecker.can('...')` 방식으로 전환

@@ -2,18 +2,19 @@
 
 처리 규칙은 `README.md`를 따릅니다. 각 항목의 `현재 상태`를 코드에서 직접 확인한 뒤 판단해 주세요.
 
-> 최신화: 2026-11-06, `feature/role` 커밋 `644fe80` 기준 (`feature/access-role`의 `fafc7bc`, `a6961c3`과 `dev`의 `0e71877`까지 반영)
+> 최신화: 2026-11-06, `feature/role` 커밋 `cfa0da0` 기준. ACCESS · ACCESS_ROLE 담당자의 처리 결과(R-01 ~ R-08)를 ROLE 담당자가 코드와 대조해 확인했습니다. D-01 세부 결정에 따라 **R-09를 추가**하고, R-03 남은 작업에 컬럼 길이를 답변했습니다. 남은 작업은 `README.md`의 "남은 작업"을 참고하세요.
 
 | ID | 제목 | 분류 | 우선순위 | 선행 조건 | 진행 상태 |
 | --- | --- | --- | --- | --- | --- |
-| R-01 | 컨트롤러 공통 응답(ApiResponse) 전환 | 공통화 | 높음 | 없음 | **완료** (커밋 전) |
-| R-02 | 예외를 LearningworksException으로 전환 | 공통화 · 버그 | 높음 | R-01 | **완료** (커밋 전) |
-| R-03 | 요청 VO 입력값 검증(@Valid) 적용 | 공통화 | 중간 | R-01 | **완료** (커밋 전) |
+| R-01 | 컨트롤러 공통 응답(ApiResponse) 전환 | 공통화 | 높음 | 없음 | **완료** (`0014d42`) |
+| R-02 | 예외를 LearningworksException으로 전환 | 공통화 · 버그 | 높음 | R-01 | **완료** (`0014d42`) |
+| R-03 | 요청 VO 입력값 검증(@Valid) 적용 | 공통화 | 중간 | R-01 | **완료** (`0014d42`) |
 | R-04 | ACTION_ID 타입을 String으로 통일 | 버그 | 높음 | 없음 | **완료** (`fafc7bc`) |
 | R-05 | `updateAccess` SQL 문법 확인 | 버그 의심 | 높음 | 없음 | **완료** (`0e71877`) |
-| R-06 | 프론트 응답 처리 전환 | 공통화 | 높음 | R-01, 공통 API 클라이언트 제공 | **완료** (커밋 전) |
-| R-07 | 역할 목록 API를 `GET /roles`로 통합 | 중복 제거 | 중간 | D-01 논의 불필요, 단독 진행 가능 | **완료** (커밋 전) |
-| R-08 | 사용하지 않는 import 정리 | 정리 | 낮음 | 없음 | **완료** (커밋 전) |
+| R-06 | 프론트 응답 처리 전환 | 공통화 | 높음 | R-01, 공통 API 클라이언트 제공 | **완료** (`0014d42`) |
+| R-07 | 역할 목록 API를 `GET /roles`로 통합 | 중복 제거 | 중간 | D-01 논의 불필요, 단독 진행 가능 | **완료** (`0014d42`) |
+| R-08 | 사용하지 않는 import 정리 | 정리 | 낮음 | 없음 | **완료** (`0014d42`) |
+| R-09 | ACTION_ID를 고정 권한 코드로 전환 | 설계 반영 (D-01) | 높음 | ACCESS 담당자 동의 | 대기 |
 
 ---
 
@@ -62,7 +63,7 @@ public ApiResponse<List<AccessRolePermissionVO>> saveRolePermission(
 ### 처리 결과
 - 상태: 수락 (완료)
 - 판단 근거: 2026-11-06 확인. 두 컨트롤러가 `ResponseEntity<Map>` + `{ responseCode, message, data }`로 응답하고, `AccessRoleController`에 전용 `@ExceptionHandler(IllegalArgumentException)`가 있었음. 문서 내용과 일치.
-- 변경 내용: `AccessController`, `AccessRoleController`를 `ApiResponse<T>`로 전환. `success()` · `response()` 헬퍼와 `@ExceptionHandler` 삭제. 저장 API는 저장 후 목록을 반환 (`/access-role/save` → 허용 권한 목록, `/access/save` → 전체 접근 권한 목록). 성공 메시지는 응답에서 제거 (D-06). 커밋 전.
+- 변경 내용: `AccessController`, `AccessRoleController`를 `ApiResponse<T>`로 전환. `success()` · `response()` 헬퍼와 `@ExceptionHandler` 삭제. 저장 API는 저장 후 목록을 반환 (`/access-role/save` → 허용 권한 목록, `/access/save` → 전체 접근 권한 목록). 성공 메시지는 응답에서 제거 (D-06). `0014d42`(`feature/access-role`의 머지 커밋)에 포함.
 - ROLE 담당자에게 요청: 없음
 
 ---
@@ -111,7 +112,7 @@ ACTION_FAILURE_SAVE(HttpStatus.INTERNAL_SERVER_ERROR, "접근 권한 저장을 �
 ### 처리 결과
 - 상태: 수락 (완료)
 - 판단 근거: 2026-11-06 확인. 두 서비스가 `IllegalArgumentException` / `IllegalStateException`을 던지고 있었음. 문서 내용과 일치.
-- 변경 내용: `ErrorCode`에 `ACTION_NOT_EXISTS`(404, "존재하지 않는 접근 권한입니다."), `ACTION_FAILURE_SAVE`(500) 추가 (상수 추가만). 없는 ACTION 포함 · update 0건 → `ACTION_NOT_EXISTS`, insert 실패 → `ACTION_FAILURE_SAVE`, 없는 역할 → `ROLE_NOT_EXISTS`, 수정 대상 actionId 없음 → `GLOBAL_BAD_REQUEST`. null · 필수값 검사는 R-03 검증으로 옮기고 서비스에서 삭제. `ACTION_NOT_EXISTS`는 update 0건에도 쓰므로 문구를 "포함되어 있습니다" 대신 일반 문구로 조정. 커밋 전.
+- 변경 내용: `ErrorCode`에 `ACTION_NOT_EXISTS`(404, "존재하지 않는 접근 권한입니다."), `ACTION_FAILURE_SAVE`(500) 추가 (상수 추가만). 없는 ACTION 포함 · update 0건 → `ACTION_NOT_EXISTS`, insert 실패 → `ACTION_FAILURE_SAVE`, 없는 역할 → `ROLE_NOT_EXISTS`, 수정 대상 actionId 없음 → `GLOBAL_BAD_REQUEST`. null · 필수값 검사는 R-03 검증으로 옮기고 서비스에서 삭제. `ACTION_NOT_EXISTS`는 update 0건에도 쓰므로 문구를 "포함되어 있습니다" 대신 일반 문구로 조정. `0014d42`(`feature/access-role`의 머지 커밋)에 포함.
 - ROLE 담당자에게 요청: 없음
 
 ---
@@ -162,11 +163,12 @@ public ApiResponse<List<AccessListVO>> selectAccessList(
 - 서비스의 null · 빈 값 검사 코드 제거 (R-02와 함께)
 
 ### 처리 결과
-- 상태: 수락 (완료, `@Size` 제외)
+- 상태: 수락 (완료, `@Size` 제외 → 아래 남은 작업)
 - 판단 근거: 2026-11-06 확인. 요청 VO에 검증 어노테이션이 없었음. 문서 내용과 일치.
-- 변경 내용: `AccessRoleSaveRequestVO`(`@NotBlank` + `@Pattern(ROLE_ID_PATTERN_ALLOW_EMPTY)`, `@NotNull List<@NotBlank String> actionIds`), `AccessSaveRequestVO`(`List<@Valid AccessVO>`), `AccessVO`(메뉴 3개 · 권한명 `@NotBlank`), 두 컨트롤러 `@RequestBody`에 `@Valid`. `@RequestParam roleId`는 `RoleController`와 같이 `@Pattern(ROLE_ID_PATTERN)`만 적용 (빈 값도 패턴에서 걸리므로 `@NotBlank`를 함께 쓰면 메시지가 2개 나옴). 선택 항목 7번(`@ModelAttribute AccessSearchRequestVO`)도 적용. 클래스 `@Validated` 미사용. 커밋 전.
+- 변경 내용: `AccessRoleSaveRequestVO`(`@NotBlank` + `@Pattern(ROLE_ID_PATTERN_ALLOW_EMPTY)`, `@NotNull List<@NotBlank String> actionIds`), `AccessSaveRequestVO`(`List<@Valid AccessVO>`), `AccessVO`(메뉴 3개 · 권한명 `@NotBlank`), 두 컨트롤러 `@RequestBody`에 `@Valid`. `@RequestParam roleId`는 `RoleController`와 같이 `@Pattern(ROLE_ID_PATTERN)`만 적용 (빈 값도 패턴에서 걸리므로 `@NotBlank`를 함께 쓰면 메시지가 2개 나옴). 선택 항목 7번(`@ModelAttribute AccessSearchRequestVO`)도 적용. 클래스 `@Validated` 미사용. `0014d42`(`feature/access-role`의 머지 커밋)에 포함.
 - 남은 작업: `ACTION.ACTION_NAME` 컬럼 길이를 확인하지 못해 `@Size(max = n)`는 TODO 주석으로 남김 (저장소에 DDL 없음).
 - ROLE 담당자에게 요청: 없음
+- ROLE 담당자 답변 (2026-11-06): 컬럼 길이는 `ACTION_ID` `VARCHAR2(20 CHAR)`, `ACTION_NAME` `VARCHAR2(40 CHAR)`입니다. `AccessVO.actionName`에 `@Size(max = 40, message = "접근 권한명은 40자 이하로 입력해주세요.")`를 추가하고 TODO 주석을 삭제해 주세요. `actionId` 검증은 R-09에서 함께 처리합니다.
 
 ---
 
@@ -298,7 +300,7 @@ UPDATE ACTION
 ### 처리 결과
 - 상태: 수락 (완료)
 - 판단 근거: 2026-11-06 확인. `apiClient.js` 제공 확인. 문서 내용과 일치하나, `Access.jsx`는 작업 중 변경으로 행 번호가 달랐음 (실제 35 · 48 · 175 · 229행).
-- 변경 내용: `accessApi.js`, `accessRoleApi.js`를 `api.get` / `api.post`로 교체 (중복 `BASE_URL` · `get` · `post` · `handleResponse` 삭제). 두 컴포넌트의 `responseCode` 분기 · `response.data` 제거. 에러는 `validations`가 있으면 필드별 메시지를, 없으면 서버 `error` 메시지를 alert로 표시. 성공 문구는 프론트에서 표시. 커밋 전.
+- 변경 내용: `accessApi.js`, `accessRoleApi.js`를 `api.get` / `api.post`로 교체 (중복 `BASE_URL` · `get` · `post` · `handleResponse` 삭제). 두 컴포넌트의 `responseCode` 분기 · `response.data` 제거. 에러는 `validations`가 있으면 필드별 메시지를, 없으면 서버 `error` 메시지를 alert로 표시. 성공 문구는 프론트에서 표시. `0014d42`(`feature/access-role`의 머지 커밋)에 포함.
 - ROLE 담당자에게 요청: 없음
 
 ---
@@ -329,7 +331,7 @@ UPDATE ACTION
 ### 처리 결과
 - 상태: 수락 (완료)
 - 판단 근거: 2026-11-06 확인. `/access-role/roles`가 `ORDER BY ROLE_ID`로 `/roles`와 같은 데이터를 조회하고 있었음.
-- 변경 내용: `AccessRole.jsx`가 `roleApi.getRoles()`의 `body.roleList`를 사용. 백엔드 `GET /access-role/roles`, `getRoleList`, `selectRoleList`(DAO · 매퍼), `AccessRoleVO` 삭제. `selectRoleCount`는 유지. 커밋 전.
+- 변경 내용: `AccessRole.jsx`가 `roleApi.getRoles()`의 `body.roleList`를 사용. 백엔드 `GET /access-role/roles`, `getRoleList`, `selectRoleList`(DAO · 매퍼), `AccessRoleVO` 삭제. `selectRoleCount`는 유지. `0014d42`(`feature/access-role`의 머지 커밋)에 포함.
 - ROLE 담당자에게 요청: 없음
 
 ---
@@ -346,5 +348,58 @@ UPDATE ACTION
 ### 처리 결과
 - 상태: 수락 (완료)
 - 판단 근거: 2026-11-06 확인. `AccessRoleServiceImpl` 4 · 5행 중복 import, `AccessRoleDao`의 미사용 `AccessRoleSaveRequestVO` import 확인.
-- 변경 내용: 두 import 삭제 (R-07로 미사용이 된 `AccessRoleVO` import도 삭제). 커밋 전.
+- 변경 내용: 두 import 삭제 (R-07로 미사용이 된 `AccessRoleVO` import도 삭제). `0014d42`(`feature/access-role`의 머지 커밋)에 포함.
 - ROLE 담당자에게 요청: 없음
+
+---
+
+## R-09. ACTION_ID를 고정 권한 코드로 전환 (D-01 반영)
+
+### 배경
+`discussions.md` D-01에서 API 권한 검사를 `@accessChecker.can('ACTION_ID')` 방식으로 하기로 했고, 별도 `ACTION_CODE` 컬럼 없이 **`ACTION_ID`(PK)를 그대로 권한 코드로 쓰기로** 결정했습니다 (ROLE 담당자 결정, ACCESS 담당자 동의 필요). 코드에 ID가 직접 적히므로 ACTION_ID는 사람이 정하는 고정값이어야 합니다.
+
+### 대상 파일
+- `backend/src/main/resources/com/learningworks/access/dao/mapper/AccessDaoMapper.xml` — `insertAccess`의 `selectKey`(SYS_GUID)
+- `backend/src/main/java/com/learningworks/access/vo/response/AccessVO.java`
+- `backend/src/main/java/com/learningworks/access/service/AccessServiceImpl.java`
+- `backend/src/main/java/com/learningworks/common/exceptions/enums/ErrorCode.java` (상수 추가만)
+- `frontend/src/components/admin/system/access/Access.jsx` — 등록 · 수정 화면
+
+### 현재 상태
+- `insertAccess`가 `ACTION_ID`를 `SUBSTR(RAWTOHEX(SYS_GUID()), 1, 20)`로 자동 생성합니다 (임시 값).
+- `AccessVO.actionId`에 검증이 없습니다.
+
+### 요청 내용
+1. **등록 시 ACTION_ID를 직접 입력받기**
+   - `selectKey` 삭제, `#{actionId}`를 입력값으로 저장
+   - 이름 규칙: 대문자 · 숫자 · 언더스코어, `{도메인}_{행위}` 형식 (예: `ASSIGNMENT_CREATE`, `ROLE_DELETE`), **최대 20자**
+2. **`AccessVO.actionId` 검증**
+   - 등록 · 수정 모두 필수입니다. `@NotBlank`, `@Size(max = 20)`, `@Pattern(regexp = "^$|^[A-Z0-9]+(_[A-Z0-9]+)*$")`
+   - `@NotBlank`로 대체되므로 `AccessServiceImpl.saveAccess`의 "수정 대상 actionId 없음 → `GLOBAL_BAD_REQUEST`" 검사는 삭제할 수 있습니다.
+   - 정규식은 상수로 두기를 권장합니다 (예: `access` 패키지의 `AccessConstants.ACTION_ID_PATTERN`). `accessChecker`(ROLE 담당자 구현)에서도 같은 규칙을 참고합니다.
+3. **중복 처리**: `DuplicateKeyException`을 잡아 새 ErrorCode로 던지기
+   ```java
+   // 409 CONFLICT 섹션
+   ACTION_ID_USED(HttpStatus.CONFLICT, "이미 사용 중인 접근 권한 ID입니다."), //
+   ```
+4. **등록 후 ID 변경 불가**
+   - 수정(`modifiedList`)은 `ACTION_ID`로 대상을 찾기만 하고, ID 자체는 바꾸지 않습니다 (현재 `updateAccess`도 ID를 바꾸지 않으므로 유지).
+   - 프론트 수정 화면에서 ID 입력칸은 읽기 전용으로 표시합니다.
+5. **기존 GUID 데이터 정리**: 새 ID 체계로 바꿀 때 `ACTION`과 이를 참조하는 `ROLE_ACTION.ACTION_ID`를 함께 바꾸거나 다시 등록해 주세요 (FK가 없으므로 수동으로 맞춰야 함).
+
+### 협의 필요 (ACCESS 담당자 판단)
+- **ACTION 관리 화면의 사용 범위**: 코드 기반 검사에서는 개발자가 API를 만들 때 ACTION_ID를 정하고 코드에 적습니다. 관리자가 화면에서 새 ACTION을 등록해도, 그 ID를 검사하는 코드가 없으면 효과가 없습니다.
+  - 추천: ACTION 목록은 **개발자가 SQL로 넣는 기준 데이터**로 관리하고, 화면에서는 이름 · 메뉴 연결 수정과 조회만 제공
+  - 또는: 등록 기능은 유지하되 SUPER_ADMIN 전용(D-03)으로 두고, "코드에 반영된 ID만 등록"하도록 안내
+- **컬럼 길이**: 20자로 부족하면 `ACTION_ID`(와 `ROLE_ACTION.ACTION_ID`) 길이 확장 검토
+
+### 완료 조건
+- 새 ACTION을 지정한 ID로 등록할 수 있고, 형식이 틀리거나 중복이면 400 / 409로 응답
+- 수정 시 ACTION_ID가 바뀌지 않음
+- 기존 GUID ACTION이 새 ID 체계로 정리됨
+
+### 처리 결과
+- 상태:
+- 판단 근거:
+- 변경 내용:
+- ROLE 담당자에게 요청:
