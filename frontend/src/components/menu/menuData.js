@@ -3,7 +3,10 @@ export const MENU = [
     section: "Main",
     groups: [
       { title: "Home", items: [{ to: "/", label: "Dashboard", end: true }] },
-      { title: "Sample", items: [{ to: "/sample", label: "Sample", end: true }] },
+      {
+        title: "Sample",
+        items: [{ to: "/sample", label: "Sample", end: true }],
+      },
     ],
   },
   {
@@ -25,7 +28,7 @@ export const MENU = [
       {
         title: "과정 관리",
         items: [
-          { to: "/admin/course", label: "과정 목록", end: true },
+          { to: "/admin/course/list", label: "과정 목록" },
           { to: "/admin/course/add", label: "과정 등록" },
         ],
       },

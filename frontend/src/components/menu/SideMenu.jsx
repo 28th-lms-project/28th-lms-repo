@@ -3,12 +3,14 @@ import { NavLink, useLocation } from "react-router-dom";
 import styles from "./SideMenu.module.css";
 import { useState } from "react";
 import { MENU } from "./menuData";
+import UserProfile from "./UserProfile";
 
 // 메뉴 항목이 현재 주소와 일치하는지 확인
 function isActiveItem(item, pathname) {
   if (item.to === "/") {
     return pathname === "/";
   }
+
   return pathname.startsWith(item.to);
 }
 
@@ -55,6 +57,7 @@ export default function SideMenu() {
       </button>
 
       <div className={styles.menuBody}>
+        <UserProfile />
         {MENU.map((section) => (
           <div key={section.section}>
             <h4 className={styles.listTitle}>{section.section}</h4>

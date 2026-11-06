@@ -25,10 +25,9 @@ export default function Test() {
 
   const [selectedSubjectId, setSelectedSubjectId] = useState(firstSubjectId);
 
-  const { questionCount, questions, subjectId } = useSelector(
-    (state) => state.test,
-  );
-  console.log(questions.length, questions);
+  const [showAnswer, setShowAnswer] = useState(false);
+
+  const { questions } = useSelector((state) => state.test);
 
   const dispatch = useDispatch();
 
@@ -113,30 +112,73 @@ export default function Test() {
                   <span>{question.correctRate}</span>
                 </div>
 
-                <div className={style.answerList}>
-                  <ul>
-                    {question.answers.map((answer) => (
-                      <li
-                        key={answer.no}
-                        className={
-                          question.correctAnswer === answer.no
-                            ? style.active
-                            : ""
-                        }
-                      >
-                        <input
-                          type="radio"
-                          checked={question.correctAnswer === answer.no}
-                          onChange={() => {}}
-                        />
-                        <label>
-                          {" "}
-                          {answer.no}. {answer.text}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {question.answerType === "O/X" ? (
+                  <div className={style.answerList}>
+                    <ul>
+                      {["O", "X"].map((option) => (
+                        <li
+                          key={option}
+                          className={
+                            question.correctAnswer === option
+                              ? style.active
+                              : ""
+                          }
+                        >
+                          <label>
+                            <input
+                              type="radio"
+                              checked={question.correctAnswer === option}
+                              readOnly
+                            />
+                            {option}
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  !["주관식", "코드작성"].includes(question.answerType) && (
+                    <div className={style.answerList}>
+                      <div onClick={() => setShowAnswer(!showAnswer)}>
+                        내용보기
+                      </div>
+                      {showAnswer && (
+                        <ul>
+                          {question.answers.map((answer) => (
+                            <li
+                              key={answer.no}
+                              className={
+                                String(question.correctAnswer ?? "")
+                                  .split(",")
+                                  .map((number) => number.trim())
+                                  .includes(answer.no)
+                                  ? style.active
+                                  : ""
+                              }
+                            >
+                              <input
+                                type={
+                                  question.answerType === "객관식-다항"
+                                    ? "checkbox"
+                                    : "radio"
+                                }
+                                checked={String(question.correctAnswer ?? "")
+                                  .split(",")
+                                  .map((number) => number.trim())
+                                  .includes(answer.no)}
+                                onChange={() => {}}
+                              />
+                              <label>
+                                {" "}
+                                {answer.no}. {answer.text}
+                              </label>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )
+                )}
               </div>
             ))}
           </div>

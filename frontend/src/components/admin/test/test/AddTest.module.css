@@ -4,6 +4,12 @@
   gap: 10px;
   width: 80%;
 }
+
+.fieldError {
+  margin: 4px 0 0;
+  color: #b42318;
+  font-size: 0.875rem;
+}
 .testQuestion {
   width: 80%;
 }

@@ -9,7 +9,6 @@ export const testSliceStore = createSlice({
   },
   reducers: {
     setTestList(state, action) {
-      console.log(action.payload);
       state.questionCount = action.payload.questionCount;
 
       state.questions = action.payload.examList.map((q) => ({

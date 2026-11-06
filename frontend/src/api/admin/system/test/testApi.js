@@ -1,76 +1,22 @@
-const host = "http://localhost:8080";
+/** 시험 문제 API. 성공 시 공통 응답의 body를 반환합니다. */
+import { api } from "../../../common/apiClient";
 
-export const searchTest = async (subjectId) => {
-  try {
-    const response = await fetch(`${host}/admin/system/tests/${subjectId}`);
-    if (!response.ok) {
-      throw Error("잘못된 요청입니다.");
-    }
+/** 문제 목록 반환: { questionCount, examList } */
+export const searchTest = (subjectId) =>
+  api.get(`/admin/system/tests/${encodeURIComponent(subjectId)}`);
 
-    const responseJson = await response.json();
-    return responseJson;
-  } catch (e) {
-    throw Error("잘못된 요청입니다.", e);
-  }
-};
+/** 문제 단건 반환. errorCode: EXAM_NOT_EXISTS */
+export const searchTestQuestion = (questionId) =>
+  api.get(`/admin/system/test/${encodeURIComponent(questionId)}`);
 
-export const searchTestQuestion = async (questionId) => {
-  try {
-    const response = await fetch(`${host}/admin/system/test/${questionId}`);
+/** 등록된 문제 반환. errorCode: GLOBAL_INVALID_PARAMETER(validations), EXAM_FAILURE_CREATE */
+export const createNewQuestion = (registTestQ) =>
+  api.post("/admin/system/test", registTestQ);
 
-    if (!response.ok) {
-      throw Error("잘못된 요청입니다.");
-    }
-    const responseJson = await response.json();
-    return responseJson;
-  } catch (e) {
-    throw Error("잘못된 요청입니다.", e);
-  }
-};
+/** 수정된 문제 반환. errorCode: GLOBAL_INVALID_PARAMETER(validations), EXAM_NOT_EXISTS, EXAM_FAILURE_UPDATE */
+export const updateTestQuestion = (questionId, body) =>
+  api.put(`/admin/system/test/${encodeURIComponent(questionId)}`, body);
 
-export const createNewQuestion = async (registTestQ) => {
-  try {
-    const response = await fetch(`${host}/admin/system/test`, {
-      method: "post",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(registTestQ),
-    });
-    if (!response.ok) {
-      throw Error("잘못된 요청입니다.");
-    }
-    return await response.json();
-  } catch (e) {
-    throw Error("잘못된 요청입니다.", e);
-  }
-};
-
-export const updateTestQuestion = async (questionId, body) => {
-  try {
-    const response = await fetch(`${host}/admin/system/test/${questionId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-      throw Error("잘못된 요청입니다.");
-    }
-    // 서버가 수정된 문제(ExamQuestionVO)를 JSON으로 돌려줌
-    return await response.json();
-  } catch (e) {
-    throw Error("잘못된 요청입니다.", e);
-  }
-};
-
-export const deleteTestQuestion = async (questionId) => {
-  try {
-    const response = await fetch(`${host}/admin/system/test/${questionId}`, {
-      method: "delete",
-    });
-    if (!response.ok) {
-      throw Error("잘못된 요청입니다.");
-    }
-    return await response.text();
-  } catch (e) {
-    throw Error("잘못된 요청입니다.", e);
-  }
-};
+/** 삭제된 문제 ID 반환. errorCode: EXAM_NOT_EXISTS */
+export const deleteTestQuestion = (questionId) =>
+  api.delete(`/admin/system/test/${encodeURIComponent(questionId)}`);

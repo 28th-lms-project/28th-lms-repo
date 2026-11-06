@@ -8,7 +8,8 @@ spring:
   # DB 설정
   datasource:
     driver-class-name: oracle.jdbc.OracleDriver
-    url: jdbc:oracle:thin:@192.168.211.20:1521:XE
+    url: jdbc:oracle:thin:@localhost:1521:XE
+    # url: jdbc:oracle:thin:@192.168.211.20:1521:XE
     username: LEARNING_WORKS
     password: LEARNING_WORKS_1234
 

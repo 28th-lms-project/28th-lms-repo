@@ -5,15 +5,13 @@ import java.util.List;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.exam.service.ExamService;
 import com.learningworks.exam.vo.request.ModifyExamQuestionVO;
 import com.learningworks.exam.vo.request.RegistExamQuestionVO;
@@ -30,43 +28,38 @@ public class ExamController {
 	private ExamService examService;
 
 	@PostMapping("admin/system/test")
-	@ResponseBody
-	public ExamQuestionVO makeNewQuestion(
+	public ApiResponse<ExamQuestionVO> makeNewQuestion(
 			@Valid @RequestBody RegistExamQuestionVO registExamQuestionVO) {
 		ExamQuestionVO examQuestion = this.examService.createNewExam(registExamQuestionVO);
-		return examQuestion;
+		return ApiResponse.CREATED(examQuestion);
 	}
 
 	@GetMapping("admin/system/testSet")
-	@ResponseBody
-	public List<ExamSetVO> getAllExamInExamSet() {
-		return this.examService.readAllExamInExamSet();
+	public ApiResponse<List<ExamSetVO>> getAllExamInExamSet() {
+		return ApiResponse.OK(this.examService.readAllExamInExamSet());
 	}
 	
 	@GetMapping("admin/system/tests/{subjectId}")
-	@ResponseBody
-	public ExamQuestionListVO getAllExamQuestion(@PathVariable String subjectId){
-		return this.examService.readAllExamQuestion(subjectId);
+	public ApiResponse<ExamQuestionListVO> getAllExamQuestion(@PathVariable String subjectId){
+		return ApiResponse.OK(this.examService.readAllExamQuestion(subjectId));
 	}
 	
 	@GetMapping("admin/system/test/{examId}")
-	public ExamQuestionVO getOneQuestionById(@PathVariable String examId) {
-		return this.examService.readOneQuestionsById(examId);
+	public ApiResponse<ExamQuestionVO> getOneQuestionById(@PathVariable String examId) {
+		return ApiResponse.OK(this.examService.readOneQuestionsById(examId));
 	}
 	
 	@DeleteMapping("admin/system/test/{examId}")
-	@ResponseBody
-	public String deleteExamQuestion(@PathVariable String examId) {
+	public ApiResponse<String> deleteExamQuestion(@PathVariable String examId) {
 		String deleteResult = this.examService.deleteExamQuestion(examId);
-		return deleteResult;
+		return ApiResponse.OK(deleteResult);
 	}
 
 
 	@PutMapping("admin/system/test/{examId}")
-	@ResponseBody
-	public ExamQuestionVO updateExamQuestion(@PathVariable String examId, @Valid @RequestBody ModifyExamQuestionVO modifyExamQuestionVO) {
+	public ApiResponse<ExamQuestionVO> updateExamQuestion(@PathVariable String examId, @Valid @RequestBody ModifyExamQuestionVO modifyExamQuestionVO) {
 		ExamQuestionVO examQuestionVO = this.examService.updateExamQuestion(examId, modifyExamQuestionVO);
-		return examQuestionVO;
+		return ApiResponse.OK(examQuestionVO);
 	}
 
 }

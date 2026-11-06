@@ -1,7 +1,6 @@
 package com.learningworks.security.auth;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
@@ -23,11 +22,11 @@ public class LoginUser implements UserDetails {
   private final boolean deleted;
   private final List<GrantedAuthority> authorities;
 
-  public LoginUser(MemberVO member) {
-    this(member, LocalDateTime.now());
+  public LoginUser(MemberVO member, String salt) {
+    this(member, salt, LocalDateTime.now());
   }
 
-  public LoginUser(MemberVO member, LocalDateTime now) {
+  public LoginUser(MemberVO member, String salt, LocalDateTime now) {
     if (member == null) {
       throw new IllegalArgumentException("회원 정보가 null 입니다.");
     }
@@ -37,19 +36,19 @@ public class LoginUser implements UserDetails {
 
     this.id = member.getId();
     this.password = member.getPassword();
-    this.salt = member.getSalt();
+    this.salt = salt;
     this.name = member.getName();
     this.locked = LoginUser.isLocked(member, now);
     this.deleted = "Y".equals(member.getDelYn());
+    this.authorities = LoginUser.toAuthorities(member.getBaseRole());
 
-    List<GrantedAuthority> list = new ArrayList<>();
-    if (member.getRoles() != null) {
-      for (String role : member.getRoles()) {
-        list.add(new SimpleGrantedAuthority(role));
-      }
+  }
+
+  private static List<GrantedAuthority> toAuthorities(String baseRole) {
+    if (baseRole == null || baseRole.isBlank()) {
+      return List.of();
     }
-    this.authorities = List.copyOf(list);
-
+    return List.of(new SimpleGrantedAuthority(baseRole));
   }
 
   private static boolean isLocked(MemberVO member, LocalDateTime now) {

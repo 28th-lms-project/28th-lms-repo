@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.member.dao.MemberDao">
+
+	<select id="selectLoginMember" parameterType="string" resultType="com.learningworks.member.vo.response.MemberVO">
+		SELECT ID
+			 , PWD AS PASSWORD
+             , NAME
+             , BASE_ROLE
+             , DEL_YN
+             , PWD_FAIL_CNT AS LOGIN_FAIL_COUNT
+             , LOGIN_BLOCK_DATE
+          FROM "USER"
+         WHERE ID = #{id}
+	</select>
+	
+	<select id="selectSalt" parameterType="string" resultType="string">
+		SELECT SALT
+          FROM SALT
+         WHERE ID = #{id}
+	</select>
+	
+	<update id="updateLoginSuccess" parameterType="string">
+        UPDATE "USER"
+           SET PWD_FAIL_CNT = 0
+             , LOGIN_BLOCK_DATE = NULL
+         WHERE ID = #{id}
+    </update>
+    
+    <select id="selectLoginFailStateForUpdate" parameterType="string"
+            resultType="com.learningworks.member.vo.response.MemberVO">
+        SELECT ID
+             , PWD_FAIL_CNT AS LOGIN_FAIL_COUNT
+             , LOGIN_BLOCK_DATE
+          FROM "USER"
+         WHERE ID = #{id}
+           FOR UPDATE
+    </select>
+    
+    <update id="updateLoginFail">
+        UPDATE "USER"
+           SET PWD_FAIL_CNT = #{failCount}
+             , LOGIN_BLOCK_DATE = #{blockDate}
+         WHERE ID = #{id}
+    </update>
+</mapper>

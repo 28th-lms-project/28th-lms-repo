@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { IconButton } from "../../../sample/input/IconButton";
 import { icons } from "../../../sample/input/icons";
 import {
@@ -22,13 +22,12 @@ const answerTypes = [
 
 export default function UpdateTest({ questionId }) {
   const [modifying, setModifying] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const dispatch = useDispatch();
   const {
     id,
-    answerType,
     answers,
-    answerCount,
     correctAnswer,
     pointAlloc,
     question,
@@ -36,13 +35,27 @@ export default function UpdateTest({ questionId }) {
   } = useSelector((state) => state.modTest);
 
   const [answerCnt, setAnswerCnt] = useState(0);
+  const [selectedAnswerType, setSelectedAnswerType] = useState("");
+  const [oxAnswer, setOxAnswer] = useState("");
+  const [multiAnswers, setMultiAnswers] = useState([]);
+  const answerTypeGroup = useId();
+  const isManualGraded = ["주관식", "코드작성"].includes(selectedAnswerType);
+  const isOx = selectedAnswerType === "O/X";
+  const isMulti = selectedAnswerType === "객관식-다항";
+  const usesChoices = !isManualGraded && !isOx;
   const questionRef = useRef();
 
   const pointRef = useRef();
   const subQuestRef = useRef();
   const correctRef = useRef(); // 정답 번호
-  const answerTypeRef = useRef(); // 라디오들을 감싸는 div
   const answerRefs = useRef([]); // 보기 입력창 5개
+
+  const renderFieldErrors = (field) =>
+    fieldErrors[field]?.map((message, index) => (
+      <p key={`${field}-${index}`} className={style.fieldError} role="alert">
+        {message}
+      </p>
+    ));
 
   useEffect(() => {
     if (!modifying) {
@@ -58,6 +71,11 @@ export default function UpdateTest({ questionId }) {
         if (!ignoreUpdateState) {
           dispatch(questActions.setViewQuestion(response));
           setAnswerCnt(Number(response.answerCount));
+          setSelectedAnswerType(response.answerType);
+          setOxAnswer(["O", "X"].includes(response.correctAnswer) ? response.correctAnswer : "");
+          setMultiAnswers(response.answerType === "객관식-다항"
+            ? String(response.correctAnswer ?? "").split(",").map((answer) => answer.trim()).filter(Boolean)
+            : []);
         }
       } catch (e) {
         if (!ignoreUpdateState) {
@@ -85,32 +103,35 @@ export default function UpdateTest({ questionId }) {
   };
 
   const onClickCancelHandler = () => {
+    setFieldErrors({});
     setModifying(false);
     dispatch(questActions.clearViewQuestion());
   };
 
   const onClickUpdateHandler = () => {
-    // 라디오 중 선택된 것 찾기
-    const checkedType = answerTypeRef.current.querySelector("input:checked");
-    let selectedType = "";
-    if (checkedType) {
-      selectedType = checkedType.value;
+    setFieldErrors({});
+    if (isMulti && multiAnswers.length < 2) {
+      setFieldErrors({ correctAnswer: ["정답을 2개 이상 선택해주세요."] });
+      return;
     }
-
-    const count = answerCount;
+    const count = usesChoices ? Number(answerCnt) : null;
+    const getAnswer = (index) =>
+      !usesChoices ? null : index < count ? answerRefs.current[index]?.value ?? "" : "";
 
     // 백엔드 ModifyExamQuestionVO 필드 이름과 똑같이 맞춤
     const modQuestion = {
       question: questionRef.current.value,
       subQuestion: subQuestRef.current.value,
-      answerType: selectedType,
-      correctAnswer: correctRef.current.value,
+      answerType: selectedAnswerType,
+      correctAnswer: isManualGraded ? null : isOx ? oxAnswer
+        : isMulti ? [...multiAnswers].sort((a, b) => Number(a) - Number(b)).join(",")
+          : correctRef.current.value,
       pointAlloc: Number(pointRef.current.value),
-      answerSheet1: answerRefs.current[0].value,
-      answerSheet2: answerRefs.current[1].value,
-      answerSheet3: answerRefs.current[2].value,
-      answerSheet4: answerRefs.current[3].value,
-      answerSheet5: answerRefs.current[4].value,
+      answerSheet1: getAnswer(0),
+      answerSheet2: getAnswer(1),
+      answerSheet3: getAnswer(2),
+      answerSheet4: getAnswer(3),
+      answerSheet5: getAnswer(4),
       answerCount: count,
     };
 
@@ -162,7 +183,11 @@ export default function UpdateTest({ questionId }) {
         alert("수정 완료");
         onClickCancelHandler();
       } catch (e) {
-        alert(e.message);
+        if (e.validations) {
+          setFieldErrors(e.validations);
+        } else {
+          alert(e.message);
+        }
       }
     })();
   };
@@ -171,7 +196,16 @@ export default function UpdateTest({ questionId }) {
     <>
       {!modifying && (
         <>
-          <IconButton icon={icons.edit} onClick={() => setModifying(true)}>
+          <IconButton
+            icon={icons.edit}
+            onClick={() => {
+              setFieldErrors({});
+              setSelectedAnswerType("");
+              setOxAnswer("");
+              setMultiAnswers([]);
+              setModifying(true);
+            }}
+          >
             수정
           </IconButton>
 
@@ -196,41 +230,100 @@ export default function UpdateTest({ questionId }) {
           </IconButton>
 
           <div className={style.testMod} key={id}>
-            <div className={style.testTypes} ref={answerTypeRef}>
+            {renderFieldErrors("global")}
+            <div className={style.testTypes}>
               {answerTypes.map((type) => (
                 <div key={type.value} className={style.type}>
                   <input
                     type="radio"
                     className={style.Type}
-                    name="answerType"
+                    name={answerTypeGroup}
                     value={type.value}
-                    defaultChecked={answerType === type.value}
+                    checked={selectedAnswerType === type.value}
+                    onChange={() => {
+                      setSelectedAnswerType(type.value);
+                      setOxAnswer("");
+                      setMultiAnswers([]);
+                      if (["객관식-단항", "객관식-다항"].includes(type.value) && Number(answerCnt) < 2) {
+                        setAnswerCnt(4);
+                      }
+                      setFieldErrors({});
+                    }}
                   />
                   <label>{type.label}</label>
                 </div>
               ))}
             </div>
+            {renderFieldErrors("answerType")}
             <textarea
               className={style.testQuestion}
               placeholder="문제 내용"
               defaultValue={question}
               ref={questionRef}
             ></textarea>
+            {renderFieldErrors("question")}
             <textarea
               className={style.testSubQuestion}
               placeholder="부연 문제"
               defaultValue={subQuestion}
               ref={subQuestRef}
             ></textarea>
+            {renderFieldErrors("subQuestion")}
 
+            {isManualGraded && (
+              <p>수강생이 작성한 답변은 제출 후 강사가 채점합니다.</p>
+            )}
+            {isOx && (
+              <fieldset>
+                <legend>정답</legend>
+                {["O", "X"].map((option) => (
+                  <label key={option}>
+                    <input
+                      type="radio"
+                      name={`${answerTypeGroup}-ox`}
+                      value={option}
+                      checked={oxAnswer === option}
+                      onChange={() => setOxAnswer(option)}
+                    />
+                    {option}
+                  </label>
+                ))}
+                {renderFieldErrors("correctAnswer")}
+              </fieldset>
+            )}
+            {isMulti && (
+              <fieldset>
+                <legend>정답 (2개 이상 선택)</legend>
+                {[1, 2, 3, 4, 5].filter((num) => num <= Number(answerCnt)).map((num) => (
+                  <label key={num}>
+                    <input
+                      type="checkbox"
+                      value={String(num)}
+                      checked={multiAnswers.includes(String(num))}
+                      onChange={(event) => {
+                        setMultiAnswers((previous) => event.target.checked
+                          ? [...previous, String(num)]
+                          : previous.filter((answer) => answer !== String(num)));
+                        setFieldErrors({});
+                      }}
+                    />
+                    {num}번 보기
+                  </label>
+                ))}
+                {renderFieldErrors("correctAnswer")}
+              </fieldset>
+            )}
+            <div hidden={!usesChoices || isMulti}>
             <input
               type="number"
               min="1"
-              max={answerCount}
+              max={answerCnt}
               placeholder={`정답은 1~${answerCnt}사이의 값을 입력하세요`}
               defaultValue={correctAnswer}
               ref={correctRef}
             />
+            {renderFieldErrors("correctAnswer")}
+            </div>
             <div>
               <label>배점</label>
               <input
@@ -241,29 +334,40 @@ export default function UpdateTest({ questionId }) {
                 defaultValue={pointAlloc}
                 ref={pointRef}
               />
+              {renderFieldErrors("pointAlloc")}
             </div>
-            <div>
+            <div hidden={!usesChoices}>
               <label>보기</label>
               <input
                 type="number"
-                min="1"
+                min={isMulti ? "2" : "1"}
                 max="5"
                 value={answerCnt}
-                onChange={(e) => setAnswerCnt(e.target.value)}
-              />
-              개
-            </div>
-            {answers.map((answer, index) => (
-              <input
-                key={index}
-                type="text"
-                placeholder={`${index + 1}번 보기`}
-                defaultValue={answer}
-                hidden={index >= Number(answerCnt)}
-                ref={(el) => {
-                  answerRefs.current[index] = el;
+                onChange={(e) => {
+                  setAnswerCnt(e.target.value);
+                  setMultiAnswers((previous) => previous.filter((answer) => Number(answer) <= Number(e.target.value)));
+                  setFieldErrors({});
                 }}
               />
+              개
+              {renderFieldErrors("answerCount")}
+            </div>
+            {answers.map((answer, index) => (
+              <div
+                key={index}
+                hidden={!usesChoices || (index >= Number(answerCnt) && !fieldErrors[`answerSheet${index + 1}`]?.length)}
+              >
+                <input
+                  type="text"
+                  placeholder={`${index + 1}번 보기`}
+                  defaultValue={answer}
+                  hidden={index >= Number(answerCnt)}
+                  ref={(el) => {
+                    answerRefs.current[index] = el;
+                  }}
+                />
+                {renderFieldErrors(`answerSheet${index + 1}`)}
+              </div>
             ))}
           </div>
         </>
