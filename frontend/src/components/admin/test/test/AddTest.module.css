@@ -1,0 +1,16 @@
+.testForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 80%;
+}
+.testQuestion {
+  width: 80%;
+}
+.testTypes {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 1rem;
+  width: 100%;
+}
