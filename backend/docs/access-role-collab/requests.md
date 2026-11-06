@@ -249,7 +249,7 @@ UPDATE ACTION
 
 ### 선행 조건
 - R-01 완료
-- **공통 API 클라이언트 `frontend/src/api/common/apiClient.js`** — ROLE 담당자가 작성 후 공유 예정입니다. 제공 전이면 보류로 기록해 주세요.
+- **공통 API 클라이언트 `frontend/src/api/common/apiClient.js`** — 작성 완료. 사용법: `frontend/docs/api-client-guide.md`, 사용 예: `frontend/src/api/admin/system/role/roleApi.js`. 현재 브랜치에 없다면 보류로 기록해 주세요.
 
 ### 현재 상태
 - 두 API 파일에 같은 `get` / `post` / `handleResponse`가 중복되어 있습니다.
@@ -258,9 +258,11 @@ UPDATE ACTION
   - `AccessRole.jsx`: 79, 103~104, 132, 292행 부근
   - `Access.jsx`: 74~75, 87~88, 103, 128~129, 154~156, 369행 부근
 
-### 공통 API 클라이언트 동작 (예정)
-- HTTP 2xx: 응답의 `body`를 반환 (페이징 응답은 `{ body, paginate, search }`)
-- HTTP 4xx · 5xx: 아래 필드를 가진 에러를 throw
+### 공통 API 클라이언트 동작
+- `api.get` / `api.post` / `api.put` / `api.delete`: HTTP 2xx이면 응답의 `body`를 반환
+- `api.getPage`: `{ body, paginate, search }`를 반환
+- 백엔드 주소(`http://localhost:8080`, `VITE_API_BASE_URL`로 변경 가능)가 자동으로 붙으므로 URL은 `/access-role/allowed`처럼 경로만 적습니다.
+- 실패(4xx · 5xx · 네트워크 오류): 아래 필드를 가진 `ApiError`를 throw
 
 ```js
 { httpStatusCode, errorCode, message /* = 응답의 error */, validations }
