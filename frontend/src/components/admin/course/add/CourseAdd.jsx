@@ -36,7 +36,6 @@ export default function CourseAdd() {
     for (const studentId of selectStudents) {
       formData.append("studentId", studentId.value);
     }
-    console.log(formData);
 
     (async () => {
       await fetch("http://localhost:8080/admin/course/add", {

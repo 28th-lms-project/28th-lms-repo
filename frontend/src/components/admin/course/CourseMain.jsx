@@ -39,7 +39,7 @@ export default function CourseMain() {
     navigate("/admin/course/add");
   };
   const clickCourseIdButtonHandler = (urlId) => {
-    navigate(`/admin/course/list/${urlId}`);
+    navigate(`/admin/course/list/${urlId}?tab=0`);
   };
   return (
     <>

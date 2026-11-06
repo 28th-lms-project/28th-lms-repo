@@ -3,6 +3,7 @@ package com.learningworks.course.service;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.learningworks.course.dao.CourseDao;
 import com.learningworks.course.vo.request.RegistCourseStudentVO;
@@ -53,6 +54,7 @@ public class CourseServiceImpl implements CourseService{
 		return CourseMemberVO;
 	}
 
+	@Transactional
 	@Override
 	public int addCourse(RegistCourseVO registCourseVO) {
 		int studentResult = 0 ;

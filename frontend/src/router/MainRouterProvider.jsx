@@ -97,11 +97,23 @@ const router = createBrowserRouter([
                       const res = await fetch(
                         "http://localhost:8080/course/view",
                       );
+
                       const list = await res.json();
-                      return redirect(list[0].id);
+                      if (!list) {
+                        return redirect("admin/course/add");
+                      }
+                      return redirect(`/admin/course/list/${list[0].id}?tab=0`);
                     },
                   },
-                  { path: ":id", element: <CourseItem /> },
+                  {
+                    path: ":id",
+                    element: (
+                      <>
+                        <CourseItem />
+                      </>
+                    ),
+                    // children: [{ index: true, element: <div>111</div> }],
+                  },
                 ],
               },
               {

@@ -12,7 +12,7 @@ export default function CourseTutorSelect() {
       const response = await fetch("http://localhost:8080/tutor/list");
 
       const result = await response.json();
-      console.log(result);
+
       const mappedOptions = result.map((course) => ({
         value: course.id,
         label: course.name,

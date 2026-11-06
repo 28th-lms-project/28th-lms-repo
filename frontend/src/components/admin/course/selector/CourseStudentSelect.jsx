@@ -11,7 +11,7 @@ export default function CourseStudentSelect() {
       const response = await fetch("http://localhost:8080/student/list");
 
       const result = await response.json();
-      console.log(result);
+
       const mappedOptions = result.map((student) => ({
         value: student.id,
         label: student.name,
