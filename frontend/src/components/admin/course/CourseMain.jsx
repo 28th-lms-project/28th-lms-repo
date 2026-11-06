@@ -22,6 +22,7 @@ export default function CourseMain() {
     (async () => {
       const fetchResult = await fetch("http://localhost:8080/course/view");
       const result = await fetchResult.json();
+
       if (!ignore) {
         dispatch(courseActions.load(result));
 

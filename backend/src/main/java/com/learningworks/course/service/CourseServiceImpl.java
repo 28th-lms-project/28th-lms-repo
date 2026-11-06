@@ -29,6 +29,7 @@ public class CourseServiceImpl implements CourseService{
 		if(result.equals(null)) {
 			System.out.println("Error");
 		}
+		
 		return result;
 	}
 

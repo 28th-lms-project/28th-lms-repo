@@ -32,7 +32,6 @@ public class CourseController {
 	@GetMapping("/course/view")
 	public List<CourseVO> viewCourse() {
 		List<CourseVO> course = this.courseService.viewCourse();
-		System.out.println(course);
 		return course ;
 	}
 	

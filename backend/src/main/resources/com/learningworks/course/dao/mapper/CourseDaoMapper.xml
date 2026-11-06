@@ -7,22 +7,33 @@
 	<select 
 	id="viewCourse" 
 	resultType="com.learningworks.course.vo.response.CourseVO">
-	 SELECT ID 
-		  , COURSE_NAME 
-		  , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
-	      , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
-	      , "NO" 
-	   FROM COURSE
-	</select>
-	
-	<select id="readOneCourse" resultType="com.learningworks.course.vo.response.CourseVO" parameterType="string">
-	 SELECT ID 
+	 SELECT C.ID 
           , COURSE_NAME 
           , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
           , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
           , "NO" 
-       FROM COURSE
-      WHERE ID = #{_parameter}
+          , U.NAME
+       FROM COURSE C
+      INNER JOIN COURSE_TUTOR CT
+         ON C.ID = CT.COURSE_ID
+      INNER JOIN "USER" U
+         ON CT.TUTOR_ID = U.ID 
+         
+	</select>
+	
+	<select id="readOneCourse" resultType="com.learningworks.course.vo.response.CourseVO" parameterType="string">
+	 SELECT C.ID 
+          , COURSE_NAME 
+          , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
+          , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
+          , "NO"
+          , U.NAME
+       FROM COURSE C
+      INNER JOIN COURSE_TUTOR CT
+         ON C.ID = CT.COURSE_ID
+      INNER JOIN "USER" U
+         ON CT.TUTOR_ID = U.ID 
+      WHERE C.ID = #{_parameter}
 	</select>
 	
 	

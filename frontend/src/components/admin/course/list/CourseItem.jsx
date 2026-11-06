@@ -17,6 +17,7 @@ export default function CourseItem() {
         `http://localhost:8080/course/list/${id}`,
       );
       const resultJson = await fetchResult.json();
+      console.log(resultJson);
       if (!ignore) {
         dispatch(courseActions.loadShowCourse(resultJson));
 
@@ -61,7 +62,7 @@ export default function CourseItem() {
             </span>
 
             <div>{finishCourse(showCourse.startDate, showCourse.endDated)}</div>
-            <div>강사 이름</div>
+            <div>{showCourse.name}</div>
           </>
         )}
       </div>

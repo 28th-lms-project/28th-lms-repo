@@ -12,6 +12,7 @@ export const courseSlice = createSlice({
   reducers: {
     load(state, action) {
       state.courseList = [...action.payload];
+      console.log(action.payload);
     },
     startLoading(state) {
       state.isLoading = true;
@@ -21,6 +22,7 @@ export const courseSlice = createSlice({
     },
     loadShowCourse(state, action) {
       state.showCourse = action.payload;
+      console.log(action.payload);
       // console.log(state.showCourse);
     },
     selectStudents(state, action) {

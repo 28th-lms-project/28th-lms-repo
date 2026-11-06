@@ -10,6 +10,6 @@ public class CourseVO {
 	private String startDate;
 	private String endDated;
 	
-	
+	private String name;
 	
 }
