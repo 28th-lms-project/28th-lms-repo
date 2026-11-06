@@ -119,22 +119,32 @@
     overflow-y: auto;
 }
 
-/* 공통 목록 항목 */
+/* 목록 공통 */
 .listItem {
     display: flex;
     align-items: center;
     min-height: 42px;
     padding: 0 10px;
     font-size: 14px;
-    border-bottom: 1px dashed #ddd;
     color: #333;
-    transition: background-color 0.15s;
+    border-bottom: 1px dashed #ddd;
     cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+/* 마우스 오버 */
+.listItem:hover {
+    background-color: #e5e5e5;
 }
 
 /* 선택된 항목 */
-.activeItem {
-    background-color: #ddd;
+.selected {
+    background-color: #d5d5d5;
+}
+
+/* 선택된 항목에 마우스 오버 */
+.selected:hover {
+    background-color: #c8c8c8;
 }
 
 /* 빈 목록 */

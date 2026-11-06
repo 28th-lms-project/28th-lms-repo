@@ -60,9 +60,9 @@ public ApiResponse<RoleVO> deleteRole(...) { ... }
 - 회원에게 역할을 지정하는 규칙(자기보다 아래 순위만 지정)은 `ROLE_RANK` 기반 `RoleAssignPolicy`로 별도 처리되며, 이 결정과 무관하게 유지됩니다.
 
 ### 결정 결과
-- 결정:
-- 결정일 · 참석자:
-- 후속 작업:
+- 결정: A. ROLE_ACTION 기반 검사 (`@accessChecker.can(actionCode)`)
+- 결정일 · 참석자: 2026-11-06, ACCESS · ACCESS_ROLE 담당자
+- 후속 작업: `ACTION_CODE` 컬럼 이름 규칙, `accessChecker` 구현 담당, 요청자 역할을 JWT / DB 중 어디서 읽을지는 아직 미정 (ROLE · JWT 담당자와 협의 필요)
 
 ---
 
@@ -111,9 +111,9 @@ public ApiResponse<RoleVO> deleteRole(...) { ... }
 - [ ] SUPER_ADMIN을 권한 설정 대상에서 제외할지
 
 ### 결정 결과
-- 결정:
-- 결정일 · 참석자:
-- 후속 작업:
+- 결정: `/access/save`, `/access-role/save` 모두 `ROLE_SUPER_ADMIN` 전용. `ROLE_SUPER_ADMIN`은 권한 설정 대상에서 제외
+- 결정일 · 참석자: 2026-11-06, ACCESS · ACCESS_ROLE 담당자
+- 후속 작업: 두 저장 API에 TODO 주석 추가 완료. JWT · 메서드 보안 적용 시 권한 제한, SUPER_ADMIN 제외(목록에서 숨김 또는 저장 거부) 구현 예정
 
 ---
 
@@ -191,6 +191,6 @@ MENU / MENU_ROLE 기능은 ROLE 담당자가 구현할 예정이지만, ACCESS �
 - R-01, R-06은 이 추천안을 기준으로 작성되어 있습니다. 반려하는 경우 `ApiResponse` 변경이 필요하므로 ROLE 담당자와 다시 협의해 주세요.
 
 ### 결정 결과
-- 결정:
-- 결정일 · 참석자:
-- 후속 작업:
+- 결정: 응답에 포함하지 않고 프론트에서 표시 (추천안)
+- 결정일 · 참석자: 2026-11-06, ACCESS · ACCESS_ROLE 담당자
+- 후속 작업: R-01 · R-06에서 반영 완료

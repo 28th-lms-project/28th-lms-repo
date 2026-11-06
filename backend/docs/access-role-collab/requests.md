@@ -6,14 +6,14 @@
 
 | ID | 제목 | 분류 | 우선순위 | 선행 조건 | 진행 상태 |
 | --- | --- | --- | --- | --- | --- |
-| R-01 | 컨트롤러 공통 응답(ApiResponse) 전환 | 공통화 | 높음 | 없음 | 대기 |
-| R-02 | 예외를 LearningworksException으로 전환 | 공통화 · 버그 | 높음 | R-01 | 대기 |
-| R-03 | 요청 VO 입력값 검증(@Valid) 적용 | 공통화 | 중간 | R-01 | 대기 |
+| R-01 | 컨트롤러 공통 응답(ApiResponse) 전환 | 공통화 | 높음 | 없음 | **완료** (커밋 전) |
+| R-02 | 예외를 LearningworksException으로 전환 | 공통화 · 버그 | 높음 | R-01 | **완료** (커밋 전) |
+| R-03 | 요청 VO 입력값 검증(@Valid) 적용 | 공통화 | 중간 | R-01 | **완료** (커밋 전) |
 | R-04 | ACTION_ID 타입을 String으로 통일 | 버그 | 높음 | 없음 | **완료** (`fafc7bc`) |
 | R-05 | `updateAccess` SQL 문법 확인 | 버그 의심 | 높음 | 없음 | **완료** (`0e71877`) |
-| R-06 | 프론트 응답 처리 전환 | 공통화 | 높음 | R-01, 공통 API 클라이언트 제공 | 대기 (클라이언트 제공 완료) |
-| R-07 | 역할 목록 API를 `GET /roles`로 통합 | 중복 제거 | 중간 | D-01 논의 불필요, 단독 진행 가능 | 대기 |
-| R-08 | 사용하지 않는 import 정리 | 정리 | 낮음 | 없음 | 대기 |
+| R-06 | 프론트 응답 처리 전환 | 공통화 | 높음 | R-01, 공통 API 클라이언트 제공 | **완료** (커밋 전) |
+| R-07 | 역할 목록 API를 `GET /roles`로 통합 | 중복 제거 | 중간 | D-01 논의 불필요, 단독 진행 가능 | **완료** (커밋 전) |
+| R-08 | 사용하지 않는 import 정리 | 정리 | 낮음 | 없음 | **완료** (커밋 전) |
 
 ---
 
@@ -60,10 +60,10 @@ public ApiResponse<List<AccessRolePermissionVO>> saveRolePermission(
 - 모든 API가 가이드의 응답 형식으로 응답 (Postman 등으로 확인)
 
 ### 처리 결과
-- 상태:
-- 판단 근거:
-- 변경 내용:
-- ROLE 담당자에게 요청:
+- 상태: 수락 (완료)
+- 판단 근거: 2026-11-06 확인. 두 컨트롤러가 `ResponseEntity<Map>` + `{ responseCode, message, data }`로 응답하고, `AccessRoleController`에 전용 `@ExceptionHandler(IllegalArgumentException)`가 있었음. 문서 내용과 일치.
+- 변경 내용: `AccessController`, `AccessRoleController`를 `ApiResponse<T>`로 전환. `success()` · `response()` 헬퍼와 `@ExceptionHandler` 삭제. 저장 API는 저장 후 목록을 반환 (`/access-role/save` → 허용 권한 목록, `/access/save` → 전체 접근 권한 목록). 성공 메시지는 응답에서 제거 (D-06). 커밋 전.
+- ROLE 담당자에게 요청: 없음
 
 ---
 
@@ -109,10 +109,10 @@ ACTION_FAILURE_SAVE(HttpStatus.INTERNAL_SERVER_ERROR, "접근 권한 저장을 �
 - `/access/save`에 필수값을 비워 요청하면 500이 아니라 400 + `validations`(또는 해당 ErrorCode)로 응답
 
 ### 처리 결과
-- 상태:
-- 판단 근거:
-- 변경 내용:
-- ROLE 담당자에게 요청:
+- 상태: 수락 (완료)
+- 판단 근거: 2026-11-06 확인. 두 서비스가 `IllegalArgumentException` / `IllegalStateException`을 던지고 있었음. 문서 내용과 일치.
+- 변경 내용: `ErrorCode`에 `ACTION_NOT_EXISTS`(404, "존재하지 않는 접근 권한입니다."), `ACTION_FAILURE_SAVE`(500) 추가 (상수 추가만). 없는 ACTION 포함 · update 0건 → `ACTION_NOT_EXISTS`, insert 실패 → `ACTION_FAILURE_SAVE`, 없는 역할 → `ROLE_NOT_EXISTS`, 수정 대상 actionId 없음 → `GLOBAL_BAD_REQUEST`. null · 필수값 검사는 R-03 검증으로 옮기고 서비스에서 삭제. `ACTION_NOT_EXISTS`는 update 0건에도 쓰므로 문구를 "포함되어 있습니다" 대신 일반 문구로 조정. 커밋 전.
+- ROLE 담당자에게 요청: 없음
 
 ---
 
@@ -162,10 +162,11 @@ public ApiResponse<List<AccessListVO>> selectAccessList(
 - 서비스의 null · 빈 값 검사 코드 제거 (R-02와 함께)
 
 ### 처리 결과
-- 상태:
-- 판단 근거:
-- 변경 내용:
-- ROLE 담당자에게 요청:
+- 상태: 수락 (완료, `@Size` 제외)
+- 판단 근거: 2026-11-06 확인. 요청 VO에 검증 어노테이션이 없었음. 문서 내용과 일치.
+- 변경 내용: `AccessRoleSaveRequestVO`(`@NotBlank` + `@Pattern(ROLE_ID_PATTERN_ALLOW_EMPTY)`, `@NotNull List<@NotBlank String> actionIds`), `AccessSaveRequestVO`(`List<@Valid AccessVO>`), `AccessVO`(메뉴 3개 · 권한명 `@NotBlank`), 두 컨트롤러 `@RequestBody`에 `@Valid`. `@RequestParam roleId`는 `RoleController`와 같이 `@Pattern(ROLE_ID_PATTERN)`만 적용 (빈 값도 패턴에서 걸리므로 `@NotBlank`를 함께 쓰면 메시지가 2개 나옴). 선택 항목 7번(`@ModelAttribute AccessSearchRequestVO`)도 적용. 클래스 `@Validated` 미사용. 커밋 전.
+- 남은 작업: `ACTION.ACTION_NAME` 컬럼 길이를 확인하지 못해 `@Size(max = n)`는 TODO 주석으로 남김 (저장소에 DDL 없음).
+- ROLE 담당자에게 요청: 없음
 
 ---
 
@@ -295,10 +296,10 @@ UPDATE ACTION
 - 두 페이지의 조회 · 저장이 정상 동작
 
 ### 처리 결과
-- 상태:
-- 판단 근거:
-- 변경 내용:
-- ROLE 담당자에게 요청:
+- 상태: 수락 (완료)
+- 판단 근거: 2026-11-06 확인. `apiClient.js` 제공 확인. 문서 내용과 일치하나, `Access.jsx`는 작업 중 변경으로 행 번호가 달랐음 (실제 35 · 48 · 175 · 229행).
+- 변경 내용: `accessApi.js`, `accessRoleApi.js`를 `api.get` / `api.post`로 교체 (중복 `BASE_URL` · `get` · `post` · `handleResponse` 삭제). 두 컴포넌트의 `responseCode` 분기 · `response.data` 제거. 에러는 `validations`가 있으면 필드별 메시지를, 없으면 서버 `error` 메시지를 alert로 표시. 성공 문구는 프론트에서 표시. 커밋 전.
+- ROLE 담당자에게 요청: 없음
 
 ---
 
@@ -326,10 +327,10 @@ UPDATE ACTION
 - `/access-role/roles` 호출이 남아 있지 않음
 
 ### 처리 결과
-- 상태:
-- 판단 근거:
-- 변경 내용:
-- ROLE 담당자에게 요청:
+- 상태: 수락 (완료)
+- 판단 근거: 2026-11-06 확인. `/access-role/roles`가 `ORDER BY ROLE_ID`로 `/roles`와 같은 데이터를 조회하고 있었음.
+- 변경 내용: `AccessRole.jsx`가 `roleApi.getRoles()`의 `body.roleList`를 사용. 백엔드 `GET /access-role/roles`, `getRoleList`, `selectRoleList`(DAO · 매퍼), `AccessRoleVO` 삭제. `selectRoleCount`는 유지. 커밋 전.
+- ROLE 담당자에게 요청: 없음
 
 ---
 
@@ -343,7 +344,7 @@ UPDATE ACTION
 중복 · 미사용 import 삭제
 
 ### 처리 결과
-- 상태:
-- 판단 근거:
-- 변경 내용:
-- ROLE 담당자에게 요청:
+- 상태: 수락 (완료)
+- 판단 근거: 2026-11-06 확인. `AccessRoleServiceImpl` 4 · 5행 중복 import, `AccessRoleDao`의 미사용 `AccessRoleSaveRequestVO` import 확인.
+- 변경 내용: 두 import 삭제 (R-07로 미사용이 된 `AccessRoleVO` import도 삭제). 커밋 전.
+- ROLE 담당자에게 요청: 없음

@@ -9,37 +9,13 @@ import {
     saveAccessList,
 } from "../../../../api/admin/system/access/accessApi";
 
-const selectStyle = {
-    width: "auto",
-    minWidth: "120px",
-    height: "36px",
-    padding: "0 10px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    backgroundColor: "#fff",
-    fontSize: "13px",
-};
+import styles from "./Access.module.css";
 
-const inputStyle = {
-    flex: 1,
-    minWidth: 0,
-    height: "35px",
-    padding: "0 10px",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    fontSize: "13px",
-};
-
-const buttonStyle = {
-    minWidth: "45px",
-    height: "35px",
-    padding: "0 12px",
-    border: "1px solid #ccc",
-    borderRadius: "3px",
-    backgroundColor: "#f5f5f5",
-    color: "#555",
-    cursor: "pointer",
-};
+// 입력값 검증 실패면 필드별 메시지를, 아니면 서버 에러 메시지를 반환
+const getErrorMessage = (error) =>
+    error.validations
+        ? Object.values(error.validations).flat().join("\n")
+        : error.message;
 
 export default function Access() {
 
@@ -60,29 +36,24 @@ export default function Access() {
     // 메뉴 전체 조회
     const getMenuList = useCallback(async () => {
         try {
-            const response = await getAccessMenuList();
+            const body = await getAccessMenuList();
 
-            if (response.responseCode === "SUCCESS") {
-                setMenuList(response.data ?? []);
-            }
+            setMenuList(body ?? []);
         } catch (error) {
             console.error("메뉴 조회 실패:", error);
+            alert(getErrorMessage(error));
         }
     }, []);
 
     // 접근 권한 목록 조회
     const getAccessList = useCallback(async (params = {}) => {
         try {
-            const response = await fetchAccessApi(params);
+            const body = await fetchAccessApi(params);
 
-            if (response.responseCode === "SUCCESS") {
-                setAccessList(response.data ?? []);
-            } else {
-                alert(response.message || "목록 조회에 실패했습니다.");
-            }
+            setAccessList(body ?? []);
         } catch (error) {
             console.error("접근 권한 조회 실패:", error);
-            alert("접근 권한 목록 조회에 실패했습니다.");
+            alert(getErrorMessage(error));
         }
     }, []);
 
@@ -197,35 +168,31 @@ export default function Access() {
         };
 
         try {
-            const response = await saveAccessList({
+            await saveAccessList({
                 addedList: [newData],
                 modifiedList: [],
             });
 
-            if (response.responseCode === "SUCCESS") {
-                alert("접근 권한이 추가되었습니다.");
+            alert("접근 권한이 추가되었습니다.");
 
-                setTopMenuId("");
-                setMidMenuId("");
-                setBtmMenuId("");
+            setTopMenuId("");
+            setMidMenuId("");
+            setBtmMenuId("");
 
-                setIsEditing(false);
-                setActionName("");
-                setEditingId(null);
-                setEditingOriginalData(null);
+            setIsEditing(false);
+            setActionName("");
+            setEditingId(null);
+            setEditingOriginalData(null);
 
-                await getAccessList({
-                    topMenuId: "",
-                    midMenuId: "",
-                    btmMenuId: "",
-                    actionName: "",
-                });
-            } else {
-                alert(response.message || "접근 권한 추가에 실패했습니다.");
-            }
+            await getAccessList({
+                topMenuId: "",
+                midMenuId: "",
+                btmMenuId: "",
+                actionName: "",
+            });
         } catch (error) {
             console.error("접근 권한 추가 실패:", error);
-            alert(error.message || "접근 권한 추가 중 오류가 발생했습니다.");
+            alert(getErrorMessage(error));
         }
     };
 
@@ -251,35 +218,31 @@ export default function Access() {
         };
 
         try {
-            const response = await saveAccessList({
+            await saveAccessList({
                 addedList: [],
                 modifiedList: [updatedData],
             });
 
-            if (response.responseCode === "SUCCESS") {
-                alert("접근 권한이 수정되었습니다.");
+            alert("접근 권한이 수정되었습니다.");
 
-                setTopMenuId("");
-                setMidMenuId("");
-                setBtmMenuId("");
+            setTopMenuId("");
+            setMidMenuId("");
+            setBtmMenuId("");
 
-                setIsEditing(false);
-                setActionName("");
-                setEditingId(null);
-                setEditingOriginalData(null);
+            setIsEditing(false);
+            setActionName("");
+            setEditingId(null);
+            setEditingOriginalData(null);
 
-                await getAccessList({
-                    topMenuId: "",
-                    midMenuId: "",
-                    btmMenuId: "",
-                    actionName: "",
-                });
-            } else {
-                alert(response.message || "접근 권한 수정에 실패했습니다.");
-            }
+            await getAccessList({
+                topMenuId: "",
+                midMenuId: "",
+                btmMenuId: "",
+                actionName: "",
+            });
         } catch (error) {
             console.error("접근 권한 수정 실패:", error);
-            alert(error.message || "접근 권한 수정 중 오류가 발생했습니다.");
+            alert(getErrorMessage(error));
         }
     };
 
@@ -362,113 +325,95 @@ export default function Access() {
 
     return (
         <PageContainer>
-
-            <div className="access-page">
-
-                <h2>접근 권한 조회</h2>
+            <div className={styles.accessPage}>
+                <h2 className={styles.pageTitle}>접근 권한 조회</h2>
 
                 {/* 검색 및 등록 영역 */}
-                <div className="access-search">
-
-                    <div className="access-select">
-
+                <div className={styles.accessSearch}>
+                    {/* 메뉴 선택 영역 */}
+                    <div className={styles.accessSelect}>
                         <select
                             value={topMenuId}
-                            onChange={(e) =>
-                                changeTopMenu(e.target.value)
-                            }
-                            style={selectStyle}
+                            onChange={(e) => changeTopMenu(e.target.value)}
+                            className={styles.select}
                         >
                             <option value="">대 메뉴 선택</option>
-
                             {topMenuList.map((item) => (
-                                <option
-                                    key={item.id}
-                                    value={item.id}
-                                >
-                                    {item.title}
-                                </option>
-                            ))}
-
-                        </select>
-
-                        <select
-                            value={midMenuId}
-                            onChange={(e) =>
-                                changeMidMenu(e.target.value)
-                            }
-                            disabled={!topMenuId}
-                            style={selectStyle}
-                        >
-                            <option value="">중 메뉴 선택</option>
-
-                            {midMenuList.map((item) => (
-                                <option
-                                    key={item.id}
-                                    value={item.id}
-                                >
-                                    {item.title}
-                                </option>
-                            ))}
-
-                        </select>
-
-                        <select
-                            value={btmMenuId}
-                            onChange={(e) =>
-                                changeBtmMenu(e.target.value)
-                            }
-                            disabled={!midMenuId}
-                            style={selectStyle}
-                        >
-                            <option value="">소 메뉴 선택</option>
-
-                            {btmMenuList.map((item) => (
                                 <option key={item.id} value={item.id}>
                                     {item.title}
                                 </option>
                             ))}
                         </select>
 
+                        <select
+                            value={midMenuId}
+                            onChange={(e) => changeMidMenu(e.target.value)}
+                            disabled={!topMenuId}
+                            className={styles.select}
+                        >
+                            <option value="">중 메뉴 선택</option>
+                            {midMenuList.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                    {item.title}
+                                </option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={btmMenuId}
+                            onChange={(e) => changeBtmMenu(e.target.value)}
+                            disabled={!midMenuId}
+                            className={styles.select}
+                        >
+                            <option value="">소 메뉴 선택</option>
+                            {btmMenuList.map((item) => (
+                                <option key={item.id} value={item.id}>
+                                    {item.title}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
-                    <div className="access-input">
-
+                    {/* 권한명 입력 및 버튼 영역 */}
+                    <div className={styles.accessInput}>
                         <input
                             type="text"
                             placeholder="권한 명을 입력하세요"
                             value={actionName}
-                            onChange={(e) =>
-                                setActionName(e.target.value)
-                            }
-                            style={inputStyle}
+                            onChange={(e) => setActionName(e.target.value)}
+                            className={styles.input}
                         />
 
                         {editingId ? (
-
-                            <button onClick={updateAccess} style={buttonStyle}>
+                            <button
+                                type="button"
+                                onClick={updateAccess}
+                                className={styles.button}
+                            >
                                 수정 반영
                             </button>
-
                         ) : (
-
-                            <button onClick={addAccess} style={buttonStyle}>
+                            <button
+                                type="button"
+                                onClick={addAccess}
+                                className={styles.button}
+                            >
                                 추가
                             </button>
-
                         )}
 
-                        <button onClick={cancelChanges} style={buttonStyle}>
+                        <button
+                            type="button"
+                            onClick={cancelChanges}
+                            className={styles.button}
+                        >
                             취소
                         </button>
-
                     </div>
-
                 </div>
 
                 {/* 접근 권한 그리드 */}
-                <div className="access-grid">
-
+                <div className={styles.accessGrid}>
                     <Grid
                         title=""
                         header={header}
@@ -484,11 +429,8 @@ export default function Access() {
                             },
                         }}
                     />
-
                 </div>
-
             </div>
-
         </PageContainer>
     );
 }

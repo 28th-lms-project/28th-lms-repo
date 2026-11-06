@@ -6,18 +6,6 @@
 
 <mapper namespace="com.learningworks.accessrole.dao.AccessRoleDao">
 
-    <!-- 역할 목록 조회 -->
-    <select id="selectRoleList"
-            resultType="com.learningworks.accessrole.vo.response.AccessRoleVO">
-
-        SELECT R.ROLE_ID AS roleId
-             , R.ROLE_DISPLAY_NAME AS roleDisplayName
-          FROM ROLE R
-         ORDER BY R.ROLE_ID
-
-    </select>
-
-
     <!-- 역할별 허용 권한 목록 조회 -->
     <select id="selectAllowedPermissionList"
             resultType="com.learningworks.accessrole.vo.response.AccessRolePermissionVO">

@@ -6,11 +6,17 @@ import PageContainer from "../../../common/PageContainer";
 import {
     getAllowedPermissionList,
     getDeniedPermissionList,
-    getRoleList,
     saveRolePermission,
 } from "../../../../api/admin/system/access-role/accessRoleApi";
+import {getRoles} from "../../../../api/admin/system/role/roleApi";
 
 import styles from "./AccessRole.module.css";
+
+// 입력값 검증 실패면 필드별 메시지를, 아니면 서버 에러 메시지를 반환
+const getErrorMessage = (error) =>
+    error.validations
+        ? Object.values(error.validations).flat().join("\n")
+        : error.message;
 
 export default function AccessRole() {
     const [roleList, setRoleList] = useState([]);
@@ -35,13 +41,12 @@ export default function AccessRole() {
     // 역할 목록 조회
     const fetchRoleList = async () => {
         try {
-            const response = await getRoleList();
+            const body = await getRoles();
 
-            if (response.responseCode === "SUCCESS") {
-                setRoleList(response.data || []);
-            }
+            setRoleList(body?.roleList ?? []);
         } catch (error) {
             console.error("역할 목록 조회 실패", error);
+            alert(getErrorMessage(error));
         }
     };
 
@@ -57,26 +62,21 @@ export default function AccessRole() {
                 getDeniedPermissionList(params),
             ]);
 
-            if (
-                allowed.responseCode === "SUCCESS" &&
-                denied.responseCode === "SUCCESS"
-            ) {
-                const allowedData = allowed.data || [];
-                const deniedData = denied.data || [];
+            const allowedData = allowed ?? [];
+            const deniedData = denied ?? [];
 
-                setAllowedList(allowedData);
-                setDeniedList(deniedData);
+            setAllowedList(allowedData);
+            setDeniedList(deniedData);
 
-                const permissionIds = allowedData.map(
-                    (item) => item.actionId
-                );
+            const permissionIds = allowedData.map(
+                (item) => item.actionId
+            );
 
-                setSavedPermissions(permissionIds);
-                setRolePermissions(permissionIds);
-            }
+            setSavedPermissions(permissionIds);
+            setRolePermissions(permissionIds);
         } catch (error) {
             console.error("권한 목록 조회 실패", error);
-            alert(error.message);
+            alert(getErrorMessage(error));
         }
     };
 
@@ -225,7 +225,6 @@ export default function AccessRole() {
 
     // 권한 저장
     const saveHandler = async () => {
-        console.log("저장 버튼 클릭!");
         if (!selectedRole) return;
 
         try {
@@ -234,18 +233,16 @@ export default function AccessRole() {
                 actionIds: rolePermissions,
             };
 
-            const response = await saveRolePermission(params);
+            await saveRolePermission(params);
 
-            if (response.responseCode === "SUCCESS") {
-                alert("권한이 저장되었습니다.");
+            alert("권한이 저장되었습니다.");
 
-                await fetchPermissionList(selectedRole);
+            await fetchPermissionList(selectedRole);
 
-                setSelectedPermissionIds([]);
-            }
+            setSelectedPermissionIds([]);
         } catch (error) {
             console.error("권한 저장 실패", error);
-            alert(error.message);
+            alert(getErrorMessage(error));
         }
     };
 
@@ -284,7 +281,9 @@ export default function AccessRole() {
                                 <div
                                     key={role.roleId}
                                     onClick={() => roleClickHandler(role.roleId)}
-                                    className={styles.listItem}
+                                    className={`${styles.listItem} ${
+                                        selectedRole === role.roleId ? styles.selected : ""
+                                    }`}
                                 >
                                     {role.roleDisplayName}
                                 </div>
@@ -370,11 +369,7 @@ export default function AccessRole() {
                                         allowedPermissions.map((item) => (
                                             <div
                                                 key={item.actionId}
-                                                onClick={() =>
-                                                    revokePermissionHandler(
-                                                        item.actionId,
-                                                    )
-                                                }
+                                                onClick={() => revokePermissionHandler(item.actionId)}
                                                 className={styles.listItem}
                                                 title="클릭하면 권한이 해제됩니다."
                                             >
@@ -471,12 +466,12 @@ export default function AccessRole() {
                                         deniedPermissions.map((item) => (
                                             <div
                                                 key={item.actionId}
-                                                onClick={() =>
-                                                    grantPermissionHandler(
-                                                        item.actionId,
-                                                    )
-                                                }
-                                                className={styles.listItem}
+                                                onClick={() => grantPermissionHandler(item.actionId)}
+                                                className={`${styles.listItem} ${
+                                                    selectedPermissionIds.includes(item.actionId)
+                                                        ? styles.selected
+                                                        : ""
+                                                }`}
                                                 title="클릭하면 권한이 부여됩니다."
                                             >
                                                 {item.actionName}
