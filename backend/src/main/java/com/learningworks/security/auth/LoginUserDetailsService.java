@@ -5,10 +5,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.learningworks.member.dao.MemberDao;
 import com.learningworks.member.vo.response.MemberVO;
-
 import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 public class LoginUserDetailsService implements UserDetailsService {
 
   private final MemberDao memberDao;
@@ -21,7 +20,8 @@ public class LoginUserDetailsService implements UserDetailsService {
       throw new UsernameNotFoundException("아이디 또는 비밀번호가 올바르지 않습니다.");
     }
 
-    return new LoginUser(member);
+    String salt = this.memberDao.selectSalt(username);
+    return new LoginUser(member, salt);
   }
 
 }
