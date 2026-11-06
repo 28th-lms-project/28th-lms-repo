@@ -1,5 +1,6 @@
 package com.learningworks.role.vo.request;
 
+import com.learningworks.role.RoleConstants;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -17,7 +18,7 @@ public class RegistRoleVO {
    */
   @NotBlank(message = "역할ID를 입력해주세요.")
   @Size(max = 20, message = "역할ID는 20자 이하로 입력해주세요.")
-  @Pattern(regexp = "^$|^ROLE_[A-Z0-9]+(_[A-Z0-9]+)*$",
+  @Pattern(regexp = RoleConstants.ROLE_ID_PATTERN_ALLOW_EMPTY,
       message = "역할ID는 'ROLE_'로 시작하고, 대문자·숫자와 단어 구분용 언더스코어(_)만 사용할 수 있습니다. (예: ROLE_SUPER_ADMIN)")
   private String roleId;
 
