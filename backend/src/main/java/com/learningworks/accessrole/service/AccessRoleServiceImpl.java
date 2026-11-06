@@ -58,25 +58,25 @@ public class AccessRoleServiceImpl implements AccessRoleService {
 
         String roleId = request.getRoleId();
 
-        List<Long> permissionIds = request.getPermissionIds() == null
+        List<String> actionIds = request.getActionIds() == null
                 ? Collections.emptyList()
-                : request.getPermissionIds();
+                : request.getActionIds();
 
         validateRole(roleId);
 
         // 중복 권한 제거
-        permissionIds = permissionIds.stream()
+        actionIds = actionIds.stream()
                 .distinct()
                 .toList();
 
         // 전달받은 권한 ID가 실제 ACTION에 존재하는지 확인
-        if (!permissionIds.isEmpty()) {
+        if (!actionIds.isEmpty()) {
 
             int actionCount = accessRoleDao.selectActionCount(
-                    permissionIds
+                    actionIds
             );
 
-            if (actionCount != permissionIds.size()) {
+            if (actionCount != actionIds.size()) {
                 throw new IllegalArgumentException(
                         "존재하지 않는 접근 권한이 포함되어 있습니다."
                 );
@@ -87,10 +87,10 @@ public class AccessRoleServiceImpl implements AccessRoleService {
         accessRoleDao.deleteRolePermission(roleId);
 
         // 선택된 권한 등록
-        if (!permissionIds.isEmpty()) {
+        if (!actionIds.isEmpty()) {
             accessRoleDao.insertRolePermission(
                     roleId,
-                    permissionIds
+                    actionIds
             );
         }
     }

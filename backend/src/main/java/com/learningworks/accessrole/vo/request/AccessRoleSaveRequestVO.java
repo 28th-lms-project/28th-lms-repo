@@ -11,5 +11,5 @@ public class AccessRoleSaveRequestVO {
 
     private String roleId;
 
-    private List<Long> permissionIds;
+    private List<String> actionIds;
 }
