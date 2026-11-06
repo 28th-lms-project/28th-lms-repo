@@ -4,8 +4,8 @@ import PageContainer from "../../../common/PageContainer";
 import {Grid} from "../../../common/Grid";
 
 import {
+    getAccessList as fetchAccessApi,
     getAccessMenuList,
-    getAccessList,
     saveAccessList,
 } from "../../../../api/admin/system/access/accessApi";
 
@@ -52,128 +52,44 @@ export default function Access() {
     const [actionName, setActionName] = useState("");
 
     const [accessList, setAccessList] = useState([]);
-    const [originalList, setOriginalList] = useState([]);
 
     const [editingId, setEditingId] = useState(null);
-
-    const [addedList, setAddedList] = useState([]);
-    const [modifiedList, setModifiedList] = useState([]);
-
-    const [search, setSearch] = useState({
-        topMenuId: "",
-        midMenuId: "",
-        btmMenuId: "",
-        actionName: "",
-    });
-
-    // 메뉴 목록 조회
-    const fetchMenuList = async () => {
-        try {
-            const response = await getAccessMenuList();
-
-            if (response.responseCode === "SUCCESS") {
-                setMenuList(response.data || []);
-            }
-        } catch (error) {
-            console.error("메뉴 조회 실패", error);
-        }
-    };
-
-    // 접근 권한 목록 조회
-    const fetchAccessList = async () => {
-        try {
-            const response = await getAccessList(search);
-
-            if (response.responseCode === "SUCCESS") {
-                setAccessList(response.data || []);
-            }
-        } catch (error) {
-            console.error("접근 권한 조회 실패", error);
-        }
-    };
-
-    // 신규 추가 및 수정 저장
-    const handleSave = async () => {
-        try {
-            const response = await saveAccessList({
-                addedList,
-                modifiedList,
-            });
-
-            if (response.responseCode === "SUCCESS") {
-                alert("저장되었습니다.");
-
-                setAddedList([]);
-                setModifiedList([]);
-
-                fetchAccessList();
-            }
-        } catch (error) {
-            console.error("저장 실패", error);
-        }
-    };
-
-    useEffect(() => {
-        fetchMenuList();
-        fetchAccessList();
-    }, []);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingOriginalData, setEditingOriginalData] = useState(null);
 
     // 메뉴 전체 조회
     const getMenuList = useCallback(async () => {
-
         try {
-
             const response = await getAccessMenuList();
 
             if (response.responseCode === "SUCCESS") {
                 setMenuList(response.data ?? []);
             }
-
         } catch (error) {
-            console.error("메뉴 조회 실패", error);
+            console.error("메뉴 조회 실패:", error);
         }
-
     }, []);
 
-    // 접근 권한 조회
-    const getAccessList = useCallback(async () => {
-
+    // 접근 권한 목록 조회
+    const getAccessList = useCallback(async (params = {}) => {
         try {
-
-            const response = await api(
-                apiOption.GET,
-                "/access/actions",
-                {
-                    topMenuId,
-                    midMenuId,
-                    btmMenuId,
-                    actionName,
-                }
-            );
+            const response = await fetchAccessApi(params);
 
             if (response.responseCode === "SUCCESS") {
-
-                const data = response.data ?? [];
-
-                setAccessList(data);
-                setOriginalList(
-                    JSON.parse(JSON.stringify(data))
-                );
-
-                setAddedList([]);
-                setModifiedList([]);
-                setEditingId(null);
+                setAccessList(response.data ?? []);
+            } else {
+                alert(response.message || "목록 조회에 실패했습니다.");
             }
-
         } catch (error) {
-            console.error("접근 권한 조회 실패", error);
+            console.error("접근 권한 조회 실패:", error);
+            alert("접근 권한 목록 조회에 실패했습니다.");
         }
-
-    }, [topMenuId, midMenuId, btmMenuId, actionName]);
+    }, []);
 
     useEffect(() => {
         getMenuList();
-    }, [getMenuList]);
+        getAccessList();
+    }, [getMenuList, getAccessList]);
 
     // 메뉴 계층별 데이터
     const topMenuList = useMemo(() => {
@@ -204,36 +120,64 @@ export default function Access() {
 
     // 대메뉴 변경
     const changeTopMenu = (value) => {
-
         setTopMenuId(value);
         setMidMenuId("");
         setBtmMenuId("");
 
+        if (isEditing) return;
+
+        getAccessList({
+            topMenuId: value,
+            midMenuId: "",
+            btmMenuId: "",
+            actionName: "",
+        });
     };
 
     // 중메뉴 변경
     const changeMidMenu = (value) => {
-
         setMidMenuId(value);
         setBtmMenuId("");
 
+        if (isEditing) return;
+
+        getAccessList({
+            topMenuId,
+            midMenuId: value,
+            btmMenuId: "",
+            actionName: "",
+        });
+    };
+
+    // 소메뉴 변경
+    const changeBtmMenu = (value) => {
+        setBtmMenuId(value);
+
+        if (isEditing) return;
+
+        getAccessList({
+            topMenuId,
+            midMenuId,
+            btmMenuId: value,
+            actionName: "",
+        });
     };
 
     // 그리드 행 수정
     const editRow = (row) => {
-
+        setIsEditing(true);
         setEditingId(row.actionId);
+
+        setEditingOriginalData({...row});
 
         setActionName(row.actionName);
         setTopMenuId(row.topMenuId);
         setMidMenuId(row.midMenuId);
         setBtmMenuId(row.btmMenuId);
-
     };
 
     // 신규 데이터 추가
-    const addAccess = () => {
-
+    const addAccess = async () => {
         if (
             !actionName.trim() ||
             !topMenuId ||
@@ -252,18 +196,41 @@ export default function Access() {
             btmMenuId,
         };
 
-        setAccessList((prev) => [...prev, newData]);
+        try {
+            const response = await saveAccessList({
+                addedList: [newData],
+                modifiedList: [],
+            });
 
-        setAddedList((prev) => [...prev, newData]);
+            if (response.responseCode === "SUCCESS") {
+                alert("접근 권한이 추가되었습니다.");
 
-        setActionName("");
-        setEditingId(null);
+                setTopMenuId("");
+                setMidMenuId("");
+                setBtmMenuId("");
 
+                setIsEditing(false);
+                setActionName("");
+                setEditingId(null);
+                setEditingOriginalData(null);
+
+                await getAccessList({
+                    topMenuId: "",
+                    midMenuId: "",
+                    btmMenuId: "",
+                    actionName: "",
+                });
+            } else {
+                alert(response.message || "접근 권한 추가에 실패했습니다.");
+            }
+        } catch (error) {
+            console.error("접근 권한 추가 실패:", error);
+            alert(error.message || "접근 권한 추가 중 오류가 발생했습니다.");
+        }
     };
 
     // 기존 데이터 수정
-    const updateAccess = () => {
-
+    const updateAccess = async () => {
         if (
             !editingId ||
             !actionName.trim() ||
@@ -283,58 +250,51 @@ export default function Access() {
             btmMenuId,
         };
 
-        setAccessList((prev) =>
-            prev.map((item) =>
-                item.actionId === editingId
-                    ? {...item, ...updatedData}
-                    : item
-            )
-        );
-
-        const isNew = addedList.some(
-            (item) => item.actionId === editingId
-        );
-
-        if (isNew) {
-            setAddedList((prev) =>
-                prev.map((item) =>
-                    item.actionId === editingId
-                        ? updatedData
-                        : item
-                )
-            );
-        } else {
-            setModifiedList((prev) => {
-                const exists = prev.some(
-                    (item) => item.actionId === editingId
-                );
-
-                return exists
-                    ? prev.map((item) =>
-                        item.actionId === editingId
-                            ? updatedData
-                            : item
-                    )
-                    : [...prev, updatedData];
+        try {
+            const response = await saveAccessList({
+                addedList: [],
+                modifiedList: [updatedData],
             });
+
+            if (response.responseCode === "SUCCESS") {
+                alert("접근 권한이 수정되었습니다.");
+
+                setTopMenuId("");
+                setMidMenuId("");
+                setBtmMenuId("");
+
+                setIsEditing(false);
+                setActionName("");
+                setEditingId(null);
+                setEditingOriginalData(null);
+
+                await getAccessList({
+                    topMenuId: "",
+                    midMenuId: "",
+                    btmMenuId: "",
+                    actionName: "",
+                });
+            } else {
+                alert(response.message || "접근 권한 수정에 실패했습니다.");
+            }
+        } catch (error) {
+            console.error("접근 권한 수정 실패:", error);
+            alert(error.message || "접근 권한 수정 중 오류가 발생했습니다.");
+        }
+    };
+
+    // 변경 데이터 저장 전 취소
+    const cancelChanges = async () => {
+        if (editingOriginalData) {
+            setActionName(editingOriginalData.actionName);
+            setTopMenuId(editingOriginalData.topMenuId);
+            setMidMenuId(editingOriginalData.midMenuId);
+            setBtmMenuId(editingOriginalData.btmMenuId);
         }
 
         setEditingId(null);
-        setActionName("");
-
-    };
-
-    // 저장 전 전체 취소
-    const cancelChanges = () => {
-
-        setAccessList(
-            JSON.parse(JSON.stringify(originalList))
-        );
-
-        setAddedList([]);
-        setModifiedList([]);
-
-        setEditingId(null);
+        setEditingOriginalData(null);
+        setIsEditing(false);
 
         setTopMenuId("");
         setMidMenuId("");
@@ -342,48 +302,12 @@ export default function Access() {
 
         setActionName("");
 
-    };
-
-    // DB 저장
-    const saveAccess = async () => {
-
-        if (
-            addedList.length === 0 &&
-            modifiedList.length === 0
-        ) {
-            alert("변경된 데이터가 없습니다.");
-            return;
-        }
-
-        try {
-
-            const response = await api(
-                apiOption.POST,
-                "/access/save",
-                {
-                    addedList,
-                    modifiedList,
-                }
-            );
-
-            if (response.responseCode === "SUCCESS") {
-
-                alert("저장되었습니다.");
-
-                await getAccessList();
-
-                setAddedList([]);
-                setModifiedList([]);
-            }
-
-        } catch (error) {
-
-            console.error("저장 실패", error);
-
-            alert("저장 중 오류가 발생했습니다.");
-
-        }
-
+        await getAccessList({
+            topMenuId: "",
+            midMenuId: "",
+            btmMenuId: "",
+            actionName: "",
+        });
     };
 
     // 그리드 데이터 구성
@@ -492,7 +416,7 @@ export default function Access() {
                         <select
                             value={btmMenuId}
                             onChange={(e) =>
-                                setBtmMenuId(e.target.value)
+                                changeBtmMenu(e.target.value)
                             }
                             disabled={!midMenuId}
                             style={selectStyle}
@@ -500,14 +424,10 @@ export default function Access() {
                             <option value="">소 메뉴 선택</option>
 
                             {btmMenuList.map((item) => (
-                                <option
-                                    key={item.id}
-                                    value={item.id}
-                                >
+                                <option key={item.id} value={item.id}>
                                     {item.title}
                                 </option>
                             ))}
-
                         </select>
 
                     </div>
@@ -537,18 +457,6 @@ export default function Access() {
                             </button>
 
                         )}
-
-                        <button onClick={getAccessList} style={buttonStyle}>
-                            조회
-                        </button>
-
-                    </div>
-
-                    <div className="access-buttons">
-
-                        <button onClick={saveAccess} style={buttonStyle}>
-                            저장
-                        </button>
 
                         <button onClick={cancelChanges} style={buttonStyle}>
                             취소

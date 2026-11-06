@@ -32,7 +32,7 @@ public interface AccessRoleDao {
 
     // 전체 권한 중 유효한 권한 개수 확인
     int selectActionCount(
-            @Param("permissionIds") List<Long> permissionIds
+            @Param("actionIds") List<String> actionIds
     );
 
     // 기존 역할 권한 삭제
@@ -43,6 +43,6 @@ public interface AccessRoleDao {
     // 역할 권한 등록
     int insertRolePermission(
             @Param("roleId") String roleId,
-            @Param("permissionIds") List<Long> permissionIds
+            @Param("actionIds") List<String> actionIds
     );
 }
