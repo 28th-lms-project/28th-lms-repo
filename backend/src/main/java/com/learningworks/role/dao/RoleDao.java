@@ -10,8 +10,6 @@ import com.learningworks.role.vo.response.RoleVO;
 @Mapper
 public interface RoleDao {
 
-  long selectRoleCount();
-
   List<RoleVO> selectAllRoles();
 
   int insertNewRole(RegistRoleVO registRoleVO);

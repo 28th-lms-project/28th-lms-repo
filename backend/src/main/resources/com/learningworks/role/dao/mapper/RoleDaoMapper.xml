@@ -5,13 +5,6 @@
 <mapper
   namespace="com.learningworks.role.dao.RoleDao">
   
-  <!-- long selectRoleCount(); -->
-  <select id="selectRoleCount"
-          resultType="_long">
-    SELECT COUNT(ROLE_ID)
-      FROM "ROLE"
-  </select>
-  
   <!-- List<RoleVO> selectAllRoles(); -->
   <select id="selectAllRoles"
           resultType="com.learningworks.role.vo.response.RoleVO">
@@ -52,7 +45,7 @@
   <select id="selectActiveUserCountByRoleId"
           parameterType="string"
           resultType="_long">
-    SELECT COUNT(1)
+    SELECT COUNT(ID)
       FROM "USER"
      WHERE BASE_ROLE = #{_parameter}
        AND DEL_YN = 'N'

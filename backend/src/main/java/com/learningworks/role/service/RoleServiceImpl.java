@@ -1,5 +1,6 @@
 package com.learningworks.role.service;
 
+import java.util.List;
 import java.util.Set;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -30,10 +31,11 @@ public class RoleServiceImpl implements RoleService {
 
   @Override
   public RoleListVO readRoleList() {
+    List<RoleVO> roleList = this.roleDao.selectAllRoles();
 
     RoleListVO result = new RoleListVO();
-    result.setRoleCount(this.roleDao.selectRoleCount());
-    result.setRoleList(this.roleDao.selectAllRoles());
+    result.setRoleList(roleList);
+    result.setRoleCount(roleList.size());
 
     return result;
   }
