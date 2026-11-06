@@ -20,7 +20,7 @@ public interface ExamService {
 
 	ExamQuestionListVO readAllExamQuestion(String subjectId);
 
-//	ExamQuestionListVO readAllQuestions();
+	ExamQuestionVO readOneQuestionsById(String examId);
 
 //	ExamSetVO readExamSetByCourseName(String courseName);
 

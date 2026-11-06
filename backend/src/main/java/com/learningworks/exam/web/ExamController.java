@@ -49,19 +49,19 @@ public class ExamController {
 		return this.examService.readAllExamQuestion(subjectId);
 	}
 	
+	@GetMapping("admin/system/test/{examId}")
+	public ExamQuestionVO getOneQuestionById(@PathVariable String examId) {
+		return this.examService.readOneQuestionsById(examId);
+	}
+	
 	@DeleteMapping("admin/system/test/{examId}")
 	@ResponseBody
 	public String deleteExamQuestion(@PathVariable String examId) {
 		String deleteResult = this.examService.deleteExamQuestion(examId);
 		return deleteResult;
 	}
-	
-//	@GetMapping("/test/{courseName}")
-//	public ExamSetVO getExamSet(@PathVariable String courseName) {
-//		ExamSetVO examSet = this.examService.readExamSetByCourseName(courseName);
-//		return null;
-//	}
-	
+
+
 	@PutMapping("admin/system/test/{examId}")
 	@ResponseBody
 	public ExamQuestionVO updateExamQuestion(@PathVariable String examId, @Valid @RequestBody ModifyExamQuestionVO modifyExamQuestionVO) {

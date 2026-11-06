@@ -57,6 +57,8 @@ public class ExamServiceImpl implements ExamService {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 	}
+	
+	
 
 	@Override
 	public List<ExamSetVO> readAllExamInExamSet() {
@@ -122,6 +124,14 @@ public class ExamServiceImpl implements ExamService {
 		result.setExamList(questions);
 		result.setQuestionCount(questionCount);
 		return result;
+	}
+
+
+
+	@Override
+	public ExamQuestionVO readOneQuestionsById(String examId) {
+		ExamQuestionVO question = this.examDao.selectQuestionById(examId);
+		return question;
 	}
 
 //	@Override
