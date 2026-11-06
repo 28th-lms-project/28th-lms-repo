@@ -2,9 +2,11 @@ package com.learningworks.course.service;
 
 import java.util.List;
 
-import com.learningworks.course.vo.request.CourseMemberVO;
-import com.learningworks.course.vo.request.ViewCourseVO;
+import com.learningworks.course.vo.request.RegistCourseVO;
+import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
+
+import jakarta.validation.Valid;
 
 public interface CourseService {
 
@@ -15,5 +17,9 @@ public interface CourseService {
 	CourseVO readMyCourse(String courseId);
 
 	List<CourseMemberVO> courseMemberList();
+
+	int addCourse(RegistCourseVO registCourseVO);
+
+	List<CourseMemberVO> courseTutorList();
 
 }

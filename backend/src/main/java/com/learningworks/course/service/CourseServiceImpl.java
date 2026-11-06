@@ -5,9 +5,13 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.learningworks.course.dao.CourseDao;
-import com.learningworks.course.vo.request.CourseMemberVO;
-import com.learningworks.course.vo.request.ViewCourseVO;
+import com.learningworks.course.vo.request.RegistCourseStudentVO;
+import com.learningworks.course.vo.request.RegistCourseTutorVO;
+import com.learningworks.course.vo.request.RegistCourseVO;
+import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
+
+import jakarta.validation.Valid;
 
 @Service
 public class CourseServiceImpl implements CourseService{
@@ -46,6 +50,41 @@ public class CourseServiceImpl implements CourseService{
 	public List<CourseMemberVO> courseMemberList() {
 		List<CourseMemberVO> CourseMemberVO = this.courseDao.courseMemeberList();
 		return CourseMemberVO;
+	}
+
+	@Override
+	public int addCourse(RegistCourseVO registCourseVO) {
+		int studentResult = 0 ;
+		RegistCourseTutorVO registCourseTutorVO = new RegistCourseTutorVO();
+		RegistCourseStudentVO registCourseStudentVO = new RegistCourseStudentVO();
+		int courseResult = this.courseDao.addCourse(registCourseVO);
+		if (courseResult == 0) {
+			System.out.println("course Error");
+		}
+		registCourseTutorVO.setCourseId(registCourseVO.getId());
+		registCourseTutorVO.setTutorId(registCourseVO.getTutorId());
+		int tutorResult = this.courseDao.addtutor(registCourseTutorVO); 
+		if (tutorResult == 0) {
+			System.out.println("toutor Error");
+		}
+		for( String student : registCourseVO.getStudentId()) {
+			registCourseStudentVO.setCourseId(registCourseVO.getId());
+			registCourseStudentVO.setStudentId(student);
+			studentResult = this.courseDao.addStudent(registCourseStudentVO);
+		}
+		if (studentResult == 0) {
+			System.out.println("student Error");
+		}
+		
+		
+		
+		return 0;
+	}
+
+	@Override
+	public List<CourseMemberVO> courseTutorList() {
+		List<CourseMemberVO> courseMemberVO = this.courseDao.courseTutorList();
+		return courseMemberVO;
 	}
 	
 	

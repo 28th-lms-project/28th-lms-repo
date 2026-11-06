@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-import { courseActions } from "../store/slice/courseSliceStore";
+import { courseActions } from "../../../../store/slices/courseSliceStore";
 
 export default function CourseItem() {
   const { showCourse } = useSelector((store) => store.courses);
@@ -18,11 +18,9 @@ export default function CourseItem() {
       );
       const resultJson = await fetchResult.json();
       if (!ignore) {
-        console.log(resultJson);
         dispatch(courseActions.loadShowCourse(resultJson));
 
         dispatch(courseActions.finishLoading());
-        console.log(showCourse);
       }
     })();
     return () => {
@@ -32,8 +30,6 @@ export default function CourseItem() {
   }, [id]);
 
   const finishCourse = (courseStartDate, courseEndDated) => {
-    console.log(courseStartDate);
-    console.log(courseEndDated);
     const today = new Date();
     const startDate = new Date(courseStartDate);
     const endDate = new Date(courseEndDated);
@@ -44,12 +40,10 @@ export default function CourseItem() {
     const elapsedDays = today - startDate;
 
     const progress = Math.min(100, Math.max(0, (elapsedDays / totalDay) * 100));
-    console.log(progress);
+
     if (progress >= 100) {
       return "이미 완료된 과정입니다 ";
     } else {
-      console.log(totalDay);
-      console.log(Math.round(progress));
       return `${Math.round(progress)}% 진행중 `;
     }
   };

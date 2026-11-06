@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import Select from "react-select";
+import { courseActions } from "../../../../store/slices/courseSliceStore";
 
 export default function CourseStudentSelect() {
   const [options, setOptions] = useState([]);
-
+  const dispatch = useDispatch();
   useEffect(() => {
     const getCourseList = async () => {
       const response = await fetch("http://localhost:8080/student/list");
@@ -11,7 +13,7 @@ export default function CourseStudentSelect() {
       const result = await response.json();
       console.log(result);
       const mappedOptions = result.map((student) => ({
-        value: student.name,
+        value: student.id,
         label: student.name,
       }));
 
@@ -22,22 +24,22 @@ export default function CourseStudentSelect() {
   }, []);
 
   const handleChange = (selectedOption) => {
-    console.log("선택한 과정 ID:", selectedOption.value);
+    dispatch(courseActions.selectStudents(selectedOption));
   };
 
   return (
     <div
       style={{
         display: "inline-block",
-        width: " 150px",
+        width: " 400px",
         verticalAlign: "middle",
       }}
     >
       <Select
         options={options}
         onChange={handleChange}
-        placeholder="과정 선택"
-        isSearchable
+        placeholder="수강생 선택"
+        isMulti
       />
     </div>
   );

@@ -4,9 +4,13 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
-import com.learningworks.course.vo.request.CourseMemberVO;
-import com.learningworks.course.vo.request.ViewCourseVO;
+import com.learningworks.course.vo.request.RegistCourseStudentVO;
+import com.learningworks.course.vo.request.RegistCourseTutorVO;
+import com.learningworks.course.vo.request.RegistCourseVO;
+import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
+
+import jakarta.validation.Valid;
 
 @Mapper
 public interface CourseDao {
@@ -18,5 +22,13 @@ public interface CourseDao {
 	CourseVO readMyCourse(String courseId);
 
 	List<CourseMemberVO> courseMemeberList();
+
+	int addCourse(RegistCourseVO registCourseVO);
+
+	int addtutor(RegistCourseTutorVO registCourseTutorVO);
+
+	int addStudent(RegistCourseStudentVO registCourseStudentVO);
+
+	List<CourseMemberVO> courseTutorList();
 
 }

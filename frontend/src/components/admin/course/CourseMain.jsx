@@ -1,6 +1,6 @@
 import { Fragment, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { courseActions } from "./store/slice/courseSliceStore";
+import { courseActions } from "../../../store/slices/courseSliceStore";
 
 import { IconButton } from "../../sample/input/IconButton";
 import { icons } from "../../sample/input/icons";
@@ -32,7 +32,7 @@ export default function CourseMain() {
       // showArticle 제거.
       ignore = true;
     };
-  }, [dispatch]);
+  }, [dispatch, pathname]);
 
   const onClickAddGroupButtonHandler = () => {
     navigate("/admin/course/add");
@@ -59,7 +59,7 @@ export default function CourseMain() {
               }
               onClick={clickCourseIdButtonHandler.bind(this, course.id)}
             >
-              {course.id}
+              {course.courseName}
             </IconButton>
           </Fragment>
         );
