@@ -2,7 +2,7 @@
 
 처리 규칙은 `README.md`를 따릅니다. 각 항목의 `현재 상태`를 코드에서 직접 확인한 뒤 판단해 주세요.
 
-> 최신화: 2026-11-06, `feature/role` 커밋 `cfa0da0` 기준. ACCESS · ACCESS_ROLE 담당자의 처리 결과(R-01 ~ R-08)를 ROLE 담당자가 코드와 대조해 확인했습니다. D-01 세부 결정에 따라 **R-09를 추가**하고, R-03 남은 작업에 컬럼 길이를 답변했습니다. 남은 작업은 `README.md`의 "남은 작업"을 참고하세요.
+> 최신화: 2026-11-06, `feature/role` 커밋 `cfa0da0` 기준. ACCESS · ACCESS_ROLE 담당자의 처리 결과(R-01 ~ R-08)를 ROLE 담당자가 코드와 대조해 확인했습니다. D-01 최종 결정(`ACTION_CODE` 컬럼, 시퀀스 `ACTION_ID`, `@RequireAction` 자동 수집)에 맞춰 **R-09를 다시 작성**하고, 권한 검사 구현에 따라 **R-10을 추가**했습니다. 남은 작업은 `README.md`의 "남은 작업"을 참고하세요.
 
 | ID | 제목 | 분류 | 우선순위 | 선행 조건 | 진행 상태 |
 | --- | --- | --- | --- | --- | --- |
@@ -14,7 +14,8 @@
 | R-06 | 프론트 응답 처리 전환 | 공통화 | 높음 | R-01, 공통 API 클라이언트 제공 | **완료** (`0014d42`) |
 | R-07 | 역할 목록 API를 `GET /roles`로 통합 | 중복 제거 | 중간 | D-01 논의 불필요, 단독 진행 가능 | **완료** (`0014d42`) |
 | R-08 | 사용하지 않는 import 정리 | 정리 | 낮음 | 없음 | **완료** (`0014d42`) |
-| R-09 | ACTION_ID를 고정 권한 코드로 전환 | 설계 반영 (D-01) | 높음 | ACCESS 담당자 동의 | 대기 |
+| R-09 | ACTION_CODE 기반 권한 등록으로 전환 | 설계 반영 (D-01) | 높음 | ACCESS 담당자 동의 (권한 코드 목록 API는 제공 완료) | 대기 |
+| R-10 | 권한 캐시 초기화 호출 · SUPER_ADMIN 전용 표시 적용 | 설계 반영 (D-01, D-03) | 중간 | 없음 | 대기 |
 
 ---
 
@@ -168,7 +169,7 @@ public ApiResponse<List<AccessListVO>> selectAccessList(
 - 변경 내용: `AccessRoleSaveRequestVO`(`@NotBlank` + `@Pattern(ROLE_ID_PATTERN_ALLOW_EMPTY)`, `@NotNull List<@NotBlank String> actionIds`), `AccessSaveRequestVO`(`List<@Valid AccessVO>`), `AccessVO`(메뉴 3개 · 권한명 `@NotBlank`), 두 컨트롤러 `@RequestBody`에 `@Valid`. `@RequestParam roleId`는 `RoleController`와 같이 `@Pattern(ROLE_ID_PATTERN)`만 적용 (빈 값도 패턴에서 걸리므로 `@NotBlank`를 함께 쓰면 메시지가 2개 나옴). 선택 항목 7번(`@ModelAttribute AccessSearchRequestVO`)도 적용. 클래스 `@Validated` 미사용. `0014d42`(`feature/access-role`의 머지 커밋)에 포함.
 - 남은 작업: `ACTION.ACTION_NAME` 컬럼 길이를 확인하지 못해 `@Size(max = n)`는 TODO 주석으로 남김 (저장소에 DDL 없음).
 - ROLE 담당자에게 요청: 없음
-- ROLE 담당자 답변 (2026-11-06): 컬럼 길이는 `ACTION_ID` `VARCHAR2(20 CHAR)`, `ACTION_NAME` `VARCHAR2(40 CHAR)`입니다. `AccessVO.actionName`에 `@Size(max = 40, message = "접근 권한명은 40자 이하로 입력해주세요.")`를 추가하고 TODO 주석을 삭제해 주세요. `actionId` 검증은 R-09에서 함께 처리합니다.
+- ROLE 담당자 답변 (2026-11-06): 컬럼 길이는 `ACTION_ID` `VARCHAR2(20 CHAR)`, `ACTION_NAME` `VARCHAR2(40 CHAR)`입니다. `AccessVO.actionName`에 `@Size(max = 40, message = "접근 권한명은 40자 이하로 입력해주세요.")`를 추가하고 TODO 주석을 삭제해 주세요. `ACTION_ID`는 시퀀스로 자동 생성되므로 입력 검증이 필요 없고, 새로 추가된 `actionCode` 검증은 R-09에서 함께 처리합니다.
 
 ---
 
@@ -353,50 +354,149 @@ UPDATE ACTION
 
 ---
 
-## R-09. ACTION_ID를 고정 권한 코드로 전환 (D-01 반영)
+## R-09. ACTION_CODE 기반 권한 등록으로 전환 (D-01 반영)
 
 ### 배경
-`discussions.md` D-01에서 API 권한 검사를 `@accessChecker.can('ACTION_ID')` 방식으로 하기로 했고, 별도 `ACTION_CODE` 컬럼 없이 **`ACTION_ID`(PK)를 그대로 권한 코드로 쓰기로** 결정했습니다 (ROLE 담당자 결정, ACCESS 담당자 동의 필요). 코드에 ID가 직접 적히므로 ACTION_ID는 사람이 정하는 고정값이어야 합니다.
+`discussions.md` D-01 최종 결정에 따라 ACTION 테이블에 **`ACTION_CODE`(권한 코드) 컬럼이 추가**되었고, `ACTION_ID`는 **시퀀스로 자동 생성**합니다.
+
+- 권한 코드는 백엔드 개발자가 API 메서드에 `@RequireAction(domain, action, description)`으로 정의합니다. 예: `ROLE_DELETE`, `SURVEY_ANSWER`.
+- 서버 시작 시 ROLE 담당자의 `ActionCodeRegistry`가 이 코드들을 모으고, 목록 API로 제공합니다.
+- 관리자는 ACTION을 등록할 때 코드를 직접 입력하지 않습니다. **목록에서 도메인 → 행위 순으로 선택**합니다.
+- 앞서 협의한 "DB 상수 테이블(테이블명) + CRUD 드롭다운" 방식은 이 방식으로 대체되었습니다. 상수 테이블은 만들지 않습니다. 채택하지 않은 이유는 D-01을 참고하세요.
+
+### 선행 조건
+- ACCESS 담당자 동의 (상수 테이블 방식을 대체하므로 재합의 필요)
+- 3번의 등록부 검증과 6번의 드롭다운에 필요한 `ActionCodeRegistry` · `GET /action-codes`는 ROLE 담당자가 구현을 마쳤습니다 (아래 "ROLE 담당자가 제공하는 것").
 
 ### 대상 파일
-- `backend/src/main/resources/com/learningworks/access/dao/mapper/AccessDaoMapper.xml` — `insertAccess`의 `selectKey`(SYS_GUID)
-- `backend/src/main/java/com/learningworks/access/vo/response/AccessVO.java`
+- `backend/src/main/resources/com/learningworks/access/dao/mapper/AccessDaoMapper.xml` — `insertAccess`의 `selectKey`, 조회 · 등록 SQL
+- `backend/src/main/java/com/learningworks/access/vo/response/AccessVO.java`, 목록 응답 VO
 - `backend/src/main/java/com/learningworks/access/service/AccessServiceImpl.java`
 - `backend/src/main/java/com/learningworks/common/exceptions/enums/ErrorCode.java` (상수 추가만)
 - `frontend/src/components/admin/system/access/Access.jsx` — 등록 · 수정 화면
 
 ### 현재 상태
-- `insertAccess`가 `ACTION_ID`를 `SUBSTR(RAWTOHEX(SYS_GUID()), 1, 20)`로 자동 생성합니다 (임시 값).
-- `AccessVO.actionId`에 검증이 없습니다.
+- `insertAccess`가 `ACTION_ID`를 `SUBSTR(RAWTOHEX(SYS_GUID()), 1, 20)`로 생성합니다.
+- DB에는 `ACTION_CODE` 컬럼이 추가되었지만 매퍼 · VO · 화면에는 아직 반영되지 않았습니다.
 
 ### 요청 내용
-1. **등록 시 ACTION_ID를 직접 입력받기**
-   - `selectKey` 삭제, `#{actionId}`를 입력값으로 저장
-   - 이름 규칙: 대문자 · 숫자 · 언더스코어, `{도메인}_{행위}` 형식 (예: `ASSIGNMENT_CREATE`, `ROLE_DELETE`), **최대 20자**
-2. **`AccessVO.actionId` 검증**
-   - 등록 · 수정 모두 필수입니다. `@NotBlank`, `@Size(max = 20)`, `@Pattern(regexp = "^$|^[A-Z0-9]+(_[A-Z0-9]+)*$")`
-   - `@NotBlank`로 대체되므로 `AccessServiceImpl.saveAccess`의 "수정 대상 actionId 없음 → `GLOBAL_BAD_REQUEST`" 검사는 삭제할 수 있습니다.
-   - 정규식은 상수로 두기를 권장합니다 (예: `access` 패키지의 `AccessConstants.ACTION_ID_PATTERN`). `accessChecker`(ROLE 담당자 구현)에서도 같은 규칙을 참고합니다.
-3. **중복 처리**: `DuplicateKeyException`을 잡아 새 ErrorCode로 던지기
+1. **`ACTION_ID`를 팀 공통 PK 규칙으로 생성**
+   - `selectKey`의 `SYS_GUID`를 팀 공통 규칙(`'약자-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_테이블_명_PK.NEXTVAL, 6, '0')`)으로 변경
+   - Java 타입은 `String` 유지 (R-04)
+2. **`ACTION_CODE`를 매퍼 · VO에 반영**
+   - 목록 · 상세 조회 결과와 등록 SQL에 `ACTION_CODE` 추가
+   - `AccessVO.actionCode` 추가
+3. **`actionCode` 검증 (등록 시)**
+   - `@NotBlank(message = "권한 코드를 선택해주세요.")`, `@Size(max = 40, message = "권한 코드는 40자 이하로 입력해주세요.")` (`ACTION_CODE` `VARCHAR2(40 CHAR)`)
+   - **등록부에 있는 코드인지 서비스에서 확인**: ROLE 담당자가 제공할 `ActionCodeRegistry.contains(actionCode)`가 false이면 400. 드롭다운은 화면을 거치지 않는 요청으로 우회할 수 있으므로 백엔드 검증이 필요합니다.
+   - 형식 정규식(`@Pattern`)은 등록부 검증에 포함되므로 따로 두지 않아도 됩니다.
+   ```java
+   // 400 BAD_REQUEST 섹션
+   ACTION_CODE_NOT_EXISTS(HttpStatus.BAD_REQUEST, "등록되지 않은 권한 코드입니다."), //
+   ```
+4. **중복 처리**: `ACTION_CODE`의 `UNIQUE` 제약 위반(`DuplicateKeyException`)을 잡아 새 ErrorCode로 던지기
    ```java
    // 409 CONFLICT 섹션
-   ACTION_ID_USED(HttpStatus.CONFLICT, "이미 사용 중인 접근 권한 ID입니다."), //
+   ACTION_CODE_USED(HttpStatus.CONFLICT, "이미 등록된 권한 코드입니다."), //
    ```
-4. **등록 후 ID 변경 불가**
-   - 수정(`modifiedList`)은 `ACTION_ID`로 대상을 찾기만 하고, ID 자체는 바꾸지 않습니다 (현재 `updateAccess`도 ID를 바꾸지 않으므로 유지).
-   - 프론트 수정 화면에서 ID 입력칸은 읽기 전용으로 표시합니다.
-5. **기존 GUID 데이터 정리**: 새 ID 체계로 바꿀 때 `ACTION`과 이를 참조하는 `ROLE_ACTION.ACTION_ID`를 함께 바꾸거나 다시 등록해 주세요 (FK가 없으므로 수동으로 맞춰야 함).
+5. **등록 후 `ACTION_CODE` 변경 불가 (추천)**
+   - 코드를 바꾸면 이미 그 ACTION을 부여받은 역할이 다른 API를 쓸 수 있게 되는 등 권한의 의미가 바뀝니다.
+   - 수정(`modifiedList`)은 이름 · 메뉴만 바꾸고 `updateAccess`의 `SET`에 `ACTION_CODE`를 넣지 않습니다. 코드를 바꿔야 하면 삭제 후 다시 등록합니다.
+   - 수정 화면에서 권한 코드는 읽기 전용으로 표시합니다.
+6. **등록 화면: 드롭다운 2개** — `GET /action-codes`(구현 완료)의 `domainList`를 사용합니다. 응답 형식은 아래 "ROLE 담당자가 제공하는 것"을 참고하세요. 언더스코어로 문자열을 나누지 말고 응답의 값을 그대로 쓰세요.
 
-### 협의 필요 (ACCESS 담당자 판단)
-- **ACTION 관리 화면의 사용 범위**: 코드 기반 검사에서는 개발자가 API를 만들 때 ACTION_ID를 정하고 코드에 적습니다. 관리자가 화면에서 새 ACTION을 등록해도, 그 ID를 검사하는 코드가 없으면 효과가 없습니다.
-  - 추천: ACTION 목록은 **개발자가 SQL로 넣는 기준 데이터**로 관리하고, 화면에서는 이름 · 메뉴 연결 수정과 조회만 제공
-  - 또는: 등록 기능은 유지하되 SUPER_ADMIN 전용(D-03)으로 두고, "코드에 반영된 ID만 등록"하도록 안내
-- **컬럼 길이**: 20자로 부족하면 `ACTION_ID`(와 `ROLE_ACTION.ACTION_ID`) 길이 확장 검토
+   ```text
+   [1] 도메인      [ ROLE                 ▼ ]   ← 표시: domain (영문 그대로)
+   [2] 권한        [ 역할 삭제 (DELETE)      ▼ ]   ← 표시: "description (action)", value: actionCode
+       권한 코드   ROLE_DELETE                    ← 읽기 전용 표시
+       권한명      [ 역할 삭제               ]   ← description이 기본값, 수정 가능
+   ```
+
+   - **1번 드롭다운**: `domain`을 영문 그대로 표시합니다 (도메인 한글명은 두지 않기로 결정).
+   - **2번 드롭다운**: 표시는 `description (action)`, 선택값은 `actionCode`. 받은 `actionCode`를 그대로 저장 요청의 `actionCode`에 넣습니다.
+   - **이미 등록된 코드**: `registered`가 `true`인 선택지는 비활성화하고 "(등록됨)"을 붙입니다.
+   - **도메인을 바꾸면**: 2번 선택값과 권한명을 초기화합니다.
+   - **권한명 기본값**: 2번을 고르면 `ACTION_NAME`에 `description`을 채웁니다. 단, 관리자가 권한명을 직접 고친 뒤에는 2번 선택을 바꿔도 덮어쓰지 않습니다.
+   - **수정 화면**: 두 드롭다운 모두 읽기 전용 (5번).
+7. **(선택) 미사용 코드 표시**: 목록에서 등록부에 없는 `ACTION_CODE`(코드에서 삭제된 권한)를 "미사용"으로 표시
+8. **기존 데이터 정리**
+   - GUID로 저장된 `ACTION`과 이를 참조하는 `ROLE_ACTION.ACTION_ID`를 함께 정리해야 합니다 (FK가 없으므로 수동).
+   - 테스트 데이터라면 삭제 후 다시 등록하는 것이 가장 간단합니다.
+9. **DB 상수 테이블은 만들지 않습니다.** 작업 중이던 상수 테이블과 관련 코드는 정리해 주세요.
+
+### ROLE 담당자가 제공하는 것 (구현 완료)
+패키지: `com.learningworks.common.action`
+
+- `ActionCodeRegistry.contains(String actionCode)`: 등록부에 있는 코드인지 확인 (3번 검증에 사용, 주입받아 호출)
+- `GET /action-codes` (`@RequireSuperAdmin`): 권한 코드 목록
+
+```json
+{ "httpStatusCode": 200, "httpStatusMessage": "OK",
+  "body": {
+    "actionCodeCount": 3,
+    "domainList": [
+      { "domain": "COURSE_NOTICE", "actionList": [
+        { "actionCode": "COURSE_NOTICE_CREATE", "action": "CREATE", "description": "강의 공지 등록", "registered": false } ] },
+      { "domain": "ROLE", "actionList": [
+        { "actionCode": "ROLE_DELETE", "action": "DELETE", "description": "역할 삭제", "registered": true },
+        { "actionCode": "ROLE_READ",   "action": "READ",   "description": "역할 목록 조회", "registered": false } ] } ] } }
+```
+
+- 도메인 · 행위 모두 이름순 정렬, `@RequireSuperAdmin` API는 목록에 없음
+- `registered`: `ACTION.ACTION_CODE`에 이미 있는 코드인지
+- 캐시 초기화 호출은 R-10 참고
 
 ### 완료 조건
-- 새 ACTION을 지정한 ID로 등록할 수 있고, 형식이 틀리거나 중복이면 400 / 409로 응답
-- 수정 시 ACTION_ID가 바뀌지 않음
-- 기존 GUID ACTION이 새 ID 체계로 정리됨
+- 새 ACTION이 팀 공통 규칙의 `ACTION_ID`와 선택한 `ACTION_CODE`로 등록됨
+- 등록부에 없는 코드는 400, 이미 등록된 코드는 409로 응답
+- 수정 시 `ACTION_CODE`가 바뀌지 않음
+- 기존 GUID 데이터가 정리됨
+
+### 처리 결과
+- 상태:
+- 판단 근거:
+- 변경 내용:
+- ROLE 담당자에게 요청:
+
+---
+
+## R-10. 권한 캐시 초기화 호출 · SUPER_ADMIN 전용 표시 적용 (D-01, D-03 반영)
+
+### 배경
+ROLE 담당자가 D-01의 권한 검사(`com.learningworks.common.action`)를 구현했습니다.
+
+- `AccessChecker`는 역할별 허용 권한 코드를 **캐시**합니다. ROLE_ACTION이나 ACTION_CODE가 바뀌는 곳에서 캐시를 비워야 바뀐 권한이 바로 반영됩니다.
+- `@RequireSuperAdmin`을 붙인 API는 SUPER_ADMIN만 호출할 수 있습니다 (D-03).
+- 권한 검사는 기본적으로 **꺼져 있습니다** (`app.access-check.enabled`, 기본값 `false`). JWT 인증이 적용된 뒤 켭니다. 꺼져 있는 동안에는 어노테이션을 붙여도 동작에 영향이 없으므로 지금 적용해도 안전합니다.
+
+### 대상 파일
+- `backend/src/main/java/com/learningworks/accessrole/service/AccessRoleServiceImpl.java`
+- `backend/src/main/java/com/learningworks/access/service/AccessServiceImpl.java`
+- `backend/src/main/java/com/learningworks/accessrole/web/AccessRoleController.java`
+- `backend/src/main/java/com/learningworks/access/web/AccessController.java`
+
+### 요청 내용
+1. **권한 저장 후 캐시 초기화**: `AccessRoleServiceImpl.saveRolePermission`에서 저장이 끝난 뒤 `accessChecker.evictRole(roleId)` 호출
+2. **ACTION 저장 후 캐시 초기화**: `AccessServiceImpl.saveAccess`에서 ACTION을 수정 · 삭제했다면 `accessChecker.evictAll()` 호출 (등록만 했다면 생략 가능)
+   - 두 메서드 모두 트랜잭션 안에서 호출하면 **커밋 후에** 비워지므로, 호출 위치는 메서드 끝이면 됩니다.
+3. **SUPER_ADMIN 전용 표시**: D-03 TODO 주석 위치(`/access/save`, `/access-role/save`)에 `@RequireSuperAdmin` 추가, TODO 주석 삭제
+4. 조회 API(`/access/actions`, `/access-role/allowed`, `/access-role/denied` 등)는 권한 설정 화면 전용이므로 함께 `@RequireSuperAdmin`을 붙이기를 권장합니다 (선택).
+
+```java
+import com.learningworks.common.action.AccessChecker;
+import com.learningworks.common.action.RequireSuperAdmin;
+
+@RequireSuperAdmin
+@PostMapping("/save")
+public ApiResponse<...> saveRolePermission(...) { ... }
+
+// AccessRoleServiceImpl.saveRolePermission 마지막
+this.accessChecker.evictRole(request.getRoleId());
+```
+
+### 완료 조건
+- 권한 저장 · ACTION 수정 후 캐시 초기화 메서드가 호출됨
+- 두 저장 API에 `@RequireSuperAdmin`이 붙고 D-03 TODO 주석이 삭제됨
 
 ### 처리 결과
 - 상태:

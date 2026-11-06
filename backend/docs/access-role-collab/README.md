@@ -7,13 +7,15 @@
   - 2026-11-06 (1차): `feature/role` 커밋 `644fe80` 기준. R-04, R-05 완료 기록, R-06 현재 상태 수정, R-03에 `@ModelAttribute` 선택 항목 추가
   - 2026-11-06 (2차): `feature/role` 커밋 `cfa0da0` 기준. ACCESS · ACCESS_ROLE 담당자가 **R-01 ~ R-08 전부 처리**(`0014d42`에 포함)하고 **D-01, D-03, D-06을 결정**한 내용을 반영. ROLE 담당자가 코드와 대조해 처리 결과가 실제 코드와 일치함을 확인
   - 2026-11-06 (3차): ROLE 담당자가 **D-01 세부 사항**(`ACTION_ID`를 권한 코드로 사용, `accessChecker`는 ROLE 담당자 구현, 요청자 역할은 DB 조회)과 **D-02**(MENU_ROLE 유지)를 결정. **R-09 추가**, R-03에 `ACTION` 컬럼 길이 답변
+  - 2026-11-06 (4차): **D-01 최종 결정**으로 재정리. `ACTION_CODE` 컬럼 추가, `ACTION_ID`는 시퀀스, 권한 코드는 백엔드가 API에 `@RequireAction`으로 정의하고 서버 시작 시 자동 수집, 관리자는 목록에서 선택. DB 상수 테이블 방식은 채택하지 않음. **R-09 재작성**, D-03에 SUPER_ADMIN 전용 표시 보충
+  - 2026-11-06 (5차): `ACTION_CODE` `VARCHAR2(40 CHAR)`, `ACTION_ID`는 팀 공통 PK 규칙. ROLE 담당자가 **권한 검사를 구현**(`com.learningworks.common.action`, 검사는 JWT 적용 후 켬). R-09 6번에 드롭다운 동작 확정, **R-10 추가** (캐시 초기화 호출, `@RequireSuperAdmin` 적용)
 
 ## 현재 진행 상황
 
 | 구분 | 완료 | 남음 |
 | --- | --- | --- |
-| 요청 (R) | R-01 ~ R-08 | R-03의 `ACTION_NAME` `@Size(max = 40)`, **R-09** (ACTION_ID 고정 권한 코드 전환) |
-| 협의 (D) | D-01(세부 사항 포함), D-02, D-03, D-06 결정 | D-03 구현, D-04 · D-05 결정 |
+| 요청 (R) | R-01 ~ R-08 | R-03의 `ACTION_NAME` `@Size(max = 40)`, **R-09** (ACTION_CODE 기반 권한 등록 전환), **R-10** (캐시 초기화 · SUPER_ADMIN 전용 표시) |
+| 협의 (D) | D-01(권한 검사 구현 포함), D-02, D-03, D-06 결정 | D-03 구현, D-04 · D-05 결정 |
 
 이 디렉토리의 문서는 **"요청"과 "협의"** 두 종류입니다. 담당자(또는 담당자의 Claude Code)가 각 항목을 검토하고, 수락 · 반려 · 보류를 판단해 **각 항목의 `처리 결과`란에 기록**해 주세요.
 
@@ -34,7 +36,7 @@
 4. **수정 범위**
    - 수정 가능: `access`, `accessrole` 패키지(백엔드), 해당 페이지 프론트 코드 (`frontend/src/api/admin/system/access*`, `frontend/src/components/admin/system/access*`)
    - 공통 파일 `ErrorCode.java`: **새 enum 상수 추가만** 가능 (기존 상수 변경 · 삭제 금지)
-   - 그 외 공통 파일(`ApiResponse`, `GlobalExceptionHandler` 등)과 `role` 패키지: 수정하지 말고, 변경이 필요하면 처리 결과란에 요청 내용을 적어주세요.
+   - 그 외 공통 파일(`ApiResponse`, `GlobalExceptionHandler`, `common.action` 패키지 등)과 `role` 패키지: 사용(주입 · 어노테이션)은 자유, 수정하지 말고, 변경이 필요하면 처리 결과란에 요청 내용을 적어주세요.
 5. **의존 관계**를 지켜주세요. 각 항목의 `선행 조건`이 충족되지 않았으면 보류로 기록합니다.
 6. 처리 후 `처리 결과`란을 아래 형식으로 채워주세요.
 
@@ -108,15 +110,16 @@ ROLE API 목록:
 
 ### ACCESS · ACCESS_ROLE 담당자
 
-1. **R-09 검토** (ACTION_ID를 고정 권한 코드로 전환) — D-01 세부 결정에 대한 동의 여부와, ACTION 관리 화면의 사용 범위를 판단해 주세요.
-2. **R-03 남은 작업**: `AccessVO.actionName`에 `@Size(max = 40)` 추가 (컬럼 길이 확인 완료)
-3. **D-03 구현**
+1. **R-09 검토** (ACTION_CODE 기반 권한 등록 전환) — D-01 최종 결정(상수 테이블 대신 `@RequireAction` 자동 수집)에 대한 동의 여부를 판단해 주세요. 팀 공통 PK 규칙 `ACTION_ID`, `ACTION_CODE` 매퍼 · VO 반영, 중복 처리, 기존 데이터 정리는 먼저 진행할 수 있습니다. 진행 중이던 DB 상수 테이블 작업은 중단해 주세요.
+2. **R-10 처리** (캐시 초기화 호출, `@RequireSuperAdmin` 적용) — 권한 검사가 꺼져 있어 지금 적용해도 동작에 영향 없음
+3. **R-03 남은 작업**: `AccessVO.actionName`에 `@Size(max = 40)` 추가 (컬럼 길이 확인 완료)
+4. **D-03 구현**
    - JWT 없이 지금 할 수 있는 것: `ROLE_SUPER_ADMIN`을 권한 설정 화면 역할 목록에서 숨기기(`GET /roles` 결과에서 프론트가 제외), `/access-role/save`에서 `roleId`가 `ROLE_SUPER_ADMIN`이면 저장 거부
-   - JWT · 메서드 보안 적용 후: 두 저장 API를 `ROLE_SUPER_ADMIN` 전용으로 제한 (TODO 주석 위치)
-4. **D-04** 결정 (선택)
+   - 두 저장 API를 `ROLE_SUPER_ADMIN` 전용으로 제한: `@RequireSuperAdmin`을 지금 붙이면 됨 (R-10)
+5. **D-04** 결정 (선택)
 
 ### ROLE 담당자
 
 1. MENU · MENU_ROLE 구현 (D-02 결정: MENU_ROLE 유지, 프론트 라우터에서도 MENU_ROLE 기준으로 화면 접근 제한). **D-05**는 이때 함께 결정
-2. `accessChecker` 구현 (D-01). 구현 후 권한 저장 시 캐시 초기화 호출을 ACCESS_ROLE 담당자에게 R 항목으로 요청
-3. JWT 적용 후 `RoleController`의 권한 TODO를 `@accessChecker.can('...')` 방식으로 전환
+2. ~~권한 코드 체계 구현 (D-01)~~ **완료** — `com.learningworks.common.action` (`@RequireAction`, `@RequireSuperAdmin`, `ActionCodeRegistry`, `GET /action-codes`, `AccessChecker`, 검사 인터셉터). `RoleController` 적용 완료, 캐시 초기화 호출은 R-10으로 요청
+3. JWT 적용 후 `app.access-check.enabled: true`로 권한 검사 켜기, 실제 로그인 사용자로 동작 확인
