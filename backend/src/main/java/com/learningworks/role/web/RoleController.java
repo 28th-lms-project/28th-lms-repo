@@ -16,7 +16,6 @@ import com.learningworks.role.service.RoleService;
 import com.learningworks.role.vo.request.ModifyRoleOrderVO;
 import com.learningworks.role.vo.request.ModifyRoleVO;
 import com.learningworks.role.vo.request.MoveRoleUserVO;
-import com.learningworks.role.vo.request.MoveRoleUserVO;
 import com.learningworks.role.vo.request.RegistRoleVO;
 import com.learningworks.role.vo.response.RoleListVO;
 import com.learningworks.role.vo.response.RoleUserMoveResultVO;
@@ -78,6 +77,29 @@ public class RoleController {
       @Pattern(regexp = RoleConstants.ROLE_ID_PATTERN,
           message = "잘못된 요청입니다.") @PathVariable String roleId) {
     RoleVO result = this.roleService.deleteRole(roleId);
+
+    return ApiResponse.OK(result);
+  }
+
+  @GetMapping("/{roleId}/users")
+  public ApiResponse<List<RoleUserVO>> getRoleUsers(
+      @Pattern(regexp = RoleConstants.ROLE_ID_PATTERN,
+          message = "잘못된 요청입니다.") @PathVariable String roleId) {
+    List<RoleUserVO> result = this.roleService.readRoleUsers(roleId);
+
+    return ApiResponse.OK(result);
+  }
+
+  /** 로그인이 필요하다. 비로그인이면 401 (RoleAssignPolicy에서 처리) */
+  @PutMapping("/{roleId}/users")
+  public ApiResponse<RoleUserMoveResultVO> moveRoleUsers(
+      @AuthenticationPrincipal LoginUser loginUser,
+      @Pattern(regexp = RoleConstants.ROLE_ID_PATTERN,
+          message = "잘못된 요청입니다.") @PathVariable String roleId,
+      @Valid @RequestBody MoveRoleUserVO moveRoleUserVO) {
+    String actorId = loginUser == null ? null : loginUser.getUsername();
+    RoleUserMoveResultVO result =
+        this.roleService.moveRoleUsers(actorId, roleId, moveRoleUserVO);
 
     return ApiResponse.OK(result);
   }
