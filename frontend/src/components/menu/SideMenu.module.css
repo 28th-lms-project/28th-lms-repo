@@ -5,7 +5,7 @@
   min-width: 260px;
   height: 100vh;
   flex-shrink: 0;
-  background-color: #212529; /* 다크 배경 */
+  background-color: #212529;
   color: #f1f3f5;
   padding: 1.5rem 1rem;
   overflow-y: auto;
@@ -15,7 +15,7 @@
     min-width 0.25s ease;
 }
 
-/* 스크롤바 디자인 (다크 테마 맞춤) */
+/* 스크롤바 디자인 */
 .sideMenu::-webkit-scrollbar {
   width: 6px;
 }
@@ -27,18 +27,19 @@
   background: transparent;
 }
 
-/* 사이드바를 접었을 때 (Collapsed) */
+/* 사이드바를 접었을 때 */
 .sideMenu.collapsed {
   width: 60px;
   min-width: 60px;
   overflow: hidden;
 }
-.sideMenu.collapsed .menuBody {
+.sideMenu.collapsed .menuBody,
+.sideMenu.collapsed .logo {
   opacity: 0;
   pointer-events: none;
 }
 
-/* 메뉴 본문 래퍼 */
+/* 메뉴 본문 */
 .menuBody {
   transition: opacity 0.15s ease;
 }
@@ -114,7 +115,7 @@
   transform: rotate(90deg);
 }
 
-/* 아코디언 서브메뉴 감싸개 (Grid 높이 애니메이션) */
+/* 아코디언 서브메뉴 래퍼 */
 .submenuWrap {
   display: grid;
   grid-template-rows: 0fr;
@@ -159,9 +160,35 @@
   color: #ffffff;
 }
 
-/* 현재 선택된 메뉴 활성화 (스크린샷의 붉은 폰트) */
+/* 현재 선택된 메뉴 활성화 */
 .listItem a:global(.active) {
   color: #ff5252;
   font-weight: 700;
   background-color: rgba(255, 82, 82, 0.08);
+}
+
+/* 상단 로고 & 헤더 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-left: 0.5rem;
+}
+
+.logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #adb5bd;
+  letter-spacing: 0.08em;
+  transition: opacity 0.15s ease;
+}
+
+/* 비로그인 게스트 영역 */
+.guestSection {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
 }
