@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
 
 import PageContainer from "../../../common/PageContainer";
 import usePermission from "../../../../hooks/usePermission";
-import {
-  selectIsSuperAdmin,
-  selectPermissionStatus,
-} from "../../../../store/slices/permissionSliceStore";
 import { IconButton } from "../../../common/input/IconButton";
 import { icons } from "../../../common/input/icons";
 
@@ -49,21 +44,19 @@ const isEnterKey = (event) =>
  * - ROLE_READ 있음: 목록 표시. 생성 · 수정 · 삭제 · 순서 변경은 SUPER_ADMIN만
  */
 export default function Role() {
-  const permissionStatus = useSelector(selectPermissionStatus);
-  const isSuperAdmin = useSelector(selectIsSuperAdmin);
-  const can = usePermission();
+  const { can, isSuperAdmin, status } = usePermission();
 
   // idle: 비로그인(조회하지 않음) → 표시 없음
   let content = null;
-  if (permissionStatus === "loading") {
+  if (status === "loading") {
     content = <p className={styles.notice}>권한 확인 중...</p>;
-  } else if (permissionStatus === "failed") {
+  } else if (status === "failed") {
     content = (
       <p className={styles.notice}>
         권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
       </p>
     );
-  } else if (permissionStatus === "loaded") {
+  } else if (status === "loaded") {
     content = can("ROLE_READ") ? (
       <RoleManagement
         isSuperAdmin={isSuperAdmin}
