@@ -555,7 +555,7 @@ export default function Access() {
                         title=""
                         header={header}
                         content={content}
-                        columnStyle="200px 1.3fr 2fr 1fr 1fr 1fr 80px"
+                        columnStyle="200px 1.5fr 1.5fr 1fr 1fr 1fr 80px"
                         clickableColumn={{
                             6: (value, rowIndex) => {
                                 const row = accessList[rowIndex];
