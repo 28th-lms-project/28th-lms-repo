@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSelector } from "react-redux";
 
 import PageContainer from "../../../common/PageContainer";
+import usePermission from "../../../../hooks/usePermission";
+import {
+    selectIsSuperAdmin,
+    selectPermissionStatus,
+} from "../../../../store/slices/permissionSliceStore";
 import { IconButton } from "../../../common/input/IconButton";
 import { icons } from "../../../common/input/icons";
 
@@ -33,7 +39,49 @@ const INITIAL_NEW_ROLE = { roleIdSuffix: "", roleDisplayName: "" };
 // 한글 입력(IME) 조합 중 Enter는 무시
 const isEnterKey = (event) => event.key === "Enter" && !event.nativeEvent.isComposing;
 
+/**
+ * 권한 관리 화면. 내 권한에 따라 표시 여부를 정한다 (실제 차단은 서버가 함).
+ *
+ * - 권한 조회 중: "권한 확인 중..." (관리자 전용 페이지라 이 화면에만 표시. 다른 화면의 버튼과는 무관)
+ * - 권한 조회 실패: 안내 문구
+ * - ROLE_READ 없음: "권한이 없습니다."
+ * - ROLE_READ 있음: 목록 표시. 생성 · 수정 · 삭제 · 순서 변경은 SUPER_ADMIN만
+ */
 export default function Role() {
+    const permissionStatus = useSelector(selectPermissionStatus);
+    const isSuperAdmin = useSelector(selectIsSuperAdmin);
+    const can = usePermission();
+
+    // idle: 비로그인(조회하지 않음) → 표시 없음
+    let content = null;
+    if (permissionStatus === "loading") {
+        content = <p className={styles.notice}>권한 확인 중...</p>;
+    } else if (permissionStatus === "failed") {
+        content = (
+            <p className={styles.notice}>
+                권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
+            </p>
+        );
+    } else if (permissionStatus === "loaded") {
+        content = can("ROLE_READ") ? (
+            <RoleManagement
+                isSuperAdmin={isSuperAdmin}
+                canReadUsers={can("ROLE_USER_READ")}
+                canMoveUsers={can("ROLE_USER_MOVE")}
+            />
+        ) : (
+            <p className={styles.notice}>권한이 없습니다.</p>
+        );
+    }
+
+    return <PageContainer>{content}</PageContainer>;
+}
+
+/**
+ * 역할 목록 · 생성 · 이름 변경 · 순서 변경 · 삭제
+ * ROLE_READ가 있을 때만 마운트되므로, 권한 없이 목록 API를 호출하지 않는다.
+ */
+function RoleManagement({ isSuperAdmin, canReadUsers, canMoveUsers }) {
     // 서버 목록 / 화면 순서 (드래그로 바뀜)
     const [roles, setRoles] = useState([]);
     const [orderedRoles, setOrderedRoles] = useState([]);
@@ -216,7 +264,7 @@ export default function Role() {
     // ───────── 순서 변경 (HTML5 Drag and Drop) ─────────
 
     const isDraggable = (role) =>
-        !loading && !isProtectedRole(role.roleId) && role.roleId !== editingRoleId;
+        isSuperAdmin && !loading && !isProtectedRole(role.roleId) && role.roleId !== editingRoleId;
 
     const clearDrag = () => {
         setDraggingRoleId(null);
@@ -324,66 +372,71 @@ export default function Role() {
 
     // ───────── 화면 ─────────
 
+    // 드래그 손잡이 · 관리 버튼 열은 SUPER_ADMIN에게만 표시
+    const columnCount = isSuperAdmin ? 5 : 3;
+
     return (
-        <PageContainer>
+        <>
             <div className={styles.rolePage}>
-                {/* 생성 폼 */}
-                <div className={styles.createForm}>
-                    <div className={styles.field}>
-                        <label htmlFor="newRoleId" className={styles.label}>
-                            역할 ID
-                        </label>
-                        <div className={styles.prefixInput}>
-                            {/* 접두어 클릭 시 입력칸 포커스 */}
-                            <label htmlFor="newRoleId" className={styles.prefix}>
-                                {ROLE_ID_PREFIX}
+                {/* 생성 폼 (SUPER_ADMIN 전용) */}
+                {isSuperAdmin && (
+                    <div className={styles.createForm}>
+                        <div className={styles.field}>
+                            <label htmlFor="newRoleId" className={styles.label}>
+                                역할 ID
+                            </label>
+                            <div className={styles.prefixInput}>
+                                {/* 접두어 클릭 시 입력칸 포커스 */}
+                                <label htmlFor="newRoleId" className={styles.prefix}>
+                                    {ROLE_ID_PREFIX}
+                                </label>
+                                <input
+                                    id="newRoleId"
+                                    type="text"
+                                    className={styles.input}
+                                    placeholder="TUTOR"
+                                    value={newRole.roleIdSuffix}
+                                    onChange={(e) => changeNewRoleId(e.target.value)}
+                                    onKeyDown={(e) => isEnterKey(e) && handleCreate()}
+                                    disabled={loading}
+                                    autoComplete="off"
+                                />
+                            </div>
+                            {createErrors.roleId?.map((message) => (
+                                <p key={message} className={styles.errorMessage}>
+                                    {message}
+                                </p>
+                            ))}
+                        </div>
+    
+                        <div className={styles.field}>
+                            <label htmlFor="newRoleName" className={styles.label}>
+                                역할 이름
                             </label>
                             <input
-                                id="newRoleId"
+                                id="newRoleName"
                                 type="text"
                                 className={styles.input}
-                                placeholder="TUTOR"
-                                value={newRole.roleIdSuffix}
-                                onChange={(e) => changeNewRoleId(e.target.value)}
+                                placeholder="역할 이름을 입력하세요"
+                                value={newRole.roleDisplayName}
+                                onChange={(e) => changeNewRoleName(e.target.value)}
                                 onKeyDown={(e) => isEnterKey(e) && handleCreate()}
                                 disabled={loading}
-                                autoComplete="off"
                             />
+                            {createErrors.roleDisplayName?.map((message) => (
+                                <p key={message} className={styles.errorMessage}>
+                                    {message}
+                                </p>
+                            ))}
                         </div>
-                        {createErrors.roleId?.map((message) => (
-                            <p key={message} className={styles.errorMessage}>
-                                {message}
-                            </p>
-                        ))}
+    
+                        <div className={styles.createButton}>
+                            <IconButton icon={icons.add} iconSize={16} disabled={loading} onClick={handleCreate}>
+                                추가
+                            </IconButton>
+                        </div>
                     </div>
-
-                    <div className={styles.field}>
-                        <label htmlFor="newRoleName" className={styles.label}>
-                            역할 이름
-                        </label>
-                        <input
-                            id="newRoleName"
-                            type="text"
-                            className={styles.input}
-                            placeholder="역할 이름을 입력하세요"
-                            value={newRole.roleDisplayName}
-                            onChange={(e) => changeNewRoleName(e.target.value)}
-                            onKeyDown={(e) => isEnterKey(e) && handleCreate()}
-                            disabled={loading}
-                        />
-                        {createErrors.roleDisplayName?.map((message) => (
-                            <p key={message} className={styles.errorMessage}>
-                                {message}
-                            </p>
-                        ))}
-                    </div>
-
-                    <div className={styles.createButton}>
-                        <IconButton icon={icons.add} iconSize={16} disabled={loading} onClick={handleCreate}>
-                            추가
-                        </IconButton>
-                    </div>
-                </div>
+                )}
 
                 {/* 순서의 의미 안내 (RoleAssignPolicy: 자기보다 아래 순위 역할의 회원만 변경 가능) */}
                 <p className={styles.hint}>
@@ -394,25 +447,25 @@ export default function Role() {
                 <div className={styles.tableWrapper}>
                     <table className={styles.roleTable}>
                         <colgroup>
-                            <col className={styles.colHandle} />
+                            {isSuperAdmin && <col className={styles.colHandle} />}
                             <col className={styles.colRank} />
                             <col className={styles.colId} />
                             <col />
-                            <col className={styles.colActions} />
+                            {isSuperAdmin && <col className={styles.colActions} />}
                         </colgroup>
                         <thead>
                             <tr>
-                                <th aria-label="이동" />
+                                {isSuperAdmin && <th aria-label="이동" />}
                                 <th>순위</th>
                                 <th>역할 ID</th>
                                 <th>역할 이름</th>
-                                <th aria-label="관리" />
+                                {isSuperAdmin && <th aria-label="관리" />}
                             </tr>
                         </thead>
                         <tbody>
                             {listStatus === "loading" && (
                                 <tr>
-                                    <td colSpan={5} className={styles.empty}>
+                                    <td colSpan={columnCount} className={styles.empty}>
                                         목록을 불러오는 중입니다...
                                     </td>
                                 </tr>
@@ -420,7 +473,7 @@ export default function Role() {
 
                             {listStatus === "failed" && (
                                 <tr>
-                                    <td colSpan={5} className={styles.empty}>
+                                    <td colSpan={columnCount} className={styles.empty}>
                                         <p className={styles.listErrorTitle}>목록을 불러오지 못했습니다.</p>
                                         {listError && <p className={styles.listErrorMessage}>{listError}</p>}
                                         <IconButton icon={icons.refresh} iconSize={16} onClick={retryLoadRoles}>
@@ -432,7 +485,7 @@ export default function Role() {
 
                             {listStatus === "loaded" && orderedRoles.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className={styles.empty}>
+                                    <td colSpan={columnCount} className={styles.empty}>
                                         역할이 없습니다.
                                     </td>
                                 </tr>
@@ -463,17 +516,19 @@ export default function Role() {
                                         onDrop={(e) => handleDrop(e, role)}
                                         onDragEnd={clearDrag}
                                     >
-                                        <td className={styles.handle}>
-                                            <span
-                                                title={
-                                                    isProtected
-                                                        ? "순서를 변경할 수 없는 역할입니다."
-                                                        : "끌어서 순서를 변경합니다."
-                                                }
-                                            >
-                                                ≡
-                                            </span>
-                                        </td>
+                                        {isSuperAdmin && (
+                                            <td className={styles.handle}>
+                                                <span
+                                                    title={
+                                                        isProtected
+                                                            ? "순서를 변경할 수 없는 역할입니다."
+                                                            : "끌어서 순서를 변경합니다."
+                                                    }
+                                                >
+                                                    ≡
+                                                </span>
+                                            </td>
+                                        )}
                                         <td className={styles.rank}>{index + 1}</td>
                                         <td className={styles.roleId}>{role.roleId}</td>
                                         <td>
@@ -491,49 +546,51 @@ export default function Role() {
                                                 role.roleDisplayName
                                             )}
                                         </td>
-                                        <td className={styles.actions}>
-                                            {isEditing ? (
-                                                <>
-                                                    <IconButton
-                                                        icon={icons.ok}
-                                                        iconSize={16}
-                                                        disabled={loading}
-                                                        onClick={() => saveEdit(role)}
-                                                    >
-                                                        저장
-                                                    </IconButton>
-                                                    <IconButton
-                                                        icon={icons.close}
-                                                        iconSize={16}
-                                                        disabled={loading}
-                                                        onClick={cancelEdit}
-                                                    >
-                                                        취소
-                                                    </IconButton>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <IconButton
-                                                        icon={icons.edit}
-                                                        iconSize={16}
-                                                        disabled={loading}
-                                                        onClick={() => startEdit(role)}
-                                                    >
-                                                        수정
-                                                    </IconButton>
-                                                    {!isProtected && (
+                                        {isSuperAdmin && (
+                                            <td className={styles.actions}>
+                                                {isEditing ? (
+                                                    <>
                                                         <IconButton
-                                                            icon={icons.delete}
+                                                            icon={icons.ok}
                                                             iconSize={16}
                                                             disabled={loading}
-                                                            onClick={() => handleDelete(role)}
+                                                            onClick={() => saveEdit(role)}
                                                         >
-                                                            삭제
+                                                            저장
                                                         </IconButton>
-                                                    )}
-                                                </>
-                                            )}
-                                        </td>
+                                                        <IconButton
+                                                            icon={icons.close}
+                                                            iconSize={16}
+                                                            disabled={loading}
+                                                            onClick={cancelEdit}
+                                                        >
+                                                            취소
+                                                        </IconButton>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <IconButton
+                                                            icon={icons.edit}
+                                                            iconSize={16}
+                                                            disabled={loading}
+                                                            onClick={() => startEdit(role)}
+                                                        >
+                                                            수정
+                                                        </IconButton>
+                                                        {!isProtected && (
+                                                            <IconButton
+                                                                icon={icons.delete}
+                                                                iconSize={16}
+                                                                disabled={loading}
+                                                                onClick={() => handleDelete(role)}
+                                                            >
+                                                                삭제
+                                                            </IconButton>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </td>
+                                        )}
                                     </tr>
                                 );
                             })}
@@ -541,8 +598,8 @@ export default function Role() {
                     </table>
                 </div>
 
-                {/* 순서 변경 시에만 표시 */}
-                {isOrderChanged && (
+                {/* 순서 변경 시에만 표시 (SUPER_ADMIN 전용) */}
+                {isSuperAdmin && isOrderChanged && (
                     <div className={styles.orderBar}>
                         <span>순서가 변경되었습니다.</span>
                         <div className={styles.orderButtons}>
@@ -572,9 +629,11 @@ export default function Role() {
                     role={moveTarget}
                     roles={roles}
                     onClose={() => setMoveTarget(null)}
+                    canReadUsers={canReadUsers}
+                    canMoveUsers={canMoveUsers}
                     onCompleted={handleMoveCompleted}
                 />
             )}
-        </PageContainer>
+        </>
     );
 }

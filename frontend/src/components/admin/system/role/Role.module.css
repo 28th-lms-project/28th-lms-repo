@@ -242,6 +242,18 @@
     white-space: pre-line;
 }
 
+/* 권한 없음 · 권한 조회 실패 안내 */
+.notice {
+    margin: 0;
+    padding: 40px 20px;
+    background-color: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+}
+
 /* 순서의 의미 안내 */
 .hint {
     margin: 0 0 -8px;

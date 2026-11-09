@@ -22,10 +22,19 @@ import styles from "./Role.module.css";
  *
  * @param {{ roleId: string, roleDisplayName: string }} role 삭제할 역할
  * @param {{ roleId: string, roleDisplayName: string }[]} roles 전체 역할 (이동 대상 선택지)
+ * @param {boolean} canReadUsers 회원 목록 표시 권한 (ROLE_USER_READ)
+ * @param {boolean} canMoveUsers [이동 후 삭제] 표시 권한 (ROLE_USER_MOVE)
  * @param {() => void} onClose 취소
  * @param {() => void} onCompleted 이동 · 삭제 처리 후 (모달 닫기 + 목록 재조회)
  */
-export default function RoleUserMoveModal({ role, roles, onClose, onCompleted }) {
+export default function RoleUserMoveModal({
+    role,
+    roles,
+    canReadUsers,
+    canMoveUsers,
+    onClose,
+    onCompleted,
+}) {
     // null: 조회 중
     const [users, setUsers] = useState(null);
     const [usersError, setUsersError] = useState(false);
@@ -38,6 +47,9 @@ export default function RoleUserMoveModal({ role, roles, onClose, onCompleted })
     );
 
     useEffect(() => {
+        // 회원 목록 권한이 없으면 조회하지 않음 (목록 없이 이동만 가능)
+        if (!canReadUsers) return;
+
         const controller = new AbortController();
 
         // 회원이 0명이면(그 사이 다른 사용자가 처리함) 바로 삭제 재시도
@@ -78,7 +90,7 @@ export default function RoleUserMoveModal({ role, roles, onClose, onCompleted })
         return () => controller.abort();
         // 모달은 열릴 때 한 번만 조회 (role이 바뀌면 새로 마운트됨)
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [role.roleId]);
+    }, [role.roleId, canReadUsers]);
 
     // Esc로 닫기 (요청 중에는 무시)
     useEffect(() => {
@@ -135,7 +147,9 @@ export default function RoleUserMoveModal({ role, roles, onClose, onCompleted })
                 </h3>
 
                 <div className={styles.modalContent}>
-                    {users === null ? (
+                    {!canReadUsers ? (
+                        <p>{formatRole(role)} 역할을 사용 중인 회원이 있습니다.</p>
+                    ) : users === null ? (
                         <p>회원 목록을 불러오는 중입니다...</p>
                     ) : usersError ? (
                         <p>{formatRole(role)} 역할을 사용 중인 회원 목록을 불러오지 못했습니다.</p>
@@ -180,14 +194,16 @@ export default function RoleUserMoveModal({ role, roles, onClose, onCompleted })
                     <IconButton icon={icons.close} iconSize={16} disabled={loading} onClick={onClose}>
                         취소
                     </IconButton>
-                    <IconButton
-                        icon={icons.ok}
-                        iconSize={16}
-                        disabled={loading || users === null || !replaceRoleId}
-                        onClick={handleMoveAndDelete}
-                    >
-                        이동 후 삭제
-                    </IconButton>
+                    {canMoveUsers && (
+                        <IconButton
+                            icon={icons.ok}
+                            iconSize={16}
+                            disabled={loading || (canReadUsers && users === null) || !replaceRoleId}
+                            onClick={handleMoveAndDelete}
+                        >
+                            이동 후 삭제
+                        </IconButton>
+                    )}
                 </div>
             </div>
         </div>,
