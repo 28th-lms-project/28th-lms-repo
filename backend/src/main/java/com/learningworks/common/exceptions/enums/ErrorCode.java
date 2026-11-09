@@ -42,6 +42,8 @@ public enum ErrorCode {
   COURSE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 강의입니다."), //
   FILES_NOT_FOUND_FILE(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."), //
   ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), //
+  SURVEY_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 설문입니다."), //
+  SURVEY_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 설문 답변입니다."), //
 
   // 405 METHOD NOT ALLOWED
   GLOBAL_METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 HTTP 메서드 요청입니다."), //
@@ -65,6 +67,10 @@ public enum ErrorCode {
   USER_FAILURE_EXIT(HttpStatus.INTERNAL_SERVER_ERROR, "회원 탈퇴를 실패했습니다."), //
   ROLE_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "역할 생성을 실패했습니다."), //
   FILES_SYSTEM_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."), //
+  SURVEY_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 생성을 실패했습니다."), //
+  SURVEY_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 수정을 실패했습니다."), //
+  SURVEY_DATA_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 답변 생성을 실패했습니다."), //
+  SURVEY_DATA_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 답변 수정을 실패했습니다."), //
   ;
 
   private final HttpStatus status;
