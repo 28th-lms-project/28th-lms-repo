@@ -3,7 +3,7 @@
 - 대상 화면: `시스템 관리 > 권한 관리` (`/admin/system/role`)
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-09
-- 상태: 설계 확정, 구현 전. 백엔드는 완료 (이 문서 작성 시점에 회원 이동 제한 1건 추가)
+- 상태: 1단계(화면) 구현 · 수동 테스트 완료. 2단계(8장 내 권한 연동)는 미진행
 
 이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API 호출 규칙은 `frontend/docs/api-client-guide.md`, 권한 체계는 `backend/docs/access-control-guide.md`를 함께 보세요.
 
@@ -21,12 +21,13 @@
 
 ## 2. 현재 상태
 
-| 대상                                        | 상태                                                              |
-| ------------------------------------------- | ----------------------------------------------------------------- |
-| 백엔드 `RoleController` (`/roles`)          | 완료. API 7개                                                     |
-| `src/api/admin/system/role/roleApi.js`      | 완료. 함수 7개. errorCode 주석 일부 보완 필요 (3장 끝)            |
-| `src/components/admin/system/role/Role.jsx` | 빈 화면 (`PageContainer`만 있음)                                  |
-| 라우트 · 메뉴                               | 등록 완료 (`MainRouterProvider.jsx`, `menuData.js`의 "권한 관리") |
+| 대상                                   | 상태                                                              |
+| -------------------------------------- | ----------------------------------------------------------------- |
+| 백엔드 `RoleController` (`/roles`)     | 완료. API 7개                                                     |
+| `src/api/admin/system/role/roleApi.js` | 완료. 함수 7개. errorCode 주석 보완 완료 (3장 끝)                 |
+| `src/components/admin/system/role/`    | 1단계 구현 완료 (7장 파일). 9장 수동 테스트 완료                  |
+| 라우트 · 메뉴                          | 등록 완료 (`MainRouterProvider.jsx`, `menuData.js`의 "권한 관리") |
+| 내 권한 연동 (8장)                     | 미진행                                                            |
 
 ---
 
@@ -50,7 +51,7 @@
 
 | 필드              | 규칙                                             | 백엔드 메시지                                                                                                       |
 | ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| `roleId`          | 필수, 20자 이하, `^ROLE_[A-Z0-9]+(_[A-Z0-9]+)*$` | "역할ID는 'ROLE*'로 시작하고, 대문자·숫자와 단어 구분용 언더스코어(*)만 사용할 수 있습니다. (예: ROLE_SUPER_ADMIN)" |
+| `roleId`          | 필수, 20자 이하, `^ROLE_[A-Z0-9]+(_[A-Z0-9]+)*$` | `역할ID는 'ROLE_'로 시작하고, 대문자·숫자와 단어 구분용 언더스코어(_)만 사용할 수 있습니다. (예: ROLE_SUPER_ADMIN)` |
 | `roleDisplayName` | 필수, 100자 이하                                 | "역할 이름을 입력해주세요." / "역할 이름은 100자 이하로 입력해주세요."                                              |
 
 ### 서버 동작 중 화면에 영향이 있는 것
@@ -61,7 +62,7 @@
 - 회원 이동은 **요청한 본인을 제외**하고 이동합니다 (`movedCount`에 본인 미포함).
 - 역할 삭제 시 탈퇴 회원의 역할은 서버가 ROLE_STUDENT로 바꿉니다 (화면 처리 불필요).
 
-### `roleApi.js` 주석 보완 (구현 시 함께)
+### `roleApi.js` 주석 보완 (완료)
 
 - `getRoleUsers`: `ROLE_NOT_EXISTS` 추가
 - `moveRoleUsers`: `ROLE_MOVE_TO_SUPER_ADMIN`, `ROLE_NOT_EXISTS`, `GLOBAL_FORBIDDEN`(요청자 회원 정보 없음) 추가
@@ -75,6 +76,8 @@
 │ 역할 ID ROLE_[_________]  역할 이름 [__________]  [추가]      │
 │   └ 입력칸 아래에 검증 메시지                                  │
 ├────────────────────────────────────────────────────────────┤
+│ 순위가 높은 역할의 관리자만 더 낮은 순위 역할의 회원을 변경할 수 있습니다. │  ← 안내 문구
+├────────────────────────────────────────────────────────────┤
 │      순위 │ 역할 ID            │ 역할 이름        │            │
 │  ≡    1   │ ROLE_SUPER_ADMIN   │ 최고 관리자       │ [수정]      │  ← 보호 역할 (회색)
 │  ≡    2   │ ROLE_ADMIN         │ 관리자           │ [수정][삭제] │
@@ -85,6 +88,7 @@
 └────────────────────────────────────────────────────────────┘
 ```
 
+- 안내 문구: 순서는 정렬만이 아니라 역할 간 상하 관계(`RoleAssignPolicy`: 자기보다 아래 순위 역할의 회원만 변경 가능)를 정하므로, 목록 위에 항상 표시합니다.
 - `≡`: 드래그 손잡이. 보호 역할도 같은 `≡`를 표시하되 드래그는 되지 않습니다.
 - 보호 역할 행(`ROLE_SUPER_ADMIN`, `ROLE_STUDENT`)은 비활성처럼 보이게 합니다.
   - 회색 배경(`#f2f2f2`), 옅은 검은색 글씨(`rgba(0, 0, 0, 0.4)`)
@@ -97,17 +101,19 @@
 
 ## 5. 상태 설계
 
-| state                          | 내용                                                                 |
-| ------------------------------ | -------------------------------------------------------------------- |
-| `roles`                        | 서버에서 받은 목록 (`roleList`)                                      |
-| `orderedRoles`                 | 화면에 보이는 순서. 드래그로 바뀜. 저장 · 되돌리기 시 `roles`로 맞춤 |
-| `isOrderChanged`               | `orderedRoles`와 `roles`의 roleId 순서가 다른지 (계산값으로 충분)    |
-| `newRole`                      | 생성 폼 `{ roleId, roleDisplayName }`                                |
-| `createErrors`                 | 생성 검증 메시지 `{ roleId: [], roleDisplayName: [] }`               |
-| `editingRoleId`, `editingName` | 이름 수정 중인 행과 입력값                                           |
-| `draggingRoleId`               | 드래그 중인 역할                                                     |
-| `moveTarget`                   | 회원 이동 모달 대상 역할 (`null`이면 모달 닫힘)                      |
-| `loading`                      | 요청 중 버튼 비활성화용                                              |
+| state                          | 내용                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| `roles`                        | 서버에서 받은 목록 (`roleList`)                                                |
+| `listStatus`, `listError`      | 첫 조회 상태 `"loading" \| "loaded" \| "failed"`와 실패 메시지                 |
+| `orderedRoles`                 | 화면에 보이는 순서. 드래그로 바뀜. 저장 · 되돌리기 시 `roles`로 맞춤           |
+| `isOrderChanged`               | `orderedRoles`와 `roles`의 roleId 순서가 다른지 (계산값으로 충분)              |
+| `newRole`                      | 생성 폼 `{ roleIdSuffix, roleDisplayName }` (`roleIdSuffix`는 `ROLE_` 뒤의 값) |
+| `createErrors`                 | 생성 검증 메시지 `{ roleId: [], roleDisplayName: [] }`                         |
+| `editingRoleId`, `editingName` | 이름 수정 중인 행과 입력값                                                     |
+| `draggingRoleId`               | 드래그 중인 역할                                                               |
+| `dropTargetRoleId`             | 놓을 위치로 표시할 역할                                                        |
+| `moveTarget`                   | 회원 이동 모달 대상 역할 (`null`이면 모달 닫힘)                                |
+| `loading`                      | 요청 중 버튼 비활성화용                                                        |
 
 - 저장 · 생성 · 삭제 · 이름 변경이 성공하면 **서버 응답으로 목록을 갱신**합니다 (`modifyRoleOrder`는 변경 후 목록을 반환하고, 나머지는 `getRoles()`로 다시 조회).
 - **순서를 바꾼 상태에서** 생성 · 삭제 · 이름 변경을 하면 화면 순서가 서버 목록으로 초기화됩니다. 순서 변경이 저장되지 않았으면 "저장하지 않은 순서 변경이 사라집니다" 확인창을 띄웁니다.
@@ -120,6 +126,11 @@
 
 - 화면 진입 시 `getRoles({ signal })` (useEffect 정리 함수에서 `abort`)
 - 순위 열은 화면 순서(1부터)를 표시
+- 표 본문 표시
+  - 조회 중: "목록을 불러오는 중입니다..." ("역할이 없습니다."가 잠깐 보이지 않도록)
+  - 조회 실패: "목록을 불러오지 못했습니다." + 실패 메시지 + [다시 시도] (alert 대신 표 안에 표시)
+  - 조회 성공 · 0건: "역할이 없습니다."
+- 생성 · 삭제 등 이후의 재조회가 실패하면 기존 목록은 유지하고 `alert`만 띄웁니다.
 
 ### 6-2. 생성
 
@@ -128,6 +139,7 @@
    - `ROLE_TUTOR`처럼 접두어째 붙여넣으면 앞의 `ROLE_`을 떼어냅니다 (`ROLE_ROLE_TUTOR` 방지).
    - 입력칸은 최대 15자입니다 (역할 ID 전체 20자 − 접두어 5자). `maxLength` 속성은 접두어를 떼기 전에 잘라버리므로 쓰지 않고, 입력 처리에서 자릅니다.
 2. [추가] 클릭 시 프론트에서 3장 규칙을 먼저 검사해 입력칸 아래에 표시 (서버 요청 줄이기용, 서버 검증이 최종).
+   - 입력칸 값을 고치면 그 칸의 검증 메시지는 지웁니다 (다음 [추가] 때 다시 검사).
 3. `createRole` 호출
    - 성공: 폼 초기화, "역할이 추가되었습니다." 안내, `getRoles()` 재조회
    - `GLOBAL_INVALID_PARAMETER`: `error.validations`를 필드별로 입력칸 아래에 표시
@@ -212,12 +224,13 @@ const getErrorMessage = (error) =>
 
 ## 7. 파일 구성
 
-| 파일                                                     | 작업                                                |
-| -------------------------------------------------------- | --------------------------------------------------- |
-| `src/components/admin/system/role/Role.jsx`              | 페이지 (목록 · 생성 · 이름 변경 · 순서 변경 · 삭제) |
-| `src/components/admin/system/role/Role.module.css`       | 새로 작성                                           |
-| `src/components/admin/system/role/RoleUserMoveModal.jsx` | 새로 작성 (회원 이동 모달)                          |
-| `src/api/admin/system/role/roleApi.js`                   | 주석 보완만 (3장 끝)                                |
+| 파일                                                     | 작업                                                                   |
+| -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `src/components/admin/system/role/Role.jsx`              | 페이지 (목록 · 생성 · 이름 변경 · 순서 변경 · 삭제)                    |
+| `src/components/admin/system/role/Role.module.css`       | 새로 작성                                                              |
+| `src/components/admin/system/role/RoleUserMoveModal.jsx` | 새로 작성 (회원 이동 모달)                                             |
+| `src/components/admin/system/role/roleUtils.js`          | 새로 작성 (보호 역할 상수, 오류 메시지, 생성 검증 · 역할 ID 입력 정리) |
+| `src/api/admin/system/role/roleApi.js`                   | 주석 보완만 (3장 끝)                                                   |
 
 `Role.jsx`가 길어지면 행 컴포넌트(`RoleRow.jsx`)나 생성 폼(`RoleCreateForm.jsx`)으로 나눠도 됩니다.
 

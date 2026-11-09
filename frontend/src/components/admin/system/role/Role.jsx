@@ -38,6 +38,10 @@ export default function Role() {
     const [roles, setRoles] = useState([]);
     const [orderedRoles, setOrderedRoles] = useState([]);
 
+    // 첫 조회 상태 ("loading" | "loaded" | "failed")와 실패 메시지
+    const [listStatus, setListStatus] = useState("loading");
+    const [listError, setListError] = useState("");
+
     // 생성 폼
     const [newRole, setNewRole] = useState(INITIAL_NEW_ROLE);
     const [createErrors, setCreateErrors] = useState(EMPTY_CREATE_ERRORS);
@@ -65,9 +69,18 @@ export default function Role() {
     const applyRoleList = useCallback((roleList) => {
         setRoles(roleList);
         setOrderedRoles(roleList);
+        setListStatus("loaded");
+        setListError("");
     }, []);
 
-    // 목록 다시 조회 (화면 순서도 서버 목록으로 초기화)
+    // 조회 실패를 표 안에 표시 (첫 조회 · 다시 시도)
+    const failRoleList = useCallback((error) => {
+        if (isAbortError(error)) return;
+        setListStatus("failed");
+        setListError(getErrorMessage(error));
+    }, []);
+
+    // 생성 · 삭제 등 이후의 재조회 (화면 순서도 서버 목록으로 초기화). 실패하면 기존 목록 유지
     const loadRoles = useCallback(async () => {
         try {
             const { roleList } = await getRoles();
@@ -77,17 +90,26 @@ export default function Role() {
         }
     }, [applyRoleList]);
 
+    // 첫 조회 실패 후 [다시 시도]
+    const retryLoadRoles = async () => {
+        setListStatus("loading");
+        try {
+            const { roleList } = await getRoles();
+            applyRoleList(roleList ?? []);
+        } catch (error) {
+            failRoleList(error);
+        }
+    };
+
     useEffect(() => {
         const controller = new AbortController();
 
         getRoles({ signal: controller.signal })
             .then(({ roleList }) => applyRoleList(roleList ?? []))
-            .catch((error) => {
-                if (!isAbortError(error)) alert(getErrorMessage(error));
-            });
+            .catch(failRoleList);
 
         return () => controller.abort();
-    }, [applyRoleList]);
+    }, [applyRoleList, failRoleList]);
 
     // 저장하지 않은 순서 변경이 있으면 버려도 되는지 확인
     const confirmDiscardOrder = () =>
@@ -96,12 +118,19 @@ export default function Role() {
 
     // ───────── 생성 ─────────
 
+    // 입력칸을 고치면 그 칸의 검증 메시지를 지움 (다음 [추가] 때 다시 검사)
+    const clearCreateError = (field) => {
+        setCreateErrors((prev) => (prev[field]?.length ? { ...prev, [field]: [] } : prev));
+    };
+
     const changeNewRoleId = (value) => {
         setNewRole((prev) => ({ ...prev, roleIdSuffix: normalizeRoleIdSuffix(value) }));
+        clearCreateError("roleId");
     };
 
     const changeNewRoleName = (value) => {
         setNewRole((prev) => ({ ...prev, roleDisplayName: value }));
+        clearCreateError("roleDisplayName");
     };
 
     const handleCreate = async () => {
@@ -356,6 +385,11 @@ export default function Role() {
                     </div>
                 </div>
 
+                {/* 순서의 의미 안내 (RoleAssignPolicy: 자기보다 아래 순위 역할의 회원만 변경 가능) */}
+                <p className={styles.hint}>
+                    순위가 높은 역할의 관리자만 더 낮은 순위 역할의 회원을 변경할 수 있습니다.
+                </p>
+
                 {/* 역할 목록 */}
                 <div className={styles.tableWrapper}>
                     <table className={styles.roleTable}>
@@ -376,7 +410,27 @@ export default function Role() {
                             </tr>
                         </thead>
                         <tbody>
-                            {orderedRoles.length === 0 && (
+                            {listStatus === "loading" && (
+                                <tr>
+                                    <td colSpan={5} className={styles.empty}>
+                                        목록을 불러오는 중입니다...
+                                    </td>
+                                </tr>
+                            )}
+
+                            {listStatus === "failed" && (
+                                <tr>
+                                    <td colSpan={5} className={styles.empty}>
+                                        <p className={styles.listErrorTitle}>목록을 불러오지 못했습니다.</p>
+                                        {listError && <p className={styles.listErrorMessage}>{listError}</p>}
+                                        <IconButton icon={icons.refresh} iconSize={16} onClick={retryLoadRoles}>
+                                            다시 시도
+                                        </IconButton>
+                                    </td>
+                                </tr>
+                            )}
+
+                            {listStatus === "loaded" && orderedRoles.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className={styles.empty}>
                                         역할이 없습니다.
