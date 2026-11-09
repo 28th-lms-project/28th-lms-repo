@@ -7,6 +7,7 @@ import CourseTutorSelect from "../selector/CourseTutorSelect";
 import CourseStudentSelect from "../selector/CourseStudentSelect";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { createCourse } from "../../../../api/admin/course/courseApi";
 export default function CourseAdd() {
   const titleRef = useRef();
   const countRef = useRef();
@@ -38,13 +39,14 @@ export default function CourseAdd() {
     }
 
     (async () => {
-      await fetch("http://localhost:8080/admin/course/add", {
-        method: "post",
-        body: formData,
-      });
+      try {
+        await createCourse(formData);
+        alert("과정이 등록되었습니다.");
+        navigate("/admin/course/list");
+      } catch (error) {
+        alert(error.message);
+      }
     })();
-
-    navigate("/admin/course/list");
   };
   const onClickAddGroupCancleButtonHandler = () => {
     setGroup(!group);

@@ -9,7 +9,7 @@ export default function StudentConnected() {
     ...WEEK.map((w) => ({ id: w.key, title: w.label })),
   ];
   const { showStudents } = useSelector((store) => store.courses);
-  console.log(showStudents);
+
   const content = showStudents.map((student) =>
     CONNECTED_HEADER.map((col) => ({
       id: `${student.rowNum}-${col.id}`, // 셀마다 고유한 값

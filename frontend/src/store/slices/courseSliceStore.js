@@ -12,7 +12,7 @@ export const courseSlice = createSlice({
   },
   reducers: {
     load(state, action) {
-      state.courseList = [...action.payload];
+      state.courseList = [...(action.payload ?? [])];
     },
     startLoading(state) {
       state.isLoading = true;
@@ -30,7 +30,7 @@ export const courseSlice = createSlice({
       state.addSelectTutor = action.payload;
     },
     showStudents(state, action) {
-      state.showStudents = [...action.payload];
+      state.showStudents = [...(action.payload ?? [])];
     },
   },
 });

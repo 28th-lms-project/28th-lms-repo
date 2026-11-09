@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.learningworks.common.utils.ApiResponse;
+import com.learningworks.common.vo.PaginationVO;
 import com.learningworks.course.service.CourseService;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
@@ -23,52 +24,56 @@ import jakarta.validation.Valid;
 @ResponseBody
 public class CourseController {
 	
+	
 	private CourseService courseService;
 	public CourseController (CourseService courseService) {
 		this.courseService = courseService;
+		
 	}
 	
 	
 	@GetMapping("/course/view")
-	public List<CourseVO> viewCourse() {
+	public ApiResponse<List<CourseVO>> viewCourse() {
+		PaginationVO paginationVO = new PaginationVO();
 		List<CourseVO> course = this.courseService.viewCourse();
-		return course ;
+		return ApiResponse.OK(course) ;
 	}
 	
 	@GetMapping("/course/list/{courseId}")
-	public CourseVO readOneCourse(@PathVariable String courseId) {
+	public ApiResponse<CourseVO> readOneCourse(@PathVariable String courseId) {
 		CourseVO course = this.courseService.readOneCourse(courseId);
-		return course;
+		return ApiResponse.OK(course);
 	}
 	@GetMapping("/{courseId}/list/student")
-	public List<CourseMemberVO> readCourseMembers(@PathVariable String courseId) {
+	public ApiResponse<List<CourseMemberVO>> readCourseMembers(@PathVariable String courseId) {
 		List<CourseMemberVO> courseMemberList = this.courseService.readCourseMembers(courseId);
-		return courseMemberList;
+		return ApiResponse.OK(courseMemberList);
+		
 	}
 	
 	@GetMapping("/my/course/list/{courseId}")
-	public CourseVO readMyCourse(@PathVariable String courseId) {
+	public ApiResponse<CourseVO> readMyCourse(@PathVariable String courseId) {
 		CourseVO course = this.courseService.readMyCourse(courseId);
-		return course;
+		return ApiResponse.OK(course);
 	}
 	
 	//나중에 분리할 endpoint
 	@GetMapping("/student/list")
-	public List<CourseMemberVO> courseMemberList() {
+	public ApiResponse<List<CourseMemberVO>> courseMemberList() {
 		List<CourseMemberVO> courseMemberVO = this.courseService.courseMemberList();
-		return courseMemberVO;
+		return ApiResponse.OK(courseMemberVO);
 	}
 	@GetMapping("/tutor/list")
-	public List<CourseMemberVO> courseTutorList(){
+	public ApiResponse<List<CourseMemberVO>> courseTutorList(){
 		List<CourseMemberVO> courseMemberVO = this.courseService.courseTutorList();
-		return courseMemberVO;
+		return ApiResponse.OK(courseMemberVO);
 	}
 	@PostMapping("/admin/course/add")
-	public ApiResponse<String> addCourse(@Valid @ModelAttribute RegistCourseVO registCourseVO,
+	public ApiResponse<RegistCourseVO> addCourse(@Valid @ModelAttribute RegistCourseVO registCourseVO,
 											BindingResult bindingResult){
 		int result = this.courseService.addCourse(registCourseVO);
-		System.out.println(registCourseVO);
-		String a = "등록완료";
-		return ApiResponse.OK("등록완료");
+		
+		
+		return ApiResponse.CREATED(registCourseVO);
 	}
 }

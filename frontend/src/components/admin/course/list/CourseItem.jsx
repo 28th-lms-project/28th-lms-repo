@@ -6,7 +6,10 @@ import { courseActions } from "../../../../store/slices/courseSliceStore";
 import { IconButton } from "../../../sample/input/IconButton";
 import CourseStudentList from "../CourseTableComponent/CourseStudentList";
 import StudentConnected from "../CourseTableComponent/StudentConnected";
-import { courseStudent } from "../api/courseapi";
+import {
+  getCourse,
+  getCourseStudents,
+} from "../../../../api/admin/course/courseApi";
 const TABS = [
   { label: "수강생", Component: <CourseStudentList /> }, // <CourseStudentList/>
   { label: "접속시간", Component: <StudentConnected /> }, // <StudentConnected/>
@@ -29,34 +32,27 @@ export default function CourseItem() {
 
   const { Component } = TABS[tab];
 
-  // useEffect(() => {
-  //   (async () => {
-  //     const result = await courseStudent(id);
-  //     console.log(result);
-  //     dispatch(courseActions.showStudents(result));
-  //   })();
-  // }, [id, dispatch]);
   useEffect(() => {
-    let ignore = false;
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
     dispatch(courseActions.startLoading());
     (async () => {
-      const result = await courseStudent(id);
-      console.log(result);
-      dispatch(courseActions.showStudents(result));
-      const fetchResult = await fetch(
-        `http://localhost:8080/course/list/${id}`,
-      );
-      const resultJson = await fetchResult.json();
-
-      if (!ignore) {
-        dispatch(courseActions.loadShowCourse(resultJson));
-
+      try {
+        const [course, students] = await Promise.all([
+          getCourse(id, options),
+          getCourseStudents(id, options),
+        ]);
+        dispatch(courseActions.loadShowCourse(course));
+        dispatch(courseActions.showStudents(students));
         dispatch(courseActions.finishLoading());
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          alert(error.message);
+        }
       }
     })();
     return () => {
-      // showArticle 제거.
-      ignore = true;
+      controller.abort();
     };
   }, [id, dispatch]);
 
@@ -91,7 +87,9 @@ export default function CourseItem() {
               {showCourse.startDate} ~ {showCourse.endDated}
             </span>
 
-            <div>{finishCourse(showCourse.startDate, showCourse.endDated)}</div>
+            <div>
+              {finishCourse(showCourse.startDate, showCourse.endDated)}
+            </div>
             <div>{showCourse.name}</div>
           </>
         )}

@@ -27,6 +27,7 @@ import Sample from "../components/sample/Sample.jsx";
 import CourseMain from "../components/admin/course/CourseMain.jsx";
 
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
+import { getCourses } from "../api/admin/course/courseApi";
 
 const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
@@ -85,7 +86,6 @@ const router = createBrowserRouter([
                 path: "list",
                 element: (
                   <>
-                    {/* <CourseItem /> */}
                     <Outlet />
                   </>
                 ),
@@ -93,16 +93,15 @@ const router = createBrowserRouter([
                 children: [
                   {
                     index: true,
+                    element: null,
                     loader: async () => {
-                      const res = await fetch(
-                        "http://localhost:8080/course/view",
-                      );
-
-                      const list = await res.json();
-                      if (!list) {
-                        return redirect("admin/course/add");
+                      const courses = await getCourses();
+                      if (!courses || courses.length === 0) {
+                        return redirect("/admin/course/add");
                       }
-                      return redirect(`/admin/course/list/${list[0].id}?tab=0`);
+                      return redirect(
+                        `/admin/course/list/${courses[0].id}?tab=0`,
+                      );
                     },
                   },
                   {
@@ -112,7 +111,6 @@ const router = createBrowserRouter([
                         <CourseItem />
                       </>
                     ),
-                    // children: [{ index: true, element: <div>111</div> }],
                   },
                 ],
               },
