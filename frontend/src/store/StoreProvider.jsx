@@ -1,7 +1,7 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { loginSlice } from "./loginSliceStore";
-import { courseSlice } from "./courseSliceStore";
+import { loginSlice } from "./slices/loginSliceStore";
+import { courseSlice } from "./slices/courseSliceStore";
 
 const toolkitStore = configureStore({
   reducer: { login: loginSlice.reducer, courses: courseSlice.reducer },
