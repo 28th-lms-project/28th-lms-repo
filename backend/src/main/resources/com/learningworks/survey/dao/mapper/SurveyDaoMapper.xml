@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.survey.dao.SurveyDao">
+
+	<insert id="insertNewSurvey"
+		parameterType="com.learningworks.survey.vo.request.RegistSurveyVO">
+		<selectKey order="BEFORE" keyProperty="id" resultType="string">
+			SELECT ('SU-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') ||
+		LPAD(SEQ_SURVEY_PK.NEXTVAL, 6, '0'))
+			FROM DUAL
+		</selectKey>
+		
+		INSERT INTO SURVEY	
+			 (ID
+			 , SUBJECT
+			 , "GROUP"
+			 , TYPE)
+		VALUES
+			(	#{id}
+			 , #{subject}
+			 , #{group}
+			 , #{type})
+	</insert>
+
+	<select id="selectSurveyById"
+		resultType="com.learningworks.survey.vo.response.SurveyVO"
+		parameterType="string">
+	SELECT ID
+		 , SUBJECT
+		 , "GROUP"
+		 , TYPE
+	  FROM SURVEY
+	 WHERE ID= #{_parameter}
+ 	</select>
+ 
+	 <update id="updateSurvey">
+	 UPDATE SURVEY
+	    SET SUBJECT = #{modifySurvey.subject}
+	  WHERE ID = #{surveyId}
+	 </update>
+	 
+	 <insert id="insertNewSurveyData">
+	 <selectKey order="BEFORE" keyProperty="registSurveyDataVO.id" resultType="string">
+			SELECT ('SD-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') ||
+		LPAD(SEQ_SURVEY_DATA_PK.NEXTVAL, 6, '0'))
+			FROM DUAL
+		</selectKey>
+	  INSERT INTO SURVEY_DATA 
+	      ( ID
+	      , SURVEY_ID
+	      , DATA)
+	VALUES( #{registSurveyDataVO.id}
+		  , #{surveyId}
+		  , #{registSurveyDataVO.data})
+	 </insert>
+	 
+	 <select id="selectSurveyDataById"
+		resultType="com.learningworks.survey.vo.response.SurveyDataVO"
+		parameterType="string">
+		SELECT ID
+			 , SURVEY_ID
+			 , DATA
+		  FROM SURVEY_DATA
+		 WHERE ID= #{_parameter}
+ 	</select>
+ 	
+ 	<update id="updateSurveyData">
+	 UPDATE SURVEY_DATA
+	    SET DATA = #{modifySurveyData}
+	  WHERE ID = #{surveyDataId}
+ 	</update>
+ 	
+ 	<resultMap id="surveyWithDataMap" type="com.learningworks.survey.vo.response.SurveyVO">
+	<id     property="id"      column="S_ID"/>
+	<result property="subject" column="SUBJECT"/>
+	<result property="group"   column="GROUP"/>
+	<result property="type"    column="TYPE"/>
+	<collection property="surveyDataList" ofType="com.learningworks.survey.vo.response.SurveyDataVO">
+		<id     property="id"       column="SD_ID"/>
+		<result property="surveyId" column="SURVEY_ID"/>
+		<result property="data"     column="DATA"/>
+	</collection>
+</resultMap>
+
+<select id="selectAllSurveyByGroup" parameterType="string" resultMap="surveyWithDataMap">
+	SELECT S.ID AS S_ID
+		 , S.SUBJECT
+		 , S."GROUP"
+		 , S.TYPE
+	     , SD.ID AS SD_ID
+	     , SD.SURVEY_ID
+	     , SD.DATA
+	  FROM SURVEY S
+	  LEFT JOIN SURVEY_DATA SD ON SD.SURVEY_ID = S.ID
+	 WHERE S."GROUP" = #{_parameter}
+	 ORDER BY S.ID, SD.ID
+</select>
+
+ 	
+ 	<select id="selectSurveyCount"
+ 		parameterType="string"
+ 		resultType="_long">
+ 		SELECT COUNT(ID)
+ 		  FROM SURVEY
+ 		 WHERE "GROUP" = #{_parameter}
+ 	</select>
+	 
+</mapper>
