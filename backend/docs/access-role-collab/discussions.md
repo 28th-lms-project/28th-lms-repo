@@ -2,13 +2,13 @@
 
 처리 규칙은 `README.md`를 따릅니다.
 
-> 최신화: 2026-11-06. D-01(세부 사항 포함), D-02, D-03, D-06이 결정되었습니다. **D-01은 최종 결정으로 다시 정리되었습니다** (`ACTION_CODE` 컬럼 추가, `ACTION_ID`는 시퀀스, 권한 코드는 API의 `@RequireAction`에서 자동 수집). D-06의 배경(성공 메시지 포함 응답)은 R-01로 해소되었습니다.
+> 최신화: 2026-11-09 (D-01 권한 검사의 JWT 연동 확인, R-09 처리 반영). 2026-11-06에 D-01(세부 사항 포함), D-02, D-03, D-06이 결정되었습니다. **D-01은 최종 결정으로 다시 정리되었습니다** (`ACTION_CODE` 컬럼 추가, `ACTION_ID`는 시퀀스, 권한 코드는 API의 `@RequireAction`에서 자동 수집). D-06의 배경(성공 메시지 포함 응답)은 R-01로 해소되었습니다.
 
 **D 항목은 설계 결정입니다.** Claude Code는 선택지와 추천안을 담당자에게 설명하고, **담당자가 결정하기 전에는 코드를 수정하지 마세요.** 결정이 나면 `결정 결과`란에 기록하고, 필요한 작업은 새 R 항목으로 정리하거나 담당자와 ROLE 담당자가 나눠서 진행합니다.
 
 | ID | 제목 | 우선순위 | 영향 범위 | 진행 상태 |
 | --- | --- | --- | --- | --- |
-| D-01 | 새로 만든 역할의 접근 권한 판단 방식 | 매우 높음 | 전체 API 권한 체크, ACTION 테이블 | **결정 · 권한 검사 구현 완료** (검사는 JWT 적용 후 켬). ACCESS 작업은 R-09, R-10 |
+| D-01 | 새로 만든 역할의 접근 권한 판단 방식 | 매우 높음 | 전체 API 권한 체크, ACTION 테이블 | **결정 · 권한 검사 구현 완료** (JWT 연동 확인, 검사는 켜기 전). ACCESS 작업: R-09 완료, R-10 대기 |
 | D-02 | MENU_ROLE과 ROLE_ACTION의 역할 분담 | 매우 높음 | MENU / MENU_ROLE 구현 (ROLE 담당자) | **결정** (B안, MENU_ROLE 유지) |
 | D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` | **결정**. 구현 대기 |
 | D-04 | 권한 설정 API의 URL 규칙 | 낮음 (선택) | ACCESS_ROLE API, 프론트 | 결정 대기 |
@@ -72,10 +72,12 @@ public ApiResponse<RoleVO> deleteRole(...) { ... }
 
 | 컬럼 | 내용 |
 | --- | --- |
-| `ACTION_ID` | PK. **팀 공통 PK 규칙으로 자동 생성** (`약자-YYYYMMDD-시퀀스 6자리` 형식, SYS_GUID 사용 중단). `ROLE_ACTION.ACTION_ID`는 계속 이 값을 참조 |
+| `ACTION_ID` | PK (`VARCHAR2(20 CHAR)`). **팀 공통 PK 규칙으로 자동 생성** (`약자-YYYYMMDD-시퀀스 6자리` 형식, SYS_GUID 사용 중단). 고정 부분이 16자이므로 약자는 4자 이하여야 20자에 들어감. `ROLE_ACTION.ACTION_ID`는 계속 이 값을 참조 |
 | `ACTION_NAME` | 표시명 (`VARCHAR2(40 CHAR)`). 관리자가 입력 |
-| `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID` | 대 · 중 · 소메뉴 |
+| `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID` | 대 · 중 · 소메뉴 (각 `VARCHAR2(20 CHAR)`) |
 | `ACTION_CODE` | **신규. 권한 코드** (`VARCHAR2(40 CHAR)`, `UNIQUE`). 예: `ROLE_DELETE`, `SURVEY_ANSWER`. 관리자가 직접 입력하지 않고 **백엔드에 정의된 코드 목록에서 선택** |
+
+`DEL_YN` 컬럼은 없습니다. ACTION을 삭제한다면 물리 삭제이며, 권한 검사는 `ROLE_ACTION`과 `ACTION`을 조인하므로 삭제된 ACTION을 가리키는 `ROLE_ACTION` 행은 자동으로 무시됩니다 (FK가 없어 행 자체는 남으므로 함께 지우는 것을 권장).
 
 **2. 권한 코드 정의: API 메서드에 `@RequireAction`을 붙인다 (규칙은 이것 하나)**
 
@@ -138,11 +140,11 @@ public ApiResponse<?> answerSurvey(...) { ... }
 | 등록부 (시작 시 수집 · 검증, `contains`) | `ActionCodeRegistry` | 완료 |
 | 권한 코드 목록 API `GET /action-codes` (`@RequireSuperAdmin`, `registered` 포함) | `web.ActionCodeController`, `service.ActionCodeServiceImpl` | 완료 |
 | 검사 인터셉터 · 검사기 (DB 역할 조회, 캐시, 커밋 후 evict) | `ActionCheckInterceptor`, `AccessChecker` | 완료 |
-| `RoleController` 적용 | 역할 목록 조회 `ROLE_READ`, 생성 · 순서 · 이름 변경 · 삭제 `@RequireSuperAdmin` | 완료 |
+| `RoleController` 적용 | 역할 목록 조회 `ROLE_READ`, 역할 사용 회원 조회 `ROLE_USER_READ`, 회원 이동 `ROLE_USER_MOVE`, 생성 · 순서 · 이름 변경 · 삭제 `@RequireSuperAdmin` | 완료 |
 | 역할 삭제 시 캐시 초기화 | `RoleServiceImpl.deleteRole` | 완료 |
 
-- **권한 검사는 기본적으로 꺼져 있습니다.** JWT 인증 필터가 없으면 모든 요청이 비로그인이라, 켜면 보호된 API가 전부 401이 됩니다. JWT 적용 후 `application.yml`에 `app.access-check.enabled: true`를 추가해 켭니다. 꺼져 있어도 권한 코드 수집과 목록 API는 동작합니다.
-- 요청자 ID는 `SecurityContext`의 `Authentication.getName()`을 사용합니다. JWT 필터는 인증 객체의 이름을 회원 ID(토큰의 `subject`)로 설정해야 합니다.
+- **권한 검사는 기본적으로 꺼져 있습니다** (`app.access-check.enabled`, 기본값 `false`). JWT 인증 필터는 머지되었지만(`878d6c0`), R-09 데이터 정리로 역할별 권한이 비어 있어 지금 켜면 SUPER_ADMIN 외에는 모두 막힙니다. 켜기 전 조건은 `README.md` "ROLE 담당자" 3번을 참고하세요. 꺼져 있어도 권한 코드 수집과 목록 API는 동작합니다.
+- 요청자 ID는 `SecurityContext`의 `Authentication.getName()`을 사용합니다. **JWT 필터(`ValidateJwtAuthenticationFilter`)가 principal에 회원 ID(토큰 `sub`)를 넣는 것을 확인했습니다** (2026-11-09, 테스트 토큰으로 요청자 ID 전달 확인).
 - 권한이 없으면 401(`GLOBAL_UNAUTHORIZED`) / 403(`GLOBAL_FORBIDDEN`)을 공통 응답 형식으로 반환합니다.
 
 **5. 코드와 DB가 어긋날 때**

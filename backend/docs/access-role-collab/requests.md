@@ -2,7 +2,7 @@
 
 처리 규칙은 `README.md`를 따릅니다. 각 항목의 `현재 상태`를 코드에서 직접 확인한 뒤 판단해 주세요.
 
-> 최신화: 2026-11-06, `feature/role` 커밋 `cfa0da0` 기준. ACCESS · ACCESS_ROLE 담당자의 처리 결과(R-01 ~ R-08)를 ROLE 담당자가 코드와 대조해 확인했습니다. D-01 최종 결정(`ACTION_CODE` 컬럼, 시퀀스 `ACTION_ID`, `@RequireAction` 자동 수집)에 맞춰 **R-09를 다시 작성**하고, 권한 검사 구현에 따라 **R-10을 추가**했습니다. 남은 작업은 `README.md`의 "남은 작업"을 참고하세요.
+> 최신화: 2026-11-09, `feature/role` 커밋 `3cee4b1` 기준. ACCESS 담당자의 **R-09 처리 결과**를 ROLE 담당자가 코드와 대조해 확인했습니다 (아래 R-09 "ROLE 담당자 확인"). R-10은 2번(ACTION 저장 후 `evictAll`)을 불필요로 정정했습니다. 남은 작업은 `README.md`의 "남은 작업"을 참고하세요.
 
 | ID   | 제목                                               | 분류                   | 우선순위 | 선행 조건                                           | 진행 상태            |
 | ---- | -------------------------------------------------- | ---------------------- | -------- | --------------------------------------------------- | -------------------- |
@@ -14,7 +14,7 @@
 | R-06 | 프론트 응답 처리 전환                              | 공통화                 | 높음     | R-01, 공통 API 클라이언트 제공                      | **완료** (`0014d42`) |
 | R-07 | 역할 목록 API를 `GET /roles`로 통합                | 중복 제거              | 중간     | D-01 논의 불필요, 단독 진행 가능                    | **완료** (`0014d42`) |
 | R-08 | 사용하지 않는 import 정리                          | 정리                   | 낮음     | 없음                                                | **완료** (`0014d42`) |
-| R-09 | ACTION_CODE 기반 권한 등록으로 전환                | 설계 반영 (D-01)       | 높음     | ACCESS 담당자 동의 (권한 코드 목록 API는 제공 완료) | 대기                 |
+| R-09 | ACTION_CODE 기반 권한 등록으로 전환                | 설계 반영 (D-01)       | 높음     | ACCESS 담당자 동의 (권한 코드 목록 API는 제공 완료) | **완료** (`6f4b85f`) |
 | R-10 | 권한 캐시 초기화 호출 · SUPER_ADMIN 전용 표시 적용 | 설계 반영 (D-01, D-03) | 중간     | 없음                                                | 대기                 |
 
 ---
@@ -431,6 +431,7 @@ UPDATE ACTION
 1. **`ACTION_ID`를 팀 공통 PK 규칙으로 생성**
    - `selectKey`의 `SYS_GUID`를 팀 공통 규칙(`'약자-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_테이블_명_PK.NEXTVAL, 6, '0')`)으로 변경
    - Java 타입은 `String` 유지 (R-04)
+   - `ACTION_ID`는 `VARCHAR2(20 CHAR)`이고 규칙의 고정 부분(`-YYYYMMDD-` + 6자리)이 16자이므로, **약자는 4자 이하**여야 합니다 (예: `ACT-20261109-000001`, 19자).
 2. **`ACTION_CODE`를 매퍼 · VO에 반영**
    - 목록 · 상세 조회 결과와 등록 SQL에 `ACTION_CODE` 추가
    - `AccessVO.actionCode` 추가
@@ -546,6 +547,11 @@ UPDATE ACTION
   8. `r09-migration.sql`: `SEQ_ACTION_PK` 생성, GUID 데이터(`ROLE_ACTION` 포함) 삭제 스크립트. 2026-11-09 개발 DB(`LEARNING_WORKS`)에 실행 완료: 시퀀스는 이미 존재해 생략, `ACTION` 10행 · `ROLE_ACTION` 23행 삭제 (`AC-20261109-000001` `ROLE_READ`만 남음)
   9. 저장소에 상수 테이블 관련 코드 없음 (정리 대상 없음). DB에 생성한 상수 테이블이 있다면 수동 DROP 필요
 - ROLE 담당자에게 요청: 없음
+- ROLE 담당자 확인 (2026-11-09, `3cee4b1` 기준)
+  - 1 ~ 7번은 코드와 일치합니다. 등록부 검증 → 중복 409 순서, 등록 전용 검증 그룹, 수정 시 `ACTION_CODE` 제외, 드롭다운 동작(R-09 6번 규칙 전부) 확인
+  - "변경 내용: (미커밋)"은 실제로 `6f4b85f`에 커밋되어 `5f96007`로 `feature/role`에 머지되었습니다.
+  - 8번의 `r09-migration.sql`이 저장소에 없습니다. 공유 DB의 데이터를 삭제한 작업이므로 저장소에 추가해 기록을 남겨 주세요.
+  - 8번의 데이터 삭제로 **역할별 권한(ROLE_ACTION)이 모두 비었습니다.** 권한 검사를 켜기 전에 ACTION 등록과 역할별 권한 부여가 다시 필요합니다 (`README.md` "ROLE 담당자" 3번).
 
 ---
 
@@ -557,20 +563,20 @@ ROLE 담당자가 D-01의 권한 검사(`com.learningworks.common.action`)를 �
 
 - `AccessChecker`는 역할별 허용 권한 코드를 **캐시**합니다. ROLE_ACTION이나 ACTION_CODE가 바뀌는 곳에서 캐시를 비워야 바뀐 권한이 바로 반영됩니다.
 - `@RequireSuperAdmin`을 붙인 API는 SUPER_ADMIN만 호출할 수 있습니다 (D-03).
-- 권한 검사는 기본적으로 **꺼져 있습니다** (`app.access-check.enabled`, 기본값 `false`). JWT 인증이 적용된 뒤 켭니다. 꺼져 있는 동안에는 어노테이션을 붙여도 동작에 영향이 없으므로 지금 적용해도 안전합니다.
+- 권한 검사는 기본적으로 **꺼져 있습니다** (`app.access-check.enabled`, 기본값 `false`). 꺼져 있는 동안에는 어노테이션을 붙여도 동작에 영향이 없으므로 지금 적용해도 안전합니다.
+- JWT 인증 필터가 머지되어(`878d6c0`) 검사를 켤 수 있는 상태입니다. **이 항목은 검사를 켜기 전에 처리되어야 합니다** (`README.md` "ROLE 담당자" 3번).
 
 ### 대상 파일
 
 - `backend/src/main/java/com/learningworks/accessrole/service/AccessRoleServiceImpl.java`
-- `backend/src/main/java/com/learningworks/access/service/AccessServiceImpl.java`
 - `backend/src/main/java/com/learningworks/accessrole/web/AccessRoleController.java`
 - `backend/src/main/java/com/learningworks/access/web/AccessController.java`
 
 ### 요청 내용
 
 1. **권한 저장 후 캐시 초기화**: `AccessRoleServiceImpl.saveRolePermission`에서 저장이 끝난 뒤 `accessChecker.evictRole(roleId)` 호출
-2. **ACTION 저장 후 캐시 초기화**: `AccessServiceImpl.saveAccess`에서 ACTION을 수정 · 삭제했다면 `accessChecker.evictAll()` 호출 (등록만 했다면 생략 가능)
-   - 두 메서드 모두 트랜잭션 안에서 호출하면 **커밋 후에** 비워지므로, 호출 위치는 메서드 끝이면 됩니다.
+   - 트랜잭션 안에서 호출하면 **커밋 후에** 비워지므로, 호출 위치는 메서드 끝이면 됩니다.
+2. ~~ACTION 저장 후 `evictAll()` 호출~~ **불필요 (2026-11-09 삭제).** ACTION 수정은 `ACTION_CODE`를 바꾸지 않고(R-09 5번) 삭제 기능도 없어서, ACTION 저장으로 역할의 허용 권한 코드가 바뀌지 않습니다. 나중에 ACTION 삭제나 코드 변경 기능을 만들면 그때 `evictAll()`을 호출하세요.
 3. **SUPER_ADMIN 전용 표시**: D-03 TODO 주석 위치(`/access/save`, `/access-role/save`)에 `@RequireSuperAdmin` 추가, TODO 주석 삭제
 4. 조회 API(`/access/actions`, `/access-role/allowed`, `/access-role/denied` 등)는 권한 설정 화면 전용이므로 함께 `@RequireSuperAdmin`을 붙이기를 권장합니다 (선택).
 
@@ -588,7 +594,7 @@ this.accessChecker.evictRole(request.getRoleId());
 
 ### 완료 조건
 
-- 권한 저장 · ACTION 수정 후 캐시 초기화 메서드가 호출됨
+- 권한 저장 후 `evictRole`이 호출됨
 - 두 저장 API에 `@RequireSuperAdmin`이 붙고 D-03 TODO 주석이 삭제됨
 
 ### 처리 결과

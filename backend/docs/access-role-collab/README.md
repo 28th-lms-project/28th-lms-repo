@@ -9,13 +9,15 @@
   - 2026-11-06 (3차): ROLE 담당자가 **D-01 세부 사항**(`ACTION_ID`를 권한 코드로 사용, `accessChecker`는 ROLE 담당자 구현, 요청자 역할은 DB 조회)과 **D-02**(MENU_ROLE 유지)를 결정. **R-09 추가**, R-03에 `ACTION` 컬럼 길이 답변
   - 2026-11-06 (4차): **D-01 최종 결정**으로 재정리. `ACTION_CODE` 컬럼 추가, `ACTION_ID`는 시퀀스, 권한 코드는 백엔드가 API에 `@RequireAction`으로 정의하고 서버 시작 시 자동 수집, 관리자는 목록에서 선택. DB 상수 테이블 방식은 채택하지 않음. **R-09 재작성**, D-03에 SUPER_ADMIN 전용 표시 보충
   - 2026-11-06 (5차): `ACTION_CODE` `VARCHAR2(40 CHAR)`, `ACTION_ID`는 팀 공통 PK 규칙. ROLE 담당자가 **권한 검사를 구현**(`com.learningworks.common.action`, 검사는 JWT 적용 후 켬). R-09 6번에 드롭다운 동작 확정, **R-10 추가** (캐시 초기화 호출, `@RequireSuperAdmin` 적용)
+  - 2026-11-09 (6차): `feature/role` 커밋 `3cee4b1` 기준. ACCESS 담당자의 **R-09 처리**(`6f4b85f`, `5f96007`로 머지)를 코드와 대조해 확인. **JWT 인증 필터 머지**(`878d6c0`)에 따라 권한 검사를 켜기 위한 조건 정리. R-10 2번(ACTION 저장 후 `evictAll`)은 불필요해 삭제. `ROLE_USER_READ`, `ROLE_USER_MOVE` 추가
 
 ## 현재 진행 상황
 
 | 구분 | 완료 | 남음 |
 | --- | --- | --- |
-| 요청 (R) | R-01 ~ R-08 | R-03의 `ACTION_NAME` `@Size(max = 40)`, **R-09** (ACTION_CODE 기반 권한 등록 전환), **R-10** (캐시 초기화 · SUPER_ADMIN 전용 표시) |
+| 요청 (R) | R-01 ~ R-09 | R-03의 `ACTION_NAME` `@Size(max = 40)`, **R-10** (캐시 초기화 · SUPER_ADMIN 전용 표시) |
 | 협의 (D) | D-01(권한 검사 구현 포함), D-02, D-03, D-06 결정 | D-03 구현, D-04 · D-05 결정 |
+| 권한 검사 | 구현 · JWT 연동 확인 | **꺼져 있음.** 켜기 전 조건은 아래 "ROLE 담당자" 3번 |
 
 이 디렉토리의 문서는 **"요청"과 "협의"** 두 종류입니다. 담당자(또는 담당자의 Claude Code)가 각 항목을 검토하고, 수락 · 반려 · 보류를 판단해 **각 항목의 `처리 결과`란에 기록**해 주세요.
 
@@ -91,18 +93,22 @@
 | 새 역할은 `ROLE_STUDENT` 바로 위 순위로 추가되며, **ROLE_ACTION이 비어 있는 상태**로 생성됨 | 권한 설정 화면에서 새 역할도 바로 선택 · 설정 가능해야 함 |
 | 역할 ID 형식: `^ROLE_[A-Z0-9]+(_[A-Z0-9]+)*$` | 상수: `RoleConstants.ROLE_ID_PATTERN` (빈 값 허용 버전: `ROLE_ID_PATTERN_ALLOW_EMPTY`) |
 | 회원에게 역할을 지정할 때는 "자기보다 아래 순위 역할만" 규칙 적용 | `com.learningworks.role.service.RoleAssignPolicy` |
+| API 권한은 `@RequireAction` · `@RequireSuperAdmin`으로 지정 (D-01) | 패키지 `com.learningworks.common.action`. 주입 · 어노테이션 사용은 자유, 수정은 ROLE 담당자에게 요청 |
+| JWT 인증 필터 적용 (`ValidateJwtAuthenticationFilter`). 인증 객체의 principal은 **회원 ID 문자열**(토큰 `sub`)이며 `LoginUser`가 아님 | 컨트롤러에서 로그인 사용자 ID가 필요하면 `Authentication authentication` 파라미터로 받아 `authentication.getName()` 사용 (비로그인이면 `null`). `@AuthenticationPrincipal LoginUser`는 항상 `null`이 되므로 쓰지 말 것 |
+| 프론트 공통 API 클라이언트가 토큰을 자동 첨부하고, 토큰을 보낸 요청이 401이면 로그인 페이지로 이동 | `frontend/docs/api-client-guide.md` 8장. 화면에서 토큰을 직접 다루지 않음 |
 
 ROLE API 목록:
 
-| Method | URL | 설명 |
-| --- | --- | --- |
-| GET | `/roles` | 역할 목록 (상위 역할부터). body: `{ roleCount, roleList: [{ roleId, roleDisplayName }] }` |
-| POST | `/roles` | 역할 생성 |
-| PUT | `/roles/{roleId}` | 역할 이름 변경 |
-| PUT | `/roles/order` | 역할 순서 변경 (드래그&드롭) |
-| DELETE | `/roles/{roleId}` | 역할 삭제 |
-| GET | `/roles/{roleId}/users` | 역할을 사용 중인 활성 회원 목록 |
-| PUT | `/roles/{roleId}/users` | 역할 사용 회원 일괄 이동 (로그인 필요) |
+| Method | URL | 설명 | 권한 |
+| --- | --- | --- | --- |
+| GET | `/roles` | 역할 목록 (상위 역할부터). body: `{ roleCount, roleList: [{ roleId, roleDisplayName }] }` | `ROLE_READ` |
+| POST | `/roles` | 역할 생성 | SUPER_ADMIN |
+| PUT | `/roles/{roleId}` | 역할 이름 변경 | SUPER_ADMIN |
+| PUT | `/roles/order` | 역할 순서 변경 (드래그&드롭) | SUPER_ADMIN |
+| DELETE | `/roles/{roleId}` | 역할 삭제 | SUPER_ADMIN |
+| GET | `/roles/{roleId}/users` | 역할을 사용 중인 활성 회원 목록 | `ROLE_USER_READ` |
+| PUT | `/roles/{roleId}/users` | 역할 사용 회원 일괄 이동 (자기보다 아래 순위만) | `ROLE_USER_MOVE` |
+| GET | `/action-codes` | 권한 코드 목록 (ACTION 등록 드롭다운용) | SUPER_ADMIN |
 
 ---
 
@@ -110,16 +116,21 @@ ROLE API 목록:
 
 ### ACCESS · ACCESS_ROLE 담당자
 
-1. **R-09 검토** (ACTION_CODE 기반 권한 등록 전환) — D-01 최종 결정(상수 테이블 대신 `@RequireAction` 자동 수집)에 대한 동의 여부를 판단해 주세요. 팀 공통 PK 규칙 `ACTION_ID`, `ACTION_CODE` 매퍼 · VO 반영, 중복 처리, 기존 데이터 정리는 먼저 진행할 수 있습니다. 진행 중이던 DB 상수 테이블 작업은 중단해 주세요.
-2. **R-10 처리** (캐시 초기화 호출, `@RequireSuperAdmin` 적용) — 권한 검사가 꺼져 있어 지금 적용해도 동작에 영향 없음
-3. **R-03 남은 작업**: `AccessVO.actionName`에 `@Size(max = 40)` 추가 (컬럼 길이 확인 완료)
-4. **D-03 구현**
-   - JWT 없이 지금 할 수 있는 것: `ROLE_SUPER_ADMIN`을 권한 설정 화면 역할 목록에서 숨기기(`GET /roles` 결과에서 프론트가 제외), `/access-role/save`에서 `roleId`가 `ROLE_SUPER_ADMIN`이면 저장 거부
-   - 두 저장 API를 `ROLE_SUPER_ADMIN` 전용으로 제한: `@RequireSuperAdmin`을 지금 붙이면 됨 (R-10)
+1. **R-10 처리** (권한 저장 후 `evictRole`, 두 저장 API에 `@RequireSuperAdmin`) — **권한 검사를 켜기 전에 필요합니다.** 검사가 꺼져 있는 동안에는 적용해도 동작에 영향 없음
+2. **R-03 남은 작업**: `AccessVO.actionName`에 `@Size(max = 40)` 추가 (컬럼 길이 확인 완료, `AccessVO.java`에 TODO 주석 남아 있음)
+3. **D-03 구현**
+   - `ROLE_SUPER_ADMIN`을 권한 설정 화면 역할 목록에서 숨기기(`GET /roles` 결과에서 프론트가 제외)
+   - `/access-role/save`에서 `roleId`가 `ROLE_SUPER_ADMIN`이면 저장 거부 (`ACTION_ROLE_PROTECTED` 추가)
+   - 두 저장 API를 `ROLE_SUPER_ADMIN` 전용으로 제한 (R-10과 같은 작업)
+4. **R-09 기록 정리**: 처리 결과의 "변경 내용: (미커밋)"을 커밋 해시로 바꾸고, DB에 실행한 `r09-migration.sql`을 저장소에 추가 (현재 저장소에 없음)
 5. **D-04** 결정 (선택)
 
 ### ROLE 담당자
 
 1. MENU · MENU_ROLE 구현 (D-02 결정: MENU_ROLE 유지, 프론트 라우터에서도 MENU_ROLE 기준으로 화면 접근 제한). **D-05**는 이때 함께 결정
 2. ~~권한 코드 체계 구현 (D-01)~~ **완료** — `com.learningworks.common.action` (`@RequireAction`, `@RequireSuperAdmin`, `ActionCodeRegistry`, `GET /action-codes`, `AccessChecker`, 검사 인터셉터). `RoleController` 적용 완료, 캐시 초기화 호출은 R-10으로 요청
-3. JWT 적용 후 `app.access-check.enabled: true`로 권한 검사 켜기, 실제 로그인 사용자로 동작 확인
+3. **권한 검사 켜기** (`application.yml`에 `app.access-check.enabled: true`). JWT 인증 필터가 머지되어(`878d6c0`) 기술적으로는 켤 수 있지만, 지금 켜면 SUPER_ADMIN 외에는 모두 막히므로 아래가 먼저 필요합니다.
+   - R-10 처리 (권한을 바꿔도 캐시 때문에 재시작 전까지 반영되지 않음)
+   - ACTION 등록: R-09 데이터 정리로 ACTION은 `ROLE_READ` 하나만 남았습니다. `ROLE_USER_READ`, `ROLE_USER_MOVE` 등 코드에 정의된 권한을 ACTION 관리 화면에서 등록
+   - 역할별 권한 부여: 권한별 접근 권한 관리 화면에서 ADMIN · TUTOR · STUDENT에 필요한 권한을 다시 부여 (ROLE_ACTION도 함께 삭제됨)
+   - 켠 뒤 실제 로그인 사용자(SUPER_ADMIN, ADMIN)로 허용 · 403 동작 확인
