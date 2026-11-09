@@ -142,6 +142,7 @@ public ApiResponse<?> answerSurvey(...) { ... }
 | 검사 인터셉터 · 검사기 (DB 역할 조회, 캐시, 커밋 후 evict) | `ActionCheckInterceptor`, `AccessChecker` | 완료 |
 | `RoleController` 적용 | 역할 목록 조회 `ROLE_READ`, 역할 사용 회원 조회 `ROLE_USER_READ`, 회원 이동 `ROLE_USER_MOVE`, 생성 · 순서 · 이름 변경 · 삭제 `@RequireSuperAdmin` | 완료 |
 | 역할 삭제 시 캐시 초기화 | `RoleServiceImpl.deleteRole` | 완료 |
+| 내 권한 API `GET /action-codes/me` (프론트 버튼 표시용, 로그인만 필요) | `web.ActionCodeController`, `service.ActionCodeServiceImpl`, `vo.response.MyActionCodeVO` | 완료 (2026-11-09) |
 
 - **권한 검사는 기본적으로 꺼져 있습니다** (`app.access-check.enabled`, 기본값 `false`). JWT 인증 필터는 머지되었지만(`878d6c0`), R-09 데이터 정리로 역할별 권한이 비어 있어 지금 켜면 SUPER_ADMIN 외에는 모두 막힙니다. 켜기 전 조건은 `README.md` "ROLE 담당자" 3번을 참고하세요. 꺼져 있어도 권한 코드 수집과 목록 API는 동작합니다.
 - 요청자 ID는 `SecurityContext`의 `Authentication.getName()`을 사용합니다. **JWT 필터(`ValidateJwtAuthenticationFilter`)가 principal에 회원 ID(토큰 `sub`)를 넣는 것을 확인했습니다** (2026-11-09, 테스트 토큰으로 요청자 ID 전달 확인).
