@@ -40,6 +40,11 @@ public class CourseController {
 		CourseVO course = this.courseService.readOneCourse(courseId);
 		return course;
 	}
+	@GetMapping("/{courseId}/list/student")
+	public List<CourseMemberVO> readCourseMembers(@PathVariable String courseId) {
+		List<CourseMemberVO> courseMemberList = this.courseService.readCourseMembers(courseId);
+		return courseMemberList;
+	}
 	
 	@GetMapping("/my/course/list/{courseId}")
 	public CourseVO readMyCourse(@PathVariable String courseId) {

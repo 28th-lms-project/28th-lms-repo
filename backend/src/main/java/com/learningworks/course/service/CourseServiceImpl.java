@@ -89,6 +89,12 @@ public class CourseServiceImpl implements CourseService{
 		List<CourseMemberVO> courseMemberVO = this.courseDao.courseTutorList();
 		return courseMemberVO;
 	}
+
+	@Override
+	public List<CourseMemberVO> readCourseMembers(String courseId) {
+		List<CourseMemberVO> courseMemberList = this.courseDao.readCourseMembers(courseId);
+		return courseMemberList;
+	}
 	
 	
 	

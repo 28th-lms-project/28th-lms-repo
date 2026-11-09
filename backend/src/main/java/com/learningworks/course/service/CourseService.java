@@ -22,4 +22,6 @@ public interface CourseService {
 
 	List<CourseMemberVO> courseTutorList();
 
+	List<CourseMemberVO> readCourseMembers(String courseId);
+
 }

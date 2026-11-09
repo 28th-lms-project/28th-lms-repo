@@ -142,4 +142,16 @@
              ,#{courseId}
              ,#{studentId})
 	 </insert>
+	 
+	<select id="readCourseMembers" 
+	        resultType="com.learningworks.course.vo.response.CourseMemberVO"
+	        parameterType="string">
+	        SELECT ROWNUM
+                 , U.NAME
+                 , U.ID
+              FROM "USER" u
+             WHERE U.ID IN (SELECT CS.USER_ID  
+                              FROM COURSE_STUDENT CS 
+                             WHERE CS.COURSE_ID = #{_parameter})
+	</select>
 </mapper>

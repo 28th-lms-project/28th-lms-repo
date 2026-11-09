@@ -31,4 +31,6 @@ public interface CourseDao {
 
 	List<CourseMemberVO> courseTutorList();
 
+	List<CourseMemberVO> readCourseMembers(String courseId);
+
 }

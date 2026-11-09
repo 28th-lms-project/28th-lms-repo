@@ -8,6 +8,7 @@ export const courseSlice = createSlice({
     showCourse: undefined,
     addSelectTutor: undefined,
     selectStudents: [],
+    showStudents: [],
   },
   reducers: {
     load(state, action) {
@@ -27,6 +28,9 @@ export const courseSlice = createSlice({
     },
     addSelectTutor(state, action) {
       state.addSelectTutor = action.payload;
+    },
+    showStudents(state, action) {
+      state.showStudents = [...action.payload];
     },
   },
 });
