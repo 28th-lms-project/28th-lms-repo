@@ -21,7 +21,7 @@
 
 - 성공하면 응답의 `body`가 그대로 반환됩니다. `responseCode`, `.data`, `.body`를 확인할 필요가 없습니다.
 - 실패하면 `ApiError`가 throw 됩니다. `try-catch`로 받아서 `errorCode`, `message`, `validations`를 사용합니다.
-- 백엔드 주소, 헤더, 응답 해석, (추후) 로그인 토큰은 공통 함수가 처리합니다. **컴포넌트나 모듈 API 파일에서 `fetch`를 직접 사용하지 마세요.**
+- 백엔드 주소, 헤더, 응답 해석, 로그인 토큰(`Authorization` 헤더)은 공통 함수가 처리합니다. **컴포넌트나 모듈 API 파일에서 `fetch`를 직접 사용하지 마세요.**
 
 백엔드 응답 형식은 `backend/docs/api-response-guide.md`를 참고하세요.
 
@@ -228,15 +228,15 @@ useEffect(() => {
 
 공통 errorCode입니다. 모듈별 errorCode는 `backend/src/main/java/com/learningworks/common/exceptions/enums/ErrorCode.java`를 확인하세요.
 
-| errorCode                  | 상태 | 상황                  | 프론트 대응 예시                   |
-| -------------------------- | ---- | --------------------- | ---------------------------------- |
-| `GLOBAL_INVALID_PARAMETER` | 400  | 입력값 검증 실패      | `validations`를 입력칸 아래 표시   |
-| `GLOBAL_INVALID_JSON`      | 400  | 요청 데이터 형식 오류 | 요청 코드 확인 (개발 중 오류)      |
-| `GLOBAL_UNAUTHORIZED`      | 401  | 로그인 필요           | 로그인 페이지로 이동 (JWT 적용 후) |
-| `GLOBAL_FORBIDDEN`         | 403  | 권한 없음             | 메시지 표시                        |
-| `GLOBAL_NOT_FOUND_URL`     | 404  | 존재하지 않는 URL     | 요청 URL 확인 (개발 중 오류)       |
-| `GLOBAL_DUPLICATED`        | 409  | 중복 데이터           | 메시지 표시                        |
-| `GLOBAL_SYSTEM_ERROR`      | 500  | 서버 오류             | 메시지 표시                        |
+| errorCode                  | 상태 | 상황                    | 프론트 대응 예시                            |
+| -------------------------- | ---- | ----------------------- | ------------------------------------------- |
+| `GLOBAL_INVALID_PARAMETER` | 400  | 입력값 검증 실패        | `validations`를 입력칸 아래 표시            |
+| `GLOBAL_INVALID_JSON`      | 400  | 요청 데이터 형식 오류   | 요청 코드 확인 (개발 중 오류)               |
+| `GLOBAL_UNAUTHORIZED`      | 401  | 로그인 필요 · 토큰 만료 | 공통 함수가 로그인 페이지로 이동 (8장 참고) |
+| `GLOBAL_FORBIDDEN`         | 403  | 권한 없음               | 메시지 표시                                 |
+| `GLOBAL_NOT_FOUND_URL`     | 404  | 존재하지 않는 URL       | 요청 URL 확인 (개발 중 오류)                |
+| `GLOBAL_DUPLICATED`        | 409  | 중복 데이터             | 메시지 표시                                 |
+| `GLOBAL_SYSTEM_ERROR`      | 500  | 서버 오류               | 메시지 표시                                 |
 
 ---
 
@@ -252,17 +252,40 @@ useEffect(() => {
 
 ---
 
-## 참고: 로그인 기능 담당자
+## 8. 로그인 토큰 처리
 
-### 처리된 것
+JWT 로그인은 공통 함수에 적용되어 있습니다. **모듈 API 파일과 컴포넌트에서는 토큰을 신경 쓰지 않아도 됩니다.**
 
-- 로그인 토큰은 `src/utils/tokenStorage.js`의 `getToken()`에서 읽어 **모든 요청에 `Authorization: Bearer {토큰}` 헤더로 자동 첨부**됩니다.
-- 토큰이 없거나 만료되었으면 헤더를 붙이지 않습니다. 만료된 토큰을 보내면 로그인이 필요 없는 API까지 거부될 수 있기 때문입니다.
-- 로그인 성공 시 `loginSuccess` 액션으로 토큰을 저장하면 그 이후 요청부터 바로 적용됩니다. 화면이나 모듈 API 파일에서 토큰을 따로 다룰 필요가 없습니다.
+### 토큰 저장 위치
 
-### 아직 처리되지 않은 것
+Access Token은 `localStorage`의 `accessToken` 키에 저장되며, `src/utils/tokenStorage.js`를 통해서만 다룹니다.
 
-JWT 인증을 구현할 때 `src/api/common/apiClient.js`에서 처리합니다.
+| 함수                      | 설명                                                              |
+| ------------------------- | ----------------------------------------------------------------- |
+| `setToken(token)`         | 토큰 저장                                                         |
+| `getToken()`              | 저장된 토큰 반환. 없으면 `null`                                   |
+| `removeToken()`           | 토큰 삭제                                                         |
+| `decodeToken(token)`      | 토큰의 payload(`sub`, `exp` 등)를 객체로 반환. 형식 오류면 `null` |
+| `isTokenExpired(payload)` | `exp` 기준 만료 여부. payload가 없어도 `true`                     |
 
-- 401 응답 시 로그아웃(`logout` 액션) 후 로그인 페이지 이동, 또는 토큰 재발급 (`TODO` 주석 위치)
-- 쿠키로 토큰을 주고받는 방식을 선택한다면 `fetch` 옵션에 `credentials: "include"` 추가가 필요합니다.
+- 로그인 성공 시 `loginSlice`의 `loginSuccess` 액션이 토큰을 저장하고, `logout` 액션이 삭제합니다. (`src/store/slices/loginSliceStore.js`)
+- 앱 시작 시 저장된 토큰이 만료되었으면 삭제하고 비로그인 상태로 시작합니다.
+
+### 공통 함수가 하는 일
+
+1. **헤더 자동 추가**: 저장된 토큰이 있으면 모든 요청에 `Authorization: Bearer {토큰}` 헤더가 붙습니다. 토큰이 없으면 헤더 없이 요청합니다.
+2. **401 자동 처리**: 토큰을 보낸 요청이 `401`로 실패하면(토큰 만료 · 위조 등) 토큰을 삭제하고 `/login`으로 이동합니다.
+   - 페이지가 새로 로드되므로 Redux 로그인 상태도 함께 초기화됩니다.
+   - 이동과 별개로 `ApiError`는 그대로 throw 됩니다. 컴포넌트의 `catch`에서 `alert`을 띄우면 이동 전에 "로그인이 필요합니다." 메시지가 한 번 표시될 수 있습니다.
+3. **로그인 요청은 제외**: `/login` 요청의 401(아이디 · 비밀번호 불일치 등)과 토큰 없이 보낸 요청의 401은 페이지를 이동하지 않고 일반 에러처럼 `ApiError`만 throw 합니다. 로그인 화면에서 `error.message`를 표시하면 됩니다.
+
+### 하지 말 것
+
+- 모듈 API 파일이나 컴포넌트에서 `getToken()`으로 토큰을 꺼내 `Authorization` 헤더를 직접 붙이기
+- `localStorage.getItem("accessToken")`처럼 저장소에 직접 접근하기 (`tokenStorage.js` 함수 사용)
+- 로그인 · 로그아웃 시 `setToken` / `removeToken`을 직접 호출하기 (`loginSuccess` / `logout` 액션 사용)
+
+### 참고
+
+- **토큰 재발급(Refresh Token)은 도입하지 않습니다.** Access Token이 만료되면 401 처리에 따라 로그인 페이지로 이동하며, 다시 로그인해야 합니다. 작업 중 만료가 불편하면 백엔드의 Access Token 만료 시간을 조정합니다.
+- 쿠키로 토큰을 주고받는 방식으로 바꾼다면 `fetch` 옵션에 `credentials: "include"` 추가가 필요합니다.
