@@ -7,10 +7,13 @@
  *
  * 사용 방법은 frontend/docs/api-client-guide.md 를 참고하세요.
  */
-import { decodeToken, getToken, isTokenExpired } from "../../utils/tokenStorage";
+
+import { getToken, removeToken } from "../../utils/tokenStorage";
 
 /** 백엔드 주소. .env 파일의 VITE_API_BASE_URL 로 변경할 수 있습니다. */
-const BASE_URL = (import.meta.env?.VITE_API_BASE_URL ?? "http://localhost:8080").replace(/\/+$/, "");
+const BASE_URL = (
+  import.meta.env?.VITE_API_BASE_URL ?? "http://localhost:8080"
+).replace(/\/+$/, "");
 
 /** 응답에 error 메시지가 없을 때 사용할 기본 메시지 */
 const DEFAULT_MESSAGES = {
@@ -50,16 +53,10 @@ export class ApiError extends Error {
 }
 
 /**
- * 요청에 사용할 로그인 토큰을 반환합니다.
- * 토큰이 없거나 만료되었으면 null (만료된 토큰을 보내면 로그인이 필요 없는 API까지 거부될 수 있으므로 보내지 않음)
+ * 로그인 토큰을 반환합니다.
+ * TODO: JWT 로그인 구현 시 저장된 Access Token을 반환하도록 변경
  */
-const getAccessToken = () => {
-  const token = getToken();
-  if (!token || isTokenExpired(decodeToken(token))) {
-    return null;
-  }
-  return token;
-};
+const getAccessToken = () => getToken();
 
 /** 쿼리스트링 생성. null · undefined · 빈 문자열은 제외하고, 배열은 같은 키로 여러 번 붙입니다. */
 const buildUrl = (url, params) => {
@@ -109,7 +106,12 @@ const request = async (method, url, { params, data, signal } = {}) => {
 
   let response;
   try {
-    response = await fetch(buildUrl(url, params), { method, headers, body, signal });
+    response = await fetch(buildUrl(url, params), {
+      method,
+      headers,
+      body,
+      signal,
+    });
   } catch (error) {
     // 요청 취소(AbortController)는 그대로 전달
     if (error.name === "AbortError") {
@@ -128,13 +130,20 @@ const request = async (method, url, { params, data, signal } = {}) => {
     return result;
   }
 
-  // TODO: 백엔드 JWT 인증 적용 후 401이면 로그아웃(logout 액션) 처리 후 로그인 페이지로 이동, 또는 토큰 재발급
+  // TODO: JWT 로그인 구현 시 401이면 토큰 재발급 또는 로그인 페이지로 이동
+  if (response.status === 401 && accessToken && url !== "/login") {
+    removeToken();
+    window.location.replace("/login");
+  }
 
   const status = response.status;
   throw new ApiError({
     httpStatusCode: status,
     errorCode: result?.errorCode ?? CLIENT_ERROR_CODE.INVALID_RESPONSE,
-    message: result?.error ?? DEFAULT_MESSAGES[status] ?? DEFAULT_MESSAGES[status >= 500 ? 500 : 400],
+    message:
+      result?.error ??
+      DEFAULT_MESSAGES[status] ??
+      DEFAULT_MESSAGES[status >= 500 ? 500 : 400],
     validations: result?.validations,
   });
 };
@@ -152,7 +161,8 @@ const requestBody = async (method, url, options) => {
  */
 export const api = {
   /** GET → body */
-  get: (url, params, options) => requestBody("GET", url, { ...options, params }),
+  get: (url, params, options) =>
+    requestBody("GET", url, { ...options, params }),
 
   /** GET (페이징 목록) → { body, paginate, search } */
   getPage: async (url, params, options) => {
@@ -171,5 +181,6 @@ export const api = {
   put: (url, data, options) => requestBody("PUT", url, { ...options, data }),
 
   /** DELETE → body */
-  delete: (url, params, options) => requestBody("DELETE", url, { ...options, params }),
+  delete: (url, params, options) =>
+    requestBody("DELETE", url, { ...options, params }),
 };
