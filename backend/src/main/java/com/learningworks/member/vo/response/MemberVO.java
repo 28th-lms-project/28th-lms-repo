@@ -24,9 +24,4 @@ public class MemberVO {
   private String delYn;
   private LocalDateTime loginBlockDate;
 
-  @JsonIgnore
-  private String salt;
-
-  @JsonIgnore
-  private List<String> roles;
 }

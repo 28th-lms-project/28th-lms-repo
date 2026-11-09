@@ -1,9 +1,10 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import loginReducer from "./loginSliceStore";
+import { loginSlice } from "./loginSliceStore";
+import { courseSlice } from "./courseSliceStore";
 
 const toolkitStore = configureStore({
-  reducer: { login: loginReducer },
+  reducer: { login: loginSlice.reducer, courses: courseSlice.reducer },
 });
 
 export default function StoreProvider({ children }) {

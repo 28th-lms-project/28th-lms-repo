@@ -1,6 +1,8 @@
 import {
   createBrowserRouter,
   Navigate,
+  Outlet,
+  redirect,
   RouterProvider,
 } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
@@ -9,7 +11,7 @@ import Main from "../components/main/Main";
 import MyInfo from "../components/my/info/MyInfo";
 import MyCourseList from "../components/my/course/MyCourseList";
 import MyCourse from "../components/my/course/MyCourse";
-import CourseList from "../components/admin/course/list/CourseList";
+
 import CourseAdd from "../components/admin/course/add/CourseAdd";
 import Survey from "../components/admin/survey/survey/Survey";
 import Test from "../components/admin/test/test/Test";
@@ -22,6 +24,9 @@ import Access from "../components/admin/system/access/Access";
 import AccessRole from "../components/admin/system/access-role/AccessRole";
 import Code from "../components/admin/system/code/Code";
 import Sample from "../components/sample/Sample.jsx";
+import CourseMain from "../components/admin/course/CourseMain.jsx";
+
+import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 
 const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
@@ -59,20 +64,50 @@ const router = createBrowserRouter([
       },
       {
         path: "admin",
+        element: (
+          <>
+            <CourseMain />
+            <Outlet />
+          </>
+        ),
         handle: { crumb: "System Management" },
         children: [
           {
             path: "course",
             handle: { crumb: "과정 관리" },
+            element: (
+              <>
+                <Outlet />
+              </>
+            ),
             children: [
               {
-                index: true,
-                element: <CourseList />,
+                path: "list",
+                element: (
+                  <>
+                    {/* <CourseItem /> */}
+                    <Outlet />
+                  </>
+                ),
                 handle: { crumb: "과정 목록" },
+                children: [
+                  {
+                    index: true,
+                    loader: async () => {
+                      const res = await fetch(
+                        "http://localhost:8080/course/view",
+                      );
+                      const list = await res.json();
+                      return redirect(list[0].id);
+                    },
+                  },
+                  { path: ":id", element: <CourseItem /> },
+                ],
               },
               {
                 path: "add",
                 element: <CourseAdd />,
+
                 handle: { crumb: "과정 등록" },
               },
             ],
@@ -106,8 +141,16 @@ const router = createBrowserRouter([
                 element: <Tutor />,
                 handle: { crumb: "강사 관리" },
               },
-              { path: "menu", element: <Menu />, handle: { crumb: "메뉴 관리" } },
-              { path: "role", element: <Role />, handle: { crumb: "권한 관리" } },
+              {
+                path: "menu",
+                element: <Menu />,
+                handle: { crumb: "메뉴 관리" },
+              },
+              {
+                path: "role",
+                element: <Role />,
+                handle: { crumb: "권한 관리" },
+              },
               {
                 path: "access",
                 element: <Access />,
