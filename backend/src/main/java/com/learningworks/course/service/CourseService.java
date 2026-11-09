@@ -6,8 +6,6 @@ import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 
-import jakarta.validation.Valid;
-
 public interface CourseService {
 
 	List<CourseVO> viewCourse();
@@ -18,7 +16,7 @@ public interface CourseService {
 
 	List<CourseMemberVO> courseMemberList();
 
-	int addCourse(RegistCourseVO registCourseVO);
+	CourseVO addCourse(RegistCourseVO registCourseVO);
 
 	List<CourseMemberVO> courseTutorList();
 

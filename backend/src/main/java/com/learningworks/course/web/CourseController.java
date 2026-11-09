@@ -3,16 +3,13 @@ package com.learningworks.course.web;
 
 import java.util.List;
 
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.learningworks.common.utils.ApiResponse;
-import com.learningworks.common.vo.PaginationVO;
 import com.learningworks.course.service.CourseService;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
@@ -21,7 +18,6 @@ import com.learningworks.course.vo.response.CourseVO;
 import jakarta.validation.Valid;
 
 @RestController
-@ResponseBody
 public class CourseController {
 	
 	
@@ -34,7 +30,6 @@ public class CourseController {
 	
 	@GetMapping("/course/view")
 	public ApiResponse<List<CourseVO>> viewCourse() {
-		PaginationVO paginationVO = new PaginationVO();
 		List<CourseVO> course = this.courseService.viewCourse();
 		return ApiResponse.OK(course) ;
 	}
@@ -69,11 +64,7 @@ public class CourseController {
 		return ApiResponse.OK(courseMemberVO);
 	}
 	@PostMapping("/admin/course/add")
-	public ApiResponse<RegistCourseVO> addCourse(@Valid @ModelAttribute RegistCourseVO registCourseVO,
-											BindingResult bindingResult){
-		int result = this.courseService.addCourse(registCourseVO);
-		
-		
-		return ApiResponse.CREATED(registCourseVO);
+	public ApiResponse<CourseVO> addCourse(@Valid @ModelAttribute RegistCourseVO registCourseVO) {
+		return ApiResponse.CREATED(this.courseService.addCourse(registCourseVO));
 	}
 }

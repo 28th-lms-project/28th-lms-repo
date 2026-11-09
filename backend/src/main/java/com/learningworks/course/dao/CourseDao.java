@@ -10,8 +10,6 @@ import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 
-import jakarta.validation.Valid;
-
 @Mapper
 public interface CourseDao {
 
