@@ -11,6 +11,7 @@
             resultType="com.learningworks.access.vo.response.AccessListVO">
 
         SELECT A.ACTION_ID AS actionId
+             , A.ACTION_CODE AS actionCode
              , A.ACTION_NAME AS actionName
              , A.TOP_MENU_ID AS topMenuId
              , TOP_MENU.TITLE AS topMenuName
@@ -65,13 +66,14 @@
                    resultType="string"
                    order="BEFORE">
 
-            SELECT SUBSTR(RAWTOHEX(SYS_GUID()), 1, 20)
+            SELECT 'AC-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_ACTION_PK.NEXTVAL, 6, '0')
               FROM DUAL
 
         </selectKey>
 
         INSERT INTO ACTION (
             ACTION_ID,
+            ACTION_CODE,
             ACTION_NAME,
             TOP_MENU_ID,
             MID_MENU_ID,
@@ -79,6 +81,7 @@
         )
         VALUES (
             #{actionId},
+            #{actionCode},
             #{actionName},
             #{topMenuId},
             #{midMenuId},
