@@ -70,6 +70,14 @@ public class AccessChecker {
     return this.findAllowedActionCodes(roleId).contains(actionCode);
   }
 
+  /**
+   * roleId 역할에 허용된 권한 코드 목록 (캐시 사용, 수정 불가).
+   * SUPER_ADMIN은 ROLE_ACTION과 관계없이 모든 권한이 허용되므로, 호출하는 쪽에서 따로 처리할 것.
+   */
+  public Set<String> getAllowedActionCodes(String roleId) {
+    return this.findAllowedActionCodes(roleId);
+  }
+
   /** 해당 역할의 캐시를 비운다. 트랜잭션 안이면 커밋 후에 비운다. */
   public void evictRole(String roleId) {
     this.afterCommit(() -> this.evict(roleId));

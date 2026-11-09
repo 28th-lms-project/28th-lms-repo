@@ -15,6 +15,19 @@
        AND DEL_YN = 'N'
   </select>
 
+  <!-- MyActionCodeVO selectMyRoleByUserId(String userId); -->
+  <select id="selectMyRoleByUserId"
+          parameterType="string"
+          resultType="com.learningworks.common.action.vo.response.MyActionCodeVO">
+    SELECT R.ROLE_ID AS roleId
+         , R.ROLE_DISPLAY_NAME AS roleDisplayName
+      FROM "USER" U
+     INNER JOIN "ROLE" R
+        ON U.BASE_ROLE = R.ROLE_ID
+     WHERE U.ID = #{_parameter}
+       AND U.DEL_YN = 'N'
+  </select>
+
   <!-- List<String> selectAllowedActionCodesByRoleId(String roleId); -->
   <select id="selectAllowedActionCodesByRoleId"
           parameterType="string"

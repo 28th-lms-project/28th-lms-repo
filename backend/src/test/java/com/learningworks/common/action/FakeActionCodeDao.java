@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.learningworks.common.action.dao.ActionCodeDao;
+import com.learningworks.common.action.vo.response.MyActionCodeVO;
 
 /** 테스트용 ActionCodeDao. 조회 횟수를 센다. */
 class FakeActionCodeDao implements ActionCodeDao {
@@ -17,6 +18,18 @@ class FakeActionCodeDao implements ActionCodeDao {
   @Override
   public String selectBaseRoleByUserId(String userId) {
     return this.baseRoles.get(userId);
+  }
+
+  @Override
+  public MyActionCodeVO selectMyRoleByUserId(String userId) {
+    String roleId = this.baseRoles.get(userId);
+    if (roleId == null) {
+      return null;
+    }
+    MyActionCodeVO myActionCode = new MyActionCodeVO();
+    myActionCode.setRoleId(roleId);
+    myActionCode.setRoleDisplayName(roleId + "_NAME");
+    return myActionCode;
   }
 
   @Override
