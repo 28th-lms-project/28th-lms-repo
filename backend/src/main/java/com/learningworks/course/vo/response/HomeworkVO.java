@@ -11,4 +11,6 @@ public class HomeworkVO {
 	private String subject    ;
 	private String content    ;
 	private String endDate    ;
+	
+	
 }
