@@ -1,8 +1,6 @@
 package com.learningworks.accessrole.dao;
 
-import com.learningworks.accessrole.vo.request.AccessRoleSaveRequestVO;
 import com.learningworks.accessrole.vo.response.AccessRolePermissionVO;
-import com.learningworks.accessrole.vo.response.AccessRoleVO;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -11,9 +9,6 @@ import java.util.List;
 
 @Mapper
 public interface AccessRoleDao {
-
-    // 역할 목록 조회
-    List<AccessRoleVO> selectRoleList();
 
     // 역할별 허용 권한 목록 조회
     List<AccessRolePermissionVO> selectAllowedPermissionList(
@@ -32,7 +27,7 @@ public interface AccessRoleDao {
 
     // 전체 권한 중 유효한 권한 개수 확인
     int selectActionCount(
-            @Param("permissionIds") List<Long> permissionIds
+            @Param("actionIds") List<String> actionIds
     );
 
     // 기존 역할 권한 삭제
@@ -43,6 +38,6 @@ public interface AccessRoleDao {
     // 역할 권한 등록
     int insertRolePermission(
             @Param("roleId") String roleId,
-            @Param("permissionIds") List<Long> permissionIds
+            @Param("actionIds") List<String> actionIds
     );
 }

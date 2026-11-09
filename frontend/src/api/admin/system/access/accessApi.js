@@ -1,77 +1,31 @@
-
-/** @format */
+/**
+ * 접근 권한(ACCESS) API
+ * 백엔드: backend/src/main/java/com/learningworks/access/web/AccessController.java
+ */
+import { api } from "../../../common/apiClient";
 
 /**
- * 공통 응답 처리
+ * 메뉴 목록 조회
  */
-const handleResponse = async (response) => {
-    const result = await response.json();
-
-    if (!response.ok) {
-        throw new Error(
-            result.message || `요청 실패 (${response.status})`
-        );
-    }
-
-    return result;
-};
-
-/**
- * GET 요청
- */
-const get = async (url, params = {}) => {
-    const queryString = new URLSearchParams(
-        Object.entries(params).filter(
-            ([, value]) => value !== null && value !== undefined && value !== ""
-        )
-    ).toString();
-
-    const response = await fetch(
-        queryString ? `${url}?${queryString}` : url,
-        {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        }
-    );
-
-    return await handleResponse(response);
-};
-
-/**
- * POST 요청
- */
-const post = async (url, data = {}) => {
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-    });
-
-    return await handleResponse(response);
-};
-
-/**
- * 대메뉴 / 중메뉴 / 소메뉴 목록 조회
- */
-export const getAccessMenuList = async (params = {}) => {
-    return await get("/access/menus", params);
-};
+export const getAccessMenuList = () => api.get("/access/menus");
 
 /**
  * 접근 권한 목록 조회
- * ACTION + MENU JOIN
+ * @param {{ topMenuId?: string, midMenuId?: string, btmMenuId?: string, actionName?: string }} params
  */
-export const getAccessList = async (params = {}) => {
-    return await get("/access/actions", params);
-};
+export const getAccessList = (params = {}) => api.get("/access/actions", params);
 
 /**
- * 접근 권한 신규 추가 및 수정
+ * 권한 코드 목록 조회 (ACTION 등록 드롭다운용, 도메인 → 행위)
+ * 백엔드: backend/src/main/java/com/learningworks/common/action/web/ActionCodeController.java
+ * @returns {Promise<{ actionCodeCount: number, domainList: { domain: string, actionList: { actionCode: string, action: string, description: string, registered: boolean }[] }[] }>}
  */
-export const saveAccessList = async (params) => {
-    return await post("/access/save", params);
-};
+export const getActionCodes = () => api.get("/action-codes");
+
+/**
+ * 접근 권한 신규 등록 및 수정
+ * @param {{ addedList: object[], modifiedList: object[] }} params
+ * @returns {Promise<object[]>} 저장 후 전체 접근 권한 목록
+ * errorCode: GLOBAL_INVALID_PARAMETER(validations), GLOBAL_BAD_REQUEST, ACTION_CODE_NOT_EXISTS, ACTION_CODE_USED, ACTION_NOT_EXISTS, ACTION_FAILURE_SAVE
+ */
+export const saveAccessList = (params) => api.post("/access/save", params);
