@@ -23,24 +23,40 @@ export default function AddTest({ subjectId }) {
   const [selectedAnswerType, setSelectedAnswerType] = useState("");
   const [oxAnswer, setOxAnswer] = useState("");
   const [multiAnswers, setMultiAnswers] = useState([]);
+
   const answerTypeGroup = useId();
   const isManualGraded = ["주관식", "코드작성"].includes(selectedAnswerType);
   const isOx = selectedAnswerType === "O/X";
   const isMulti = selectedAnswerType === "객관식-다항";
   const usesChoices = !isManualGraded && !isOx;
+
   const questionRef = useRef();
-  const dispatch = useDispatch();
   const pointRef = useRef();
   const subQuestRef = useRef();
   const correctRef = useRef(); // 정답 번호
   const answerRefs = useRef([]); // 보기 입력창 5개
 
-  const renderFieldErrors = (field) =>
-    fieldErrors[field]?.map((message, index) => (
+  const dispatch = useDispatch();
+
+  const renderFieldErrors = (field) => {
+    const message = fieldErrors[field];
+    if (!message) {
+      return null;
+    }
+    return fieldErrors[field]?.map((message, index) => (
       <p key={`${field}-${index}`} className={style.fieldError} role="alert">
         {message}
       </p>
     ));
+  };
+
+  const hasFieldError = (field) => {
+    const message = fieldErrors[field];
+    if (!message) {
+      return false;
+    }
+    return message.lenth > 0;
+  };
 
   const count = Number(answerCnt);
   const getAnswer = (index) => {
@@ -52,6 +68,22 @@ export default function AddTest({ subjectId }) {
     }
     return "";
   };
+  const getCorrectAnswer = () => {
+    if (isManualGraded) {
+      return null;
+    }
+    if (isOx) {
+      return oxAnswer;
+    }
+    if (isMulti) {
+      return [...multiAnswers].sort((a, b) => Number(a) - Number(b)).join(",");
+    }
+    return correctRef.current.value;
+  };
+  let minAnswerCnt = "1";
+  if (isMulti) {
+    minAnswerCnt = "2";
+  }
   const onClickAddButtonHandler = () => {
     setFieldErrors({});
     if (isMulti && multiAnswers.length < 2) {
@@ -61,10 +93,11 @@ export default function AddTest({ subjectId }) {
     const question = questionRef.current.value;
     const point = pointRef.current.value;
     const subQuest = subQuestRef.current.value;
-    const correct = isManualGraded ? null : isOx ? oxAnswer
-      : isMulti ? [...multiAnswers].sort((a, b) => Number(a) - Number(b)).join(",")
-        : correctRef.current.value;
-    const answerCount = usesChoices ? Number(answerCnt) : null;
+    const correct = getCorrectAnswer();
+    let answerCount = null;
+    if (usesChoices) {
+      answerCount = Number(answerCnt);
+    }
     const registTestQ = {
       subjectId: subjectId,
       question: question,
@@ -145,7 +178,10 @@ export default function AddTest({ subjectId }) {
                       setSelectedAnswerType(type.value);
                       setOxAnswer("");
                       setMultiAnswers([]);
-                      if (["객관식-단항", "객관식-다항"].includes(type.value) && Number(answerCnt) < 2) {
+                      if (
+                        ["객관식-단항", "객관식-다항"].includes(type.value) &&
+                        Number(answerCnt) < 2
+                      ) {
                         setAnswerCnt(4);
                       }
                       setFieldErrors({});
@@ -193,34 +229,43 @@ export default function AddTest({ subjectId }) {
             {isMulti && (
               <fieldset>
                 <legend>정답 (2개 이상 선택)</legend>
-                {answerNumbers.filter((num) => num <= Number(answerCnt)).map((num) => (
-                  <label key={num}>
-                    <input
-                      type="checkbox"
-                      value={String(num)}
-                      checked={multiAnswers.includes(String(num))}
-                      onChange={(event) => {
-                        setMultiAnswers((previous) => event.target.checked
-                          ? [...previous, String(num)]
-                          : previous.filter((answer) => answer !== String(num)));
-                        setFieldErrors({});
-                      }}
-                    />
-                    {num}번 보기
-                  </label>
-                ))}
+                {answerNumbers
+                  .filter((num) => num <= Number(answerCnt))
+                  .map((num) => (
+                    <label key={num}>
+                      <input
+                        type="checkbox"
+                        value={String(num)}
+                        checked={multiAnswers.includes(String(num))}
+                        onChange={(event) => {
+                          const checked = event.target.checked;
+                          const value = String(num);
+                          setMultiAnswers((previous) => {
+                            if (checked) {
+                              return [...previous, value];
+                            }
+                            return previous.filter(
+                              (answer) => answer !== value,
+                            );
+                          });
+                          setFieldErrors({});
+                        }}
+                      />
+                      {num}번 보기
+                    </label>
+                  ))}
                 {renderFieldErrors("correctAnswer")}
               </fieldset>
             )}
             <div hidden={!usesChoices || isMulti}>
-            <input
-              type="number"
-              min="1"
-              max={answerCnt}
-              placeholder={`정답은 1~${answerCnt}사이의 값을 입력하세요`}
-              ref={correctRef}
-            />
-            {renderFieldErrors("correctAnswer")}
+              <input
+                type="number"
+                min="1"
+                max={answerCnt}
+                placeholder={`정답은 1~${answerCnt}사이의 값을 입력하세요`}
+                ref={correctRef}
+              />
+              {renderFieldErrors("correctAnswer")}
             </div>
             <div>
               <label>배점</label>
@@ -238,22 +283,29 @@ export default function AddTest({ subjectId }) {
               <label>보기</label>
               <input
                 type="number"
-                min={isMulti ? "2" : "1"}
+                min={minAnswerCnt}
                 max="5"
                 onChange={(e) => {
                   setAnswerCnt(e.target.value);
-                  setMultiAnswers((previous) => previous.filter((answer) => Number(answer) <= Number(e.target.value)));
+                  setMultiAnswers((previous) =>
+                    previous.filter(
+                      (answer) => Number(answer) <= Number(e.target.value),
+                    ),
+                  );
                   setFieldErrors({});
                 }}
                 value={answerCnt}
               />
-              개
-              {renderFieldErrors("answerCount")}
+              개{renderFieldErrors("answerCount")}
             </div>
             {answerNumbers.map((num, index) => (
               <div
                 key={num}
-                hidden={!usesChoices || (index >= Number(answerCnt) && !fieldErrors[`answerSheet${num}`]?.length)}
+                hidden={
+                  !usesChoices ||
+                  (index >= Number(answerCnt) &&
+                    !hasFieldError(`answerSheet${num}`))
+                }
               >
                 <input
                   type="text"
