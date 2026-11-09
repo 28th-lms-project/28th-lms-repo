@@ -275,10 +275,18 @@ ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), /
 
 ---
 
-## 참고: 로그인 · 보안 기능 담당자
+## 참고: 로그인 · 보안 기능
 
-아래 항목은 아직 처리되지 않았습니다. 인증 기능을 구현할 때 함께 처리해야 합니다.
+### 처리된 것
 
-- 서비스에서 `AuthenticationManager.authenticate()`를 호출하면 `BadCredentialsException` 등이 발생하는데, 현재는 500으로 응답됩니다. `AuthenticationException` → 401 핸들러가 필요합니다.
-- `formLogin` / `httpBasic`이 꺼져 있어서, 인증되지 않은 요청이 401이 아니라 403으로 응답됩니다. JWT 적용 시 `AuthenticationEntryPoint`(401)를 직접 등록해야 합니다.
-- `SecurityConfig`에서 `anyRequest().permitAll()`을 해제할 때 **`/error`는 반드시 `permitAll`** 에 포함해야 합니다. 포함하지 않으면 모든 에러 응답이 빈 403으로 바뀝니다.
+- **로그인 실패**: 로그인은 `LoginJwtAuthenticationFilter`(필터)에서 처리하며, 실패하면 `LoginFailureHandler`가 공통 형식으로 응답합니다 (`USER_NOT_MATCHED_IDENTIFY` 401, 내부 오류는 `GLOBAL_SYSTEM_ERROR` 500).
+- **잘못된 · 만료된 토큰**: `ValidateJwtAuthenticationFilter`가 공통 형식의 `GLOBAL_UNAUTHORIZED`(401)로 응답합니다. 필터에서 직접 응답하므로 `GlobalExceptionHandler`를 거치지 않습니다.
+- **로그인 사용자 ID**: JWT 필터가 인증 객체의 principal에 **회원 ID 문자열**(토큰 `sub`)을 넣습니다. 컨트롤러에서는 `Authentication authentication` 파라미터로 받아 `authentication.getName()`을 사용하세요 (비로그인이면 `null`). principal이 `LoginUser`가 아니므로 `@AuthenticationPrincipal LoginUser`는 항상 `null`입니다.
+- **API 권한 검사**: Spring Security의 URL 규칙이 아니라 `@RequireAction` · `@RequireSuperAdmin`(`com.learningworks.common.action`)으로 지정하며, 비로그인은 401, 권한 없음은 403을 공통 형식으로 응답합니다. 현재는 꺼져 있습니다 (`app.access-check.enabled`). 설계는 `backend/docs/access-role-collab/discussions.md` D-01을 참고하세요.
+
+### 아직 처리되지 않은 것
+
+- `SecurityConfig`는 `anyRequest().permitAll()` 상태입니다. 이를 `authenticated()`로 바꾼다면:
+  - **`/error`는 반드시 `permitAll`** 에 포함해야 합니다. 포함하지 않으면 모든 에러 응답이 빈 403으로 바뀝니다.
+  - `formLogin` / `httpBasic`이 꺼져 있어서 인증되지 않은 요청이 401이 아니라 403으로 응답되므로, 공통 형식의 401을 내려주는 `AuthenticationEntryPoint`를 직접 등록해야 합니다.
+  - API별 권한은 이미 `@RequireAction`으로 처리하므로, URL 규칙은 "로그인 필요 여부" 정도만 두는 것을 권장합니다.
