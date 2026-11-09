@@ -13,6 +13,7 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
+import com.learningworks.course.vo.response.HomeworkVO;
 
 @Service
 public class CourseServiceImpl implements CourseService{
@@ -94,6 +95,11 @@ public class CourseServiceImpl implements CourseService{
 	@Override
 	public List<CourseMemberVO> readCourseMembers(String courseId) {
 		return this.courseDao.readCourseMembers(courseId);
+	}
+
+	@Override
+	public List<HomeworkVO> courseHomeworkList(String courseId) {
+		return this.courseDao.readHomeworkList(courseId);
 	}
 
 }

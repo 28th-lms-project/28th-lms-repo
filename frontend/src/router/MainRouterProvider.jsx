@@ -28,8 +28,13 @@ import CourseMain from "../components/admin/course/CourseMain.jsx";
 
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 import { getCourses } from "../api/admin/course/courseApi";
+import HomeworkDetails from "../components/admin/course/CourseTableComponent/HomeworkDetails.jsx";
 
 const router = createBrowserRouter([
+  {
+    path: "/popup/homework/:courseid/:homeworkId",
+    element: <HomeworkDetails />,
+  },
   { path: "/login", element: <Login /> },
   {
     path: "/",

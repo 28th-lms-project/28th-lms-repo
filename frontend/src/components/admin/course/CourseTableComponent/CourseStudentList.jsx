@@ -18,7 +18,6 @@ export default function CourseStudentList() {
   return (
     <>
       <Grid
-        title="수강생"
         header={STUDENT_HEADER}
         content={content}
         style={{

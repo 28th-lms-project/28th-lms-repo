@@ -14,6 +14,7 @@ import com.learningworks.course.service.CourseService;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
+import com.learningworks.course.vo.response.HomeworkVO;
 
 import jakarta.validation.Valid;
 
@@ -52,6 +53,11 @@ public class CourseController {
 		return ApiResponse.OK(course);
 	}
 	
+	@GetMapping("/{courseId}/homeworklist")
+	public ApiResponse<List<HomeworkVO>> readHomework(@PathVariable String courseId){
+		List<HomeworkVO> homeworkList = this.courseService.courseHomeworkList(courseId);
+		return ApiResponse.OK(homeworkList);
+	}
 	//나중에 분리할 endpoint
 	@GetMapping("/student/list")
 	public ApiResponse<List<CourseMemberVO>> courseMemberList() {

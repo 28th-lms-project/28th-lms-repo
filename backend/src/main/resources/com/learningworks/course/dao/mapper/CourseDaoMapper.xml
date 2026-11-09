@@ -154,4 +154,22 @@
                               FROM COURSE_STUDENT CS 
                              WHERE CS.COURSE_ID = #{_parameter})
 	</select>
+	
+	
+	<select id="readHomeworkList"
+	       parameterType="string"
+	       resultType="com.learningworks.course.vo.response.HomeworkVO">
+	SELECT CH.CONTENT 
+    , CH.COURSE_ID 
+    , TO_CHAR(CRT_DT,'YYYY-MM-DD') AS CRT_DT 
+    , TO_CHAR(END_DATE,'YYYY-MM-DD') AS END_DATE 
+    , CH.ID 
+    , TO_CHAR(MDFY_DT, 'YYYY-MM-DD') AS MDFY_DT 
+    , CH.SUBJECT 
+  FROM COURSE_HOMEWORK CH
+ WHERE CH.COURSE_ID IN (SELECT C.ID 
+                      FROM COURSE C 
+                     WHERE C.ID = #{_parameter})
+   AND CH.DEL_YN = 'N'
+   </select>
 </mapper>

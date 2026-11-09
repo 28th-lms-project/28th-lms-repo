@@ -5,6 +5,7 @@ import java.util.List;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
+import com.learningworks.course.vo.response.HomeworkVO;
 
 public interface CourseService {
 
@@ -21,5 +22,7 @@ public interface CourseService {
 	List<CourseMemberVO> courseTutorList();
 
 	List<CourseMemberVO> readCourseMembers(String courseId);
+
+	List<HomeworkVO> courseHomeworkList(String courseId);
 
 }

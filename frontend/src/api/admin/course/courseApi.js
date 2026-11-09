@@ -40,7 +40,8 @@ export const getStudents = (options) =>
  * 전체 강사 목록 조회 (과정 등록 시 강사 선택용)
  * @returns {Promise<{ id: string, name: string }[]>}
  */
-export const getTutors = (options) => api.get("/tutor/list", undefined, options);
+export const getTutors = (options) =>
+  api.get("/tutor/list", undefined, options);
 
 /**
  * 과정 등록
@@ -50,3 +51,20 @@ export const getTutors = (options) => api.get("/tutor/list", undefined, options)
  */
 export const createCourse = (formData) =>
   api.post("/admin/course/add", formData);
+
+/**
+ * 과정의 과제 전체 목록 조회 (삭제된 과제 제외)
+ * 백엔드: CourseController#readHomework → GET /{courseId}/homeworklist
+ * @param {string} courseid 과정 ID (예: "CO-20261106-000019")
+ * @param {{ signal?: AbortSignal }} [options] 요청 취소용 signal
+ * @returns {Promise<{ id: string, courseId: string, subject: string, content: string, endDate: string, crtDt: string, mdfyDt: string }[]>}
+ *   과제가 없으면 빈 배열
+ */
+export const getHomeworks = (courseid, options) =>
+  api.get(`/${courseid}/homeworklist`, undefined, options);
+
+/**
+ *
+ */
+export const getOneHomeworks = (courseid, homeworkid, options) =>
+  api.get(`/${courseid}/homeworklist/${homeworkid}`, undefined, options);

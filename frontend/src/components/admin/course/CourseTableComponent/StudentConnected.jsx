@@ -37,7 +37,6 @@ export default function StudentConnected() {
   return (
     <>
       <Grid
-        title="출결"
         header={CONNECTED_HEADER}
         content={content}
         style={{

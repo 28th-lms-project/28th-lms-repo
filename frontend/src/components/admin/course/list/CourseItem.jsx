@@ -9,12 +9,14 @@ import StudentConnected from "../CourseTableComponent/StudentConnected";
 import {
   getCourse,
   getCourseStudents,
+  getHomeworks,
 } from "../../../../api/admin/course/courseApi";
+import HomeWorkList from "../CourseTableComponent/HomeWorkList";
 const TABS = [
   { label: "수강생", Component: <CourseStudentList /> }, // <CourseStudentList/>
   { label: "접속시간", Component: <StudentConnected /> }, // <StudentConnected/>
   { label: "시간표", Component: <div>시간표</div> }, //<CourseTimeTable/>
-  { label: "과제", Component: <div>과제</div> }, //<HomeWorkList/>
+  { label: "과제", Component: <HomeWorkList /> }, //<HomeWorkList/>
   { label: "시험", Component: <div>시험</div> }, //<Exam/>
   { label: "면접일정", Component: <div>면접일정</div> }, //<InterviewTimeTable/>
   { label: "교육자료", Component: <div>교육자료</div> }, //<EducationMaterialsList/>
@@ -38,12 +40,14 @@ export default function CourseItem() {
     dispatch(courseActions.startLoading());
     (async () => {
       try {
-        const [course, students] = await Promise.all([
+        const [course, students, homeworks] = await Promise.all([
           getCourse(id, options),
           getCourseStudents(id, options),
+          getHomeworks(id, options),
         ]);
         dispatch(courseActions.loadShowCourse(course));
         dispatch(courseActions.showStudents(students));
+        dispatch(courseActions.loadhomeworks(homeworks));
         dispatch(courseActions.finishLoading());
       } catch (error) {
         if (error.name !== "AbortError") {
@@ -87,9 +91,7 @@ export default function CourseItem() {
               {showCourse.startDate} ~ {showCourse.endDated}
             </span>
 
-            <div>
-              {finishCourse(showCourse.startDate, showCourse.endDated)}
-            </div>
+            <div>{finishCourse(showCourse.startDate, showCourse.endDated)}</div>
             <div>{showCourse.name}</div>
           </>
         )}
