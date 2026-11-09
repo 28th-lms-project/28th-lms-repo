@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+  namespace="com.learningworks.common.action.dao.ActionCodeDao">
+
+  <!-- String selectBaseRoleByUserId(String userId); -->
+  <select id="selectBaseRoleByUserId"
+          parameterType="string"
+          resultType="string">
+    SELECT BASE_ROLE
+      FROM "USER"
+     WHERE ID = #{_parameter}
+       AND DEL_YN = 'N'
+  </select>
+
+  <!-- List<String> selectAllowedActionCodesByRoleId(String roleId); -->
+  <select id="selectAllowedActionCodesByRoleId"
+          parameterType="string"
+          resultType="string">
+    SELECT DISTINCT A.ACTION_CODE
+      FROM ROLE_ACTION RA
+     INNER JOIN ACTION A
+        ON RA.ACTION_ID = A.ACTION_ID
+     WHERE RA.ROLE_ID = #{_parameter}
+       AND A.ACTION_CODE IS NOT NULL
+  </select>
+
+  <!-- List<String> selectRegisteredActionCodes(); -->
+  <select id="selectRegisteredActionCodes"
+          resultType="string">
+    SELECT ACTION_CODE
+      FROM ACTION
+     WHERE ACTION_CODE IS NOT NULL
+  </select>
+
+</mapper>

@@ -64,19 +64,15 @@ const router = createBrowserRouter([
       },
       {
         path: "admin",
-        element: (
-          <>
-            <CourseMain />
-            <Outlet />
-          </>
-        ),
         handle: { crumb: "System Management" },
         children: [
           {
             path: "course",
             handle: { crumb: "과정 관리" },
+            // 과정 버튼 목록(CourseMain)은 과정 관리 화면에서만 표시
             element: (
               <>
+                <CourseMain />
                 <Outlet />
               </>
             ),

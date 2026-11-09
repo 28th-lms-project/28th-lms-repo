@@ -6,6 +6,7 @@ import {Grid} from "../../../common/Grid";
 import {
     getAccessList as fetchAccessApi,
     getAccessMenuList,
+    getActionCodes,
     saveAccessList,
 } from "../../../../api/admin/system/access/accessApi";
 
@@ -26,6 +27,13 @@ export default function Access() {
     const [btmMenuId, setBtmMenuId] = useState("");
 
     const [actionName, setActionName] = useState("");
+    // 관리자가 권한명을 직접 고쳤는지 (고친 뒤에는 권한 선택을 바꿔도 덮어쓰지 않음)
+    const [isActionNameEdited, setIsActionNameEdited] = useState(false);
+
+    // 권한 코드 (GET /action-codes 의 domainList)
+    const [actionDomainList, setActionDomainList] = useState([]);
+    const [actionDomain, setActionDomain] = useState("");
+    const [actionCode, setActionCode] = useState("");
 
     const [accessList, setAccessList] = useState([]);
 
@@ -57,10 +65,66 @@ export default function Access() {
         }
     }, []);
 
+    // 권한 코드 목록 조회 (등록 여부 registered 포함)
+    const getActionCodeList = useCallback(async () => {
+        try {
+            const body = await getActionCodes();
+
+            setActionDomainList(body?.domainList ?? []);
+        } catch (error) {
+            console.error("권한 코드 조회 실패:", error);
+            alert(getErrorMessage(error));
+        }
+    }, []);
+
     useEffect(() => {
         getMenuList();
         getAccessList();
-    }, [getMenuList, getAccessList]);
+        getActionCodeList();
+    }, [getMenuList, getAccessList, getActionCodeList]);
+
+    // 선택한 도메인의 권한 목록
+    const actionCodeList = useMemo(() => {
+
+        return actionDomainList.find(
+            (item) => item.domain === actionDomain
+        )?.actionList ?? [];
+
+    }, [actionDomainList, actionDomain]);
+
+    // 도메인 변경: 권한 선택값과 권한명 초기화
+    const changeActionDomain = (value) => {
+        setActionDomain(value);
+        setActionCode("");
+        setActionName("");
+        setIsActionNameEdited(false);
+    };
+
+    // 권한 변경: 권한명을 description 으로 채움 (직접 고친 뒤에는 유지)
+    const changeActionCode = (value) => {
+        setActionCode(value);
+
+        if (isActionNameEdited) return;
+
+        const selected = actionCodeList.find(
+            (item) => item.actionCode === value
+        );
+
+        setActionName(selected?.description ?? "");
+    };
+
+    // 권한명 직접 입력
+    const changeActionName = (value) => {
+        setActionName(value);
+        setIsActionNameEdited(true);
+    };
+
+    // 권한 코드 입력값 초기화
+    const resetActionCode = () => {
+        setActionDomain("");
+        setActionCode("");
+        setIsActionNameEdited(false);
+    };
 
     // 메뉴 계층별 데이터
     const topMenuList = useMemo(() => {
@@ -142,6 +206,18 @@ export default function Access() {
         setEditingOriginalData({...row});
 
         setActionName(row.actionName);
+        setIsActionNameEdited(true);
+
+        // 권한 코드는 수정 불가 (읽기 전용 표시)
+        setActionCode(row.actionCode ?? "");
+        setActionDomain(
+            actionDomainList.find((domain) =>
+                domain.actionList.some(
+                    (item) => item.actionCode === row.actionCode
+                )
+            )?.domain ?? ""
+        );
+
         setTopMenuId(row.topMenuId);
         setMidMenuId(row.midMenuId);
         setBtmMenuId(row.btmMenuId);
@@ -149,6 +225,11 @@ export default function Access() {
 
     // 신규 데이터 추가
     const addAccess = async () => {
+        if (!actionCode) {
+            alert("도메인과 권한을 선택해주세요.");
+            return;
+        }
+
         if (
             !actionName.trim() ||
             !topMenuId ||
@@ -161,6 +242,7 @@ export default function Access() {
 
         const newData = {
             actionId: `TEMP_${Date.now()}`,
+            actionCode,
             actionName: actionName.trim(),
             topMenuId,
             midMenuId,
@@ -175,6 +257,7 @@ export default function Access() {
 
             alert("접근 권한이 추가되었습니다.");
 
+            resetActionCode();
             setTopMenuId("");
             setMidMenuId("");
             setBtmMenuId("");
@@ -190,6 +273,9 @@ export default function Access() {
                 btmMenuId: "",
                 actionName: "",
             });
+
+            // 등록 여부(registered) 갱신
+            await getActionCodeList();
         } catch (error) {
             console.error("접근 권한 추가 실패:", error);
             alert(getErrorMessage(error));
@@ -225,6 +311,7 @@ export default function Access() {
 
             alert("접근 권한이 수정되었습니다.");
 
+            resetActionCode();
             setTopMenuId("");
             setMidMenuId("");
             setBtmMenuId("");
@@ -259,6 +346,7 @@ export default function Access() {
         setEditingOriginalData(null);
         setIsEditing(false);
 
+        resetActionCode();
         setTopMenuId("");
         setMidMenuId("");
         setBtmMenuId("");
@@ -276,6 +364,7 @@ export default function Access() {
     // 그리드 데이터 구성
     const header = [
         {id: "actionId", title: "ID"},
+        {id: "actionCode", title: "권한 코드"},
         {id: "actionName", title: "접근 권한 명"},
         {id: "topMenuName", title: "대 메뉴명"},
         {id: "midMenuName", title: "중 메뉴명"},
@@ -293,6 +382,14 @@ export default function Access() {
                 id: item.actionId,
                 keyName: "actionId",
                 value: item.actionId,
+            },
+            {
+                id: item.actionId,
+                keyName: "actionCode",
+                // 등록부에 없는 코드(API에서 삭제된 권한)는 미사용 표시
+                value: item.actionCode
+                    ? `${item.actionCode}${item.actionCodeInUse ? "" : " (미사용)"}`
+                    : "",
             },
             {
                 id: item.actionId,
@@ -326,8 +423,6 @@ export default function Access() {
     return (
         <PageContainer>
             <div className={styles.accessPage}>
-                <h2 className={styles.pageTitle}>접근 권한 조회</h2>
-
                 {/* 검색 및 등록 영역 */}
                 <div className={styles.accessSearch}>
                     {/* 메뉴 선택 영역 */}
@@ -374,13 +469,55 @@ export default function Access() {
                         </select>
                     </div>
 
+                    {/* 권한 코드 선택 영역 (도메인 → 권한) */}
+                    <div className={styles.accessCode}>
+                        <select
+                            value={actionDomain}
+                            onChange={(e) => changeActionDomain(e.target.value)}
+                            disabled={isEditing}
+                            className={styles.select}
+                        >
+                            <option value="">도메인 선택</option>
+                            {actionDomainList.map((item) => (
+                                <option key={item.domain} value={item.domain}>
+                                    {item.domain}
+                                </option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={actionCode}
+                            onChange={(e) => changeActionCode(e.target.value)}
+                            disabled={isEditing || !actionDomain}
+                            className={styles.select}
+                        >
+                            <option value="">권한 선택</option>
+                            {actionCodeList.map((item) => (
+                                <option
+                                    key={item.actionCode}
+                                    value={item.actionCode}
+                                    disabled={item.registered}
+                                >
+                                    {`${item.description} (${item.action})${item.registered ? " (등록됨)" : ""}`}
+                                </option>
+                            ))}
+                        </select>
+
+                        <div className={styles.codeView}>
+                            <span className={styles.codeLabel}>권한 코드</span>
+                            <span className={styles.codeValue}>
+                                {actionCode || "-"}
+                            </span>
+                        </div>
+                    </div>
+
                     {/* 권한명 입력 및 버튼 영역 */}
                     <div className={styles.accessInput}>
                         <input
                             type="text"
                             placeholder="권한 명을 입력하세요"
                             value={actionName}
-                            onChange={(e) => setActionName(e.target.value)}
+                            onChange={(e) => changeActionName(e.target.value)}
                             className={styles.input}
                         />
 
@@ -418,9 +555,9 @@ export default function Access() {
                         title=""
                         header={header}
                         content={content}
-                        columnStyle="70px 2fr 1fr 1fr 1fr 80px"
+                        columnStyle="1.2fr 1.2fr 2fr 1fr 1fr 1fr 80px"
                         clickableColumn={{
-                            5: (value, rowIndex) => {
+                            6: (value, rowIndex) => {
                                 const row = accessList[rowIndex];
 
                                 if (row) {

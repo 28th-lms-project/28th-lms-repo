@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.learningworks.common.action.RequireAction;
+import com.learningworks.common.action.RequireSuperAdmin;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.role.RoleConstants;
 import com.learningworks.role.service.RoleService;
@@ -35,7 +37,7 @@ public class RoleController {
 
   private RoleService roleService;
 
-  // @PreAuthorize("hasAnyRole('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
+  @RequireAction(domain = "ROLE", action = "READ", description = "역할 목록 조회")
   @GetMapping
   public ApiResponse<RoleListVO> getRoles() {
     RoleListVO roleListVO = this.roleService.readRoleList();
@@ -43,7 +45,7 @@ public class RoleController {
     return ApiResponse.OK(roleListVO);
   }
 
-  // TODO @PreAuthorize - ROLE_SUPER_ADMIN 전용
+  @RequireSuperAdmin
   @PostMapping
   public ApiResponse<RoleVO> createRole(@Valid @RequestBody RegistRoleVO registRoleVO) {
     RoleVO result = this.roleService.createRole(registRoleVO);
@@ -51,7 +53,8 @@ public class RoleController {
     return ApiResponse.CREATED(result);
   }
 
-  // TODO @PreAuthorize - ROLE_SUPER_ADMIN 전용 (순위가 권한 판단 기준이므로 반드시 제한할 것)
+  // 순위가 권한 판단 기준이므로 반드시 SUPER_ADMIN으로 제한할 것
+  @RequireSuperAdmin
   @PutMapping("/order")
   public ApiResponse<RoleListVO> modifyRoleOrder(
       @Valid @RequestBody ModifyRoleOrderVO modifyRoleOrderVO) {
@@ -60,7 +63,7 @@ public class RoleController {
     return ApiResponse.OK(result);
   }
 
-  // TODO @PreAuthorize - ROLE_SUPER_ADMIN 전용
+  @RequireSuperAdmin
   @PutMapping("/{roleId}")
   public ApiResponse<RoleVO> modifyRole(
       @Pattern(regexp = RoleConstants.ROLE_ID_PATTERN,
@@ -71,7 +74,7 @@ public class RoleController {
     return ApiResponse.OK(result);
   }
 
-  // TODO @PreAuthorize - ROLE_SUPER_ADMIN 전용
+  @RequireSuperAdmin
   @DeleteMapping("/{roleId}")
   public ApiResponse<RoleVO> deleteRole(
       @Pattern(regexp = RoleConstants.ROLE_ID_PATTERN,

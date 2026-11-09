@@ -2,6 +2,7 @@ package com.learningworks.access.service;
 
 import java.util.List;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -12,6 +13,7 @@ import com.learningworks.access.vo.request.AccessSearchRequestVO;
 import com.learningworks.access.vo.response.AccessListVO;
 import com.learningworks.access.vo.response.AccessMenuVO;
 import com.learningworks.access.vo.response.AccessVO;
+import com.learningworks.common.action.ActionCodeRegistry;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 
@@ -23,11 +25,22 @@ public class AccessServiceImpl implements AccessService {
 
     private final AccessDao accessDao;
 
+    private final ActionCodeRegistry actionCodeRegistry;
+
     @Override
     public List<AccessListVO> selectAccessList(
             AccessSearchRequestVO request
     ) {
-        return accessDao.selectAccessList(request);
+        List<AccessListVO> accessList = accessDao.selectAccessList(request);
+
+        // 등록부에 없는 코드(API에서 @RequireAction이 삭제된 권한)는 미사용으로 표시
+        for (AccessListVO access : accessList) {
+            access.setActionCodeInUse(
+                    actionCodeRegistry.contains(access.getActionCode())
+            );
+        }
+
+        return accessList;
     }
 
     @Override
@@ -47,7 +60,23 @@ public class AccessServiceImpl implements AccessService {
         if (addedList != null) {
             for (AccessVO access : addedList) {
 
-                int result = accessDao.insertAccess(access);
+                // 드롭다운을 거치지 않은 요청 대비: 등록부에 있는 코드만 허용
+                if (!actionCodeRegistry.contains(access.getActionCode())) {
+                    throw new LearningworksException(
+                            ErrorCode.ACTION_CODE_NOT_EXISTS
+                    );
+                }
+
+                int result;
+
+                try {
+                    result = accessDao.insertAccess(access);
+                } catch (DuplicateKeyException e) {
+                    // ACTION_CODE UNIQUE 제약 위반
+                    throw new LearningworksException(
+                            ErrorCode.ACTION_CODE_USED
+                    );
+                }
 
                 if (result != 1) {
                     throw new LearningworksException(

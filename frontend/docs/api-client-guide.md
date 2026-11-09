@@ -254,8 +254,15 @@ useEffect(() => {
 
 ## 참고: 로그인 기능 담당자
 
-아래 항목은 아직 처리되지 않았습니다. JWT 로그인을 구현할 때 `src/api/common/apiClient.js`에서 처리합니다.
+### 처리된 것
 
-- `getAccessToken()`이 저장된 Access Token을 반환하도록 변경하면, 모든 요청에 `Authorization: Bearer {토큰}` 헤더가 자동으로 붙습니다.
-- 401 응답 시 토큰 재발급 또는 로그인 페이지 이동 처리 (`TODO` 주석 위치)
+- 로그인 토큰은 `src/utils/tokenStorage.js`의 `getToken()`에서 읽어 **모든 요청에 `Authorization: Bearer {토큰}` 헤더로 자동 첨부**됩니다.
+- 토큰이 없거나 만료되었으면 헤더를 붙이지 않습니다. 만료된 토큰을 보내면 로그인이 필요 없는 API까지 거부될 수 있기 때문입니다.
+- 로그인 성공 시 `loginSuccess` 액션으로 토큰을 저장하면 그 이후 요청부터 바로 적용됩니다. 화면이나 모듈 API 파일에서 토큰을 따로 다룰 필요가 없습니다.
+
+### 아직 처리되지 않은 것
+
+JWT 인증을 구현할 때 `src/api/common/apiClient.js`에서 처리합니다.
+
+- 401 응답 시 로그아웃(`logout` 액션) 후 로그인 페이지 이동, 또는 토큰 재발급 (`TODO` 주석 위치)
 - 쿠키로 토큰을 주고받는 방식을 선택한다면 `fetch` 옵션에 `credentials: "include"` 추가가 필요합니다.

@@ -36,6 +36,40 @@
     gap: 10px;
 }
 
+/* 권한 코드 선택 영역 (도메인 · 권한 · 권한 코드 표시) */
+.accessCode {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+/* 권한 코드 읽기 전용 표시 */
+.codeView {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f7f7f7;
+    font-size: 13px;
+}
+
+.codeLabel {
+    flex-shrink: 0;
+    color: #888;
+}
+
+.codeValue {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #333;
+    font-family: monospace;
+}
+
 /* 셀렉트 박스 */
 .select {
     width: 100%;
@@ -114,7 +148,8 @@
 
 /* 반응형 */
 @media (max-width: 1000px) {
-    .accessSelect {
+    .accessSelect,
+    .accessCode {
         grid-template-columns: 1fr;
     }
 }
