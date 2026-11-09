@@ -58,6 +58,9 @@ public class RoleAssignPolicy {
    * actorId가 fromRoleId 역할의 회원들을 toRoleId로 일괄 이동할 수 있는지 검사한다. 불가하면 예외.
    * 요청자 본인은 이동 대상에서 제외해야 한다(updateActiveUserBaseRole의 excludeUserId).
    *
+   * ROLE_SUPER_ADMIN으로는 누구도(SUPER_ADMIN 포함) 일괄 이동할 수 없다.
+   * 일괄 이동은 역할 삭제 전 정리용이며, 최고 권한이 실수로 여러 명에게 부여되는 것을 막기 위함.
+   *
    * @param actorId 요청자(로그인 사용자) ID. 비로그인이면 null
    * @param fromRoleId 현재 역할 ID
    * @param toRoleId 이동할 역할 ID
@@ -67,6 +70,9 @@ public class RoleAssignPolicy {
 
     if (fromRoleId.equals(toRoleId)) {
       throw new LearningworksException(ErrorCode.ROLE_MOVE_SAME);
+    }
+    if (RoleConstants.SUPER_ADMIN_ROLE.equals(toRoleId)) {
+      throw new LearningworksException(ErrorCode.ROLE_MOVE_TO_SUPER_ADMIN);
     }
 
     int fromRoleRank = this.findRoleRank(fromRoleId);

@@ -22,6 +22,7 @@ public enum ErrorCode {
   FILES_BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 파일 요청입니다."), //
   ROLE_ORDER_INVALID(HttpStatus.BAD_REQUEST, "최고 권한은 맨 위, 기본 권한은 맨 아래에 위치해야 합니다."), //
   ROLE_MOVE_SAME(HttpStatus.BAD_REQUEST, "같은 역할로는 이동할 수 없습니다."), //
+  ROLE_MOVE_TO_SUPER_ADMIN(HttpStatus.BAD_REQUEST, "최고 관리자 역할로는 회원을 이동할 수 없습니다."), //
   ACTION_CODE_NOT_EXISTS(HttpStatus.BAD_REQUEST, "등록되지 않은 권한 코드입니다."), //
 
   // 401 UNAUTHORIZED

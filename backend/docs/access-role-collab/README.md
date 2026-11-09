@@ -107,7 +107,7 @@ ROLE API 목록:
 | PUT | `/roles/order` | 역할 순서 변경 (드래그&드롭) | SUPER_ADMIN |
 | DELETE | `/roles/{roleId}` | 역할 삭제 | SUPER_ADMIN |
 | GET | `/roles/{roleId}/users` | 역할을 사용 중인 활성 회원 목록 | `ROLE_USER_READ` |
-| PUT | `/roles/{roleId}/users` | 역할 사용 회원 일괄 이동 (자기보다 아래 순위만) | `ROLE_USER_MOVE` |
+| PUT | `/roles/{roleId}/users` | 역할 사용 회원 일괄 이동 (자기보다 아래 순위만, ROLE_SUPER_ADMIN으로는 이동 불가) | `ROLE_USER_MOVE` |
 | GET | `/action-codes` | 권한 코드 목록 (ACTION 등록 드롭다운용) | SUPER_ADMIN |
 | GET | `/action-codes/me` | 내 권한: 현재 역할과 허용된 권한 코드 (프론트 버튼 표시용). body: `{ roleId, roleDisplayName, superAdmin, actionCodes }`. SUPER_ADMIN은 `superAdmin: true`, `actionCodes: []` | 로그인 |
 
