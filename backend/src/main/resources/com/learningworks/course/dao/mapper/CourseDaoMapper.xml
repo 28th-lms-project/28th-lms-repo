@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.course.dao.CourseDao">
+
+	<select 
+	id="viewCourse" 
+	resultType="com.learningworks.course.vo.response.CourseVO">
+	 SELECT C.ID 
+          , COURSE_NAME 
+          , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
+          , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
+          , "NO" 
+          , U.NAME
+       FROM COURSE C
+      INNER JOIN COURSE_TUTOR CT
+         ON C.ID = CT.COURSE_ID
+      INNER JOIN "USER" U
+         ON CT.TUTOR_ID = U.ID 
+         
+	</select>
+	
+	<select id="readOneCourse" resultType="com.learningworks.course.vo.response.CourseVO" parameterType="string">
+	 SELECT C.ID 
+          , COURSE_NAME 
+          , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
+          , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
+          , "NO"
+          , U.NAME
+       FROM COURSE C
+      INNER JOIN COURSE_TUTOR CT
+         ON C.ID = CT.COURSE_ID
+      INNER JOIN "USER" U
+         ON CT.TUTOR_ID = U.ID 
+      WHERE C.ID = #{_parameter}
+	</select>
+	
+	
+	<select
+	 id="readMyCourse"
+	 resultType="com.learningworks.course.vo.response.CourseVO" 
+	 parameterType="string">
+	 SELECT C."NO" 
+          , C.COURSE_NAME 
+          , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
+          , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
+          , C.ID 
+        FROM COURSE c 
+       WHERE C.ID = (SELECT COURSE_ID 
+                       FROM COURSE_STUDENT  
+                      WHERE USER_ID IN (SELECT ID 
+                                             FROM "USER"
+                                         WHERE ID = #{_parameter}))
+	</select>
+	
+	<select id="courseMemeberList"
+	resultType="com.learningworks.course.vo.response.CourseMemberVO">
+	   SELECT U.NAME
+            , u.BASE_ROLE 
+            , u.CRT_DT 
+            , u.DEL_YN 
+            , u.GITHUB_URL 
+            , u.ID 
+            , u.LOGIN_BLOCK_DATE 
+            , u.MDFY_DT 
+            , u.PWD 
+            , u.PWD_CHANGE_DT 
+            , u.PWD_FAIL_CNT 
+         FROM "USER" u 
+        WHERE U.BASE_ROLE =(SELECT R.ROLE_ID 
+                              FROM "ROLE" r 
+                             WHERE R.ROLE_ID = 'ROLE_STUDENT')
+	</select>
+	
+	
+	<select id="courseTutorList"
+	       resultType="com.learningworks.course.vo.response.CourseMemberVO">
+	       SELECT U.NAME
+            , u.BASE_ROLE 
+            , u.CRT_DT 
+            , u.DEL_YN 
+            , u.GITHUB_URL 
+            , u.ID 
+            , u.LOGIN_BLOCK_DATE 
+            , u.MDFY_DT 
+            , u.PWD 
+            , u.PWD_CHANGE_DT 
+            , u.PWD_FAIL_CNT 
+         FROM "USER" u 
+        WHERE U.BASE_ROLE =(SELECT R.ROLE_ID 
+                              FROM "ROLE" r 
+                             WHERE R.ROLE_ID = 'ROLE_TUTOR')
+	       
+	    </select>
+
+    <insert id="addCourse" parameterType="com.learningworks.course.vo.request.RegistCourseVO">
+        <selectKey order="BEFORE" keyProperty="id" resultType="string">
+         SELECT 'CO-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_PK.NEXTVAL, 6, '0')
+           FROM DUAL
+        </selectKey>
+        INSERT INTO COURSE 
+             ( ID
+             , COURSE_NAME
+             , NO
+             , START_DATE
+             , END_DATED)
+        VALUES 
+             (#{id}           
+            , #{courseName}   
+            , #{no}           
+            , #{startDate}    
+            , #{endDated}   )
+    </insert>
+    
+    <insert id="addtutor" parameterType="com.learningworks.course.vo.request.RegistCourseTutorVO">
+         <selectKey order="BEFORE" keyProperty="id" resultType="string">
+         SELECT 'CU-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_TUTOR_PK.NEXTVAL, 6, '0')
+           FROM DUAL
+        </selectKey>
+        INSERT INTO COURSE_TUTOR
+             (ID
+             ,TUTOR_ID
+             ,COURSE_ID)
+        VALUES
+             (#{id}
+             ,#{tutorId}
+             ,#{courseId})     
+    </insert>
+    
+	 <insert id="addStudent" parameterType="com.learningworks.course.vo.request.RegistCourseStudentVO">
+	     <selectKey order="BEFORE" keyProperty="id" resultType="string">
+         SELECT 'CT-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_STUDENT_PK.NEXTVAL, 6, '0')
+           FROM DUAL
+        </selectKey>
+        INSERT INTO COURSE_STUDENT
+             (ID
+             ,COURSE_ID
+             ,USER_ID)
+        VALUES
+             (#{id}
+             ,#{courseId}
+             ,#{studentId})
+	 </insert>
+</mapper>

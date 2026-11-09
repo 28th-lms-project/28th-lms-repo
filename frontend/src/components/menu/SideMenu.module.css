@@ -4,6 +4,7 @@
   width: 260px;
   min-width: 260px;
   height: 100vh;
+  flex-shrink: 0;
   background-color: #212529; /* 다크 배경 */
   color: #f1f3f5;
   padding: 1.5rem 1rem;
@@ -73,7 +74,7 @@
   letter-spacing: 0.05em;
 }
 
-.listTitle:first-of-type {
+.menuBody > div:first-child .listTitle {
   margin-top: 0;
 }
 
@@ -92,7 +93,9 @@
   color: #ced4da;
   padding: 0.5rem 0.5rem 0.25rem 0.5rem;
   border-radius: 4px;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .listItemTitle:hover {

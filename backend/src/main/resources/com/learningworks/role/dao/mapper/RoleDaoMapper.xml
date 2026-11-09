@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+  namespace="com.learningworks.role.dao.RoleDao">
+
+  <!-- List<RoleVO> selectAllRoles(); -->
+  <select id="selectAllRoles"
+          resultType="com.learningworks.role.vo.response.RoleVO">
+    SELECT ROLE_ID
+         , ROLE_DISPLAY_NAME
+      FROM "ROLE"
+     ORDER BY ROLE_RANK
+         , ROLE_ID
+  </select>
+
+  <!-- RoleVO selectRoleByRoleId(String roleId); -->
+  <select id="selectRoleByRoleId"
+          parameterType="string"
+          resultType="com.learningworks.role.vo.response.RoleVO">
+    SELECT ROLE_ID
+         , ROLE_DISPLAY_NAME
+      FROM "ROLE"
+     WHERE ROLE_ID = #{_parameter}
+  </select>
+
+  <!-- int insertNewRole(RegistRoleVO registRoleVO, int roleRank); -->
+  <insert id="insertNewRole">
+    INSERT INTO "ROLE"
+     (ROLE_ID
+    , ROLE_DISPLAY_NAME
+    , ROLE_RANK)
+    VALUES
+     (#{registRoleVO.roleId}
+    , #{registRoleVO.roleDisplayName}
+    , #{roleRank})
+  </insert>
+
+  <!-- int updateRole(String roleId, ModifyRoleVO modifyRoleVO); -->
+  <update id="updateRole">
+    UPDATE "ROLE"
+       SET ROLE_DISPLAY_NAME = #{modifyRoleVO.roleDisplayName}
+     WHERE ROLE_ID = #{roleId}
+  </update>
+
+  <!-- Integer selectRankByRoleId(String roleId); -->
+  <select id="selectRankByRoleId"
+          parameterType="string"
+          resultType="int">
+    SELECT ROLE_RANK
+      FROM "ROLE"
+     WHERE ROLE_ID = #{_parameter}
+  </select>
+
+  <!-- int updateRankByRoleId(String roleId, int roleRank); -->
+  <update id="updateRankByRoleId">
+    UPDATE "ROLE"
+       SET ROLE_RANK = #{roleRank}
+     WHERE ROLE_ID = #{roleId}
+  </update>
+
+  <!-- int updateRoleRanks(List<String> roleIds); -->
+  <update id="updateRoleRanks">
+    UPDATE "ROLE"
+       SET ROLE_RANK = CASE ROLE_ID
+                       <foreach collection="roleIds" item="roleId" index="idx">
+                         WHEN #{roleId} THEN #{idx} + 1
+                       </foreach>
+                       END
+     WHERE ROLE_ID IN
+           <foreach collection="roleIds" item="roleId" open="(" separator="," close=")">
+             #{roleId}
+           </foreach>
+  </update>
+
+  <!-- RoleRankVO selectRoleRankByUserId(String userId); -->
+  <select id="selectRoleRankByUserId"
+          parameterType="string"
+          resultType="com.learningworks.role.vo.response.RoleRankVO">
+    SELECT R.ROLE_ID
+         , R.ROLE_RANK
+      FROM "USER" U
+     INNER JOIN "ROLE" R
+        ON U.BASE_ROLE = R.ROLE_ID
+     WHERE U.ID = #{_parameter}
+       AND U.DEL_YN = 'N'
+  </select>
+
+  <!-- long selectActiveUserCountByRoleId(String roleId); -->
+  <select id="selectActiveUserCountByRoleId"
+          parameterType="string"
+          resultType="_long">
+    SELECT COUNT(ID)
+      FROM "USER"
+     WHERE BASE_ROLE = #{_parameter}
+       AND DEL_YN = 'N'
+  </select>
+
+  <!-- List<RoleUserVO> selectActiveUsersByRoleId(String roleId); -->
+  <select id="selectActiveUsersByRoleId"
+          parameterType="string"
+          resultType="com.learningworks.role.vo.response.RoleUserVO">
+    SELECT ID
+         , NAME
+      FROM "USER"
+     WHERE BASE_ROLE = #{_parameter}
+       AND DEL_YN = 'N'
+     ORDER BY NAME
+         , ID
+  </select>
+
+  <!-- int updateActiveUserBaseRole(String fromRoleId, String toRoleId, String excludeUserId); -->
+  <update id="updateActiveUserBaseRole">
+    UPDATE "USER"
+       SET BASE_ROLE = #{toRoleId}
+         , MDFY_DT = SYSDATE
+     WHERE BASE_ROLE = #{fromRoleId}
+       AND DEL_YN = 'N'
+       AND ID != #{excludeUserId}
+  </update>
+
+  <!-- int updateDeletedUserBaseRole(String roleId, String replaceRoleId); -->
+  <update id="updateDeletedUserBaseRole">
+    UPDATE "USER"
+       SET BASE_ROLE = #{replaceRoleId}
+         , MDFY_DT = SYSDATE
+     WHERE BASE_ROLE = #{roleId}
+       AND DEL_YN = 'Y'
+  </update>
+
+  <!-- int deleteRoleActionByRoleId(String roleId); -->
+  <delete id="deleteRoleActionByRoleId"
+          parameterType="string">
+    DELETE
+      FROM ROLE_ACTION
+     WHERE ROLE_ID = #{_parameter}
+  </delete>
+
+  <!-- int deleteMenuRoleByRoleId(String roleId); -->
+  <delete id="deleteMenuRoleByRoleId"
+          parameterType="string">
+    DELETE
+      FROM MENU_ROLE
+     WHERE ROLE_ID = #{_parameter}
+  </delete>
+
+  <!-- int deleteRole(String roleId); -->
+  <delete id="deleteRole"
+          parameterType="string">
+    DELETE
+      FROM "ROLE"
+     WHERE ROLE_ID = #{_parameter}
+  </delete>
+
+</mapper>

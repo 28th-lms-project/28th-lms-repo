@@ -1,0 +1,29 @@
+.dashboard {
+  height: 100%;
+}
+
+.contentContainer {
+  display: flex;
+  flex-direction: column;
+  background-color: rgb(255, 255, 255);
+  padding: 0px 2rem 2rem;
+  margin: 1rem 0px 0px;
+  height: auto;
+  overflow: visible;
+}
+
+.contentTitle {
+  margin: 0px 0px 10px;
+  padding: 2rem 0px 1rem;
+  background-color: rgb(255, 255, 255);
+  position: static;
+  top: 0px;
+  font-size: 1.2rem;
+}
+
+.contentItem {
+  background-color: rgb(245, 245, 245);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}

@@ -1,3 +1,5 @@
+import CourseItem from "./CourseItem";
+
 export default function CourseList() {
-  return <div>CourseList</div>;
+  return <></>;
 }
