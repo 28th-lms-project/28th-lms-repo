@@ -52,10 +52,7 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * 로그인 토큰을 반환합니다.
- * TODO: JWT 로그인 구현 시 저장된 Access Token을 반환하도록 변경
- */
+/** 저장된 Access Token을 반환합니다. 없으면 null */
 const getAccessToken = () => getToken();
 
 /** 쿼리스트링 생성. null · undefined · 빈 문자열은 제외하고, 배열은 같은 키로 여러 번 붙입니다. */
@@ -130,7 +127,7 @@ const request = async (method, url, { params, data, signal } = {}) => {
     return result;
   }
 
-  // TODO: JWT 로그인 구현 시 401이면 토큰 재발급 또는 로그인 페이지로 이동
+  // 토큰을 보낸 요청이 401이면 토큰 삭제 후 로그인 페이지로 이동 (로그인 요청 자체는 제외)
   if (response.status === 401 && accessToken && url !== "/login") {
     removeToken();
     window.location.replace("/login");

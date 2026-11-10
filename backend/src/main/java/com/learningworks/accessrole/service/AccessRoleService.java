@@ -2,14 +2,10 @@ package com.learningworks.accessrole.service;
 
 import com.learningworks.accessrole.vo.request.AccessRoleSaveRequestVO;
 import com.learningworks.accessrole.vo.response.AccessRolePermissionVO;
-import com.learningworks.accessrole.vo.response.AccessRoleVO;
 
 import java.util.List;
 
 public interface AccessRoleService {
-
-    // 역할 목록 조회
-    List<AccessRoleVO> getRoleList();
 
     // 허용 권한 목록 조회
     List<AccessRolePermissionVO> getAllowedPermissionList(

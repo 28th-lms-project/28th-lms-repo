@@ -15,4 +15,5 @@ public class CourseMemberVO {
 	private String baseRole        ;
 	private String delYn           ;
 	private String loginBlockDate  ;
+	private String rowNum          ;
 }

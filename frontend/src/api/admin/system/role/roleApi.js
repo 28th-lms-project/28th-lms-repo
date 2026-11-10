@@ -50,6 +50,7 @@ export const deleteRole = (roleId) => api.delete(rolePath(roleId));
  * 역할을 사용 중인 활성 회원 목록
  * @param {string} roleId
  * @returns {Promise<{ id: string, name: string }[]>}
+ * errorCode: ROLE_NOT_EXISTS
  */
 export const getRoleUsers = (roleId, options) => api.get(`${rolePath(roleId)}/users`, undefined, options);
 
@@ -58,6 +59,8 @@ export const getRoleUsers = (roleId, options) => api.get(`${rolePath(roleId)}/us
  * @param {string} roleId 현재 역할
  * @param {string} replaceRoleId 이동할 역할
  * @returns {Promise<{ fromRoleId: string, toRoleId: string, movedCount: number }>}
- * errorCode: ROLE_MOVE_SAME, ROLE_TARGET_FORBIDDEN, ROLE_ASSIGN_FORBIDDEN, GLOBAL_UNAUTHORIZED
+ * errorCode: ROLE_MOVE_SAME, ROLE_MOVE_TO_SUPER_ADMIN, ROLE_NOT_EXISTS,
+ *            ROLE_TARGET_FORBIDDEN, ROLE_ASSIGN_FORBIDDEN, GLOBAL_UNAUTHORIZED,
+ *            GLOBAL_FORBIDDEN(요청자 회원 정보 없음)
  */
 export const moveRoleUsers = (roleId, replaceRoleId) => api.put(`${rolePath(roleId)}/users`, { replaceRoleId });

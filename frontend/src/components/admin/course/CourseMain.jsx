@@ -1,6 +1,7 @@
 import { Fragment, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { courseActions } from "../../../store/slices/courseSliceStore";
+import { getCourses } from "../../../api/admin/course/courseApi";
 
 import { IconButton } from "../../sample/input/IconButton";
 import { icons } from "../../sample/input/icons";
@@ -17,21 +18,21 @@ export default function CourseMain() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let ignore = false;
+    const controller = new AbortController();
     dispatch(courseActions.startLoading());
     (async () => {
-      const fetchResult = await fetch("http://localhost:8080/course/view");
-      const result = await fetchResult.json();
-
-      if (!ignore) {
-        dispatch(courseActions.load(result));
-
+      try {
+        const courses = await getCourses({ signal: controller.signal });
+        dispatch(courseActions.load(courses));
         dispatch(courseActions.finishLoading());
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          alert(error.message);
+        }
       }
     })();
     return () => {
-      // showArticle 제거.
-      ignore = true;
+      controller.abort();
     };
   }, [dispatch, pathname]);
 
@@ -39,7 +40,7 @@ export default function CourseMain() {
     navigate("/admin/course/add");
   };
   const clickCourseIdButtonHandler = (urlId) => {
-    navigate(`/admin/course/list/${urlId}`);
+    navigate(`/admin/course/list/${urlId}?tab=0`);
   };
   return (
     <>
@@ -48,6 +49,7 @@ export default function CourseMain() {
         backgroundColor={isAddActive ? "#fff" : "buttonface"}
         icon={icons.add}
         onClick={onClickAddGroupButtonHandler}
+        style={{ border: "1px 1px 1px 0px solid #000" }}
       />
       {courseList.map((course) => {
         return (
@@ -58,6 +60,14 @@ export default function CourseMain() {
                   ? "#fff"
                   : "buttonface"
               }
+              style={{
+                borderTop: "1px  solid #000",
+                borederBotton: "0px",
+                borderTopLeftRadius: "0px",
+                borderTopRightRadius: "0px",
+                borderBottomLeftRadius: "0px",
+                borderBottomRightRadius: "0px",
+              }}
               onClick={clickCourseIdButtonHandler.bind(this, course.id)}
             >
               {course.courseName}

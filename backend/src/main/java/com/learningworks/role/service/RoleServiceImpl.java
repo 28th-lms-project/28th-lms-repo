@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.learningworks.common.action.AccessChecker;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.role.RoleConstants;
@@ -30,6 +31,8 @@ public class RoleServiceImpl implements RoleService {
   RoleDao roleDao;
 
   RoleAssignPolicy roleAssignPolicy;
+
+  AccessChecker accessChecker;
 
   @Override
   public RoleListVO readRoleList() {
@@ -153,6 +156,9 @@ public class RoleServiceImpl implements RoleService {
     if (this.roleDao.deleteRole(roleId) == 0) {
       throw new LearningworksException(ErrorCode.ROLE_NOT_EXISTS);
     }
+
+    // 삭제된 역할의 권한 캐시 정리 (커밋 후 실행)
+    this.accessChecker.evictRole(roleId);
 
     return role;
   }
