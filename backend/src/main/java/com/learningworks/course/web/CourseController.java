@@ -28,24 +28,44 @@ public class CourseController {
 		
 	}
 	
-	
+	/**
+	 * 강의 목록 전체 조회 
+	 * @return List<CourseVO>
+	 */
 	@GetMapping("/course/view")
 	public ApiResponse<List<CourseVO>> viewCourse() {
 		List<CourseVO> course = this.courseService.viewCourse();
 		return ApiResponse.OK(course) ;
 	}
 	
+	/**
+	 * 강의 id로 강의 하나 상세 조회
+	 * @param courseId
+	 * @return CourseVO
+	 */
 	@GetMapping("/course/list/{courseId}")
 	public ApiResponse<CourseVO> readOneCourse(@PathVariable String courseId) {
 		CourseVO course = this.courseService.readOneCourse(courseId);
 		return ApiResponse.OK(course);
 	}
+	
+	/**
+	 * 해당 강의에 대한 학생 리스트 조회 
+	 * @param courseId
+	 * @return List<CourseMemberVO>
+	 */
 	@GetMapping("/{courseId}/list/student")
 	public ApiResponse<List<CourseMemberVO>> readCourseMembers(@PathVariable String courseId) {
 		List<CourseMemberVO> courseMemberList = this.courseService.readCourseMembers(courseId);
 		return ApiResponse.OK(courseMemberList);
 		
 	}
+	/**
+	 * (미사용)
+	 * 수강생 로그인 아이디에 대한 강의 조회 
+	 * @param courseId
+	 * @return CourseVO
+	 */
 	
 	@GetMapping("/my/course/list/{courseId}")
 	public ApiResponse<CourseVO> readMyCourse(@PathVariable String courseId) {
@@ -53,22 +73,44 @@ public class CourseController {
 		return ApiResponse.OK(course);
 	}
 	
+	/**
+	 * 강의에 대한 과제 목록 전체 조회
+	 * @param courseId
+	 * @return List<HomeworkVO>
+	 */
 	@GetMapping("/{courseId}/homeworklist")
 	public ApiResponse<List<HomeworkVO>> readHomework(@PathVariable String courseId){
 		List<HomeworkVO> homeworkList = this.courseService.courseHomeworkList(courseId);
 		return ApiResponse.OK(homeworkList);
 	}
-	//나중에 분리할 endpoint
+	
+	/**
+	 * 나중에 분리할 endpoint
+	 * 전체 학생 목록 조회 query문에서 WHERE BASE_ROLE = 'ROLE_STUDENT'
+	 * @return List<CourseMemberVO>
+	 */
 	@GetMapping("/student/list")
 	public ApiResponse<List<CourseMemberVO>> courseMemberList() {
 		List<CourseMemberVO> courseMemberVO = this.courseService.courseMemberList();
 		return ApiResponse.OK(courseMemberVO);
 	}
+	/**
+	 * 나중에 분리할 endpoint
+	 * 전체 강사 목록 조회 QUERY문에서 WHERE BASE_ROLE = 'ROLE_TUTOR'
+	 * @return List<CourseMemberVO>
+	 */
+	
 	@GetMapping("/tutor/list")
 	public ApiResponse<List<CourseMemberVO>> courseTutorList(){
 		List<CourseMemberVO> courseMemberVO = this.courseService.courseTutorList();
 		return ApiResponse.OK(courseMemberVO);
 	}
+	
+	/**
+	 * 강의 등록 API
+	 * @param registCourseVO
+	 * @return ApiResponse.CREATED
+	 */
 	@PostMapping("/admin/course/add")
 	public ApiResponse<CourseVO> addCourse(@Valid @ModelAttribute RegistCourseVO registCourseVO) {
 		return ApiResponse.CREATED(this.courseService.addCourse(registCourseVO));
