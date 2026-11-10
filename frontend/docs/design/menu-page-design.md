@@ -1,0 +1,306 @@
+# 메뉴 관리 화면 · 메뉴 기반 사이드바 · URL 접근 제한 설계
+
+- 대상 화면: `시스템 관리 > 메뉴 관리` (`/admin/system/menu`), 사이드바(`SideMenu.jsx`), 모든 화면의 URL 접근
+- 담당: ROLE 모듈 담당자
+- 작성일: 2026-11-10
+- 상태: 설계 확정. 구현 전
+
+이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
+
+---
+
+## 1. 확정된 결정
+
+| 항목 | 결정 |
+| --- | --- |
+| 역할 분담 | **메뉴(`MENU_ROLE`)는 사이드바 표시와 URL 접근**, **권한 코드(`ROLE_ACTION`)는 버튼 · API**. 화면 안의 버튼은 지금처럼 `can()`으로 따로 숨겨야 합니다 |
+| 메뉴 단계 | 대메뉴 = 사이드바 섹션 제목(Main / My Page / System Management), 중메뉴 = 접히는 그룹, 소메뉴 = 링크 |
+| 사이드바 데이터 | `menuData.js`(고정 데이터) 대신 `GET /menus/me` 결과를 씁니다 |
+| 저장 후 반영 | 메뉴 관리에서 저장 · 삭제 · 순서 변경에 성공하면 내 메뉴를 다시 받아 **내 사이드바에 바로 반영**. 다른 사용자는 새로고침 · 재로그인 때 반영 |
+| URL 선택 | **라우터에 표시한 경로만** 드롭다운으로 고릅니다 (5장) |
+| URL 매칭 | 메뉴에 없는 URL은 **가장 긴 접두어**의 메뉴 권한을 따릅니다. 예: `/admin/course/list/123` → "과정 목록" |
+| 어느 메뉴에도 속하지 않는 URL | **SUPER_ADMIN만** 열 수 있습니다. 예외: `/`(대시보드), `/login` |
+| 팝업 (`/popup/...`) | 같은 가드를 적용합니다. 소속 메뉴는 라우트에 직접 적습니다 (5-2) |
+| 메뉴를 받는 중 | 아무것도 그리지 않습니다 |
+| 비로그인 | 가드 대상 URL이면 `/login`으로 이동 |
+| SUPER_ADMIN | `MENU_ROLE`과 관계없이 모든 메뉴 표시 · 접근. 메뉴 관리 화면의 SUPER_ADMIN 체크박스는 **체크된 채로 비활성화** |
+| 접근 거부 | 화면 전체에 "권한이 없습니다" (권한 관리 화면과 같은 방식) |
+| 순서 변경 | HTML5 Drag and Drop. **같은 상위 메뉴 안에서만** |
+| UI 부품 | `src/components/sample`의 컴포넌트를 씁니다 (6-1) |
+
+---
+
+## 2. 이 설계로 막을 수 있는 것과 없는 것
+
+"과정 등록" 화면(`/admin/course/add`)에 STUDENT가 들어가면 403 알림이 세 번 뜨고 화면이 보이던 문제 기준입니다.
+
+| 상황 | 결과 |
+| --- | --- |
+| 메뉴에서 허용되지 않은 화면 URL을 직접 입력 | **막힘.** 가드가 `<Outlet />` 위에서 막으므로 `CourseMain` 등 화면 컴포넌트가 아예 그려지지 않고, 알림도 뜨지 않습니다 |
+| 화면 컴포넌트를 고치지 않아도 되는지 | **고치지 않아도 됩니다.** 라우터와 레이아웃만 바뀝니다 |
+| 라우트의 `loader` | **막지 못합니다.** `loader`는 화면보다 먼저 실행됩니다. 지금은 `/admin/course/list`의 index `loader`(`getCourses`)가 해당합니다. 서버가 403으로 막으므로 데이터는 새지 않지만, 오류 화면이 보일 수 있습니다 |
+| 메뉴는 허용됐는데 API 권한이 없음 | 막지 못합니다. 메뉴와 권한 코드는 따로 설정하므로, 관리자가 두 설정을 맞춰야 합니다 |
+| 화면 안의 특정 버튼 | 막지 못합니다. 각 담당자가 `can()`으로 숨겨야 합니다 |
+
+---
+
+## 3. 현재 상태
+
+| 대상 | 상태 |
+| --- | --- |
+| 백엔드 `/menus` API | 구현 전 (`backend/docs/design/menu-design.md`) |
+| `components/admin/system/menu/Menu.jsx` | 빈 화면 (`<div>Menu</div>`) |
+| `components/menu/SideMenu.jsx` | `menuData.js`의 고정 데이터를 그림. 현재 주소가 들어 있는 그룹만 처음에 펼침 |
+| `router/MainRouterProvider.jsx` | 메뉴 표시(`handle.menu`)와 가드 없음 |
+| 라우트 · 메뉴 등록 | "메뉴 관리" 라우트와 메뉴 항목은 등록되어 있음 |
+
+---
+
+## 4. API
+
+`src/api/admin/system/menu/menuApi.js`에 함수를 만듭니다. 성공하면 `body`, 실패하면 `ApiError`.
+
+| 함수 | 요청 | 반환 (`body`) | 주요 errorCode |
+| --- | --- | --- | --- |
+| `getMyMenus(options)` | `GET /menus/me` | `{ superAdmin, menus, guardUrls }` | `GLOBAL_UNAUTHORIZED` |
+| `getMenus(options)` | `GET /menus` | `{ roles, menus }` | — |
+| `createMenu(menu)` | `POST /menus` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_PARENT_INVALID`, `MENU_URL_USED`, `MENU_ROLE_INVALID` |
+| `modifyMenu(menuId, menu)` | `PUT /menus/{menuId}` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_URL_USED`, `MENU_ROLE_INVALID` |
+| `modifyMenuOrder(parentId, menuIds)` | `PUT /menus/order` | `{ roles, menus }` | `MENU_ORDER_INVALID`, `MENU_ORDER_OUTDATED` |
+| `deleteMenu(menuId)` | `DELETE /menus/{menuId}` | 메뉴 1건 | `MENU_NOT_EXISTS`, `MENU_HAS_CHILDREN`, `MENU_IN_USE` |
+
+메뉴 객체 필드: `id`, `title`, `parentId`, `menuOrder`, `useYn`, `spread`, `menuUrl`, `roleIds`, `crtDt`, `mdfyDt`. `getMyMenus`의 메뉴에는 `useYn` · `roleIds` · 날짜가 없습니다.
+
+권한 코드: 화면 `MENU_READ`, 추가 `MENU_CREATE`, 저장 · 순서 변경 `MENU_UPDATE`, 삭제 `MENU_DELETE`.
+
+---
+
+## 5. 라우터 표시와 URL 접근 제한 (가드)
+
+### 5-1. 메뉴로 고를 수 있는 경로 표시
+
+메뉴 관리 화면이 "실제로 있는 화면"만 고르게 하려고, 라우트의 `handle`에 표시합니다.
+
+```jsx
+{ path: "add", element: <CourseAdd />, handle: { crumb: "과정 등록", menu: true } },
+```
+
+- `menu: true`를 붙일 수 있는 라우트: 파라미터(`:id`)가 없고 화면이 있는 경로.
+- 지금 `menuData.js`에 있는 링크(대시보드 `/` 제외)에 모두 붙입니다.
+- `router/routeUtils.js`의 `getMenuUrlOptions(routes)`가 라우트 트리를 돌며 `menu: true`인 경로의 전체 URL을 모읍니다. 이를 위해 `MainRouterProvider.jsx`의 라우트 배열을 `routes`로 따로 export 합니다.
+
+### 5-2. 소속 메뉴 직접 지정
+
+접두어로 메뉴를 찾을 수 없는 라우트는 `handle.guardAs`에 소속 메뉴 URL을 적습니다.
+
+```jsx
+{
+  path: "/popup/homework/:courseid/:homeworkId",
+  element: <MenuGuard><HomeworkDetails /></MenuGuard>,
+  handle: { guardAs: "/admin/course/list" },   // 과정 목록 화면에서 여는 팝업
+},
+```
+
+### 5-3. 가드 판정 순서 (`MenuGuard`)
+
+1. 경로가 `/` 또는 `/login`이면 통과.
+2. 비로그인이면 `/login`으로 이동.
+3. 내 메뉴 상태가 `idle`/`loading`이면 아무것도 그리지 않음. `failed`면 "메뉴 정보를 불러오지 못했습니다." 안내.
+4. `superAdmin`이면 통과.
+5. 판정할 URL: 일치한 라우트 중 가장 안쪽의 `handle.guardAs`, 없으면 현재 `pathname`.
+6. `guardUrls`에서 그 URL과 **같거나, 그 URL이 `기준URL + "/"`로 시작하는** 것 중 가장 긴 것을 찾음.
+   - 경계 검사가 필요합니다: `/admin/system/access-role`이 `/admin/system/access`에 매칭되면 안 됩니다.
+   - `/`는 매칭 후보에서 뺍니다 (모든 URL에 매칭되므로). `/`는 1번에서 처리합니다.
+7. 찾지 못하면 거부 (SUPER_ADMIN은 4번에서 이미 통과).
+8. 찾았으면 내 메뉴(`menus`)의 `menuUrl`에 그 URL이 있을 때만 통과.
+
+거부되면 "권한이 없습니다"를 화면 전체에 표시합니다. 사이드바는 그대로 보입니다.
+
+### 5-4. 배치
+
+- `MainLayout.jsx`: `<Outlet />`을 `<MenuGuard><Outlet /></MenuGuard>`로 감쌉니다.
+- 팝업 라우트: 5-2처럼 화면을 직접 감쌉니다 (`MainLayout` 밖이라서).
+- 내 메뉴 조회(`fetchMyMenus`)는 `MenuGuard`가 시작합니다. 팝업에서도 동작해야 하기 때문입니다. 사이드바는 같은 store 값을 읽기만 합니다.
+
+---
+
+## 6. 메뉴 관리 화면 (`/admin/system/menu`)
+
+### 6-1. 사용할 sample 컴포넌트
+
+| 용도 | 컴포넌트 |
+| --- | --- |
+| 이름 · URL 표시 입력 | `sample/input/Input.jsx`의 `TextField` |
+| 사용여부 · 펼침 · 역할 체크박스 | `Checkbox` |
+| URL 선택 | `NativeSelect` |
+| 추가 · 삭제 · 저장 · 취소 | `Button` |
+| 삭제 확인, 저장 안 한 변경사항 확인 | `sample/Modal.jsx`의 `Confirm` |
+| 화면 틀 | `common/PageContainer`, `components/Section.jsx` |
+
+목록(드래그 순서 변경)은 권한 관리 화면처럼 직접 만든 목록을 씁니다. sample `Grid`에는 드래그 기능이 없습니다.
+
+### 6-2. 화면 구성
+
+```text
+┌ 대메뉴 ───────────┐┌ 중메뉴 ───────────┐┌ 소메뉴 ───────────┐
+│ ≡ Main            ││ ≡ 과정 관리       ││ ≡ 과정 목록       │
+│ ≡ My Page         ││ ≡ 설문 관리       ││ ≡ 과정 등록       │
+│ ≡ System Mgmt  ◀  ││ ≡ 시스템 관리  ◀  ││                   │
+├───────────────────┤├───────────────────┤├───────────────────┤
+│ ID  MN-2026...    ││ ID  MN-2026...    ││ ID  MN-2026...    │
+│ 이름 [          ] ││ 이름 [          ] ││ 이름 [          ] │
+│ ☑ 사용            ││ ☑ 사용  ☐ 펼침    ││ ☑ 사용            │
+│ 역할              ││ 역할              ││ 역할              │
+│ ☑ 최고관리자(고정)││ ☑ 최고관리자(고정)││ ☑ 최고관리자(고정)│
+│ ☐ 관리자 ☐ 강사…  ││ ☐ 관리자 ☐ 강사…  ││ ☐ 관리자 ☐ 강사…  │
+│                   ││                   ││ URL [선택      ▼] │
+│ 생성 2026-11-10…  ││ 생성 …            ││ 생성 …            │
+│ 수정 -            ││ 수정 …            ││ 수정 …            │
+│ [추가][삭제]      ││ [추가][삭제]      ││ [추가][삭제]      │
+│ [저장][취소]      ││ [저장][취소]      ││ [저장][취소]      │
+└───────────────────┘└───────────────────┘└───────────────────┘
+```
+
+- 위: 목록. 아래: 선택한 메뉴의 상세.
+- 대메뉴를 고르면 중메뉴 열에 그 하위가, 중메뉴를 고르면 소메뉴 열에 그 하위가 나옵니다. 상위 선택이 바뀌면 오른쪽 열의 선택은 풀립니다.
+- 미사용(`useYn = 'N'`) 메뉴는 목록에서 흐리게 표시하고 이름 뒤에 "(미사용)"을 붙입니다.
+- 역할 체크박스 순서는 역할 순위 순서(`roles` 그대로)입니다.
+
+### 6-3. 상태 설계
+
+| 상태 | 내용 |
+| --- | --- |
+| `listStatus`, `listError` | `getMenus` 결과 상태 |
+| `roles`, `menus` | `getMenus` 결과 (평평한 목록) |
+| `selectedIds` | `{ top, mid, btm }` 열별 선택 메뉴 ID |
+| `forms` | 열별 상세 입력값 `{ mode: "view" \| "new", id, title, useYn, spread, menuUrl, roleIds }` |
+| `formErrors` | 열별 입력 오류 |
+| `saving` | 저장 · 삭제 · 순서 변경 진행 중 (버튼 비활성) |
+
+열 목록은 `menus`에서 `parentId`로 걸러서 `menuOrder`로 정렬해 계산합니다 (따로 저장하지 않음).
+
+### 6-4. 기능별 상세
+
+**추가**
+- 대메뉴 열은 항상, 중 · 소메뉴 열은 상위 메뉴를 골랐을 때만 활성화.
+- 누르면 그 열의 상세가 빈 입력(`mode: "new"`, 사용 체크, 펼침 해제, 역할 없음)이 됩니다. 저장하면 `createMenu`.
+- 새 메뉴는 같은 상위 메뉴의 맨 뒤에 들어갑니다.
+
+**저장**
+- `mode`가 `new`면 `createMenu`, 아니면 `modifyMenu`.
+- 입력 검사(백엔드와 같은 규칙): 이름 필수 · 100자 이하, 소메뉴 URL 필수.
+- 성공하면 `getMenus` 다시 조회 + 저장한 메뉴 선택 + 내 메뉴 다시 조회(7장).
+
+**취소**
+- 입력값을 마지막 저장 값으로 되돌립니다. `new` 모드면 상세를 비우고 이전 선택으로 돌아갑니다.
+
+**삭제**
+- `Confirm`으로 확인 후 `deleteMenu`. `new` 모드에서는 비활성화.
+- `MENU_HAS_CHILDREN` · `MENU_IN_USE`는 서버 메시지를 그대로 알림으로 표시.
+
+**저장하지 않은 변경사항**
+- 입력을 바꾼 상태에서 다른 메뉴를 고르거나 상위 선택을 바꾸면 `Confirm`("저장하지 않은 변경사항이 있습니다. 이동할까요?")을 띄웁니다.
+
+**순서 변경**
+- 권한 관리 화면과 같은 HTML5 Drag and Drop. 같은 열(같은 상위 메뉴) 안에서만.
+- 놓으면 `modifyMenuOrder(parentId, 그 열의 전체 ID 목록)`. 성공하면 응답으로 목록 교체 + 내 메뉴 다시 조회.
+- `MENU_ORDER_OUTDATED`면 "메뉴 목록이 변경되었습니다…" 알림 후 목록 다시 조회.
+
+**URL 선택 (소메뉴만)**
+- 선택지: `getMenuUrlOptions(routes)` 중 **다른 메뉴가 쓰지 않는** URL. 표시는 `crumb (URL)`.
+- 저장된 URL이 선택지에 없으면(라우트가 없어짐) `(등록되지 않은 경로) /xxx`로 맨 위에 보여 줍니다.
+
+**역할 체크박스**
+- SUPER_ADMIN은 항상 체크 · 비활성. 저장할 때 `roleIds`에 넣지 않습니다.
+
+### 6-5. 권한별 표시
+
+| 권한 | 없을 때 |
+| --- | --- |
+| `MENU_READ` | 화면 전체 "권한이 없습니다" (권한 관리 화면처럼 감싸는 컴포넌트에서 처리, 확인 중이면 "권한 확인 중...") |
+| `MENU_CREATE` | [추가] 숨김 |
+| `MENU_UPDATE` | 드래그 손잡이 숨김. 기존 메뉴의 입력칸 · [저장] · [취소] 비활성 |
+| `MENU_DELETE` | [삭제] 숨김 |
+
+---
+
+## 7. 사이드바 (`SideMenu.jsx`)
+
+### 7-1. store: `src/store/slices/menuSliceStore.js`
+
+권한 store(`permissionSliceStore.js`)와 같은 구조로 만듭니다.
+
+| 항목 | 내용 |
+| --- | --- |
+| 상태 | `{ status, superAdmin, menus, guardUrls, requestId }` (`status`: `idle` / `loading` / `succeeded` / `failed`) |
+| `fetchMyMenus` | `status === "idle"`일 때만 실행 (`condition`) |
+| `refreshMyMenus` | 조건 없이 다시 조회. 메뉴 관리에서 저장 성공 후 호출. 이전 값은 응답이 올 때까지 유지 (사이드바가 깜빡이지 않게) |
+| 로그아웃 | `logout`에서 `idle`로 초기화 |
+| 등록 | `store/StoreProvider.jsx`에 `menu` reducer 추가 |
+
+### 7-2. 그리기 규칙
+
+- `menus`를 대(섹션) → 중(그룹) → 소(링크) 트리로 만들어 `menuOrder` 순으로 그립니다.
+- 소메뉴가 하나도 없는 중메뉴, 중메뉴가 하나도 없는 대메뉴는 그리지 않습니다.
+- 처음 펼칠 그룹: `spread = 'Y'`인 그룹 + 현재 주소가 들어 있는 그룹 (지금 동작 유지).
+- `NavLink`의 `end`는 URL이 `/`일 때만 켭니다 (지금 `menuData.js`에서 `end`를 쓴 곳은 `/`와 `/sample`이고, `/sample`은 하위 경로가 없어 차이가 없습니다).
+- 그룹을 펼친 상태는 지금처럼 이름이 아니라 **메뉴 ID**로 기억합니다 (같은 이름 그룹이 생길 수 있으므로).
+- 메뉴를 받는 중에는 메뉴 영역을 비워 둡니다.
+- 전환이 끝나면 `menuData.js`를 삭제합니다.
+
+---
+
+## 8. 파일 구성
+
+```text
+src/api/admin/system/menu/menuApi.js            (새 파일)
+src/store/slices/menuSliceStore.js              (새 파일)
+src/store/StoreProvider.jsx                     (reducer 등록)
+src/router/routeUtils.js                        (새 파일: getMenuUrlOptions, findGuardUrl)
+src/router/MainRouterProvider.jsx               (routes export, handle.menu, guardAs, 팝업 감싸기)
+src/components/menu/MenuGuard.jsx               (새 파일)
+src/layout/MainLayout.jsx                       (Outlet 감싸기)
+src/components/menu/SideMenu.jsx                (store 사용)
+src/components/menu/menuData.js                 (전환 후 삭제)
+src/components/admin/system/menu/Menu.jsx       (권한 확인 래퍼 + 화면)
+src/components/admin/system/menu/MenuColumn.jsx (열 하나: 목록 + 상세)
+src/components/admin/system/menu/menuUtils.js   (트리 계산, 입력 검사, 오류 메시지)
+src/components/admin/system/menu/Menu.module.css
+```
+
+### 지킬 것
+
+- `MainRouterProvider.jsx`는 다른 담당자(과정 관리)와 같이 쓰는 파일입니다. 기존 라우트 구조는 바꾸지 말고 `handle`과 감싸기만 추가하세요. 수정 전에 담당자에게 알리세요.
+- 화면 컴포넌트 파일(과정 관리 등)은 고치지 않습니다.
+
+---
+
+## 9. 적용 순서
+
+1. 백엔드 `/menus` API 구현.
+2. DB에 초기 메뉴 · `MENU_ROLE` 입력 (`backend/docs/design/menu-design.md` 2-5).
+3. 메뉴 관리 화면 구현.
+4. 사이드바를 store로 전환.
+5. 라우터 표시 + 가드 적용. **2번이 끝나기 전에 켜면 SUPER_ADMIN 외에는 대시보드만 열립니다.**
+6. 팀에 공지: 새 화면을 만들면 라우트에 `handle.menu`를 붙이고, 메뉴 관리에서 메뉴와 역할을 등록해야 다른 역할이 들어갈 수 있다는 것.
+
+---
+
+## 10. 확인 시나리오 (수동 테스트)
+
+| # | 시나리오 | 기대 결과 |
+| --- | --- | --- |
+| M1 | STUDENT로 `/admin/course/add` 직접 입력 | 알림 없이 "권한이 없습니다" |
+| M2 | STUDENT로 `/my/course/list/123` (수강 과정 허용) | 화면 표시 (접두어 매칭) |
+| M3 | ADMIN으로 `/admin/system/access-role` (접근 관리만 허용) | "권한이 없습니다" (경계 검사) |
+| M4 | 메뉴에 없는 URL을 SUPER_ADMIN / 그 외로 입력 | 열림 / "권한이 없습니다" |
+| M5 | 비로그인으로 `/admin/course/add` | `/login`으로 이동 |
+| M6 | 과정 목록이 허용된 TUTOR로 숙제 팝업 열기 | 팝업 표시 (`guardAs`) |
+| M7 | 메뉴 관리에서 소메뉴 이름 변경 · 미사용 · 역할 해제 후 저장 | 내 사이드바 즉시 반영 |
+| M8 | 중메뉴 미사용 | 그 아래 소메뉴가 사이드바에서 사라지고 URL 접근도 거부 |
+| M9 | `spread` 켠 중메뉴 | 새로고침 시 펼쳐진 상태 |
+| M10 | 드래그로 순서 변경 | 목록 · 사이드바 순서 변경 |
+| M11 | 하위 메뉴가 있는 대메뉴 삭제 | 서버 메시지 알림, 삭제 안 됨 |
+| M12 | URL 드롭다운 | 이미 쓰인 URL과 파라미터 경로(`:id`)가 없음 |
+| M13 | 입력 변경 후 다른 메뉴 선택 | 확인 창 |
+| M14 | `MENU_UPDATE`만 없는 역할 | 드래그 손잡이 없음, 입력 비활성 |
