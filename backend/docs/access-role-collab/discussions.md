@@ -10,7 +10,7 @@
 | --- | --- | --- | --- | --- |
 | D-01 | 새로 만든 역할의 접근 권한 판단 방식 | 매우 높음 | 전체 API 권한 체크, ACTION 테이블 | **결정 · 권한 검사 구현 완료** (JWT 연동 확인, 검사는 켜기 전). ACCESS 작업: R-09 · R-10 완료 |
 | D-02 | MENU_ROLE과 ROLE_ACTION의 역할 분담 | 매우 높음 | MENU / MENU_ROLE 구현 (ROLE 담당자) | **결정** (B안, MENU_ROLE 유지). MENU 구현 전 |
-| D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` | **결정 · 구현 완료** (R-10, R-11, 2026-11-10) |
+| D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` | **결정 · 구현 완료** (R-10, R-11, 2026-11-10). SUPER_ADMIN 전용 범위 추가 합의 |
 | D-04 | 권한 설정 API의 URL 규칙 | 낮음 (선택) | ACCESS_ROLE API, 프론트 | **보류** (2026-11-10) |
 | D-05 | MENU 테이블 공동 사용 방식 | 중간 | ACCESS 모듈, MENU 구현 | 결정 대기 |
 | D-06 | 성공 메시지를 응답에 포함할지 | 낮음 | R-01, R-06 | **결정 · 반영 완료** |
@@ -148,7 +148,8 @@ public ApiResponse<?> answerSurvey(...) { ... }
 | 권한 관리 화면 권한별 표시 (`ROLE_READ` · SUPER_ADMIN 기준) | `frontend/src/components/admin/system/role/Role.jsx` | 완료 (2026-11-10) |
 | ACCESS · ACCESS_ROLE 쪽 적용 (캐시 초기화, SUPER_ADMIN 전용 표시, 화면 표시) | R-10, R-11 | 대기 |
 
-- **권한 검사는 기본적으로 꺼져 있습니다** (`app.access-check.enabled`, 기본값 `false`). JWT 인증 필터는 머지되었지만(`878d6c0`), R-09 데이터 정리로 역할별 권한이 비어 있어 지금 켜면 SUPER_ADMIN 외에는 모두 막힙니다. 켜기 전 조건은 `README.md` "ROLE 담당자" 3번을 참고하세요. 꺼져 있어도 권한 코드 수집과 목록 API는 동작합니다.
+- **권한 검사는 2026-11-10에 켰습니다** (`application.yml`의 `app.access-check.enabled: true`. 설정이 없으면 기본값 `false`). 역할별 권한 부여는 화면에서 계속 진행합니다 (`README.md` "ROLE 담당자" 3번).
+  - 이전 기록: 켜기 전에는 R-09 데이터 정리로 역할별 권한이 비어 있어, 켜면 SUPER_ADMIN 외에는 모두 막히는 상태였습니다.
 - 요청자 ID는 `SecurityContext`의 `Authentication.getName()`을 사용합니다. **JWT 필터(`ValidateJwtAuthenticationFilter`)가 principal에 회원 ID(토큰 `sub`)를 넣는 것을 확인했습니다** (2026-11-09, 테스트 토큰으로 요청자 ID 전달 확인).
 - 권한이 없으면 401(`GLOBAL_UNAUTHORIZED`) / 403(`GLOBAL_FORBIDDEN`)을 공통 응답 형식으로 반환합니다.
 
@@ -260,6 +261,13 @@ public ApiResponse<?> answerSurvey(...) { ... }
   - 두 저장 API와 두 화면의 조회 API에 `@RequireSuperAdmin` 적용 (R-10)
   - `ErrorCode`에 `ACTION_ROLE_PROTECTED(CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다.")` 추가 (상수 추가만). `AccessRoleServiceImpl.saveRolePermission`에서 `roleId`가 `RoleConstants.SUPER_ADMIN_ROLE`이면 409로 거부
   - 권한별 접근 권한 관리 화면 역할 목록에서 `ROLE_SUPER_ADMIN` 제외, 두 화면을 SUPER_ADMIN에게만 표시 (R-11)
+  - ROLE 담당자 확인 (2026-11-10, `8e64b37`): 위 구현 현황 표의 네 항목 모두 적용됨을 코드에서 확인
+- 추가 합의 (2026-11-10, ROLE · ACCESS 담당자): **SUPER_ADMIN 전용 범위**
+  - `@RequireSuperAdmin`은 권한 체계 자체를 다루는 기능으로 한정합니다. 현재 대상은 **역할 생성 · 이름 변경 · 순서 변경 · 삭제, 권한 코드 목록(`GET /action-codes`), 메뉴 목록(`GET /access/menus`), ACTION 저장(`POST /access/save`), 역할별 권한 저장(`POST /access-role/save`)** 이며, 지금 코드 그대로 유지합니다.
+  - 권한 설정 화면의 조회 API 3개는 `@RequireAction`입니다 (`GET /access/actions` → `ACCESS_READ`, `GET /access-role/allowed` → `ACCESS_ROLE_READ_ALLOWED`, `GET /access-role/denied` → `ACCESS_ROLE_READ_DENIED`). ACCESS 담당자의 `1be71e4` 설정이 병합(`8e64b37`)에서 유지된 것으로, "나머지는 열어 둔다"는 합의와 맞습니다. 두 화면 자체는 프론트에서 SUPER_ADMIN에게만 표시됩니다 (R-11).
+  - 그 외 기능은 앞으로도 `@RequireAction`으로 두어, 필요할 때 관리자가 다른 역할에 부여할 수 있게 열어 둡니다. 역할별로 어떤 권한을 줄지는 현재 코드에 정의된 권한 코드 기준으로 관리자가 화면에서 정합니다.
+  - SUPER_ADMIN 전용을 새로 추가해야 하는 기능이 생기면 두 담당자가 먼저 협의합니다.
+  - 가이드 반영: `backend/docs/access-control-guide.md` 2장 "`@RequireSuperAdmin`이 붙은 API (현재 전체 목록)"
 
 ---
 

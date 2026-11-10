@@ -17,8 +17,11 @@ mybatis:
   config-location: classpath:config/mybatis-config.xml
   mapper-locations: classpath*:com/learningworks/**/dao/mapper/*DaoMapper.xml
 
-# JWT 설정
 app:
+  # JWT 설정
   jwt:
     secret-key: gwcR4tHA5Pvn3iApesLgqq0tcY1nLzuyrRRt7/q6lc0=
     access-token-validity-seconds: 1800
+  # API 권한 검사 (@RequireAction, @RequireSuperAdmin). 사용법: backend/docs/access-control-guide.md
+  access-check:
+    enabled: true

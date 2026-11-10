@@ -625,6 +625,11 @@ this.accessChecker.evictRole(request.getRoleId());
 - ROLE 담당자에게 요청:
   - `AccessChecker` 클래스 주석의 "ACTION 수정 · 삭제(/access/save): evictAll()" 정정 (README "ROLE 담당자" 4번, 이미 등록됨)
   - (참고) JDK 23 이상으로 빌드하면 Lombok이 실행되지 않아 컴파일이 실패합니다(JDK 23부터 annotation processing 기본 비활성). 팀 JDK가 21이면 문제없지만, `pom.xml`의 `maven-compiler-plugin`에 `<proc>full</proc>` 또는 `annotationProcessorPaths`에 lombok 지정을 검토해 주세요 (공통 파일이라 수정하지 않음)
+- ROLE 담당자 확인 (2026-11-10, `8e64b37` 기준)
+  - 1 ~ 4번은 코드와 일치합니다. `evictRole`은 SUPER_ADMIN 거부 · 역할 검증 이후, 저장 마지막에 호출되며 커밋 후 비워집니다.
+  - 3번(조회 API에 `@RequireSuperAdmin`)은 병합 커밋 `8e64b37`에서 `1be71e4`의 설정으로 바뀌었습니다. 현재 `GET /access/menus`만 `@RequireSuperAdmin`이고, `GET /access/actions`, `/access-role/allowed`, `/access-role/denied`는 `@RequireAction`(`ACCESS_READ`, `ACCESS_ROLE_READ_ALLOWED`, `ACCESS_ROLE_READ_DENIED`)입니다. 2026-11-10 합의에 따라 현재 코드를 그대로 유지합니다 (D-03 "추가 합의").
+  - `AccessChecker` 주석 정정: 처리했습니다.
+  - JDK: `pom.xml`의 `java.version`이 21이므로 현재는 변경하지 않습니다. 팀에서 JDK 23 이상을 쓰게 되면 공통 설정 담당과 검토합니다.
 
 ---
 

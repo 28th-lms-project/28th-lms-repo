@@ -2,7 +2,7 @@
 
 - 작성: ROLE 모듈 담당자
 - 대상: ACCESS(`/access`) · ACCESS_ROLE(`/access-role`) 모듈 담당자, 그리고 담당자의 Claude Code
-- 작성 기준 코드: `feature/role` 브랜치 커밋 `1ce6a14` (PR #30 머지 시점)
+- 작성 기준 코드: `feature/role` 브랜치 커밋 `8e64b37` (ACCESS 담당자 처리 `54ac2ca` 머지 후)
 - 최신화 이력
   - 2026-11-06 (1차): `feature/role` 커밋 `644fe80` 기준. R-04, R-05 완료 기록, R-06 현재 상태 수정, R-03에 `@ModelAttribute` 선택 항목 추가
   - 2026-11-06 (2차): `feature/role` 커밋 `cfa0da0` 기준. ACCESS · ACCESS_ROLE 담당자가 **R-01 ~ R-08 전부 처리**(`0014d42`에 포함)하고 **D-01, D-03, D-06을 결정**한 내용을 반영. ROLE 담당자가 코드와 대조해 처리 결과가 실제 코드와 일치함을 확인
@@ -11,6 +11,7 @@
   - 2026-11-06 (5차): `ACTION_CODE` `VARCHAR2(40 CHAR)`, `ACTION_ID`는 팀 공통 PK 규칙. ROLE 담당자가 **권한 검사를 구현**(`com.learningworks.common.action`, 검사는 JWT 적용 후 켬). R-09 6번에 드롭다운 동작 확정, **R-10 추가** (캐시 초기화 호출, `@RequireSuperAdmin` 적용)
   - 2026-11-09 (6차): `feature/role` 커밋 `3cee4b1` 기준. ACCESS 담당자의 **R-09 처리**(`6f4b85f`, `5f96007`로 머지)를 코드와 대조해 확인. **JWT 인증 필터 머지**(`878d6c0`)에 따라 권한 검사를 켜기 위한 조건 정리. R-10 2번(ACTION 저장 후 `evictAll`)은 불필요해 삭제. `ROLE_USER_READ`, `ROLE_USER_MOVE` 추가
   - 2026-11-10 (7차): `feature/role` 커밋 `1ce6a14` 기준. ROLE 쪽 **권한 관리 화면(프론트)과 내 권한 연동(`usePermission`)** 완료, 프론트 권한 가이드(`frontend/docs/permission-guide.md`) 추가. ACCESS 쪽 남은 작업(R-10, R-03 잔여, D-03, R-09 기록)이 코드에서 **아직 미처리**임을 확인. R-10의 영향 범위 보강(내 권한 API도 같은 캐시를 써서 **프론트 화면 표시도 서버 재시작 전까지 바뀌지 않음**), 우선순위를 높음으로 변경. **R-11 추가** (권한 설정 화면에 내 권한 표시 적용, 선택)
+  - 2026-11-10 (8차): `feature/role` 커밋 `8e64b37` 기준. ACCESS 담당자의 **R-10 · R-11 · R-03 잔여 · R-09 기록 · D-03 구현 · D-04 보류**(`54ac2ca`)를 ROLE 담당자가 코드와 대조해 확인. **SUPER_ADMIN 전용 범위 합의** 기록 (D-03 "추가 합의"). ROLE 담당자 4번(`AccessChecker` 주석) 처리. 권한 검사를 켜기 위한 남은 조건을 데이터 작업으로 정리
 
 ## 현재 진행 상황
 
@@ -18,7 +19,7 @@
 | --- | --- | --- |
 | 요청 (R) | R-01 ~ R-11 (2026-11-10 ACCESS 담당자 처리) | 없음 |
 | 협의 (D) | D-01(권한 검사 구현 포함), D-02, D-03(구현 포함), D-06 결정, D-04 보류 | D-05 결정 |
-| 권한 검사 (서버) | 구현 · JWT 연동 확인 | **꺼져 있음.** 켜기 전 조건은 아래 "ROLE 담당자" 3번 |
+| 권한 검사 (서버) | 구현 · JWT 연동 확인 · R-10 완료 · **2026-11-10 켬** | 역할별 권한 부여와 계정별 확인 (아래 "ROLE 담당자" 3번) |
 | 권한 표시 (프론트) | 내 권한 조회 · `usePermission` 훅, 권한 관리 화면 · 권한 설정 화면 두 개 적용 (R-11) | 없음 |
 
 이 디렉토리의 문서는 **"요청"과 "협의"** 두 종류입니다. 담당자(또는 담당자의 Claude Code)가 각 항목을 검토하고, 수락 · 반려 · 보류를 판단해 **각 항목의 `처리 결과`란에 기록**해 주세요.
@@ -100,7 +101,9 @@
 | JWT 인증 필터 적용 (`ValidateJwtAuthenticationFilter`). 인증 객체의 principal은 **회원 ID 문자열**(토큰 `sub`)이며 `LoginUser`가 아님 | 컨트롤러에서 로그인 사용자 ID가 필요하면 `Authentication authentication` 파라미터로 받아 `authentication.getName()` 사용 (비로그인이면 `null`). `@AuthenticationPrincipal LoginUser`는 항상 `null`이 되므로 쓰지 말 것 |
 | 프론트 공통 API 클라이언트가 토큰을 자동 첨부하고, 토큰을 보낸 요청이 401이면 로그인 페이지로 이동 | `frontend/docs/api-client-guide.md` 8장. 화면에서 토큰을 직접 다루지 않음 |
 | 프론트 권한 표시: 로그인 시 `MainLayout`이 `GET /action-codes/me`를 한 번 조회해 Redux에 저장. 화면은 `const { can, isSuperAdmin, status } = usePermission();`로 판단 | `frontend/docs/permission-guide.md`. 버튼 · 화면 숨김은 표시용이며 실제 차단은 서버 검사 |
-| `AccessChecker`는 역할별 허용 권한 코드를 **만료 없이 캐시**하고, 서버 검사와 `GET /action-codes/me`가 **같은 캐시**를 씀 | 권한 저장 후 `evictRole`을 호출하지 않으면 **서버 검사와 프론트 화면 표시 모두** 서버 재시작 전까지 예전 권한을 씀 (R-10) |
+| `AccessChecker`는 역할별 허용 권한 코드를 **만료 없이 캐시**하고, 서버 검사와 `GET /action-codes/me`가 **같은 캐시**를 씀 | 권한 저장(`/access-role/save`)과 역할 삭제 시 해당 역할 캐시를 비움 (R-10 완료). 권한이 바뀌는 기능을 새로 만들면(예: ACTION 삭제) 캐시 초기화 호출이 필요하므로 ROLE 담당자와 협의 |
+| **SUPER_ADMIN 전용(`@RequireSuperAdmin`) 범위**: 역할 생성 · 이름 변경 · 순서 변경 · 삭제, `GET /action-codes`, `GET /access/menus`, `POST /access/save`, `POST /access-role/save` (2026-11-10 합의, 현재 코드 유지). 권한 설정 화면의 조회 API 3개는 `@RequireAction`(`ACCESS_READ`, `ACCESS_ROLE_READ_ALLOWED`, `ACCESS_ROLE_READ_DENIED`) | 그 외 기능은 모두 `@RequireAction`으로 두어 관리자가 부여할 수 있게 함. 범위를 넓히려면 먼저 협의 (D-03 "추가 합의") |
+| `AccessRole.jsx`가 ROLE 화면의 `role/roleUtils.js`에서 `SUPER_ADMIN_ROLE_ID`를 가져다 씀 | ROLE 담당자는 이 상수의 이름 · 위치를 유지. 바꿔야 하면 ACCESS 담당자에게 알림 |
 | 권한 관리 화면(`/admin/system/role`) 구현 완료. 역할 생성 · 이름 변경 · 순서 변경(드래그) · 삭제 · 사용 회원 이동 | 설계: `frontend/docs/design/role-page-design.md` |
 
 ROLE API 목록:
@@ -143,13 +146,14 @@ ROLE API 목록:
 1. MENU · MENU_ROLE 구현 (D-02 결정: MENU_ROLE 유지, 프론트 라우터에서도 MENU_ROLE 기준으로 화면 접근 제한). **D-05**는 이때 함께 결정
    - 현재 `menu` 패키지는 빈 폴더(`.gitkeep`)뿐이고, 프론트 사이드 메뉴는 고정 목록(`menuData.js`)이라 권한과 관계없이 모두에게 보입니다.
 2. ~~권한 코드 체계 구현 (D-01)~~ **완료** — `com.learningworks.common.action` (`@RequireAction`, `@RequireSuperAdmin`, `ActionCodeRegistry`, `GET /action-codes`, `AccessChecker`, 검사 인터셉터). `RoleController` 적용 완료, 캐시 초기화 호출은 R-10으로 요청
-3. **권한 검사 켜기** (`application.yml`에 `app.access-check.enabled: true`). JWT 인증 필터가 머지되어(`878d6c0`) 기술적으로는 켤 수 있지만, 아래가 먼저 필요합니다.
-   - R-10 처리 (위 ACCESS 담당자 1번)
-   - ACTION 등록: R-09 데이터 정리 뒤 ACTION은 `ROLE_READ` 하나만 남았습니다. `ROLE_USER_READ`, `ROLE_USER_MOVE` 등 코드에 정의된 권한을 ACTION 관리 화면에서 등록 (`GET /action-codes`의 `registered: false` 항목)
+3. **권한 검사 켜기** — **설정 완료** (2026-11-10, `application.yml`에 `app.access-check.enabled: true`). 아래 데이터 작업과 확인이 남았습니다.
+   - ~~R-10 처리~~ **완료** (`54ac2ca`)
+   - 현재 `@RequireAction`이 붙은 API는 ROLE 3개(`ROLE_READ`, `ROLE_USER_READ`, `ROLE_USER_MOVE`)와 ACCESS 조회 3개(`ACCESS_READ`, `ACCESS_ROLE_READ_ALLOWED`, `ACCESS_ROLE_READ_DENIED`)뿐이므로, 다른 모듈 기능에는 영향이 없습니다.
+   - ACTION 등록: R-09 데이터 정리 뒤 ACTION은 `ROLE_READ` 하나만 남았습니다. `ROLE_USER_READ`, `ROLE_USER_MOVE`, ACCESS 조회 코드 등 코드에 정의된 권한을 접근 관리 화면에서 필요에 따라 등록 (드롭다운에서 "(등록됨)"이 아닌 항목)
    - 역할별 권한 부여: 권한별 접근 권한 관리 화면에서 ADMIN · TUTOR · STUDENT에 필요한 권한을 다시 부여. 2026-11-10 기준 ROLE_ADMIN에 `ROLE_READ`를 부여해 권한 관리 화면 표시를 확인함
-   - 켠 뒤 실제 로그인 사용자(SUPER_ADMIN, ADMIN, STUDENT)로 허용 · 403 동작 확인
-   - 켜는 시점을 팀에 공지 (`backend/docs/access-control-guide.md` 상단 안내 갱신)
-4. **`AccessChecker` 주석 정리**: 클래스 주석에 "ACTION 수정 · 삭제(`/access/save`): `evictAll()`"이 남아 있는데, R-10 2번에서 불필요로 정정한 내용과 다릅니다. "ACTION 삭제 · 코드 변경 기능이 생기면 `evictAll()`"로 고치기
+   - 켠 뒤 실제 로그인 사용자(SUPER_ADMIN, ADMIN, STUDENT)로 허용 · 403 동작 확인. 접근 관리 · 권한별 접근 권한 관리 화면은 ACCESS 담당자에게도 확인 요청
+   - 팀에 공지 (가이드의 "현재 상태" 안내는 2026-11-10 "켜져 있음"으로 갱신함)
+4. ~~`AccessChecker` 주석 정리~~ **완료** (2026-11-10) — "ACTION 수정은 호출하지 않음, ACTION 삭제 · 코드 변경 기능이 생기면 `evictAll()`"로 정정
 5. ~~권한 관리 화면 프론트 · 내 권한 연동~~ **완료** (2026-11-10) — `frontend/docs/design/role-page-design.md`, `frontend/docs/permission-guide.md`
 
 ---
