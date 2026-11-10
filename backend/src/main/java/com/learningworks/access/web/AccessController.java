@@ -2,6 +2,8 @@ package com.learningworks.access.web;
 
 import java.util.List;
 
+import com.learningworks.common.action.RequireAction;
+import com.learningworks.common.action.RequireSuperAdmin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,8 +30,7 @@ public class AccessController {
 
     private final AccessService accessService;
 
-    // 접근 권한 목록 조회
-    @RequireSuperAdmin
+    @RequireAction(domain = "ACCESS", action = "READ", description = "접근 권한 목록 조회")
     @GetMapping("/actions")
     public ApiResponse<List<AccessListVO>> selectAccessList(
             @ModelAttribute AccessSearchRequestVO request

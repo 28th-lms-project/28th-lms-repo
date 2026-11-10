@@ -9,8 +9,7 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
-
-import jakarta.validation.Valid;
+import com.learningworks.course.vo.response.HomeworkVO;
 
 @Mapper
 public interface CourseDao {
@@ -30,5 +29,9 @@ public interface CourseDao {
 	int addStudent(RegistCourseStudentVO registCourseStudentVO);
 
 	List<CourseMemberVO> courseTutorList();
+
+	List<CourseMemberVO> readCourseMembers(String courseId);
+
+	List<HomeworkVO> readHomeworkList(String courseId);
 
 }

@@ -8,11 +8,12 @@ export const courseSlice = createSlice({
     showCourse: undefined,
     addSelectTutor: undefined,
     selectStudents: [],
+    showStudents: [],
+    homeworks: [],
   },
   reducers: {
     load(state, action) {
-      state.courseList = [...action.payload];
-      console.log(action.payload);
+      state.courseList = [...(action.payload ?? [])];
     },
     startLoading(state) {
       state.isLoading = true;
@@ -22,14 +23,18 @@ export const courseSlice = createSlice({
     },
     loadShowCourse(state, action) {
       state.showCourse = action.payload;
-      console.log(action.payload);
-      // console.log(state.showCourse);
     },
     selectStudents(state, action) {
       state.selectStudents = [...action.payload];
     },
     addSelectTutor(state, action) {
       state.addSelectTutor = action.payload;
+    },
+    showStudents(state, action) {
+      state.showStudents = [...(action.payload ?? [])];
+    },
+    loadhomeworks(state, action) {
+      state.homeworks = [...(action.payload ?? [])];
     },
   },
 });

@@ -5,12 +5,15 @@ API마다 "어떤 역할이 호출할 수 있는지"는 **컨트롤러 메서드
 - 권한이 필요한 API: `@RequireAction(domain, action, description)`을 붙입니다.
 - 최고 관리자만 쓰는 API: `@RequireSuperAdmin`을 붙입니다.
 - 공통 파일 수정, 권한 목록 파일 등록, DB 작업은 필요 없습니다. **자기 컨트롤러만 수정하면 됩니다.**
+- 화면에서 권한에 따라 버튼 · 화면을 숨기는 방법은 `frontend/docs/permission-guide.md`를 참고하세요. 화면에서 숨겨도 API에는 이 가이드대로 어노테이션을 붙여야 합니다.
 
 > **⚠️ 현재 상태: 권한 검사는 꺼져 있습니다.**
 >
 > 지금은 어노테이션을 붙여도 동작에 영향이 없으므로 **미리 붙여 두세요.** 검사를 켜면 바로 적용됩니다. 켜는 시점은 ROLE 담당자가 공지합니다.
 >
 > 검사가 켜진 뒤에는 관리자가 권한을 등록 · 부여하기 전까지 **ROLE_SUPER_ADMIN만** 해당 API를 호출할 수 있습니다 (6장 참고).
+>
+> **⚠️ 권한 변경 반영:** 지금은 `권한별 접근 권한 관리`에서 권한을 바꿔도 **서버를 재시작해야** 반영될 수 있습니다. 권한 저장 시 캐시를 비우는 처리(ACCESS 모듈 R-10)가 아직 적용되지 않았기 때문입니다 (6장 참고).
 
 ---
 
@@ -28,7 +31,7 @@ API마다 "어떤 역할이 호출할 수 있는지"는 **컨트롤러 메서드
 ```
 
 - 권한 코드는 `domain + "_" + action`입니다 (예: `ASSIGNMENT_CREATE`).
-- 요청자의 역할은 토큰이 아니라 **DB의 현재 역할** 기준으로 판단합니다. 역할이 바뀌면 다음 요청부터 바로 반영됩니다.
+- 요청자의 역할은 토큰이 아니라 **DB의 현재 역할** 기준으로 판단합니다. 회원의 역할이 바뀌면 다음 요청부터 바로 반영됩니다. (역할에 부여된 권한이 바뀌는 경우는 6장의 캐시 설명 참고)
 - `ROLE_SUPER_ADMIN`은 모든 권한 코드를 항상 허용합니다.
 
 ---
@@ -124,33 +127,51 @@ public class AssignmentController {
 | 로그인만 하면 누구나 쓰는 기능        | 없음 + 서비스에서 로그인 확인 | 내 정보 조회, 내 수강 목록                |
 | 비로그인도 쓰는 기능                  | 없음                          | 로그인, 공개 공지 조회                    |
 
-> **어노테이션이 없는 API는 비로그인 사용자도 호출할 수 있습니다.** 현재 Spring Security 설정이 모든 요청을 허용(`permitAll`)하기 때문입니다. 로그인이 필요하면 아래처럼 로그인 사용자 ID가 없을 때 `GLOBAL_UNAUTHORIZED`를 던지세요.
+> **어노테이션이 없는 API는 비로그인 사용자도 호출할 수 있습니다.** 현재 Spring Security 설정이 모든 요청을 허용(`permitAll`)하기 때문입니다. 로그인이 필요하면 아래 방법 1(`AuthUtil.getLoginId()`)로 로그인을 확인하세요. 비로그인이면 `GLOBAL_UNAUTHORIZED`(401)가 응답됩니다.
 
 ### 로그인 사용자 ID 받기
 
-컨트롤러 파라미터에 `Authentication`을 추가하고 `getName()`을 사용합니다. 비로그인이면 `authentication`이 `null`입니다.
+**방법 1. `AuthUtil.getLoginId()` (로그인이 필요한 API)**
+
+어디서든 호출할 수 있고, 비로그인이면 `GLOBAL_UNAUTHORIZED`(401)를 던집니다. 로그인 확인과 ID 조회가 한 줄로 끝납니다.
+
+```java
+import com.learningworks.common.utils.AuthUtil;
+
+// Service
+public List<CourseVO> readMyCourses() {
+  String userId = AuthUtil.getLoginId(); // 비로그인이면 401
+  ...
+}
+```
+
+**방법 2. 컨트롤러 파라미터 `Authentication` (비로그인도 허용하는 API)**
+
+비로그인일 때 예외 대신 `null`로 받아 직접 처리하고 싶을 때 씁니다. 컨트롤러 파라미터에 `Authentication`을 추가하고 `getName()`을 사용합니다. 비로그인이면 `authentication`이 `null`입니다.
 
 ```java
 import org.springframework.security.core.Authentication;
 
-@GetMapping("/my/courses")
-public ApiResponse<List<CourseVO>> getMyCourses(Authentication authentication) {
+@GetMapping("/notices")
+public ApiResponse<List<NoticeVO>> getNotices(Authentication authentication) {
   String userId = authentication == null ? null : authentication.getName();
-  return ApiResponse.OK(this.courseService.readMyCourses(userId));
+  return ApiResponse.OK(this.noticeService.readNotices(userId));
 }
 ```
 
 ```java
 // Service
-public List<CourseVO> readMyCourses(String userId) {
+public List<NoticeVO> readNotices(String userId) {
   if (userId == null) {
-    throw new LearningworksException(ErrorCode.GLOBAL_UNAUTHORIZED);
+    return this.noticeDao.selectPublicNotices(); // 비로그인: 공개 공지만
   }
   ...
 }
 ```
 
 > **`@AuthenticationPrincipal LoginUser`는 쓰지 마세요.** JWT 인증 필터는 로그인 정보에 `LoginUser`가 아니라 회원 ID 문자열을 넣기 때문에, 이 값은 로그인해도 항상 `null`입니다.
+>
+> **`AuthUtil.isGranted("역할")`로 권한을 판단하지 마세요.** 이 메서드는 토큰에 적힌 역할 이름을 비교합니다. 토큰의 역할은 로그인 시점 값이라 바뀐 역할이 반영되지 않고, 역할별 권한은 관리자가 화면에서 바꿀 수 있습니다. 권한은 `@RequireAction`으로 지정하세요 (9장).
 
 ---
 
@@ -186,6 +207,13 @@ public List<CourseVO> readMyCourses(String userId) {
 | 등록했지만 역할에 부여하지 않음 | SUPER_ADMIN만 호출 가능           |
 | 역할에 부여함                   | 해당 역할 + SUPER_ADMIN 호출 가능 |
 
+### 권한 변경이 반영되는 시점 (캐시)
+
+- 서버는 역할별 허용 권한 코드 목록을 **만료 없이 캐시**합니다. 서버 검사와 내 권한 API(`GET /action-codes/me`, 프론트 화면 표시용)가 같은 캐시를 씁니다.
+- 권한을 저장할 때 해당 역할의 캐시를 비워야 바로 반영됩니다. **현재는 `권한별 접근 권한 관리`의 저장에 이 처리가 없어서**(ACCESS 모듈 R-10, 처리 대기), 서버가 켜진 뒤 한 번이라도 권한이 조회된 역할은 **서버를 재시작해야** 바뀐 권한이 적용됩니다.
+- 처리된 뒤에는 저장 즉시 서버 검사에 반영되고, 화면은 새로고침하면 반영됩니다.
+- 역할 삭제 시에는 이미 캐시가 비워집니다.
+
 ---
 
 ## 7. 확인 방법
@@ -197,7 +225,7 @@ INFO  c.l.common.action.ActionCodeRegistry -- 권한 코드 3개 등록: [ROLE_R
 ```
 
 - **권한 코드 목록 API** (SUPER_ADMIN): `GET /action-codes`. 도메인별 목록과 등록 여부(`registered`)를 볼 수 있습니다. 다른 모듈에서 이미 쓰는 domain 이름을 확인할 때도 사용합니다.
-- **내 권한 API** (로그인 사용자): `GET /action-codes/me`. 현재 역할과 허용된 권한 코드를 반환합니다. 프론트에서 버튼 표시 여부를 판단할 때 사용합니다.
+- **내 권한 API** (로그인 사용자): `GET /action-codes/me`. 현재 역할과 허용된 권한 코드를 반환합니다. 프론트에서 버튼 표시 여부를 판단할 때 사용하며, 프론트 공통 코드가 로그인 시 자동으로 호출합니다 (`frontend/docs/permission-guide.md`). 권한 검사 설정과 관계없이 항상 동작합니다.
 
 ---
 
@@ -227,7 +255,7 @@ INFO  c.l.common.action.ActionCodeRegistry -- 권한 코드 3개 등록: [ROLE_R
 - `@PreAuthorize("hasRole(...)")`, `@PreAuthorize("hasAnyRole(...)")`로 역할을 직접 나열하기
   - 관리자가 화면에서 권한을 바꿔도 반영되지 않고, 새로 만든 역할은 아무 기능도 쓸 수 없게 됩니다.
 - 서비스에서 역할 ID를 직접 비교하기
-  - 예: `if ("ROLE_TUTOR".equals(roleId))`. 위와 같은 이유입니다.
+  - 예: `if ("ROLE_TUTOR".equals(roleId))`, `AuthUtil.isGranted("ROLE_TUTOR")`. 위와 같은 이유입니다. `isGranted`는 토큰의 역할(로그인 시점 값)을 보므로 바뀐 역할도 반영되지 않습니다.
 - **등록한 뒤에 `domain` · `action` 바꾸기**
   - 권한 코드가 바뀌면 기존 등록 · 부여와 연결이 끊겨, 부여받았던 역할이 그 API를 쓸 수 없게 됩니다. 기존 코드는 접근 관리 화면에 "(미사용)"으로 표시됩니다.
   - 꼭 바꿔야 하면 바꾼 뒤 새 코드를 다시 등록 · 부여하고, ROLE 담당자에게 알려 주세요.
@@ -244,7 +272,7 @@ INFO  c.l.common.action.ActionCodeRegistry -- 권한 코드 3개 등록: [ROLE_R
 - [ ] `action`은 가능하면 `READ` · `CREATE` · `UPDATE` · `DELETE`를 썼는가?
 - [ ] 같은 권한 코드를 붙인 API들의 `description`이 똑같은가?
 - [ ] 어노테이션이 없는 API 중 로그인이 필요한 곳은 서비스에서 로그인을 확인하는가?
-- [ ] 로그인 사용자 ID를 `Authentication.getName()`으로 받는가? (`@AuthenticationPrincipal LoginUser` 사용 안 함)
+- [ ] 로그인 사용자 ID를 `AuthUtil.getLoginId()` 또는 `Authentication.getName()`으로 받는가? (`@AuthenticationPrincipal LoginUser` 사용 안 함)
 - [ ] 서버 시작 로그의 "권한 코드 N개 등록"에 내 권한 코드가 보이는가?
 
 ---
@@ -267,6 +295,8 @@ INFO  c.l.common.action.ActionCodeRegistry -- 권한 코드 3개 등록: [ROLE_R
 
 - 컨트롤러가 아닌 서비스 안에서 조건에 따라 권한을 검사하기 (예: "작성자 본인이 아니면 추가 권한 필요"). 필요하면 ROLE 담당자에게 요청하세요.
 
-### 설계 문서
+### 관련 문서
 
-권한 체계를 이렇게 정한 이유와 검토한 다른 방식은 `backend/docs/access-role-collab/discussions.md`의 D-01 · D-02를 참고하세요.
+- 프론트 화면 권한 적용: `frontend/docs/permission-guide.md`
+- 권한 체계를 이렇게 정한 이유와 검토한 다른 방식: `backend/docs/access-role-collab/discussions.md`의 D-01 · D-02
+- 권한 검사를 켜기 전에 남은 작업: `backend/docs/access-role-collab/README.md`의 "남은 작업"
