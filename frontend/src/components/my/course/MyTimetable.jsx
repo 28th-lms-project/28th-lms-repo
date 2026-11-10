@@ -324,7 +324,6 @@ export default function MyTimetable({ courseId: courseIdProp }) {
                       <th rowSpan={2} className={styles.dateColumn}>
                         날짜
                       </th>
-
                       <th rowSpan={2} className={styles.typeColumn}>
                         구분
                       </th>
@@ -332,7 +331,6 @@ export default function MyTimetable({ courseId: courseIdProp }) {
                       {timetable.timeSlots.map((slot) => (
                         <th key={slot.slotIndex}>
                           <span>{slot.label}</span>
-
                           <small>{slot.time}</small>
                         </th>
                       ))}
