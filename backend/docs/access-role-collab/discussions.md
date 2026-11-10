@@ -2,16 +2,16 @@
 
 처리 규칙은 `README.md`를 따릅니다.
 
-> 최신화: 2026-11-09 (D-01 권한 검사의 JWT 연동 확인, R-09 처리 반영). 2026-11-06에 D-01(세부 사항 포함), D-02, D-03, D-06이 결정되었습니다. **D-01은 최종 결정으로 다시 정리되었습니다** (`ACTION_CODE` 컬럼 추가, `ACTION_ID`는 시퀀스, 권한 코드는 API의 `@RequireAction`에서 자동 수집). D-06의 배경(성공 메시지 포함 응답)은 R-01로 해소되었습니다.
+> 최신화: 2026-11-10 (D-01에 프론트 내 권한 연동 완료 · 캐시 영향 범위 반영, D-02 · D-03 구현 현황 확인). 이전: 2026-11-09 (D-01 권한 검사의 JWT 연동 확인, R-09 처리 반영). 2026-11-06에 D-01(세부 사항 포함), D-02, D-03, D-06이 결정되었습니다. **D-01은 최종 결정으로 다시 정리되었습니다** (`ACTION_CODE` 컬럼 추가, `ACTION_ID`는 시퀀스, 권한 코드는 API의 `@RequireAction`에서 자동 수집). D-06의 배경(성공 메시지 포함 응답)은 R-01로 해소되었습니다.
 
 **D 항목은 설계 결정입니다.** Claude Code는 선택지와 추천안을 담당자에게 설명하고, **담당자가 결정하기 전에는 코드를 수정하지 마세요.** 결정이 나면 `결정 결과`란에 기록하고, 필요한 작업은 새 R 항목으로 정리하거나 담당자와 ROLE 담당자가 나눠서 진행합니다.
 
 | ID | 제목 | 우선순위 | 영향 범위 | 진행 상태 |
 | --- | --- | --- | --- | --- |
-| D-01 | 새로 만든 역할의 접근 권한 판단 방식 | 매우 높음 | 전체 API 권한 체크, ACTION 테이블 | **결정 · 권한 검사 구현 완료** (JWT 연동 확인, 검사는 켜기 전). ACCESS 작업: R-09 완료, R-10 대기 |
-| D-02 | MENU_ROLE과 ROLE_ACTION의 역할 분담 | 매우 높음 | MENU / MENU_ROLE 구현 (ROLE 담당자) | **결정** (B안, MENU_ROLE 유지) |
-| D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` | **결정**. 구현 대기 |
-| D-04 | 권한 설정 API의 URL 규칙 | 낮음 (선택) | ACCESS_ROLE API, 프론트 | 결정 대기 |
+| D-01 | 새로 만든 역할의 접근 권한 판단 방식 | 매우 높음 | 전체 API 권한 체크, ACTION 테이블 | **결정 · 권한 검사 구현 완료** (JWT 연동 확인, 검사는 켜기 전). ACCESS 작업: R-09 · R-10 완료 |
+| D-02 | MENU_ROLE과 ROLE_ACTION의 역할 분담 | 매우 높음 | MENU / MENU_ROLE 구현 (ROLE 담당자) | **결정** (B안, MENU_ROLE 유지). MENU 구현 전 |
+| D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` | **결정 · 구현 완료** (R-10, R-11, 2026-11-10). SUPER_ADMIN 전용 범위 추가 합의 |
+| D-04 | 권한 설정 API의 URL 규칙 | 낮음 (선택) | ACCESS_ROLE API, 프론트 | **보류** (2026-11-10) |
 | D-05 | MENU 테이블 공동 사용 방식 | 중간 | ACCESS 모듈, MENU 구현 | 결정 대기 |
 | D-06 | 성공 메시지를 응답에 포함할지 | 낮음 | R-01, R-06 | **결정 · 반영 완료** |
 
@@ -126,10 +126,11 @@ public ApiResponse<?> answerSurvey(...) { ... }
  2. DB에서 BASE_ROLE 조회
  3. ROLE_SUPER_ADMIN이면 허용
  4. ROLE_ACTION ⨝ ACTION에서 (역할, ACTION_CODE = 'ROLE_DELETE')가 있으면 허용
- 5. 역할별 허용 권한 코드 목록은 캐시. 권한 저장(/access-role/save) 또는 ACTION 수정 성공 시 캐시 초기화
+ 5. 역할별 허용 권한 코드 목록은 캐시. 권한 저장(/access-role/save) 성공 시 캐시 초기화
 ```
 
-- 5번의 캐시 초기화 호출은 `requests.md`의 **R-10**으로 요청했습니다.
+- 5번의 캐시 초기화 호출은 `requests.md`의 **R-10**으로 요청했습니다. ACTION 수정 시 초기화는 불필요로 정정되었습니다 (R-10 2번, 2026-11-09).
+- 캐시에는 만료가 없습니다. 서버 검사와 내 권한 API(`GET /action-codes/me`)가 같은 캐시를 쓰므로, R-10이 처리되기 전에는 권한을 저장해도 **서버 재시작 전까지 서버 검사와 프론트 화면 표시 모두** 예전 권한을 씁니다 (2026-11-10 확인).
 
 **구현 상태 (2026-11-06, ROLE 담당자)** — 패키지 `com.learningworks.common.action`
 
@@ -143,8 +144,12 @@ public ApiResponse<?> answerSurvey(...) { ... }
 | `RoleController` 적용 | 역할 목록 조회 `ROLE_READ`, 역할 사용 회원 조회 `ROLE_USER_READ`, 회원 이동 `ROLE_USER_MOVE`, 생성 · 순서 · 이름 변경 · 삭제 `@RequireSuperAdmin` | 완료 |
 | 역할 삭제 시 캐시 초기화 | `RoleServiceImpl.deleteRole` | 완료 |
 | 내 권한 API `GET /action-codes/me` (프론트 버튼 표시용, 로그인만 필요) | `web.ActionCodeController`, `service.ActionCodeServiceImpl`, `vo.response.MyActionCodeVO` | 완료 (2026-11-09) |
+| 프론트 내 권한 연동 (로그인 시 조회 · Redux 저장 · `usePermission` 훅) | `frontend/src/hooks/usePermission.js`, `store/slices/permissionSliceStore.js`, `layout/MainLayout.jsx`. 사용법 `frontend/docs/permission-guide.md` | 완료 (2026-11-10) |
+| 권한 관리 화면 권한별 표시 (`ROLE_READ` · SUPER_ADMIN 기준) | `frontend/src/components/admin/system/role/Role.jsx` | 완료 (2026-11-10) |
+| ACCESS · ACCESS_ROLE 쪽 적용 (캐시 초기화, SUPER_ADMIN 전용 표시, 화면 표시) | R-10, R-11 | 대기 |
 
-- **권한 검사는 기본적으로 꺼져 있습니다** (`app.access-check.enabled`, 기본값 `false`). JWT 인증 필터는 머지되었지만(`878d6c0`), R-09 데이터 정리로 역할별 권한이 비어 있어 지금 켜면 SUPER_ADMIN 외에는 모두 막힙니다. 켜기 전 조건은 `README.md` "ROLE 담당자" 3번을 참고하세요. 꺼져 있어도 권한 코드 수집과 목록 API는 동작합니다.
+- **권한 검사는 2026-11-10에 켰습니다** (`application.yml`의 `app.access-check.enabled: true`. 설정이 없으면 기본값 `false`). 역할별 권한 부여는 화면에서 계속 진행합니다 (`README.md` "ROLE 담당자" 3번).
+  - 이전 기록: 켜기 전에는 R-09 데이터 정리로 역할별 권한이 비어 있어, 켜면 SUPER_ADMIN 외에는 모두 막히는 상태였습니다.
 - 요청자 ID는 `SecurityContext`의 `Authentication.getName()`을 사용합니다. **JWT 필터(`ValidateJwtAuthenticationFilter`)가 principal에 회원 ID(토큰 `sub`)를 넣는 것을 확인했습니다** (2026-11-09, 테스트 토큰으로 요청자 ID 전달 확인).
 - 권한이 없으면 401(`GLOBAL_UNAUTHORIZED`) / 403(`GLOBAL_FORBIDDEN`)을 공통 응답 형식으로 반환합니다.
 
@@ -209,6 +214,10 @@ public ApiResponse<?> answerSurvey(...) { ... }
   - MENU · MENU_ROLE 구현 (ROLE 담당자). 메뉴 계층 규칙(예: 하위 메뉴가 하나라도 허용되면 대메뉴 표시)은 구현 시 정합니다.
   - 역할 삭제 시 `MENU_ROLE` 정리(`deleteMenuRoleByRoleId`)는 그대로 유지합니다.
   - ACCESS · ACCESS_ROLE 쪽 추가 작업은 없습니다.
+- 구현 현황 (2026-11-10 확인)
+  - 백엔드 `menu` 패키지는 빈 폴더(`.gitkeep`)뿐입니다. MENU · MENU_ROLE API는 아직 없습니다.
+  - 프론트 사이드 메뉴는 고정 목록(`frontend/src/components/menu/menuData.js`)이라 역할과 관계없이 모든 메뉴가 보이고, 라우터에도 접근 제한이 없습니다 (운영 원칙 2번 미구현).
+  - 그동안 각 화면은 `usePermission`으로 화면 안에서 권한을 확인합니다 (예: 권한 관리 화면은 `ROLE_READ`가 없으면 "권한이 없습니다").
 
 ---
 
@@ -238,6 +247,27 @@ public ApiResponse<?> answerSurvey(...) { ... }
 - ROLE 담당자 보충 (2026-11-06, D-01 최종 결정 반영)
   - 두 저장 API의 권한 제한은 `@EnableMethodSecurity` · `@PreAuthorize`가 아니라 D-01의 **검사 인터셉터**로 처리합니다.
   - 일반 `@RequireAction`을 붙이면 그 권한을 다른 역할에 부여할 수 있게 되므로 "SUPER_ADMIN 전용"과 맞지 않습니다. 그래서 **부여할 수 없는 SUPER_ADMIN 전용 표시 `@RequireSuperAdmin`**(권한 코드 목록 API에 나타나지 않음)을 구현했습니다. 권한 검사가 꺼져 있는 동안에는 동작에 영향이 없으므로 지금 TODO 주석 위치에 붙여도 됩니다 (R-10).
+- 구현 현황 (2026-11-10 확인, `1ce6a14`)
+
+  | 항목 | 상태 | 요청 |
+  | --- | --- | --- |
+  | 두 저장 API에 `@RequireSuperAdmin` | 미적용 (TODO 주석만 있음) | R-10 3번 |
+  | `/access-role/save`에서 `ROLE_SUPER_ADMIN` 저장 거부 (`ACTION_ROLE_PROTECTED`) | 미적용 (`ErrorCode`에 상수 없음) | D-03 (README 남은 작업 3번) |
+  | 권한 설정 화면 역할 목록에서 `ROLE_SUPER_ADMIN` 숨김 | 미적용 | R-11 2번 |
+  | 두 화면을 SUPER_ADMIN에게만 표시 | 미적용 (선택) | R-11 1번 |
+
+  - 검사 인터셉터는 어노테이션이 없는 API를 통과시키므로, `@RequireSuperAdmin` 없이 검사를 켜면 로그인한 누구나 권한 설정을 저장할 수 있습니다. **검사를 켜기 전에 반드시 처리해야 합니다.**
+- 구현 결과 (2026-11-10, ACCESS · ACCESS_ROLE 담당자, `54ac2ca`)
+  - 두 저장 API와 두 화면의 조회 API에 `@RequireSuperAdmin` 적용 (R-10)
+  - `ErrorCode`에 `ACTION_ROLE_PROTECTED(CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다.")` 추가 (상수 추가만). `AccessRoleServiceImpl.saveRolePermission`에서 `roleId`가 `RoleConstants.SUPER_ADMIN_ROLE`이면 409로 거부
+  - 권한별 접근 권한 관리 화면 역할 목록에서 `ROLE_SUPER_ADMIN` 제외, 두 화면을 SUPER_ADMIN에게만 표시 (R-11)
+  - ROLE 담당자 확인 (2026-11-10, `8e64b37`): 위 구현 현황 표의 네 항목 모두 적용됨을 코드에서 확인
+- 추가 합의 (2026-11-10, ROLE · ACCESS 담당자): **SUPER_ADMIN 전용 범위**
+  - `@RequireSuperAdmin`은 권한 체계 자체를 다루는 기능으로 한정합니다. 현재 대상은 **역할 생성 · 이름 변경 · 순서 변경 · 삭제, 권한 코드 목록(`GET /action-codes`), 메뉴 목록(`GET /access/menus`), ACTION 저장(`POST /access/save`), 역할별 권한 저장(`POST /access-role/save`)** 이며, 지금 코드 그대로 유지합니다.
+  - 권한 설정 화면의 조회 API 3개는 `@RequireAction`입니다 (`GET /access/actions` → `ACCESS_READ`, `GET /access-role/allowed` → `ACCESS_ROLE_READ_ALLOWED`, `GET /access-role/denied` → `ACCESS_ROLE_READ_DENIED`). ACCESS 담당자의 `1be71e4` 설정이 병합(`8e64b37`)에서 유지된 것으로, "나머지는 열어 둔다"는 합의와 맞습니다. 두 화면 자체는 프론트에서 SUPER_ADMIN에게만 표시됩니다 (R-11).
+  - 그 외 기능은 앞으로도 `@RequireAction`으로 두어, 필요할 때 관리자가 다른 역할에 부여할 수 있게 열어 둡니다. 역할별로 어떤 권한을 줄지는 현재 코드에 정의된 권한 코드 기준으로 관리자가 화면에서 정합니다.
+  - SUPER_ADMIN 전용을 새로 추가해야 하는 기능이 생기면 두 담당자가 먼저 협의합니다.
+  - 가이드 반영: `backend/docs/access-control-guide.md` 2장 "`@RequireSuperAdmin`이 붙은 API (현재 전체 목록)"
 
 ---
 
@@ -265,9 +295,9 @@ public ApiResponse<?> answerSurvey(...) { ... }
 - [ ] 변경 여부 / 시점
 
 ### 결정 결과
-- 결정:
-- 결정일 · 참석자:
-- 후속 작업:
+- 결정: **보류**. 현재 URL(`/access-role/allowed`, `/denied`, `/save`)을 유지. 지금 URL로 동작에 문제가 없고, 변경 시 백엔드 · 프론트를 함께 바꿔야 해 비용 대비 이득이 작음. 이후 ACCESS_ROLE API를 크게 손볼 때 다시 검토
+- 결정일 · 참석자: 2026-11-10, ACCESS · ACCESS_ROLE 담당자
+- 후속 작업: 없음
 
 ---
 
