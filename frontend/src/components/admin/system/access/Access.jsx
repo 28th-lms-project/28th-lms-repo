@@ -1,6 +1,7 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 
 import PageContainer from "../../../common/PageContainer";
+import usePermission from "../../../../hooks/usePermission";
 import {Grid} from "../../../common/Grid";
 
 import {
@@ -18,7 +19,34 @@ const getErrorMessage = (error) =>
         ? Object.values(error.validations).flat().join("\n")
         : error.message;
 
+/**
+ * 접근 권한(ACTION) 관리
+ * ROLE_SUPER_ADMIN 전용 화면 (D-03). 화면 숨김은 표시용이며 실제 차단은 서버(@RequireSuperAdmin)가 한다.
+ * 권한이 있을 때만 AccessManagement를 마운트하므로, 권한 없이 화면의 API를 호출하지 않는다.
+ */
 export default function Access() {
+    const {isSuperAdmin, status} = usePermission();
+
+    if (status === "loaded" && isSuperAdmin) return <AccessManagement />;
+
+    // idle: 비로그인(조회하지 않음) → 표시 없음
+    let content = null;
+    if (status === "loading") {
+        content = <p className={styles.notice}>권한 확인 중...</p>;
+    } else if (status === "failed") {
+        content = (
+            <p className={styles.notice}>
+                권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
+            </p>
+        );
+    } else if (status === "loaded") {
+        content = <p className={styles.notice}>권한이 없습니다.</p>;
+    }
+
+    return <PageContainer>{content}</PageContainer>;
+}
+
+function AccessManagement() {
 
     const [menuList, setMenuList] = useState([]);
 

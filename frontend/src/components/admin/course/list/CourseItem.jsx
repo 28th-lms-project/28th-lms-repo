@@ -12,13 +12,15 @@ import {
   getHomeworks,
 } from "../../../../api/admin/course/courseApi";
 import HomeWorkList from "../CourseTableComponent/HomeWorkList";
+import MyTimetable from "../../../my/course/MyTimetable";
+import MyInterview from "../../../my/course/MyInterview.jsx";
 const TABS = [
   { label: "수강생", Component: <CourseStudentList /> }, // <CourseStudentList/>
   { label: "접속시간", Component: <StudentConnected /> }, // <StudentConnected/>
-  { label: "시간표", Component: <div>시간표</div> }, //<CourseTimeTable/>
+  { label: "시간표", Component: <MyTimetable /> }, // courseId 는 URL(:id)에서 읽음
   { label: "과제", Component: <HomeWorkList /> }, //<HomeWorkList/>
   { label: "시험", Component: <div>시험</div> }, //<Exam/>
-  { label: "면접일정", Component: <div>면접일정</div> }, //<InterviewTimeTable/>
+  { label: "면접일정", Component: <MyInterview /> }, //<InterviewTimeTable/>
   { label: "교육자료", Component: <div>교육자료</div> }, //<EducationMaterialsList/>
   { label: "설문", Component: <div>설문</div> }, //<Survey/>
   { label: "상담목록", Component: <div>상담목록</div> }, //<ConsultationList/>
