@@ -255,6 +255,7 @@ ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), /
 | 존재하지 않는 URL                                       | 404  | `GLOBAL_NOT_FOUND_URL`                       |
 | 지원하지 않는 HTTP 메서드                               | 405  | `GLOBAL_METHOD_NOT_ALLOWED`                  |
 | PK / UNIQUE 중복                                        | 409  | `GLOBAL_DUPLICATED`                          |
+| Spring Security 권한 거부 (`AuthorizationDeniedException`) | 403 | `GLOBAL_FORBIDDEN`                        |
 | 업로드 파일 크기 초과                                   | 413  | `FILES_TOO_LARGE`                            |
 | 지원하지 않는 Content-Type                              | 415  | `GLOBAL_UNSUPPORTED_MEDIA_TYPE`              |
 | 그 외 모든 예외                                         | 500  | `GLOBAL_SYSTEM_ERROR` (+ 서버 로그)          |
@@ -281,8 +282,13 @@ ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), /
 
 - **로그인 실패**: 로그인은 `LoginJwtAuthenticationFilter`(필터)에서 처리하며, 실패하면 `LoginFailureHandler`가 공통 형식으로 응답합니다 (`USER_NOT_MATCHED_IDENTIFY` 401, 내부 오류는 `GLOBAL_SYSTEM_ERROR` 500).
 - **잘못된 · 만료된 토큰**: `ValidateJwtAuthenticationFilter`가 공통 형식의 `GLOBAL_UNAUTHORIZED`(401)로 응답합니다. 필터에서 직접 응답하므로 `GlobalExceptionHandler`를 거치지 않습니다.
-- **로그인 사용자 ID**: JWT 필터가 인증 객체의 principal에 **회원 ID 문자열**(토큰 `sub`)을 넣습니다. 컨트롤러에서는 `Authentication authentication` 파라미터로 받아 `authentication.getName()`을 사용하세요 (비로그인이면 `null`). principal이 `LoginUser`가 아니므로 `@AuthenticationPrincipal LoginUser`는 항상 `null`입니다.
+- **로그인 사용자 ID**: JWT 필터가 인증 객체의 principal에 **회원 ID 문자열**(토큰 `sub`)을 넣습니다.
+  - 로그인이 필요한 곳: `AuthUtil.getLoginId()` (`com.learningworks.common.utils`). 비로그인이면 `GLOBAL_UNAUTHORIZED`(401)를 던집니다.
+  - 비로그인도 허용하는 곳: 컨트롤러에서 `Authentication authentication` 파라미터로 받아 `authentication.getName()` (비로그인이면 `null`)
+  - principal이 `LoginUser`가 아니므로 `@AuthenticationPrincipal LoginUser`는 항상 `null`입니다.
+  - `AuthUtil.isGranted("역할")`은 토큰의 역할(로그인 시점 값)을 비교하므로 권한 판단에 쓰지 마세요. 권한은 아래 `@RequireAction`으로 지정합니다.
 - **API 권한 검사**: Spring Security의 URL 규칙이 아니라 `@RequireAction` · `@RequireSuperAdmin`(`com.learningworks.common.action`)으로 지정하며, 비로그인은 401, 권한 없음은 403을 공통 형식으로 응답합니다. 현재는 꺼져 있습니다 (`app.access-check.enabled`). **사용법은 `backend/docs/access-control-guide.md`** 를, 설계는 `backend/docs/access-role-collab/discussions.md` D-01을 참고하세요.
+- **프론트 화면 권한 표시**: 로그인 시 `GET /action-codes/me`로 받은 권한으로 버튼 · 화면을 숨깁니다. `frontend/docs/permission-guide.md` 참고
 
 ### 아직 처리되지 않은 것
 

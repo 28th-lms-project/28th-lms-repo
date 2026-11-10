@@ -233,7 +233,7 @@ useEffect(() => {
 | `GLOBAL_INVALID_PARAMETER` | 400  | 입력값 검증 실패        | `validations`를 입력칸 아래 표시            |
 | `GLOBAL_INVALID_JSON`      | 400  | 요청 데이터 형식 오류   | 요청 코드 확인 (개발 중 오류)               |
 | `GLOBAL_UNAUTHORIZED`      | 401  | 로그인 필요 · 토큰 만료 | 공통 함수가 로그인 페이지로 이동 (8장 참고) |
-| `GLOBAL_FORBIDDEN`         | 403  | 권한 없음               | 메시지 표시                                 |
+| `GLOBAL_FORBIDDEN`         | 403  | 권한 없음               | 메시지 표시. 권한이 없는 기능은 화면에서 미리 숨기기 (`permission-guide.md`) |
 | `GLOBAL_NOT_FOUND_URL`     | 404  | 존재하지 않는 URL       | 요청 URL 확인 (개발 중 오류)                |
 | `GLOBAL_DUPLICATED`        | 409  | 중복 데이터             | 메시지 표시                                 |
 | `GLOBAL_SYSTEM_ERROR`      | 500  | 서버 오류               | 메시지 표시                                 |
@@ -284,8 +284,11 @@ Access Token은 `localStorage`의 `accessToken` 키에 저장되며, `src/utils/
 - 모듈 API 파일이나 컴포넌트에서 `getToken()`으로 토큰을 꺼내 `Authorization` 헤더를 직접 붙이기
 - `localStorage.getItem("accessToken")`처럼 저장소에 직접 접근하기 (`tokenStorage.js` 함수 사용)
 - 로그인 · 로그아웃 시 `setToken` / `removeToken`을 직접 호출하기 (`loginSuccess` / `logout` 액션 사용)
+- 토큰을 `decodeToken`으로 열어 역할을 확인하고 버튼 · 화면 표시를 정하기
+  - 토큰의 역할은 로그인 시점 값이고, 역할별 권한은 관리자가 화면에서 바꿀 수 있습니다. 화면 권한 표시는 `usePermission()`을 사용하세요 (`frontend/docs/permission-guide.md`).
 
 ### 참고
 
 - **토큰 재발급(Refresh Token)은 도입하지 않습니다.** Access Token이 만료되면 401 처리에 따라 로그인 페이지로 이동하며, 다시 로그인해야 합니다. 작업 중 만료가 불편하면 백엔드의 Access Token 만료 시간을 조정합니다.
 - 쿠키로 토큰을 주고받는 방식으로 바꾼다면 `fetch` 옵션에 `credentials: "include"` 추가가 필요합니다.
+- **내 권한 조회**: 로그인 상태가 되면 `MainLayout`이 `GET /action-codes/me`를 한 번 호출해 권한을 Redux에 저장하고, 로그아웃하면 지웁니다. 화면에서 권한을 쓰는 방법은 `frontend/docs/permission-guide.md`를 참고하세요.
