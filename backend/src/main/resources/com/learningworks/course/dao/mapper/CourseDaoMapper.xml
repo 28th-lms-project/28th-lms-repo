@@ -188,4 +188,59 @@
          AND CH.ID = #{homeworkId}
          AND CH.DEL_YN = 'N'
    </select>
+   
+   <resultMap id="homeworkWithRepliesMap" type="com.learningworks.course.vo.response.HomeworkVO">
+    <id     property="id"       column="HOMEWORK_ID"/>
+    <result property="courseId" column="COURSE_ID"/>
+    <result property="subject"  column="SUBJECT"/>
+    <result property="content"  column="CONTENT"/>
+    <result property="crtDt"    column="CRT_DT"/>
+    <result property="mdfyDt"   column="MDFY_DT"/>
+    <result property="endDate"  column="END_DATE"/>
+
+    <collection property="homeworkReplies" ofType="com.learningworks.course.vo.response.HomeworkReplyVO">
+        <id     property="id"              column="REPLY_ID"/>
+        <result property="homeworkId"      column="HOMEWORK_ID"/>
+        <result property="content"         column="REPLY_CONTENT"/>
+        <result property="crtDt"           column="REPLY_CRT_DT"/>
+        <result property="mdfyDt"          column="REPLY_MDFY_DT"/>
+        <result property="delYn"           column="REPLY_DEL_YN"/>
+        <result property="courseStudentId" column="COURSE_STUDENT_ID"/>
+
+        <association property="writer" javaType="com.learningworks.course.vo.response.CourseMemberVO">
+            <id     property="id"       column="USER_ID"/>
+            <result property="name"     column="NAME"/>
+            <result property="baseRole" column="BASE_ROLE"/>
+        </association>
+    </collection>
+</resultMap>
+
+   <select id="getHomeworkReplies" resultMap="homeworkWithRepliesMap">
+   SELECT CH.ID                                        AS HOMEWORK_ID
+        , CH.COURSE_ID
+        , CH.SUBJECT
+        , CH.CONTENT
+        , TO_CHAR(CH.CRT_DT,   'YYYY-MM-DD')           AS CRT_DT
+        , TO_CHAR(CH.MDFY_DT,  'YYYY-MM-DD')           AS MDFY_DT
+        , TO_CHAR(CH.END_DATE, 'YYYY-MM-DD')           AS END_DATE
+        , CHR.ID                                       AS REPLY_ID
+        , CHR.CONTENT                                  AS REPLY_CONTENT
+        , TO_CHAR(CHR.CRT_DT,  'YYYY-MM-DD HH24:MI')   AS REPLY_CRT_DT
+        , TO_CHAR(CHR.MDFY_DT, 'YYYY-MM-DD HH24:MI')   AS REPLY_MDFY_DT
+        , CHR.DEL_YN                                   AS REPLY_DEL_YN
+        , CHR.COURSE_STUDENT_ID                        AS COURSE_STUDENT_ID
+        , U.ID                                         AS USER_ID
+        , U.NAME
+        , U.BASE_ROLE
+     FROM COURSE_HOMEWORK CH
+     LEFT JOIN COURSE_HOMEWORK_REPLY CHR
+       ON CHR.HOMEWORK_ID = CH.ID
+      AND CHR.DEL_YN      = 'N'
+     LEFT JOIN "USER" U
+       ON U.ID = CHR.COURSE_STUDENT_ID
+    WHERE CH.COURSE_ID = #{courseId}
+      AND CH.ID        = #{homeworkId}
+      AND CH.DEL_YN    = 'N'
+    ORDER BY CHR.CRT_DT DESC
+   </select>
 </mapper>

@@ -68,3 +68,13 @@ export const getHomeworks = (courseid, options) =>
  */
 export const getOneHomeworks = (courseid, homeworkid, options) =>
   api.get(`/${courseid}/homeworklist/${homeworkid}`, undefined, options);
+
+/**
+ *
+ */
+export const getHomeworkReplies = (courseid, homeworkid, options) =>
+  api.get(
+    `/${courseid}/homeworklist/${homeworkid}/replies`,
+    undefined,
+    options,
+  );

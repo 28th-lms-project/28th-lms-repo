@@ -12,4 +12,6 @@ public class HomeworkReplyVO {
 	private String delYn            ;
 	private String courseStudentId  ;
 
+	private CourseMemberVO writer   ;
+
 }

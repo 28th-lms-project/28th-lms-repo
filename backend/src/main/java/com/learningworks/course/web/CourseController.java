@@ -20,16 +20,16 @@ import jakarta.validation.Valid;
 
 @RestController
 public class CourseController {
-	
-	
+
+
 	private CourseService courseService;
 	public CourseController (CourseService courseService) {
 		this.courseService = courseService;
-		
+
 	}
-	
+
 	/**
-	 * 강의 목록 전체 조회 
+	 * 강의 목록 전체 조회
 	 * @return List<CourseVO>
 	 */
 	@GetMapping("/course/view")
@@ -37,7 +37,7 @@ public class CourseController {
 		List<CourseVO> course = this.courseService.viewCourse();
 		return ApiResponse.OK(course) ;
 	}
-	
+
 	/**
 	 * 강의 id로 강의 하나 상세 조회
 	 * @param courseId
@@ -48,9 +48,9 @@ public class CourseController {
 		CourseVO course = this.courseService.readOneCourse(courseId);
 		return ApiResponse.OK(course);
 	}
-	
+
 	/**
-	 * 해당 강의에 대한 학생 리스트 조회 
+	 * 해당 강의에 대한 학생 리스트 조회
 	 * @param courseId
 	 * @return List<CourseMemberVO>
 	 */
@@ -58,21 +58,21 @@ public class CourseController {
 	public ApiResponse<List<CourseMemberVO>> readCourseMembers(@PathVariable String courseId) {
 		List<CourseMemberVO> courseMemberList = this.courseService.readCourseMembers(courseId);
 		return ApiResponse.OK(courseMemberList);
-		
+
 	}
 	/**
 	 * (미사용)
-	 * 수강생 로그인 아이디에 대한 강의 조회 
+	 * 수강생 로그인 아이디에 대한 강의 조회
 	 * @param courseId
 	 * @return CourseVO
 	 */
-	
+
 	@GetMapping("/my/course/list/{courseId}")
 	public ApiResponse<CourseVO> readMyCourse(@PathVariable String courseId) {
 		CourseVO course = this.courseService.readMyCourse(courseId);
 		return ApiResponse.OK(course);
 	}
-	
+
 	/**
 	 * 강의에 대한 과제 목록 전체 조회
 	 * @param courseId
@@ -84,7 +84,7 @@ public class CourseController {
 		return ApiResponse.OK(homeworkList);
 	}
 	/**
-	 * 과제 상세 조회 
+	 * 과제 상세 조회
 	 * @param courseId, homeworkId
 	 * @return HomeworkVO
 	 */
@@ -93,7 +93,13 @@ public class CourseController {
 		HomeworkVO homework = this.courseService.getOneHomework(courseId,homeworkId);
 		return ApiResponse.OK(homework);
 	}
-	
+
+	@GetMapping("/{courseId}/homeworklist/{homeworkId}/replies")
+	public ApiResponse<HomeworkVO> getHomeworkReplies(@PathVariable String courseId, @PathVariable String homeworkId){
+		HomeworkVO homework = this.courseService.getHomeworkReplies(courseId, homeworkId);
+		return ApiResponse.OK(homework);
+	}
+
 	/**
 	 * 나중에 분리할 endpoint
 	 * 전체 학생 목록 조회 query문에서 WHERE BASE_ROLE = 'ROLE_STUDENT'
@@ -109,13 +115,13 @@ public class CourseController {
 	 * 전체 강사 목록 조회 QUERY문에서 WHERE BASE_ROLE = 'ROLE_TUTOR'
 	 * @return List<CourseMemberVO>
 	 */
-	
+
 	@GetMapping("/tutor/list")
 	public ApiResponse<List<CourseMemberVO>> courseTutorList(){
 		List<CourseMemberVO> courseMemberVO = this.courseService.courseTutorList();
 		return ApiResponse.OK(courseMemberVO);
 	}
-	
+
 	/**
 	 * 강의 등록 API
 	 * @param registCourseVO

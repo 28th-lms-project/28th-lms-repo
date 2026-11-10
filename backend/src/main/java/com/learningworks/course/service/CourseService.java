@@ -27,4 +27,6 @@ public interface CourseService {
 
 	HomeworkVO getOneHomework(String courseId, String homeworkId);
 
+	HomeworkVO getHomeworkReplies(String courseId, String homeworkId);
+
 }

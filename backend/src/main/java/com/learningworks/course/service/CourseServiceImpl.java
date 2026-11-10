@@ -107,4 +107,13 @@ public class CourseServiceImpl implements CourseService{
 		return this.courseDao.getOneHomework(courseId, homeworkId);
 	}
 
+	@Override
+	public HomeworkVO getHomeworkReplies(String courseId, String homeworkId) {
+		HomeworkVO result = this.courseDao.getHomeworkReplies(courseId, homeworkId);
+		if (result == null) {
+			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
+		}
+		return result;
+	}
+
 }
