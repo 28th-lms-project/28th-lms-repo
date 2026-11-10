@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.learningworks.common.action.LoginRequired;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.common.utils.AuthUtil;
 import com.learningworks.member.service.MemberService;
@@ -22,6 +23,7 @@ public class MemberController {
 
   private final MemberService memberService;
 
+  @LoginRequired
   @PostMapping("/me/password/verify")
   public ApiResponse<Void> verifyMyPassword(@Valid @RequestBody VerifyRequestVO verifyPasswordVO) {
     String id = AuthUtil.getLoginId();
@@ -31,6 +33,7 @@ public class MemberController {
     return ApiResponse.OK(null);
   }
 
+  @LoginRequired
   @PutMapping("/me")
   public ApiResponse<MemberVO> updateMyInfo(@Valid @RequestBody ModifyInfoVO modifyInfoVO) {
     String id = AuthUtil.getLoginId();
@@ -40,6 +43,7 @@ public class MemberController {
     return ApiResponse.OK(result);
   }
 
+  @LoginRequired
   @GetMapping("/me")
   public ApiResponse<MemberVO> selectMyInfo() {
     String id = AuthUtil.getLoginId();
