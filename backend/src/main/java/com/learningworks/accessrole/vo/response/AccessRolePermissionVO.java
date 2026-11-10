@@ -10,7 +10,7 @@ public class AccessRolePermissionVO {
     private String roleId;
     private String roleDisplayName;
 
-    private Long actionId;
+    private String actionId;
     private String actionName;
 
     private String lvl1;

@@ -22,6 +22,8 @@ public enum ErrorCode {
   FILES_BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 파일 요청입니다."), //
   ROLE_ORDER_INVALID(HttpStatus.BAD_REQUEST, "최고 권한은 맨 위, 기본 권한은 맨 아래에 위치해야 합니다."), //
   ROLE_MOVE_SAME(HttpStatus.BAD_REQUEST, "같은 역할로는 이동할 수 없습니다."), //
+  ROLE_MOVE_TO_SUPER_ADMIN(HttpStatus.BAD_REQUEST, "최고 관리자 역할로는 회원을 이동할 수 없습니다."), //
+  ACTION_CODE_NOT_EXISTS(HttpStatus.BAD_REQUEST, "등록되지 않은 권한 코드입니다."), //
 
   // 401 UNAUTHORIZED
   GLOBAL_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."), //
@@ -44,6 +46,8 @@ public enum ErrorCode {
   ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), //
   SURVEY_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 설문입니다."), //
   SURVEY_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 설문 답변입니다."), //
+  EXAM_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."), //
+  ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
 
   // 405 METHOD NOT ALLOWED
   GLOBAL_METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 HTTP 메서드 요청입니다."), //
@@ -55,6 +59,7 @@ public enum ErrorCode {
   ROLE_IN_USE(HttpStatus.CONFLICT, "해당 역할을 사용 중인 회원이 있어 삭제할 수 없습니다. 회원의 역할을 먼저 변경해주세요."), //
   ROLE_PROTECTED(HttpStatus.CONFLICT, "시스템 기본 역할은 삭제할 수 없습니다."), //
   ROLE_ORDER_OUTDATED(HttpStatus.CONFLICT, "역할 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요."), //
+  ACTION_CODE_USED(HttpStatus.CONFLICT, "이미 등록된 권한 코드입니다."), //
 
   // 413 CONTENT TOO LARGE
   FILES_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다."), //
@@ -66,6 +71,9 @@ public enum ErrorCode {
   GLOBAL_SYSTEM_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "요청을 처리할 수 없습니다. 잠시 후 다시 시도해주세요."), //
   USER_FAILURE_EXIT(HttpStatus.INTERNAL_SERVER_ERROR, "회원 탈퇴를 실패했습니다."), //
   ROLE_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "역할 생성을 실패했습니다."), //
+  EXAM_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "문제 등록에 실패했습니다."), //
+  EXAM_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "문제 수정에 실패했습니다."), //
+  ACTION_FAILURE_SAVE(HttpStatus.INTERNAL_SERVER_ERROR, "접근 권한 저장을 실패했습니다."), //
   FILES_SYSTEM_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."), //
   SURVEY_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 생성을 실패했습니다."), //
   SURVEY_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 수정을 실패했습니다."), //

@@ -27,8 +27,14 @@ import Sample from "../components/sample/Sample.jsx";
 import CourseMain from "../components/admin/course/CourseMain.jsx";
 
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
+import { getCourses } from "../api/admin/course/courseApi";
+import HomeworkDetails from "../components/admin/course/CourseTableComponent/HomeworkDetails.jsx";
 
 const router = createBrowserRouter([
+  {
+    path: "/popup/homework/:courseid/:homeworkId",
+    element: <HomeworkDetails />,
+  },
   { path: "/login", element: <Login /> },
   {
     path: "/",
@@ -36,6 +42,7 @@ const router = createBrowserRouter([
     errorElement: <div>404 Not Found</div>,
     children: [
       { index: true, element: <Main />, handle: { crumb: "Dashboard" } },
+      { path: "login", element: <Login />, handle: { crumb: "로그인" } },
       { path: "sample", element: <Sample />, handle: { crumb: "Sample" } },
       {
         path: "my",
@@ -64,19 +71,15 @@ const router = createBrowserRouter([
       },
       {
         path: "admin",
-        element: (
-          <>
-            <CourseMain />
-            <Outlet />
-          </>
-        ),
         handle: { crumb: "System Management" },
         children: [
           {
             path: "course",
             handle: { crumb: "과정 관리" },
+            // 과정 버튼 목록(CourseMain)은 과정 관리 화면에서만 표시
             element: (
               <>
+                <CourseMain />
                 <Outlet />
               </>
             ),
@@ -85,7 +88,6 @@ const router = createBrowserRouter([
                 path: "list",
                 element: (
                   <>
-                    {/* <CourseItem /> */}
                     <Outlet />
                   </>
                 ),
@@ -93,15 +95,25 @@ const router = createBrowserRouter([
                 children: [
                   {
                     index: true,
+                    element: null,
                     loader: async () => {
-                      const res = await fetch(
-                        "http://localhost:8080/course/view",
+                      const courses = await getCourses();
+                      if (!courses || courses.length === 0) {
+                        return redirect("/admin/course/add");
+                      }
+                      return redirect(
+                        `/admin/course/list/${courses[0].id}?tab=0`,
                       );
-                      const list = await res.json();
-                      return redirect(list[0].id);
                     },
                   },
-                  { path: ":id", element: <CourseItem /> },
+                  {
+                    path: ":id",
+                    element: (
+                      <>
+                        <CourseItem />
+                      </>
+                    ),
+                  },
                 ],
               },
               {
