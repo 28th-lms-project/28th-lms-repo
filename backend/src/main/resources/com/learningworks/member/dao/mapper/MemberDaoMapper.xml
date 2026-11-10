@@ -67,4 +67,19 @@
          WHERE ID = #{id}
            AND DEL_YN = 'N'
     </update>
+    
+    <update id="updatePassword">
+    	UPDATE "USER"
+    	   SET PWD = #{password}
+    	     , PWD_CHANGE_DT = SYSDATE
+    	     , MDFY_DT = SYSDATE
+    	 WHERE ID = #{id}
+    	   AND DEL_YN = 'N'
+    </update>
+    
+    <update id="updateSalt">
+    	UPDATE SALT
+    	   SET SALT = #{salt}
+    	 WHERE ID = #{id}
+    </update>
 </mapper>

@@ -23,4 +23,8 @@ public interface MemberDao {
   int updateMyInfo(@Param("id") String id, @Param("infoVO") ModifyInfoVO infoVO);
 
   MemberVO selectMyInfo(String id);
+
+  int updatePassword(@Param("id") String id, @Param("password") String password);
+
+  int updateSalt(@Param("id") String id, @Param("salt") String salt);
 }

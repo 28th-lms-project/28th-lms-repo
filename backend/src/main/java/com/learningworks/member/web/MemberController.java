@@ -11,6 +11,7 @@ import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.common.utils.AuthUtil;
 import com.learningworks.member.service.MemberService;
 import com.learningworks.member.vo.request.ModifyInfoVO;
+import com.learningworks.member.vo.request.ModifyPasswordVO;
 import com.learningworks.member.vo.request.VerifyRequestVO;
 import com.learningworks.member.vo.response.MemberVO;
 import jakarta.validation.Valid;
@@ -51,6 +52,16 @@ public class MemberController {
     MemberVO result = this.memberService.selectMyInfo(id);
 
     return ApiResponse.OK(result);
+  }
+
+  @LoginRequired
+  @PutMapping("/me/password")
+  public ApiResponse<Void> updatePassword(@Valid @RequestBody ModifyPasswordVO passwordVO) {
+    String id = AuthUtil.getLoginId();
+
+    this.memberService.updatePassword(id, passwordVO);
+
+    return ApiResponse.OK(null);
   }
 
 }

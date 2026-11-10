@@ -5,8 +5,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
+import com.learningworks.common.utils.crypto.SHA;
 import com.learningworks.member.dao.MemberDao;
 import com.learningworks.member.vo.request.ModifyInfoVO;
+import com.learningworks.member.vo.request.ModifyPasswordVO;
 import com.learningworks.member.vo.response.MemberVO;
 import com.learningworks.security.auth.LoginPasswordValidator;
 import com.learningworks.security.auth.LoginUser;
@@ -97,6 +99,27 @@ public class MemberServiceImpl implements MemberService {
     }
 
     return this.memberDao.selectMyInfo(id);
+  }
+
+  @Transactional(noRollbackFor = LearningworksException.class)
+  @Override
+  public void updatePassword(String id, ModifyPasswordVO passwordVO) {
+    // 현재 비밀번호 확인
+    this.verifyPassword(id, passwordVO.getCurrentPassword());
+
+    // 새 Salt 생성
+    String newSalt = SHA.generateSalt();
+    String newHash = SHA.getEncrypt(passwordVO.getNewPassword(), newSalt);
+
+    // Salt 테이블 및 내 정보 테이블의 변경
+    // 한쪽이라도 실패했을 경우 RollBack 하도록 LearningworksException이 아닌 다른 예외를 던진다.
+    if (this.memberDao.updatePassword(id, newHash) == 0) {
+      throw new IllegalStateException("비밀번호 변경 실패");
+    }
+    if (this.memberDao.updateSalt(id, newSalt) == 0) {
+      throw new IllegalStateException("Salt 변경 실패");
+    }
+
   }
 
 }
