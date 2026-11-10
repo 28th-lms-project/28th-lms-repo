@@ -29,13 +29,13 @@ import CourseMain from "../components/admin/course/CourseMain.jsx";
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 
 const router = createBrowserRouter([
-  { path: "/login", element: <Login /> },
   {
     path: "/",
     element: <MainLayout />,
     errorElement: <div>404 Not Found</div>,
     children: [
       { index: true, element: <Main />, handle: { crumb: "Dashboard" } },
+      { path: "login", element: <Login />, handle: { crumb: "로그인" } },
       { path: "sample", element: <Sample />, handle: { crumb: "Sample" } },
       {
         path: "my",
@@ -64,19 +64,15 @@ const router = createBrowserRouter([
       },
       {
         path: "admin",
-        element: (
-          <>
-            <CourseMain />
-            <Outlet />
-          </>
-        ),
         handle: { crumb: "System Management" },
         children: [
           {
             path: "course",
             handle: { crumb: "과정 관리" },
+            // 과정 버튼 목록(CourseMain)은 과정 관리 화면에서만 표시
             element: (
               <>
+                <CourseMain />
                 <Outlet />
               </>
             ),

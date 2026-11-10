@@ -1,0 +1,175 @@
+
+/** @format */
+
+.container {
+    width: 100%;
+}
+
+/* 전체 그리드 */
+.layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    min-height: calc(100vh - 135px);
+}
+
+.layout[data-selected="true"] {
+    grid-template-columns: 1fr 1.1fr 1.1fr;
+}
+
+/* 각 섹션 */
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 700px;
+    padding: 30px;
+    background-color: #fff;
+}
+
+/* 섹션 제목 */
+.panelTitle {
+    font-size: 17px;
+    font-weight: bold;
+    padding-bottom: 25px;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+}
+
+/* 메뉴 필터 영역 */
+.filterArea {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 10px;
+}
+
+/* 셀렉트 */
+.select {
+    width: 100%;
+    height: 37px;
+    padding: 0 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 13px;
+}
+
+.select:disabled {
+    background-color: #f2f2f2;
+    color: #aaa;
+    border-color: #ddd;
+    cursor: not-allowed;
+}
+
+/* 버튼 영역 */
+.buttonArea {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 37px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #ccc;
+}
+
+/* 버튼 */
+.button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 29px;
+    padding: 0 9px;
+    border: none;
+    border-radius: 4px;
+    background-color: #eee;
+    color: #666;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 목록 헤더 */
+.listHeader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom: 1px solid #ddd;
+}
+
+/* 역할 목록 */
+.roleList {
+    overflow-y: auto;
+    max-height: calc(100vh - 330px);
+}
+
+/* 권한 목록 */
+.permissionList {
+    flex: 1;
+    min-height: 300px;
+    max-height: calc(100vh - 390px);
+    overflow-y: auto;
+}
+
+/* 목록 공통 */
+.listItem {
+    display: flex;
+    align-items: center;
+    min-height: 42px;
+    padding: 0 10px;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px dashed #ddd;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+/* 마우스 오버 */
+.listItem:hover {
+    background-color: #e5e5e5;
+}
+
+/* 선택된 항목 */
+.selected {
+    background-color: #d5d5d5;
+}
+
+/* 선택된 항목에 마우스 오버 */
+.selected:hover {
+    background-color: #c8c8c8;
+}
+
+/* 빈 목록 */
+.empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100px;
+    color: #999;
+    font-size: 13px;
+}
+
+/* 하단 건수 */
+.count {
+    padding-top: 10px;
+    margin-top: auto;
+    border-top: 1px solid #ccc;
+    font-size: 12px;
+    color: #888;
+}
+
+/* 반응형 */
+@media (max-width: 1000px) {
+    .layout,
+    .layout[data-selected="true"] {
+        grid-template-columns: 1fr;
+    }
+}

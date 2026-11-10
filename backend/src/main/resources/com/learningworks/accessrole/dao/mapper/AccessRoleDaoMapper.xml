@@ -6,18 +6,6 @@
 
 <mapper namespace="com.learningworks.accessrole.dao.AccessRoleDao">
 
-    <!-- 역할 목록 조회 -->
-    <select id="selectRoleList"
-            resultType="com.learningworks.accessrole.vo.response.AccessRoleVO">
-
-        SELECT R.ROLE_ID AS roleId
-             , R.ROLE_DISPLAY_NAME AS roleDisplayName
-          FROM ROLE R
-         ORDER BY R.ROLE_ID
-
-    </select>
-
-
     <!-- 역할별 허용 권한 목록 조회 -->
     <select id="selectAllowedPermissionList"
             resultType="com.learningworks.accessrole.vo.response.AccessRolePermissionVO">
@@ -41,11 +29,10 @@
           LEFT JOIN MENU BTM_M
             ON A.BTM_MENU_ID = BTM_M.ID
          WHERE R.ROLE_ID = #{roleId}
-           AND RA.ACTION_ID IS NOT NULL
+           AND RA.ROLE_ACTION_ID IS NOT NULL
          ORDER BY A.TOP_MENU_ID, A.MID_MENU_ID, A.BTM_MENU_ID, A.ACTION_ID DESC
 
     </select>
-
 
     <!-- 역할별 미허용 권한 목록 조회 -->
     <select id="selectDeniedPermissionList"
@@ -70,11 +57,10 @@
           LEFT JOIN MENU BTM_M
             ON A.BTM_MENU_ID = BTM_M.ID
          WHERE R.ROLE_ID = #{roleId}
-           AND RA.ACTION_ID IS NULL
+           AND RA.ROLE_ACTION_ID IS NULL
          ORDER BY A.TOP_MENU_ID, A.MID_MENU_ID, A.BTM_MENU_ID, A.ACTION_ID
 
     </select>
-
 
     <!-- 역할 존재 여부 확인 -->
     <select id="selectRoleCount"
@@ -86,7 +72,6 @@
 
     </select>
 
-
     <!-- 실제 존재하는 ACTION 개수 확인 -->
     <select id="selectActionCount"
             resultType="int">
@@ -94,7 +79,7 @@
         SELECT COUNT(DISTINCT ACTION_ID)
           FROM ACTION
          WHERE ACTION_ID IN
-        <foreach collection="permissionIds"
+        <foreach collection="actionIds"
                  item="actionId"
                  open="("
                  separator=","
@@ -104,33 +89,30 @@
 
     </select>
 
-
     <!-- 기존 역할 권한 삭제 -->
     <delete id="deleteRolePermission">
 
         DELETE FROM ROLE_ACTION
          WHERE ROLE_ID = #{roleId}
+<!--           AND ACTION_ID = #{actionId}-->
 
     </delete>
 
-
     <!-- 선택한 역할 권한 등록 -->
     <insert id="insertRolePermission">
-
-        INSERT INTO ROLE_ACTION (
-               ROLE_ID
-             , ACTION_ID
-        )
-        VALUES
-        <foreach collection="permissionIds"
-                 item="actionId"
-                 separator=",">
-            (
-            #{roleId},
-            #{actionId}
+        INSERT ALL
+        <foreach collection="actionIds" item="actionId">
+            INTO ROLE_ACTION (
+                              ROLE_ACTION_ID
+                            , ROLE_ID
+                            , ACTION_ID
+            ) VALUES (
+                      SUBSTR(RAWTOHEX(SYS_GUID()), 1, 20)
+                    , #{roleId}
+                    , #{actionId}
             )
         </foreach>
-
+        SELECT 1 FROM DUAL
     </insert>
 
 </mapper>

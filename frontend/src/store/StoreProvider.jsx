@@ -1,16 +1,14 @@
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import { testSliceStore } from "./testSliceStore";
-import { questionSliceStore } from "./questionSliceStore";
-import { loginSlice } from "./loginSliceStore";
-import { courseSlice } from "./courseSliceStore";
+import { loginSlice } from "./slices/loginSliceStore";
+import { courseSlice } from "./slices/courseSliceStore";
+import { permissionSlice } from "./slices/permissionSliceStore";
 
 const toolkitStore = configureStore({
   reducer: {
     login: loginSlice.reducer,
     courses: courseSlice.reducer,
-    test: testSliceStore.reducer,
-    modTest: questionSliceStore.reducer,
+    permission: permissionSlice.reducer,
   },
 });
 
