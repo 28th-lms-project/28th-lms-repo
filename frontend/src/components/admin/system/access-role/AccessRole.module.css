@@ -173,3 +173,15 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* 권한 확인 중 · 권한 없음 안내 (권한 관리 화면과 같은 스타일) */
+.notice {
+    margin: 0;
+    padding: 40px 20px;
+    background-color: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 14px;
+    color: #777;
+}

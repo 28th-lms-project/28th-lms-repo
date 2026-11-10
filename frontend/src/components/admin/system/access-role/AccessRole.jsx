@@ -2,6 +2,7 @@
 
 import {useEffect, useMemo, useState} from "react";
 import PageContainer from "../../../common/PageContainer";
+import usePermission from "../../../../hooks/usePermission";
 
 import {
     getAllowedPermissionList,
@@ -9,6 +10,7 @@ import {
     saveRolePermission,
 } from "../../../../api/admin/system/access-role/accessRoleApi";
 import {getRoles} from "../../../../api/admin/system/role/roleApi";
+import {SUPER_ADMIN_ROLE_ID} from "../role/roleUtils";
 
 import styles from "./AccessRole.module.css";
 
@@ -18,7 +20,34 @@ const getErrorMessage = (error) =>
         ? Object.values(error.validations).flat().join("\n")
         : error.message;
 
+/**
+ * 권한별 접근 권한 관리
+ * ROLE_SUPER_ADMIN 전용 화면 (D-03). 화면 숨김은 표시용이며 실제 차단은 서버(@RequireSuperAdmin)가 한다.
+ * 권한이 있을 때만 AccessRoleManagement를 마운트하므로, 권한 없이 화면의 API를 호출하지 않는다.
+ */
 export default function AccessRole() {
+    const {isSuperAdmin, status} = usePermission();
+
+    if (status === "loaded" && isSuperAdmin) return <AccessRoleManagement />;
+
+    // idle: 비로그인(조회하지 않음) → 표시 없음
+    let content = null;
+    if (status === "loading") {
+        content = <p className={styles.notice}>권한 확인 중...</p>;
+    } else if (status === "failed") {
+        content = (
+            <p className={styles.notice}>
+                권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
+            </p>
+        );
+    } else if (status === "loaded") {
+        content = <p className={styles.notice}>권한이 없습니다.</p>;
+    }
+
+    return <PageContainer>{content}</PageContainer>;
+}
+
+function AccessRoleManagement() {
     const [roleList, setRoleList] = useState([]);
     const [allowedList, setAllowedList] = useState([]);
     const [deniedList, setDeniedList] = useState([]);
@@ -43,7 +72,12 @@ export default function AccessRole() {
         try {
             const body = await getRoles();
 
-            setRoleList(body?.roleList ?? []);
+            // ROLE_SUPER_ADMIN은 항상 모든 권한을 가지므로 권한 설정 대상에서 제외 (D-03)
+            setRoleList(
+                (body?.roleList ?? []).filter(
+                    (role) => role.roleId !== SUPER_ADMIN_ROLE_ID
+                )
+            );
         } catch (error) {
             console.error("역할 목록 조회 실패", error);
             alert(getErrorMessage(error));
