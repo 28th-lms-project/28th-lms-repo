@@ -22,6 +22,8 @@ app:
   jwt:
     secret-key: gwcR4tHA5Pvn3iApesLgqq0tcY1nLzuyrRRt7/q6lc0=
     access-token-validity-seconds: 1800
-  # API 권한 검사 (@RequireAction, @RequireSuperAdmin). 사용법: backend/docs/access-control-guide.md
+  # API 권한 검사 (@RequireAction, @RequireSuperAdmin, @LoginRequired, @PublicApi). 사용법: backend/docs/access-control-guide.md
   access-check:
     enabled: true
+    # 권한 어노테이션이 없는 API는 SUPER_ADMIN만 호출 가능 (false로 바꾸면 누구나 호출 가능)
+    default-super-admin: true

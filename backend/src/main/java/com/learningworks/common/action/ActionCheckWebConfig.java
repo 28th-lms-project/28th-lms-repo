@@ -15,10 +15,12 @@ import lombok.extern.slf4j.Slf4j;
  * <pre>
  * app:
  *   access-check:
- *     enabled: true
+ *     enabled: true               # 권한 검사 켜기 (기본값 false)
+ *     default-super-admin: true   # 권한 어노테이션이 없는 API를 SUPER_ADMIN 전용으로 (기본값 true, false면 누구나)
  * </pre>
  *
  * 꺼져 있어도 권한 코드 수집(ActionCodeRegistry)과 목록 API는 동작한다.
+ * 2026-11-10부터 enabled: true, default-super-admin: true로 운영한다.
  */
 @Slf4j
 @Configuration

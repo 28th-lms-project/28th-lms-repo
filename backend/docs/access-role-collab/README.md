@@ -12,6 +12,7 @@
   - 2026-11-09 (6차): `feature/role` 커밋 `3cee4b1` 기준. ACCESS 담당자의 **R-09 처리**(`6f4b85f`, `5f96007`로 머지)를 코드와 대조해 확인. **JWT 인증 필터 머지**(`878d6c0`)에 따라 권한 검사를 켜기 위한 조건 정리. R-10 2번(ACTION 저장 후 `evictAll`)은 불필요해 삭제. `ROLE_USER_READ`, `ROLE_USER_MOVE` 추가
   - 2026-11-10 (7차): `feature/role` 커밋 `1ce6a14` 기준. ROLE 쪽 **권한 관리 화면(프론트)과 내 권한 연동(`usePermission`)** 완료, 프론트 권한 가이드(`frontend/docs/permission-guide.md`) 추가. ACCESS 쪽 남은 작업(R-10, R-03 잔여, D-03, R-09 기록)이 코드에서 **아직 미처리**임을 확인. R-10의 영향 범위 보강(내 권한 API도 같은 캐시를 써서 **프론트 화면 표시도 서버 재시작 전까지 바뀌지 않음**), 우선순위를 높음으로 변경. **R-11 추가** (권한 설정 화면에 내 권한 표시 적용, 선택)
   - 2026-11-10 (8차): `feature/role` 커밋 `8e64b37` 기준. ACCESS 담당자의 **R-10 · R-11 · R-03 잔여 · R-09 기록 · D-03 구현 · D-04 보류**(`54ac2ca`)를 ROLE 담당자가 코드와 대조해 확인. **SUPER_ADMIN 전용 범위 합의** 기록 (D-03 "추가 합의"). ROLE 담당자 4번(`AccessChecker` 주석) 처리. 권한 검사를 켜기 위한 남은 조건을 데이터 작업으로 정리
+  - 2026-11-10 (9차): **권한 검사 켬**(`app.access-check.enabled: true`). **권한 어노테이션이 없는 API는 SUPER_ADMIN 전용**으로 변경(`default-super-admin: true`), 예외용 `@LoginRequired` · `@PublicApi` 추가. `GET /action-codes/me`는 `@LoginRequired`, `/error`는 `@PublicApi`
 
 ## 현재 진행 상황
 
@@ -101,6 +102,7 @@
 | JWT 인증 필터 적용 (`ValidateJwtAuthenticationFilter`). 인증 객체의 principal은 **회원 ID 문자열**(토큰 `sub`)이며 `LoginUser`가 아님 | 컨트롤러에서 로그인 사용자 ID가 필요하면 `Authentication authentication` 파라미터로 받아 `authentication.getName()` 사용 (비로그인이면 `null`). `@AuthenticationPrincipal LoginUser`는 항상 `null`이 되므로 쓰지 말 것 |
 | 프론트 공통 API 클라이언트가 토큰을 자동 첨부하고, 토큰을 보낸 요청이 401이면 로그인 페이지로 이동 | `frontend/docs/api-client-guide.md` 8장. 화면에서 토큰을 직접 다루지 않음 |
 | 프론트 권한 표시: 로그인 시 `MainLayout`이 `GET /action-codes/me`를 한 번 조회해 Redux에 저장. 화면은 `const { can, isSuperAdmin, status } = usePermission();`로 판단 | `frontend/docs/permission-guide.md`. 버튼 · 화면 숨김은 표시용이며 실제 차단은 서버 검사 |
+| **권한 어노테이션이 없는 API는 SUPER_ADMIN 전용** (2026-11-10). 로그인 사용자 누구나는 `@LoginRequired`, 비로그인 공개는 `@PublicApi` | ACCESS · ACCESS_ROLE의 API는 모두 어노테이션이 있어 영향 없음. 새 API를 만들 때 반드시 어노테이션을 붙일 것 (`backend/docs/access-control-guide.md` 2장) |
 | `AccessChecker`는 역할별 허용 권한 코드를 **만료 없이 캐시**하고, 서버 검사와 `GET /action-codes/me`가 **같은 캐시**를 씀 | 권한 저장(`/access-role/save`)과 역할 삭제 시 해당 역할 캐시를 비움 (R-10 완료). 권한이 바뀌는 기능을 새로 만들면(예: ACTION 삭제) 캐시 초기화 호출이 필요하므로 ROLE 담당자와 협의 |
 | **SUPER_ADMIN 전용(`@RequireSuperAdmin`) 범위**: 역할 생성 · 이름 변경 · 순서 변경 · 삭제, `GET /action-codes`, `GET /access/menus`, `POST /access/save`, `POST /access-role/save` (2026-11-10 합의, 현재 코드 유지). 권한 설정 화면의 조회 API 3개는 `@RequireAction`(`ACCESS_READ`, `ACCESS_ROLE_READ_ALLOWED`, `ACCESS_ROLE_READ_DENIED`) | 그 외 기능은 모두 `@RequireAction`으로 두어 관리자가 부여할 수 있게 함. 범위를 넓히려면 먼저 협의 (D-03 "추가 합의") |
 | `AccessRole.jsx`가 ROLE 화면의 `role/roleUtils.js`에서 `SUPER_ADMIN_ROLE_ID`를 가져다 씀 | ROLE 담당자는 이 상수의 이름 · 위치를 유지. 바꿔야 하면 ACCESS 담당자에게 알림 |

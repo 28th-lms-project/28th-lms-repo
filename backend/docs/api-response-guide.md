@@ -287,12 +287,12 @@ ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), /
   - 비로그인도 허용하는 곳: 컨트롤러에서 `Authentication authentication` 파라미터로 받아 `authentication.getName()` (비로그인이면 `null`)
   - principal이 `LoginUser`가 아니므로 `@AuthenticationPrincipal LoginUser`는 항상 `null`입니다.
   - `AuthUtil.isGranted("역할")`은 토큰의 역할(로그인 시점 값)을 비교하므로 권한 판단에 쓰지 마세요. 권한은 아래 `@RequireAction`으로 지정합니다.
-- **API 권한 검사**: Spring Security의 URL 규칙이 아니라 `@RequireAction` · `@RequireSuperAdmin`(`com.learningworks.common.action`)으로 지정하며, 비로그인은 401, 권한 없음은 403을 공통 형식으로 응답합니다. 2026-11-10부터 켜져 있습니다 (`app.access-check.enabled: true`). **사용법은 `backend/docs/access-control-guide.md`** 를, 설계는 `backend/docs/access-role-collab/discussions.md` D-01을 참고하세요.
+- **API 권한 검사**: Spring Security의 URL 규칙이 아니라 `@RequireAction` · `@RequireSuperAdmin` · `@LoginRequired` · `@PublicApi`(`com.learningworks.common.action`)로 지정하며, 비로그인은 401, 권한 없음은 403을 공통 형식으로 응답합니다. 2026-11-10부터 켜져 있고, **어노테이션이 없는 API는 SUPER_ADMIN만 호출할 수 있습니다** (`app.access-check.enabled`, `default-super-admin`). **사용법은 `backend/docs/access-control-guide.md`** 를, 설계는 `backend/docs/access-role-collab/discussions.md` D-01을 참고하세요.
 - **프론트 화면 권한 표시**: 로그인 시 `GET /action-codes/me`로 받은 권한으로 버튼 · 화면을 숨깁니다. `frontend/docs/permission-guide.md` 참고
 
 ### 아직 처리되지 않은 것
 
 - `SecurityConfig`는 `anyRequest().permitAll()` 상태입니다. 이를 `authenticated()`로 바꾼다면:
-  - **`/error`는 반드시 `permitAll`** 에 포함해야 합니다. 포함하지 않으면 모든 에러 응답이 빈 403으로 바뀝니다.
+  - **`/error`는 반드시 `permitAll`** 에 포함해야 합니다. 포함하지 않으면 모든 에러 응답이 빈 403으로 바뀝니다. (권한 검사 인터셉터 쪽은 `ErrorResponseController`에 `@PublicApi`를 붙여 이미 열어 두었습니다.)
   - `formLogin` / `httpBasic`이 꺼져 있어서 인증되지 않은 요청이 401이 아니라 403으로 응답되므로, 공통 형식의 401을 내려주는 `AuthenticationEntryPoint`를 직접 등록해야 합니다.
   - API별 권한은 이미 `@RequireAction`으로 처리하므로, URL 규칙은 "로그인 필요 여부" 정도만 두는 것을 권장합니다.

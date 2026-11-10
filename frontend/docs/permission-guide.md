@@ -23,6 +23,8 @@ export default function ExamList() {
 > **⚠️ 현재 상태: 서버 권한 검사가 켜져 있습니다** (2026-11-10).
 >
 > 권한이 없는 사용자가 `@RequireAction`이 붙은 API를 호출하면 403(`GLOBAL_FORBIDDEN`)이 응답됩니다. 권한이 걸린 API는 3-2처럼 `can()`이 `true`일 때만 호출하세요. 새로 권한을 붙인 API는 관리자가 등록 · 부여하기 전까지 SUPER_ADMIN만 쓸 수 있습니다 (5장).
+>
+> **백엔드 API에 권한 어노테이션이 아예 없으면 SUPER_ADMIN만 호출할 수 있습니다.** SUPER_ADMIN이 아닌 계정으로 테스트하다 403이 나면, 먼저 그 API에 `@RequireAction` 등이 붙어 있는지 백엔드 담당자에게 확인하세요.
 
 ---
 
