@@ -2,26 +2,31 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import Select from "react-select";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
+import { getTutors } from "../../../../api/admin/course/courseApi";
 
 export default function CourseTutorSelect() {
   const [options, setOptions] = useState([]);
 
   const dispatch = useDispatch();
   useEffect(() => {
-    const getCourseList = async () => {
-      const response = await fetch("http://localhost:8080/tutor/list");
-
-      const result = await response.json();
-      console.log(result);
-      const mappedOptions = result.map((course) => ({
-        value: course.id,
-        label: course.name,
-      }));
-
-      setOptions(mappedOptions);
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const tutors = await getTutors({ signal: controller.signal });
+        const mappedOptions = (tutors ?? []).map((tutor) => ({
+          value: tutor.id,
+          label: tutor.name,
+        }));
+        setOptions(mappedOptions);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          alert(error.message);
+        }
+      }
+    })();
+    return () => {
+      controller.abort();
     };
-
-    getCourseList();
   }, []);
 
   const handleChange = (selectedOption) => {
