@@ -34,4 +34,6 @@ public interface CourseDao {
 
 	List<HomeworkVO> readHomeworkList(String courseId);
 
+	HomeworkVO getOneHomework(String courseId, String homeworkId);
+
 }

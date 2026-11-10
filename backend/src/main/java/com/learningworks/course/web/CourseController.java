@@ -83,6 +83,16 @@ public class CourseController {
 		List<HomeworkVO> homeworkList = this.courseService.courseHomeworkList(courseId);
 		return ApiResponse.OK(homeworkList);
 	}
+	/**
+	 * 과제 상세 조회 
+	 * @param courseId, homeworkId
+	 * @return HomeworkVO
+	 */
+	@GetMapping("/{courseId}/homeworklist/{homeworkId}")
+	public ApiResponse<HomeworkVO> getOneHomework(@PathVariable String courseId, @PathVariable String homeworkId){
+		HomeworkVO homework = this.courseService.getOneHomework(courseId,homeworkId);
+		return ApiResponse.OK(homework);
+	}
 	
 	/**
 	 * 나중에 분리할 endpoint

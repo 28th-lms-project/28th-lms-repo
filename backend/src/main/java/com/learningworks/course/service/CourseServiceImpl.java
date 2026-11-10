@@ -102,4 +102,9 @@ public class CourseServiceImpl implements CourseService{
 		return this.courseDao.readHomeworkList(courseId);
 	}
 
+	@Override
+	public HomeworkVO getOneHomework(String courseId, String homeworkId) {
+		return this.courseDao.getOneHomework(courseId, homeworkId);
+	}
+
 }

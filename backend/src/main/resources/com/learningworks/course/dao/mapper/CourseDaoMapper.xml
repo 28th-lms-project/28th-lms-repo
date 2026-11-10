@@ -172,4 +172,20 @@
                      WHERE C.ID = #{_parameter})
    AND CH.DEL_YN = 'N'
    </select>
+   
+   <select id="getOneHomework"
+           parameterType="string"
+           resultType="com.learningworks.course.vo.response.HomeworkVO">
+      SELECT CH.CONTENT 
+           , CH.COURSE_ID 
+           , TO_CHAR(CRT_DT,'YYYY-MM-DD') AS CRT_DT
+           , TO_CHAR(END_DATE,'YYYY-MM-DD') AS END_DATE
+           , CH.ID 
+           , TO_CHAR(MDFY_DT,'YYYY-MM-DD') AS MDFY_DT
+           , CH.SUBJECT 
+        FROM COURSE_HOMEWORK CH
+       WHERE CH.COURSE_ID = #{courseId}
+         AND CH.ID = #{homeworkId}
+         AND CH.DEL_YN = 'N'
+   </select>
 </mapper>

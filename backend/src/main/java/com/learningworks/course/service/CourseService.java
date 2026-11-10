@@ -25,4 +25,6 @@ public interface CourseService {
 
 	List<HomeworkVO> courseHomeworkList(String courseId);
 
+	HomeworkVO getOneHomework(String courseId, String homeworkId);
+
 }
