@@ -26,6 +26,12 @@ class ActionCodeRegistryTest {
     @RequireSuperAdmin
     public void createRole() {}
 
+    @LoginRequired
+    public void getMyInfo() {}
+
+    @PublicApi
+    public void getPublicNotices() {}
+
     public void noAnnotation() {}
   }
 
@@ -70,6 +76,12 @@ class ActionCodeRegistryTest {
     @RequireSuperAdmin
     @RequireAction(domain = "ROLE", action = "CREATE", description = "역할 생성")
     public void createRole() {}
+  }
+
+  static class LoginAndPublicController {
+    @LoginRequired
+    @PublicApi
+    public void getNotices() {}
   }
 
   private static List<HandlerMethod> handlerMethods(Object controller) {
@@ -169,6 +181,27 @@ class ActionCodeRegistryTest {
         .assertThatThrownBy(() -> ActionCodeRegistryTest.registry(new BothAnnotationsController()))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("함께 사용할 수 없습니다");
+  }
+
+  @Test
+  @DisplayName("@LoginRequired와 @PublicApi처럼 권한 어노테이션을 두 개 이상 붙이면 서버 시작 실패")
+  void rejectsMultiplePermissionAnnotations() {
+    Assertions
+        .assertThatThrownBy(() -> ActionCodeRegistryTest.registry(new LoginAndPublicController()))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("@LoginRequired")
+        .hasMessageContaining("@PublicApi")
+        .hasMessageContaining("함께 사용할 수 없습니다");
+  }
+
+  @Test
+  @DisplayName("권한 어노테이션이 없는 API만 목록으로 모은다")
+  void collectsUnannotatedSources() {
+    ActionCodeRegistry registry = ActionCodeRegistryTest.registry(new ValidController());
+
+    List<String> unannotated = registry.getUnannotatedSources();
+    Assertions.assertThat(unannotated).hasSize(1);
+    Assertions.assertThat(unannotated.get(0)).contains("noAnnotation");
   }
 
 }

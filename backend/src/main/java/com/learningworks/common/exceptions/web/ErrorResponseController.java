@@ -4,6 +4,7 @@ import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.learningworks.common.action.PublicApi;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.ApiResponse;
 import jakarta.servlet.RequestDispatcher;
@@ -16,13 +17,17 @@ import lombok.extern.slf4j.Slf4j;
  * - 필터(Spring Security, JWT 등)에서 발생한 예외 / sendError(401, 403 ...)
  * - Spring이 DefaultHandlerExceptionResolver로 처리한 checked 예외
  *
- * 주의: Security 설정에서 인증을 강화할 때 "/error"는 반드시 permitAll 해야 한다.
+ * 주의
+ * - Security 설정에서 인증을 강화할 때 "/error"는 반드시 permitAll 해야 한다.
+ * - 권한 검사 인터셉터는 에러 포워딩(/error)에도 실행되므로 @PublicApi가 필요하다.
+ *   없으면 권한 어노테이션이 없는 API로 취급되어(기본값: SUPER_ADMIN 전용) 모든 에러 응답이 401/403으로 바뀐다.
  */
 @Slf4j
 @RestController
 public class ErrorResponseController implements ErrorController {
 
   // GET, POST, PUT 등 모든 메서드의 에러 포워딩 처리
+  @PublicApi
   @RequestMapping("/error")
   public ApiResponse<Void> sendErrorPage(HttpServletRequest request) {
 

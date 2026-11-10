@@ -58,6 +58,7 @@ public enum ErrorCode {
   ROLE_PROTECTED(HttpStatus.CONFLICT, "시스템 기본 역할은 삭제할 수 없습니다."), //
   ROLE_ORDER_OUTDATED(HttpStatus.CONFLICT, "역할 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요."), //
   ACTION_CODE_USED(HttpStatus.CONFLICT, "이미 등록된 권한 코드입니다."), //
+  ACTION_ROLE_PROTECTED(HttpStatus.CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다."), //
 
   // 413 CONTENT TOO LARGE
   FILES_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다."), //

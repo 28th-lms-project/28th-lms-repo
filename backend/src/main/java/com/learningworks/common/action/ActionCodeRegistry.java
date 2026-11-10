@@ -1,7 +1,10 @@
 package com.learningworks.common.action;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
@@ -23,7 +26,9 @@ import lombok.extern.slf4j.Slf4j;
  * - 권한 코드가 40자 초과
  * - description이 비어 있음
  * - 같은 권한 코드인데 description이 다름
- * - 한 메서드에 @RequireAction과 @RequireSuperAdmin을 함께 붙임
+ * - 한 메서드에 권한 어노테이션(@RequireAction, @RequireSuperAdmin, @LoginRequired, @PublicApi)을 두 개 이상 붙임
+ *
+ * 권한 어노테이션이 없는 API(기본값: SUPER_ADMIN 전용)는 시작 로그에 목록으로 남긴다.
  *
  * 주의: 이 클래스는 RequestMappingHandlerMapping을 주입받으므로, 인터셉터 등 MVC 설정 쪽에서 주입받으면 순환 의존이 생긴다.
  * 인터셉터는 HandlerMethod에서 @RequireAction을 직접 읽는다(ActionCheckInterceptor).
@@ -36,8 +41,15 @@ public class ActionCodeRegistry implements SmartInitializingSingleton {
 
   private final RequestMappingHandlerMapping handlerMapping;
 
+  /** 한 메서드에 하나만 붙일 수 있는 권한 어노테이션 */
+  private static final List<Class<? extends Annotation>> PERMISSION_ANNOTATIONS =
+      List.of(RequireAction.class, RequireSuperAdmin.class, LoginRequired.class, PublicApi.class);
+
   /** key: 권한 코드. 코드 이름순 정렬 */
   private Map<String, ActionDefinition> definitions = Map.of();
+
+  /** 권한 어노테이션이 없는 API (로그 · 확인용) */
+  private List<String> unannotatedSources = List.of();
 
   public ActionCodeRegistry(
       @Qualifier("requestMappingHandlerMapping") RequestMappingHandlerMapping handlerMapping) {
@@ -49,22 +61,36 @@ public class ActionCodeRegistry implements SmartInitializingSingleton {
   public void afterSingletonsInstantiated() {
     this.register(this.handlerMapping.getHandlerMethods().values());
     log.info("권한 코드 {}개 등록: {}", this.definitions.size(), this.definitions.keySet());
+    if (!this.unannotatedSources.isEmpty()) {
+      log.info("권한 어노테이션이 없는 API {}개 (app.access-check.default-super-admin: true이면 SUPER_ADMIN만 호출 가능): {}",
+          this.unannotatedSources.size(), this.unannotatedSources);
+    }
   }
 
   /** handlerMethods의 @RequireAction을 수집해 등록부를 교체한다. 규칙 위반이면 IllegalStateException */
   void register(Collection<HandlerMethod> handlerMethods) {
     Map<String, ActionDefinition> collected = new TreeMap<>();
+    List<String> unannotated = new ArrayList<>();
 
     for (HandlerMethod handlerMethod : handlerMethods) {
+      String source = handlerMethod.getShortLogMessage();
+
+      List<String> present = PERMISSION_ANNOTATIONS.stream()
+          .filter(handlerMethod::hasMethodAnnotation)
+          .map(annotation -> "@" + annotation.getSimpleName())
+          .toList();
+      if (present.isEmpty()) {
+        unannotated.add(source);
+        continue;
+      }
+      if (present.size() > 1) {
+        throw new IllegalStateException("권한 어노테이션 " + String.join(", ", present)
+            + "은 함께 사용할 수 없습니다. 하나만 붙이세요 (" + source + ")");
+      }
+
       RequireAction requireAction = handlerMethod.getMethodAnnotation(RequireAction.class);
       if (requireAction == null) {
         continue;
-      }
-
-      String source = handlerMethod.getShortLogMessage();
-      if (handlerMethod.hasMethodAnnotation(RequireSuperAdmin.class)) {
-        throw new IllegalStateException(
-            "@RequireAction과 @RequireSuperAdmin은 함께 사용할 수 없습니다 (" + source + ")");
       }
 
       ActionDefinition definition = ActionCodeRegistry.toDefinition(requireAction, source);
@@ -78,6 +104,12 @@ public class ActionCodeRegistry implements SmartInitializingSingleton {
     }
 
     this.definitions = Collections.unmodifiableMap(collected);
+    this.unannotatedSources = unannotated.stream().sorted().toList();
+  }
+
+  /** 권한 어노테이션이 없는 API 목록 (컨트롤러#메서드) */
+  public List<String> getUnannotatedSources() {
+    return this.unannotatedSources;
   }
 
   private static ActionDefinition toDefinition(RequireAction requireAction, String source) {

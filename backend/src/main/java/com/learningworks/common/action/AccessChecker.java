@@ -18,9 +18,10 @@ import lombok.RequiredArgsConstructor;
  * - 요청자의 역할은 JWT가 아니라 항상 DB의 현재 BASE_ROLE 기준으로 판단한다 (RoleAssignPolicy와 같은 기준).
  * - ROLE_SUPER_ADMIN은 모든 권한 코드를 허용한다.
  * - 역할별 허용 권한 코드 목록은 캐시한다. 권한이 바뀌는 곳에서 반드시 evict를 호출할 것.
- *   - 역할 권한 저장(/access-role/save): evictRole(roleId)
- *   - ACTION 수정 · 삭제(/access/save): evictAll()
- *   - 역할 삭제(DELETE /roles/{roleId}): evictRole(roleId)
+ *   - 역할 권한 저장(/access-role/save): evictRole(roleId) - AccessRoleServiceImpl.saveRolePermission
+ *   - 역할 삭제(DELETE /roles/{roleId}): evictRole(roleId) - RoleServiceImpl.deleteRole
+ *   - ACTION 수정(/access/save)은 ACTION_CODE를 바꾸지 않으므로 호출하지 않는다.
+ *     ACTION 삭제나 ACTION_CODE 변경 기능이 생기면 그때 evictAll()을 호출할 것.
  *   트랜잭션 안에서 호출하면 커밋 후에 비운다.
  * - 캐시는 서버 메모리에 있으므로 서버가 여러 대이면 다른 서버의 캐시는 비워지지 않는다.
  */
