@@ -228,15 +228,15 @@ useEffect(() => {
 
 공통 errorCode입니다. 모듈별 errorCode는 `backend/src/main/java/com/learningworks/common/exceptions/enums/ErrorCode.java`를 확인하세요.
 
-| errorCode                  | 상태 | 상황                  | 프론트 대응 예시                   |
-| -------------------------- | ---- | --------------------- | ---------------------------------- |
-| `GLOBAL_INVALID_PARAMETER` | 400  | 입력값 검증 실패      | `validations`를 입력칸 아래 표시   |
-| `GLOBAL_INVALID_JSON`      | 400  | 요청 데이터 형식 오류 | 요청 코드 확인 (개발 중 오류)      |
+| errorCode                  | 상태 | 상황                    | 프론트 대응 예시                            |
+| -------------------------- | ---- | ----------------------- | ------------------------------------------- |
+| `GLOBAL_INVALID_PARAMETER` | 400  | 입력값 검증 실패        | `validations`를 입력칸 아래 표시            |
+| `GLOBAL_INVALID_JSON`      | 400  | 요청 데이터 형식 오류   | 요청 코드 확인 (개발 중 오류)               |
 | `GLOBAL_UNAUTHORIZED`      | 401  | 로그인 필요 · 토큰 만료 | 공통 함수가 로그인 페이지로 이동 (8장 참고) |
-| `GLOBAL_FORBIDDEN`         | 403  | 권한 없음             | 메시지 표시                        |
-| `GLOBAL_NOT_FOUND_URL`     | 404  | 존재하지 않는 URL     | 요청 URL 확인 (개발 중 오류)       |
-| `GLOBAL_DUPLICATED`        | 409  | 중복 데이터           | 메시지 표시                        |
-| `GLOBAL_SYSTEM_ERROR`      | 500  | 서버 오류             | 메시지 표시                        |
+| `GLOBAL_FORBIDDEN`         | 403  | 권한 없음               | 메시지 표시                                 |
+| `GLOBAL_NOT_FOUND_URL`     | 404  | 존재하지 않는 URL       | 요청 URL 확인 (개발 중 오류)                |
+| `GLOBAL_DUPLICATED`        | 409  | 중복 데이터             | 메시지 표시                                 |
+| `GLOBAL_SYSTEM_ERROR`      | 500  | 서버 오류               | 메시지 표시                                 |
 
 ---
 
@@ -260,13 +260,13 @@ JWT 로그인은 공통 함수에 적용되어 있습니다. **모듈 API 파일
 
 Access Token은 `localStorage`의 `accessToken` 키에 저장되며, `src/utils/tokenStorage.js`를 통해서만 다룹니다.
 
-| 함수                      | 설명                                                        |
-| ------------------------- | ----------------------------------------------------------- |
-| `setToken(token)`         | 토큰 저장                                                   |
-| `getToken()`              | 저장된 토큰 반환. 없으면 `null`                             |
-| `removeToken()`           | 토큰 삭제                                                   |
+| 함수                      | 설명                                                              |
+| ------------------------- | ----------------------------------------------------------------- |
+| `setToken(token)`         | 토큰 저장                                                         |
+| `getToken()`              | 저장된 토큰 반환. 없으면 `null`                                   |
+| `removeToken()`           | 토큰 삭제                                                         |
 | `decodeToken(token)`      | 토큰의 payload(`sub`, `exp` 등)를 객체로 반환. 형식 오류면 `null` |
-| `isTokenExpired(payload)` | `exp` 기준 만료 여부. payload가 없어도 `true`               |
+| `isTokenExpired(payload)` | `exp` 기준 만료 여부. payload가 없어도 `true`                     |
 
 - 로그인 성공 시 `loginSlice`의 `loginSuccess` 액션이 토큰을 저장하고, `logout` 액션이 삭제합니다. (`src/store/slices/loginSliceStore.js`)
 - 앱 시작 시 저장된 토큰이 만료되었으면 삭제하고 비로그인 상태로 시작합니다.

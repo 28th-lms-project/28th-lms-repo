@@ -4,6 +4,7 @@ import { loginSuccess, selectUser } from "../../store/slices/loginSliceStore";
 import { login } from "../../api/login/loginApi";
 import { useState } from "react";
 import { decodeToken } from "../../utils/tokenStorage";
+import PageContainer from "../common/PageContainer";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -20,7 +21,7 @@ export default function Login() {
     return <Navigate to="/" replace />;
   }
 
-  const onClickLoginHandler = async (event) => {
+  const onSubmitLoginHandler = async (event) => {
     event.preventDefault();
     if (!id.trim() || !password) {
       setErrorMessage("아이디와 비밀번호를 입력해주세요.");
@@ -51,25 +52,33 @@ export default function Login() {
   };
 
   return (
-    <form>
-      <input
-        type="text"
-        placeholder="아이디"
-        value={id}
-        onChange={(event) => setId(event.target.value)}
-        autoComplete="username"
-      />
-      <input
-        type="password"
-        placeholder="비밀번호"
-        value={password}
-        onChange={(event) => setPassword(event.target.value)}
-        autoComplete="current-password"
-      />
-      {errorMessage && <p role="alert">{errorMessage}</p>}
-      <button type="submit" disabled={submitting} onClick={onClickLoginHandler}>
-        로그인
-      </button>
-    </form>
+    <PageContainer>
+      <div>
+        <form onSubmit={onSubmitLoginHandler}>
+          <input
+            type="text"
+            placeholder="아이디"
+            value={id}
+            onChange={(event) => setId(event.target.value)}
+            autoComplete="username"
+          />
+          <input
+            type="password"
+            placeholder="비밀번호"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+          />
+          {errorMessage && <p role="alert">{errorMessage}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            onClick={onSubmitLoginHandler}
+          >
+            로그인
+          </button>
+        </form>
+      </div>
+    </PageContainer>
   );
 }
