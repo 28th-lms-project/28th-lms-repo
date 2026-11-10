@@ -8,10 +8,10 @@
 
 | ID | 제목 | 우선순위 | 영향 범위 | 진행 상태 |
 | --- | --- | --- | --- | --- |
-| D-01 | 새로 만든 역할의 접근 권한 판단 방식 | 매우 높음 | 전체 API 권한 체크, ACTION 테이블 | **결정 · 권한 검사 구현 완료** (JWT 연동 확인, 검사는 켜기 전). ACCESS 작업: R-09 완료, R-10 대기 |
+| D-01 | 새로 만든 역할의 접근 권한 판단 방식 | 매우 높음 | 전체 API 권한 체크, ACTION 테이블 | **결정 · 권한 검사 구현 완료** (JWT 연동 확인, 검사는 켜기 전). ACCESS 작업: R-09 · R-10 완료 |
 | D-02 | MENU_ROLE과 ROLE_ACTION의 역할 분담 | 매우 높음 | MENU / MENU_ROLE 구현 (ROLE 담당자) | **결정** (B안, MENU_ROLE 유지). MENU 구현 전 |
-| D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` | **결정**. 구현 대기 (R-10, R-11) |
-| D-04 | 권한 설정 API의 URL 규칙 | 낮음 (선택) | ACCESS_ROLE API, 프론트 | 결정 대기 |
+| D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` | **결정 · 구현 완료** (R-10, R-11, 2026-11-10) |
+| D-04 | 권한 설정 API의 URL 규칙 | 낮음 (선택) | ACCESS_ROLE API, 프론트 | **보류** (2026-11-10) |
 | D-05 | MENU 테이블 공동 사용 방식 | 중간 | ACCESS 모듈, MENU 구현 | 결정 대기 |
 | D-06 | 성공 메시지를 응답에 포함할지 | 낮음 | R-01, R-06 | **결정 · 반영 완료** |
 
@@ -256,6 +256,10 @@ public ApiResponse<?> answerSurvey(...) { ... }
   | 두 화면을 SUPER_ADMIN에게만 표시 | 미적용 (선택) | R-11 1번 |
 
   - 검사 인터셉터는 어노테이션이 없는 API를 통과시키므로, `@RequireSuperAdmin` 없이 검사를 켜면 로그인한 누구나 권한 설정을 저장할 수 있습니다. **검사를 켜기 전에 반드시 처리해야 합니다.**
+- 구현 결과 (2026-11-10, ACCESS · ACCESS_ROLE 담당자)
+  - 두 저장 API와 두 화면의 조회 API에 `@RequireSuperAdmin` 적용 (R-10)
+  - `ErrorCode`에 `ACTION_ROLE_PROTECTED(CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다.")` 추가 (상수 추가만). `AccessRoleServiceImpl.saveRolePermission`에서 `roleId`가 `RoleConstants.SUPER_ADMIN_ROLE`이면 409로 거부
+  - 권한별 접근 권한 관리 화면 역할 목록에서 `ROLE_SUPER_ADMIN` 제외, 두 화면을 SUPER_ADMIN에게만 표시 (R-11)
 
 ---
 
@@ -283,9 +287,9 @@ public ApiResponse<?> answerSurvey(...) { ... }
 - [ ] 변경 여부 / 시점
 
 ### 결정 결과
-- 결정:
-- 결정일 · 참석자:
-- 후속 작업:
+- 결정: **보류**. 현재 URL(`/access-role/allowed`, `/denied`, `/save`)을 유지. 지금 URL로 동작에 문제가 없고, 변경 시 백엔드 · 프론트를 함께 바꿔야 해 비용 대비 이득이 작음. 이후 ACCESS_ROLE API를 크게 손볼 때 다시 검토
+- 결정일 · 참석자: 2026-11-10, ACCESS · ACCESS_ROLE 담당자
+- 후속 작업: 없음
 
 ---
 

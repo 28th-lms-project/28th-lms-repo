@@ -21,8 +21,8 @@ public class AccessVO {
     @Size(max = 40, message = "권한 코드는 40자 이하로 입력해주세요.")
     private String actionCode;
 
-    // TODO: ACTION.ACTION_NAME 컬럼 길이 확인 후 @Size(max = n) 추가
     @NotBlank(message = "접근 권한명을 입력해주세요.")
+    @Size(max = 40, message = "접근 권한명은 40자 이하로 입력해주세요.")
     private String actionName;
 
     @NotBlank(message = "대 메뉴를 선택해주세요.")

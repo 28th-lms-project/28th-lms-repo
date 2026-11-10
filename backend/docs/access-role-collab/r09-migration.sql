@@ -1,0 +1,23 @@
+-- R-09: ACTION_CODE 기반 권한 등록 전환용 DB 작업
+-- 실행 전 반드시 백업 · 데이터 확인. 테스트 데이터 기준으로 작성했습니다.
+
+-- 1. ACTION_ID 팀 공통 PK 규칙용 시퀀스 ('AC-YYYYMMDD-000001')
+CREATE SEQUENCE SEQ_ACTION_PK
+    START WITH 1
+    INCREMENT BY 1
+    NOCACHE;
+
+-- 2. 기존 GUID 데이터 확인 (팀 공통 규칙이 아닌 ACTION_ID)
+SELECT ACTION_ID, ACTION_CODE, ACTION_NAME
+  FROM ACTION
+ WHERE ACTION_ID NOT LIKE 'AC-%';
+
+-- 3. 기존 GUID 데이터 정리 (FK가 없으므로 ROLE_ACTION을 먼저 수동 삭제)
+--    삭제 후 화면에서 도메인 · 권한을 선택해 다시 등록하세요.
+DELETE FROM ROLE_ACTION
+ WHERE ACTION_ID IN (SELECT ACTION_ID FROM ACTION WHERE ACTION_ID NOT LIKE 'AC-%');
+
+DELETE FROM ACTION
+ WHERE ACTION_ID NOT LIKE 'AC-%';
+
+COMMIT;

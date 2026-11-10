@@ -2,6 +2,8 @@
 
 처리 규칙은 `README.md`를 따릅니다. 각 항목의 `현재 상태`를 코드에서 직접 확인한 뒤 판단해 주세요.
 
+> 처리: 2026-11-10, ACCESS · ACCESS_ROLE 담당자(Claude Code)가 R-10, R-11, R-03 잔여, R-09 기록을 처리했습니다. 각 항목의 "처리 결과"를 참고하세요.
+>
 > 최신화: 2026-11-10, `feature/role` 커밋 `1ce6a14` 기준. R-10, R-03 잔여, R-09 기록이 코드에서 **아직 미처리**임을 확인했습니다. R-10은 프론트 화면 표시에도 영향이 있어 우선순위를 **높음**으로 올렸고, **R-11**(권한 설정 화면에 내 권한 표시 적용, 선택)을 추가했습니다. 남은 작업은 `README.md`의 "남은 작업"을 참고하세요.
 >
 > 이전: 2026-11-09, `3cee4b1` 기준. ACCESS 담당자의 R-09 처리 결과를 ROLE 담당자가 코드와 대조해 확인 (아래 R-09 "ROLE 담당자 확인"). R-10 2번(ACTION 저장 후 `evictAll`)을 불필요로 정정.
@@ -10,15 +12,15 @@
 | ---- | -------------------------------------------------- | ------------------------- | ----------- | --------------------------------------------------- | --------------------------------------------------- |
 | R-01 | 컨트롤러 공통 응답(ApiResponse) 전환               | 공통화                    | 높음        | 없음                                                | **완료** (`0014d42`)                                |
 | R-02 | 예외를 LearningworksException으로 전환             | 공통화 · 버그             | 높음        | R-01                                                | **완료** (`0014d42`)                                |
-| R-03 | 요청 VO 입력값 검증(@Valid) 적용                   | 공통화                    | 중간        | R-01                                                | **완료** (`0014d42`). `ACTION_NAME` `@Size` 남음    |
+| R-03 | 요청 VO 입력값 검증(@Valid) 적용                   | 공통화                    | 중간        | R-01                                                | **완료** (`0014d42`, `@Size` 2026-11-10)            |
 | R-04 | ACTION_ID 타입을 String으로 통일                   | 버그                      | 높음        | 없음                                                | **완료** (`fafc7bc`)                                |
 | R-05 | `updateAccess` SQL 문법 확인                       | 버그 의심                 | 높음        | 없음                                                | **완료** (`0e71877`)                                |
 | R-06 | 프론트 응답 처리 전환                              | 공통화                    | 높음        | R-01, 공통 API 클라이언트 제공                      | **완료** (`0014d42`)                                |
 | R-07 | 역할 목록 API를 `GET /roles`로 통합                | 중복 제거                 | 중간        | D-01 논의 불필요, 단독 진행 가능                    | **완료** (`0014d42`)                                |
 | R-08 | 사용하지 않는 import 정리                          | 정리                      | 낮음        | 없음                                                | **완료** (`0014d42`)                                |
-| R-09 | ACTION_CODE 기반 권한 등록으로 전환                | 설계 반영 (D-01)          | 높음        | ACCESS 담당자 동의 (권한 코드 목록 API는 제공 완료) | **완료** (`6f4b85f`). `r09-migration.sql` 기록 남음 |
-| R-10 | 권한 캐시 초기화 호출 · SUPER_ADMIN 전용 표시 적용 | 설계 반영 (D-01, D-03)    | **높음**    | 없음                                                | 대기                                                |
-| R-11 | 권한 설정 화면에 내 권한 표시 적용                 | 설계 반영 (D-03) · 프론트 | 낮음 (선택) | 없음 (R-10 · D-03 구현과 함께 권장)                 | 대기                                                |
+| R-09 | ACTION_CODE 기반 권한 등록으로 전환                | 설계 반영 (D-01)          | 높음        | ACCESS 담당자 동의 (권한 코드 목록 API는 제공 완료) | **완료** (`6f4b85f`, `r09-migration.sql` 추가)      |
+| R-10 | 권한 캐시 초기화 호출 · SUPER_ADMIN 전용 표시 적용 | 설계 반영 (D-01, D-03)    | **높음**    | 없음                                                | **완료** (2026-11-10)                               |
+| R-11 | 권한 설정 화면에 내 권한 표시 적용                 | 설계 반영 (D-03) · 프론트 | 낮음 (선택) | 없음 (R-10 · D-03 구현과 함께 권장)                 | **완료** (2026-11-10)                               |
 
 ---
 
@@ -188,6 +190,7 @@ public ApiResponse<List<AccessListVO>> selectAccessList(
 - 남은 작업: `ACTION.ACTION_NAME` 컬럼 길이를 확인하지 못해 `@Size(max = n)`는 TODO 주석으로 남김 (저장소에 DDL 없음).
 - ROLE 담당자에게 요청: 없음
 - ROLE 담당자 답변 (2026-11-06): 컬럼 길이는 `ACTION_ID` `VARCHAR2(20 CHAR)`, `ACTION_NAME` `VARCHAR2(40 CHAR)`입니다. `AccessVO.actionName`에 `@Size(max = 40, message = "접근 권한명은 40자 이하로 입력해주세요.")`를 추가하고 TODO 주석을 삭제해 주세요. `ACTION_ID`는 시퀀스로 자동 생성되므로 입력 검증이 필요 없고, 새로 추가된 `actionCode` 검증은 R-09에서 함께 처리합니다.
+- 남은 작업 처리 (2026-11-10): `AccessVO.actionName`에 `@Size(max = 40, message = "접근 권한명은 40자 이하로 입력해주세요.")` 추가, TODO 주석 삭제
 
 ---
 
@@ -539,7 +542,7 @@ UPDATE ACTION
 
 - 상태: 수락
 - 판단 근거: ACCESS 담당자가 D-01 최종 결정(`@RequireAction` 자동 수집, 상수 테이블 미사용)에 동의. `ActionCodeRegistry.contains`, `GET /action-codes` 구현 확인
-- 변경 내용: (미커밋)
+- 변경 내용: `6f4b85f` (`5f96007`로 `feature/role`에 머지)
   1. `AccessDaoMapper.xml` `insertAccess` selectKey → `'AC-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_ACTION_PK.NEXTVAL, 6, '0')`
   2. 목록 조회 · 등록 SQL에 `ACTION_CODE` 추가, `AccessVO.actionCode` · `AccessListVO.actionCode` 추가
   3. `actionCode` 검증: `@NotBlank`는 등록에만 적용(검증 그룹 `AccessVO.Add` + `AccessSaveRequestVO.addedList`의 `@ConvertGroup`), `@Size(max = 40)`, 서비스에서 `ActionCodeRegistry.contains` false면 `ACTION_CODE_NOT_EXISTS`(400)
@@ -555,6 +558,7 @@ UPDATE ACTION
   - "변경 내용: (미커밋)"은 실제로 `6f4b85f`에 커밋되어 `5f96007`로 `feature/role`에 머지되었습니다.
   - 8번의 `r09-migration.sql`이 저장소에 없습니다. 공유 DB의 데이터를 삭제한 작업이므로 저장소에 추가해 기록을 남겨 주세요.
   - 8번의 데이터 삭제로 **역할별 권한(ROLE_ACTION)이 모두 비었습니다.** 권한 검사를 켜기 전에 ACTION 등록과 역할별 권한 부여가 다시 필요합니다 (`README.md` "ROLE 담당자" 3번).
+- ACCESS 담당자 조치 (2026-11-10): 변경 내용의 커밋 해시를 `6f4b85f`로 정정, `backend/docs/access-role-collab/r09-migration.sql`을 저장소에 추가
 
 ---
 
@@ -610,10 +614,17 @@ this.accessChecker.evictRole(request.getRoleId());
 
 ### 처리 결과
 
-- 상태:
-- 판단 근거:
-- 변경 내용:
+- 상태: 수락 (완료)
+- 판단 근거: 2026-11-10 `1ce6a14` 기준 코드에서 확인. `AccessRoleServiceImpl`에 `evictRole` 호출 없음, 두 컨트롤러에 `@RequireAction` · `@RequireSuperAdmin` 없이 D-03 TODO 주석만 있음. 문서 내용과 일치. `@RequireSuperAdmin`은 `@Target(METHOD)`라 메서드마다 붙임
+- 변경 내용: (커밋 해시는 커밋 후 기재)
+  1. `AccessRoleServiceImpl`에 `AccessChecker` 주입, `saveRolePermission` 끝에서 `accessChecker.evictRole(roleId)` 호출 (트랜잭션 커밋 후 비워짐)
+  2. `/access/save`, `/access-role/save`에 `@RequireSuperAdmin` 추가, D-03 TODO 주석 삭제
+  3. (선택 4번 적용) 조회 API `/access/actions`, `/access/menus`, `/access-role/allowed`, `/access-role/denied`에도 `@RequireSuperAdmin` 추가. 두 컨트롤러 클래스 주석에 "SUPER_ADMIN 전용 화면" 명시
+  4. 함께 처리: D-03 `ROLE_SUPER_ADMIN` 저장 거부 (D-03 결정 결과 참고)
+  - 확인: `./mvnw compile` 성공 (JDK 23 이상에서는 `-Dmaven.compiler.proc=full` 필요, 아래 요청 참고). 권한 검사가 꺼져 있어 동작 확인은 검사를 켠 뒤 필요
 - ROLE 담당자에게 요청:
+  - `AccessChecker` 클래스 주석의 "ACTION 수정 · 삭제(/access/save): evictAll()" 정정 (README "ROLE 담당자" 4번, 이미 등록됨)
+  - (참고) JDK 23 이상으로 빌드하면 Lombok이 실행되지 않아 컴파일이 실패합니다(JDK 23부터 annotation processing 기본 비활성). 팀 JDK가 21이면 문제없지만, `pom.xml`의 `maven-compiler-plugin`에 `<proc>full</proc>` 또는 `annotationProcessorPaths`에 lombok 지정을 검토해 주세요 (공통 파일이라 수정하지 않음)
 
 ---
 
@@ -672,7 +683,11 @@ if (!isSuperAdmin)
 
 ### 처리 결과
 
-- 상태:
-- 판단 근거:
-- 변경 내용:
-- ROLE 담당자에게 요청:
+- 상태: 수락 (완료)
+- 판단 근거: 2026-11-10 `1ce6a14` 기준 확인. `Access.jsx`, `AccessRole.jsx` 모두 `usePermission` 미사용, `AccessRole.jsx`는 `GET /roles` 결과를 그대로 역할 목록에 사용. 문서 내용과 일치
+- 변경 내용: (커밋 해시는 커밋 후 기재)
+  1. `Access.jsx`: 기존 화면을 `AccessManagement`로 이름 변경, 기본 내보내기 `Access`는 `usePermission()`의 `status` · `isSuperAdmin`으로 판단 (`loading` → "권한 확인 중...", `failed` → 재시도 안내, SUPER_ADMIN 아님 → "권한이 없습니다.", `idle` → 표시 없음). SUPER_ADMIN일 때만 `AccessManagement`를 마운트하므로 권한 없이 API를 호출하지 않음 (`Role.jsx`와 같은 구조)
+  2. `AccessRole.jsx`: 같은 구조로 `AccessRoleManagement` 분리. 역할 목록에서 `ROLE_SUPER_ADMIN` 제외 (`role/roleUtils.js`의 `SUPER_ADMIN_ROLE_ID` 사용)
+  3. 두 화면 CSS 모듈에 안내 문구용 `.notice` 추가 (권한 관리 화면과 같은 스타일)
+  - 확인: `vite build` 성공. `eslint`의 `Access.jsx` `react-hooks/set-state-in-effect` 오류 2건은 변경 전부터 있던 것 (기존 `useEffect`의 조회 호출)
+- ROLE 담당자에게 요청: 없음
