@@ -2,7 +2,7 @@
 
 처리 규칙은 `README.md`를 따릅니다. 각 항목의 `현재 상태`를 코드에서 직접 확인한 뒤 판단해 주세요.
 
-> 처리: 2026-11-10, ACCESS · ACCESS_ROLE 담당자(Claude Code)가 R-10, R-11, R-03 잔여, R-09 기록을 처리했습니다. 각 항목의 "처리 결과"를 참고하세요.
+> 처리: 2026-11-10, ACCESS · ACCESS_ROLE 담당자(Claude Code)가 R-10, R-11, R-03 잔여, R-09 기록을 처리했습니다 (`54ac2ca`). 각 항목의 "처리 결과"를 참고하세요.
 >
 > 최신화: 2026-11-10, `feature/role` 커밋 `1ce6a14` 기준. R-10, R-03 잔여, R-09 기록이 코드에서 **아직 미처리**임을 확인했습니다. R-10은 프론트 화면 표시에도 영향이 있어 우선순위를 **높음**으로 올렸고, **R-11**(권한 설정 화면에 내 권한 표시 적용, 선택)을 추가했습니다. 남은 작업은 `README.md`의 "남은 작업"을 참고하세요.
 >
@@ -190,7 +190,7 @@ public ApiResponse<List<AccessListVO>> selectAccessList(
 - 남은 작업: `ACTION.ACTION_NAME` 컬럼 길이를 확인하지 못해 `@Size(max = n)`는 TODO 주석으로 남김 (저장소에 DDL 없음).
 - ROLE 담당자에게 요청: 없음
 - ROLE 담당자 답변 (2026-11-06): 컬럼 길이는 `ACTION_ID` `VARCHAR2(20 CHAR)`, `ACTION_NAME` `VARCHAR2(40 CHAR)`입니다. `AccessVO.actionName`에 `@Size(max = 40, message = "접근 권한명은 40자 이하로 입력해주세요.")`를 추가하고 TODO 주석을 삭제해 주세요. `ACTION_ID`는 시퀀스로 자동 생성되므로 입력 검증이 필요 없고, 새로 추가된 `actionCode` 검증은 R-09에서 함께 처리합니다.
-- 남은 작업 처리 (2026-11-10): `AccessVO.actionName`에 `@Size(max = 40, message = "접근 권한명은 40자 이하로 입력해주세요.")` 추가, TODO 주석 삭제
+- 남은 작업 처리 (2026-11-10): `AccessVO.actionName`에 `@Size(max = 40, message = "접근 권한명은 40자 이하로 입력해주세요.")` 추가, TODO 주석 삭제 (`54ac2ca`)
 
 ---
 
@@ -558,7 +558,7 @@ UPDATE ACTION
   - "변경 내용: (미커밋)"은 실제로 `6f4b85f`에 커밋되어 `5f96007`로 `feature/role`에 머지되었습니다.
   - 8번의 `r09-migration.sql`이 저장소에 없습니다. 공유 DB의 데이터를 삭제한 작업이므로 저장소에 추가해 기록을 남겨 주세요.
   - 8번의 데이터 삭제로 **역할별 권한(ROLE_ACTION)이 모두 비었습니다.** 권한 검사를 켜기 전에 ACTION 등록과 역할별 권한 부여가 다시 필요합니다 (`README.md` "ROLE 담당자" 3번).
-- ACCESS 담당자 조치 (2026-11-10): 변경 내용의 커밋 해시를 `6f4b85f`로 정정, `backend/docs/access-role-collab/r09-migration.sql`을 저장소에 추가
+- ACCESS 담당자 조치 (2026-11-10): 변경 내용의 커밋 해시를 `6f4b85f`로 정정, `backend/docs/access-role-collab/r09-migration.sql`을 저장소에 추가 (`54ac2ca`)
 
 ---
 
@@ -616,7 +616,7 @@ this.accessChecker.evictRole(request.getRoleId());
 
 - 상태: 수락 (완료)
 - 판단 근거: 2026-11-10 `1ce6a14` 기준 코드에서 확인. `AccessRoleServiceImpl`에 `evictRole` 호출 없음, 두 컨트롤러에 `@RequireAction` · `@RequireSuperAdmin` 없이 D-03 TODO 주석만 있음. 문서 내용과 일치. `@RequireSuperAdmin`은 `@Target(METHOD)`라 메서드마다 붙임
-- 변경 내용: (커밋 해시는 커밋 후 기재)
+- 변경 내용: `54ac2ca`
   1. `AccessRoleServiceImpl`에 `AccessChecker` 주입, `saveRolePermission` 끝에서 `accessChecker.evictRole(roleId)` 호출 (트랜잭션 커밋 후 비워짐)
   2. `/access/save`, `/access-role/save`에 `@RequireSuperAdmin` 추가, D-03 TODO 주석 삭제
   3. (선택 4번 적용) 조회 API `/access/actions`, `/access/menus`, `/access-role/allowed`, `/access-role/denied`에도 `@RequireSuperAdmin` 추가. 두 컨트롤러 클래스 주석에 "SUPER_ADMIN 전용 화면" 명시
@@ -685,7 +685,7 @@ if (!isSuperAdmin)
 
 - 상태: 수락 (완료)
 - 판단 근거: 2026-11-10 `1ce6a14` 기준 확인. `Access.jsx`, `AccessRole.jsx` 모두 `usePermission` 미사용, `AccessRole.jsx`는 `GET /roles` 결과를 그대로 역할 목록에 사용. 문서 내용과 일치
-- 변경 내용: (커밋 해시는 커밋 후 기재)
+- 변경 내용: `54ac2ca`
   1. `Access.jsx`: 기존 화면을 `AccessManagement`로 이름 변경, 기본 내보내기 `Access`는 `usePermission()`의 `status` · `isSuperAdmin`으로 판단 (`loading` → "권한 확인 중...", `failed` → 재시도 안내, SUPER_ADMIN 아님 → "권한이 없습니다.", `idle` → 표시 없음). SUPER_ADMIN일 때만 `AccessManagement`를 마운트하므로 권한 없이 API를 호출하지 않음 (`Role.jsx`와 같은 구조)
   2. `AccessRole.jsx`: 같은 구조로 `AccessRoleManagement` 분리. 역할 목록에서 `ROLE_SUPER_ADMIN` 제외 (`role/roleUtils.js`의 `SUPER_ADMIN_ROLE_ID` 사용)
   3. 두 화면 CSS 모듈에 안내 문구용 `.notice` 추가 (권한 관리 화면과 같은 스타일)

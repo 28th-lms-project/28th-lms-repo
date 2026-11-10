@@ -256,7 +256,7 @@ public ApiResponse<?> answerSurvey(...) { ... }
   | 두 화면을 SUPER_ADMIN에게만 표시 | 미적용 (선택) | R-11 1번 |
 
   - 검사 인터셉터는 어노테이션이 없는 API를 통과시키므로, `@RequireSuperAdmin` 없이 검사를 켜면 로그인한 누구나 권한 설정을 저장할 수 있습니다. **검사를 켜기 전에 반드시 처리해야 합니다.**
-- 구현 결과 (2026-11-10, ACCESS · ACCESS_ROLE 담당자)
+- 구현 결과 (2026-11-10, ACCESS · ACCESS_ROLE 담당자, `54ac2ca`)
   - 두 저장 API와 두 화면의 조회 API에 `@RequireSuperAdmin` 적용 (R-10)
   - `ErrorCode`에 `ACTION_ROLE_PROTECTED(CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다.")` 추가 (상수 추가만). `AccessRoleServiceImpl.saveRolePermission`에서 `roleId`가 `RoleConstants.SUPER_ADMIN_ROLE`이면 409로 거부
   - 권한별 접근 권한 관리 화면 역할 목록에서 `ROLE_SUPER_ADMIN` 제외, 두 화면을 SUPER_ADMIN에게만 표시 (R-11)
