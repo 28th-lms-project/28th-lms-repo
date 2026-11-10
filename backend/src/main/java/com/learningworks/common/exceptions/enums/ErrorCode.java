@@ -24,6 +24,7 @@ public enum ErrorCode {
   ROLE_MOVE_SAME(HttpStatus.BAD_REQUEST, "같은 역할로는 이동할 수 없습니다."), //
   ROLE_MOVE_TO_SUPER_ADMIN(HttpStatus.BAD_REQUEST, "최고 관리자 역할로는 회원을 이동할 수 없습니다."), //
   ACTION_CODE_NOT_EXISTS(HttpStatus.BAD_REQUEST, "등록되지 않은 권한 코드입니다."), //
+  INTERVIEW_STUDENT_NOT_IN_COURSE(HttpStatus.BAD_REQUEST, "해당 과정에 참여 중인 수강생이 아닙니다."), //
 
   // 401 UNAUTHORIZED
   GLOBAL_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."), //
@@ -74,6 +75,7 @@ public enum ErrorCode {
   EXAM_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "문제 수정에 실패했습니다."), //
   ACTION_FAILURE_SAVE(HttpStatus.INTERNAL_SERVER_ERROR, "접근 권한 저장을 실패했습니다."), //
   FILES_SYSTEM_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."), //
+  INTERVIEW_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "면접 일정 등록에 실패했습니다."), //
   ;
 
   private final HttpStatus status;
