@@ -44,6 +44,7 @@ public enum ErrorCode {
   COURSE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 강의입니다."), //
   FILES_NOT_FOUND_FILE(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."), //
   ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), //
+  EXAM_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."), //
   ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
 
   // 405 METHOD NOT ALLOWED
@@ -68,6 +69,8 @@ public enum ErrorCode {
   GLOBAL_SYSTEM_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "요청을 처리할 수 없습니다. 잠시 후 다시 시도해주세요."), //
   USER_FAILURE_EXIT(HttpStatus.INTERNAL_SERVER_ERROR, "회원 탈퇴를 실패했습니다."), //
   ROLE_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "역할 생성을 실패했습니다."), //
+  EXAM_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "문제 등록에 실패했습니다."), //
+  EXAM_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "문제 수정에 실패했습니다."), //
   ACTION_FAILURE_SAVE(HttpStatus.INTERNAL_SERVER_ERROR, "접근 권한 저장을 실패했습니다."), //
   FILES_SYSTEM_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."), //
   ;
