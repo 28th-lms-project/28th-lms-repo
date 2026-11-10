@@ -1,5 +1,6 @@
 package com.learningworks.survey.web;
 
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,6 +26,12 @@ import lombok.AllArgsConstructor;
 public class SurveyController {
 	private SurveyService surveyService;
 
+	@GetMapping("/admin/system/survey/{group}")
+	public ApiResponse<SurveyListVO> getAllSurveybuGroup(@PathVariable String group) {
+		SurveyListVO surveyList = this.surveyService.readAllSurveyByGroup(group);
+		return ApiResponse.OK(surveyList);
+	}
+
 	@PostMapping("/admin/system/survey")
 	public ApiResponse<SurveyVO> makeNewSurvey(@Valid @RequestBody RegistSurveyVO registSurvey) {
 		SurveyVO survey = this.surveyService.createSurvey(registSurvey);
@@ -35,6 +42,12 @@ public class SurveyController {
 	public ApiResponse<SurveyVO> updateSurvey(@Valid @RequestBody ModifySurveyVO modifySurvey,
 			@PathVariable String surveyId) {
 		SurveyVO survey = this.surveyService.updateSurvey(modifySurvey, surveyId);
+		return ApiResponse.OK(survey);
+	}
+
+	@DeleteMapping("/admin/system/survey/{surveyId}")
+	public ApiResponse<String> deleteSurvey(@PathVariable String surveyId) {
+		String survey = this.surveyService.deleteSurvey(surveyId);
 		return ApiResponse.OK(survey);
 	}
 
@@ -52,10 +65,10 @@ public class SurveyController {
 		return ApiResponse.OK(survey);
 	}
 	
-	@GetMapping("/admin/system/survey/{group}")
-	public ApiResponse<SurveyListVO> getAllSurveybuGroup(@PathVariable String group){
-		SurveyListVO surveyList = this.surveyService.readAllSurveyByGroup(group);
-		return ApiResponse.OK(surveyList);
+	@DeleteMapping("/admin/system/survey/{surveyId}/data/{surveyDataId}")
+	public ApiResponse<String> deleteSurveyData(@PathVariable String surveyId, @PathVariable String surveyDataId) {
+		String survey = this.surveyService.deleteSurveyData(surveyId, surveyDataId);
+		return ApiResponse.OK(survey);
 	}
 
 }

@@ -104,5 +104,21 @@
  		  FROM SURVEY
  		 WHERE "GROUP" = #{_parameter}
  	</select>
+ 	
+ 	<delete id="deleteOneSurvey">
+ 		DELETE FROM SURVEY
+ 		 WHERE ID = #{_parameter}
+ 	</delete>
+ 	
+ 	<delete id="deleteOneSurveyData">
+ 		DELETE FROM SURVEY_DATA
+ 		 WHERE SURVEY_ID = #{surveyId}
+ 		   AND ID = #{surveyDataId}
+ 	</delete>
+ 	
+ 	<delete id="deleteSurveyDatas">
+ 		DELETE FROM SURVEY_DATA
+ 		 WHERE SURVEY_ID = #{_parameter}
+ 	</delete>
 	 
 </mapper>

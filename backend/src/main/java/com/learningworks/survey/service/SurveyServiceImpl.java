@@ -124,4 +124,29 @@ public class SurveyServiceImpl implements SurveyService{
 		return surveyList;
 	}
 
+	@Override
+	@Transactional
+	public String deleteSurvey(String surveyId) {
+		int deletedRows = this.surveyDao.deleteOneSurvey(surveyId);
+		if(deletedRows == 0) {
+			System.out.println("설문 문항을 삭제하는데 실패했습니다.");
+			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+		}
+		int deletedData = this.surveyDao.deleteSurveyDatas(surveyId);
+		
+		if(deletedData == 0) {
+			System.out.println("설문 답변을 삭제하는데 실패했습니다");
+			throw new LearningworksException(ErrorCode.SURVEY_DATA_NOT_EXISTS);
+		}
+		return surveyId;
+	}
+
+	@Override
+	@Transactional
+	public String deleteSurveyData(String surveyId, String surveyDataId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	
 }

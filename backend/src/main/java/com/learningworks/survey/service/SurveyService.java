@@ -22,4 +22,8 @@ public interface SurveyService {
 
 	SurveyListVO readAllSurveyByGroup(String group);
 
+	String deleteSurvey(String surveyId);
+
+	String deleteSurveyData(String surveyId, String surveyDataId);
+
 }

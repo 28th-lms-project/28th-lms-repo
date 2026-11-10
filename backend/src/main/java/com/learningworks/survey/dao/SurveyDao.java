@@ -33,4 +33,12 @@ public interface SurveyDao {
 
 	long selectSurveyCount(String group);
 
+	int deleteOneSurvey(String surveyId);
+
+	int deleteOneSurveyData(@Param("surveyId") String surveyId, @Param("surveyDataId") String surveyDataId);
+	
+	int deleteSurveyDatas(String surveyId);
+	
+	
+
 }

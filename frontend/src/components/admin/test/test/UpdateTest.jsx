@@ -25,14 +25,8 @@ export default function UpdateTest({ questionId }) {
   const [fieldErrors, setFieldErrors] = useState({});
 
   const dispatch = useDispatch();
-  const {
-    id,
-    answers,
-    correctAnswer,
-    pointAlloc,
-    question,
-    subQuestion,
-  } = useSelector((state) => state.modTest);
+  const { id, answers, correctAnswer, pointAlloc, question, subQuestion } =
+    useSelector((state) => state.question);
 
   const [answerCnt, setAnswerCnt] = useState(0);
   const [selectedAnswerType, setSelectedAnswerType] = useState("");
@@ -72,10 +66,19 @@ export default function UpdateTest({ questionId }) {
           dispatch(questActions.setViewQuestion(response));
           setAnswerCnt(Number(response.answerCount));
           setSelectedAnswerType(response.answerType);
-          setOxAnswer(["O", "X"].includes(response.correctAnswer) ? response.correctAnswer : "");
-          setMultiAnswers(response.answerType === "객관식-다항"
-            ? String(response.correctAnswer ?? "").split(",").map((answer) => answer.trim()).filter(Boolean)
-            : []);
+          setOxAnswer(
+            ["O", "X"].includes(response.correctAnswer)
+              ? response.correctAnswer
+              : "",
+          );
+          setMultiAnswers(
+            response.answerType === "객관식-다항"
+              ? String(response.correctAnswer ?? "")
+                  .split(",")
+                  .map((answer) => answer.trim())
+                  .filter(Boolean)
+              : [],
+          );
         }
       } catch (e) {
         if (!ignoreUpdateState) {
@@ -116,16 +119,24 @@ export default function UpdateTest({ questionId }) {
     }
     const count = usesChoices ? Number(answerCnt) : null;
     const getAnswer = (index) =>
-      !usesChoices ? null : index < count ? answerRefs.current[index]?.value ?? "" : "";
+      !usesChoices
+        ? null
+        : index < count
+          ? (answerRefs.current[index]?.value ?? "")
+          : "";
 
     // 백엔드 ModifyExamQuestionVO 필드 이름과 똑같이 맞춤
     const modQuestion = {
       question: questionRef.current.value,
       subQuestion: subQuestRef.current.value,
       answerType: selectedAnswerType,
-      correctAnswer: isManualGraded ? null : isOx ? oxAnswer
-        : isMulti ? [...multiAnswers].sort((a, b) => Number(a) - Number(b)).join(",")
-          : correctRef.current.value,
+      correctAnswer: isManualGraded
+        ? null
+        : isOx
+          ? oxAnswer
+          : isMulti
+            ? [...multiAnswers].sort((a, b) => Number(a) - Number(b)).join(",")
+            : correctRef.current.value,
       pointAlloc: Number(pointRef.current.value),
       answerSheet1: getAnswer(0),
       answerSheet2: getAnswer(1),
@@ -244,7 +255,10 @@ export default function UpdateTest({ questionId }) {
                       setSelectedAnswerType(type.value);
                       setOxAnswer("");
                       setMultiAnswers([]);
-                      if (["객관식-단항", "객관식-다항"].includes(type.value) && Number(answerCnt) < 2) {
+                      if (
+                        ["객관식-단항", "객관식-다항"].includes(type.value) &&
+                        Number(answerCnt) < 2
+                      ) {
                         setAnswerCnt(4);
                       }
                       setFieldErrors({});
@@ -294,35 +308,41 @@ export default function UpdateTest({ questionId }) {
             {isMulti && (
               <fieldset>
                 <legend>정답 (2개 이상 선택)</legend>
-                {[1, 2, 3, 4, 5].filter((num) => num <= Number(answerCnt)).map((num) => (
-                  <label key={num}>
-                    <input
-                      type="checkbox"
-                      value={String(num)}
-                      checked={multiAnswers.includes(String(num))}
-                      onChange={(event) => {
-                        setMultiAnswers((previous) => event.target.checked
-                          ? [...previous, String(num)]
-                          : previous.filter((answer) => answer !== String(num)));
-                        setFieldErrors({});
-                      }}
-                    />
-                    {num}번 보기
-                  </label>
-                ))}
+                {[1, 2, 3, 4, 5]
+                  .filter((num) => num <= Number(answerCnt))
+                  .map((num) => (
+                    <label key={num}>
+                      <input
+                        type="checkbox"
+                        value={String(num)}
+                        checked={multiAnswers.includes(String(num))}
+                        onChange={(event) => {
+                          setMultiAnswers((previous) =>
+                            event.target.checked
+                              ? [...previous, String(num)]
+                              : previous.filter(
+                                  (answer) => answer !== String(num),
+                                ),
+                          );
+                          setFieldErrors({});
+                        }}
+                      />
+                      {num}번 보기
+                    </label>
+                  ))}
                 {renderFieldErrors("correctAnswer")}
               </fieldset>
             )}
             <div hidden={!usesChoices || isMulti}>
-            <input
-              type="number"
-              min="1"
-              max={answerCnt}
-              placeholder={`정답은 1~${answerCnt}사이의 값을 입력하세요`}
-              defaultValue={correctAnswer}
-              ref={correctRef}
-            />
-            {renderFieldErrors("correctAnswer")}
+              <input
+                type="number"
+                min="1"
+                max={answerCnt}
+                placeholder={`정답은 1~${answerCnt}사이의 값을 입력하세요`}
+                defaultValue={correctAnswer}
+                ref={correctRef}
+              />
+              {renderFieldErrors("correctAnswer")}
             </div>
             <div>
               <label>배점</label>
@@ -345,17 +365,24 @@ export default function UpdateTest({ questionId }) {
                 value={answerCnt}
                 onChange={(e) => {
                   setAnswerCnt(e.target.value);
-                  setMultiAnswers((previous) => previous.filter((answer) => Number(answer) <= Number(e.target.value)));
+                  setMultiAnswers((previous) =>
+                    previous.filter(
+                      (answer) => Number(answer) <= Number(e.target.value),
+                    ),
+                  );
                   setFieldErrors({});
                 }}
               />
-              개
-              {renderFieldErrors("answerCount")}
+              개{renderFieldErrors("answerCount")}
             </div>
             {answers.map((answer, index) => (
               <div
                 key={index}
-                hidden={!usesChoices || (index >= Number(answerCnt) && !fieldErrors[`answerSheet${index + 1}`]?.length)}
+                hidden={
+                  !usesChoices ||
+                  (index >= Number(answerCnt) &&
+                    !fieldErrors[`answerSheet${index + 1}`]?.length)
+                }
               >
                 <input
                   type="text"
