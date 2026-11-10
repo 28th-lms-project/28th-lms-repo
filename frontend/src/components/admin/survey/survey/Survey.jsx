@@ -27,7 +27,7 @@ export default function Survey() {
 
   const currentCourse = selectedSubject;
 
-  const survetRef = useRef();
+  const surveyRef = useRef();
 
   const currGroup = currentCourse && `${currentCourse}_${selectGroup}`;
   console.log(currGroup);
@@ -136,6 +136,7 @@ export default function Survey() {
                           type="text"
                           className={style.surveysubject}
                           defaultValue={survey.subject}
+                          ref={surveyRef}
                           onChange={() => {}}
                         />
                       </div>
