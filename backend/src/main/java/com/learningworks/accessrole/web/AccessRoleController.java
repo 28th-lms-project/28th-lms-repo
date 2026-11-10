@@ -3,6 +3,8 @@ package com.learningworks.accessrole.web;
 import com.learningworks.accessrole.service.AccessRoleService;
 import com.learningworks.accessrole.vo.request.AccessRoleSaveRequestVO;
 import com.learningworks.accessrole.vo.response.AccessRolePermissionVO;
+import com.learningworks.common.action.RequireAction;
+import com.learningworks.common.action.RequireSuperAdmin;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.role.RoleConstants;
 
@@ -22,7 +24,7 @@ public class AccessRoleController {
 
     private final AccessRoleService accessRoleService;
 
-    // 역할별 허용 권한 조회
+    @RequireAction(domain = "ACCESS_ROLE", action = "READ_ALLOWED", description = "권한별 허용된 접근 권한 조회")
     @GetMapping("/allowed")
     public ApiResponse<List<AccessRolePermissionVO>> getAllowedPermissionList(
             @Pattern(regexp = RoleConstants.ROLE_ID_PATTERN,
@@ -34,7 +36,7 @@ public class AccessRoleController {
         );
     }
 
-    // 역할별 미허용 권한 조회
+    @RequireAction(domain = "ACCESS_ROLE", action = "READ_DENIED", description = "권한별 미허용된 접근 권한 조회")
     @GetMapping("/denied")
     public ApiResponse<List<AccessRolePermissionVO>> getDeniedPermissionList(
             @Pattern(regexp = RoleConstants.ROLE_ID_PATTERN,
@@ -46,8 +48,7 @@ public class AccessRoleController {
         );
     }
 
-    // 역할별 권한 저장 (저장 후 허용 권한 목록 반환)
-    // TODO: JWT · 메서드 보안 적용 시 ROLE_SUPER_ADMIN 전용으로 제한 (D-03)
+    @RequireSuperAdmin
     @PostMapping("/save")
     public ApiResponse<List<AccessRolePermissionVO>> saveRolePermission(
             @Valid @RequestBody AccessRoleSaveRequestVO request
