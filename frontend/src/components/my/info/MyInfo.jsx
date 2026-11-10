@@ -2,9 +2,11 @@ import { useState } from "react";
 import PageContainer from "../../common/PageContainer";
 import MyPassword from "./MyPassword";
 import MyInfoForm from "./MyInfoForm";
+import MyPasswordForm from "./MyPasswordForm";
+import styles from "./MyInfo.module.css";
 
 export default function MyInfo() {
-  const [verifiedPassword, setVerifiedPassword] = useState(false);
+  const [verifiedPassword, setVerifiedPassword] = useState("");
 
   if (!verifiedPassword) {
     return (
@@ -16,7 +18,10 @@ export default function MyInfo() {
 
   return (
     <PageContainer>
-      <MyInfoForm password={verifiedPassword} />
+      <div className={styles.layout}>
+        <MyInfoForm password={verifiedPassword} />
+        <MyPasswordForm setVerifiedPassword={setVerifiedPassword} />
+      </div>
     </PageContainer>
   );
 }

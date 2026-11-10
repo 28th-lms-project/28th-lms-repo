@@ -1,7 +1,7 @@
 /* 폼 전체 카드 래퍼 (MyPassword와 일관된 디자인) */
 .form {
   background-color: #ffffff;
-  max-width: 460px;
+  width: 100%;
   margin: 1rem auto;
   padding: 2.5rem 2rem;
   border: 1px solid #ced4da;
@@ -109,7 +109,9 @@
   font-weight: 600;
   color: #495057;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .form button[type="submit"]:hover:not(:disabled) {
