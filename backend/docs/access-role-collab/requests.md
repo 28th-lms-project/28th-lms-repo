@@ -2,20 +2,23 @@
 
 처리 규칙은 `README.md`를 따릅니다. 각 항목의 `현재 상태`를 코드에서 직접 확인한 뒤 판단해 주세요.
 
-> 최신화: 2026-11-09, `feature/role` 커밋 `3cee4b1` 기준. ACCESS 담당자의 **R-09 처리 결과**를 ROLE 담당자가 코드와 대조해 확인했습니다 (아래 R-09 "ROLE 담당자 확인"). R-10은 2번(ACTION 저장 후 `evictAll`)을 불필요로 정정했습니다. 남은 작업은 `README.md`의 "남은 작업"을 참고하세요.
+> 최신화: 2026-11-10, `feature/role` 커밋 `1ce6a14` 기준. R-10, R-03 잔여, R-09 기록이 코드에서 **아직 미처리**임을 확인했습니다. R-10은 프론트 화면 표시에도 영향이 있어 우선순위를 **높음**으로 올렸고, **R-11**(권한 설정 화면에 내 권한 표시 적용, 선택)을 추가했습니다. 남은 작업은 `README.md`의 "남은 작업"을 참고하세요.
+>
+> 이전: 2026-11-09, `3cee4b1` 기준. ACCESS 담당자의 R-09 처리 결과를 ROLE 담당자가 코드와 대조해 확인 (아래 R-09 "ROLE 담당자 확인"). R-10 2번(ACTION 저장 후 `evictAll`)을 불필요로 정정.
 
-| ID   | 제목                                               | 분류                   | 우선순위 | 선행 조건                                           | 진행 상태            |
-| ---- | -------------------------------------------------- | ---------------------- | -------- | --------------------------------------------------- | -------------------- |
-| R-01 | 컨트롤러 공통 응답(ApiResponse) 전환               | 공통화                 | 높음     | 없음                                                | **완료** (`0014d42`) |
-| R-02 | 예외를 LearningworksException으로 전환             | 공통화 · 버그          | 높음     | R-01                                                | **완료** (`0014d42`) |
-| R-03 | 요청 VO 입력값 검증(@Valid) 적용                   | 공통화                 | 중간     | R-01                                                | **완료** (`0014d42`) |
-| R-04 | ACTION_ID 타입을 String으로 통일                   | 버그                   | 높음     | 없음                                                | **완료** (`fafc7bc`) |
-| R-05 | `updateAccess` SQL 문법 확인                       | 버그 의심              | 높음     | 없음                                                | **완료** (`0e71877`) |
-| R-06 | 프론트 응답 처리 전환                              | 공통화                 | 높음     | R-01, 공통 API 클라이언트 제공                      | **완료** (`0014d42`) |
-| R-07 | 역할 목록 API를 `GET /roles`로 통합                | 중복 제거              | 중간     | D-01 논의 불필요, 단독 진행 가능                    | **완료** (`0014d42`) |
-| R-08 | 사용하지 않는 import 정리                          | 정리                   | 낮음     | 없음                                                | **완료** (`0014d42`) |
-| R-09 | ACTION_CODE 기반 권한 등록으로 전환                | 설계 반영 (D-01)       | 높음     | ACCESS 담당자 동의 (권한 코드 목록 API는 제공 완료) | **완료** (`6f4b85f`) |
-| R-10 | 권한 캐시 초기화 호출 · SUPER_ADMIN 전용 표시 적용 | 설계 반영 (D-01, D-03) | 중간     | 없음                                                | 대기                 |
+| ID   | 제목                                               | 분류                      | 우선순위    | 선행 조건                                           | 진행 상태                                           |
+| ---- | -------------------------------------------------- | ------------------------- | ----------- | --------------------------------------------------- | --------------------------------------------------- |
+| R-01 | 컨트롤러 공통 응답(ApiResponse) 전환               | 공통화                    | 높음        | 없음                                                | **완료** (`0014d42`)                                |
+| R-02 | 예외를 LearningworksException으로 전환             | 공통화 · 버그             | 높음        | R-01                                                | **완료** (`0014d42`)                                |
+| R-03 | 요청 VO 입력값 검증(@Valid) 적용                   | 공통화                    | 중간        | R-01                                                | **완료** (`0014d42`). `ACTION_NAME` `@Size` 남음    |
+| R-04 | ACTION_ID 타입을 String으로 통일                   | 버그                      | 높음        | 없음                                                | **완료** (`fafc7bc`)                                |
+| R-05 | `updateAccess` SQL 문법 확인                       | 버그 의심                 | 높음        | 없음                                                | **완료** (`0e71877`)                                |
+| R-06 | 프론트 응답 처리 전환                              | 공통화                    | 높음        | R-01, 공통 API 클라이언트 제공                      | **완료** (`0014d42`)                                |
+| R-07 | 역할 목록 API를 `GET /roles`로 통합                | 중복 제거                 | 중간        | D-01 논의 불필요, 단독 진행 가능                    | **완료** (`0014d42`)                                |
+| R-08 | 사용하지 않는 import 정리                          | 정리                      | 낮음        | 없음                                                | **완료** (`0014d42`)                                |
+| R-09 | ACTION_CODE 기반 권한 등록으로 전환                | 설계 반영 (D-01)          | 높음        | ACCESS 담당자 동의 (권한 코드 목록 API는 제공 완료) | **완료** (`6f4b85f`). `r09-migration.sql` 기록 남음 |
+| R-10 | 권한 캐시 초기화 호출 · SUPER_ADMIN 전용 표시 적용 | 설계 반영 (D-01, D-03)    | **높음**    | 없음                                                | 대기                                                |
+| R-11 | 권한 설정 화면에 내 권한 표시 적용                 | 설계 반영 (D-03) · 프론트 | 낮음 (선택) | 없음 (R-10 · D-03 구현과 함께 권장)                 | 대기                                                |
 
 ---
 
@@ -565,6 +568,14 @@ ROLE 담당자가 D-01의 권한 검사(`com.learningworks.common.action`)를 �
 - `@RequireSuperAdmin`을 붙인 API는 SUPER_ADMIN만 호출할 수 있습니다 (D-03).
 - 권한 검사는 기본적으로 **꺼져 있습니다** (`app.access-check.enabled`, 기본값 `false`). 꺼져 있는 동안에는 어노테이션을 붙여도 동작에 영향이 없으므로 지금 적용해도 안전합니다.
 - JWT 인증 필터가 머지되어(`878d6c0`) 검사를 켤 수 있는 상태입니다. **이 항목은 검사를 켜기 전에 처리되어야 합니다** (`README.md` "ROLE 담당자" 3번).
+- **(2026-11-10 추가) 검사가 꺼진 지금도 영향이 있습니다.** 프론트의 내 권한 조회(`GET /action-codes/me`, 버튼 · 화면 표시용)도 `AccessChecker`의 같은 캐시를 씁니다. 캐시에는 만료가 없어서, 권한별 접근 권한 관리 화면에서 권한을 저장해도 **이미 한 번 조회된 역할은 서버를 재시작하기 전까지 화면 표시가 바뀌지 않습니다.**
+- **(2026-11-10 추가)** 검사 인터셉터는 `@RequireAction` · `@RequireSuperAdmin`이 없는 API를 그대로 통과시킵니다. 3번이 처리되지 않은 채 검사를 켜면 **로그인한 누구나 권한 설정을 저장**할 수 있습니다.
+
+### 현재 상태 (2026-11-10, `1ce6a14` 확인)
+
+- `AccessRoleServiceImpl`에 `evictRole` 호출 없음 (프로젝트에서 `evictRole` 호출은 `RoleServiceImpl.deleteRole` 한 곳뿐)
+- `AccessController`, `AccessRoleController`에 `@RequireAction` · `@RequireSuperAdmin` 없음
+- D-03 TODO 주석 위치: `AccessController.java` 44행(`/access/save`), `AccessRoleController.java` 50행(`/access-role/save`)
 
 ### 대상 파일
 
@@ -596,6 +607,68 @@ this.accessChecker.evictRole(request.getRoleId());
 
 - 권한 저장 후 `evictRole`이 호출됨
 - 두 저장 API에 `@RequireSuperAdmin`이 붙고 D-03 TODO 주석이 삭제됨
+
+### 처리 결과
+
+- 상태:
+- 판단 근거:
+- 변경 내용:
+- ROLE 담당자에게 요청:
+
+---
+
+## R-11. 권한 설정 화면에 내 권한 표시 적용 (선택, D-03 반영)
+
+### 배경
+
+- 프론트에 내 권한 조회와 `usePermission` 훅이 추가되었습니다 (2026-11-10, ROLE 담당자). 사용법은 `frontend/docs/permission-guide.md`를 참고하세요.
+- 권한 설정 기능(`/access/save`, `/access-role/save`)은 D-03 결정에 따라 SUPER_ADMIN 전용입니다. 지금은 두 화면이 누구에게나 그대로 보입니다.
+- 화면 숨김은 표시용입니다. 실제 차단은 R-10의 `@RequireSuperAdmin`이 합니다.
+
+### 현재 상태 (2026-11-10, `1ce6a14` 확인)
+
+- `Access.jsx`, `AccessRole.jsx`에서 내 권한을 확인하지 않음
+- `AccessRole.jsx`는 `GET /roles` 결과를 그대로 역할 목록에 쓰므로 `ROLE_SUPER_ADMIN`이 표시됨 (D-03 구현 항목)
+
+### 대상 파일
+
+- `frontend/src/components/admin/system/access/Access.jsx`
+- `frontend/src/components/admin/system/access-role/AccessRole.jsx`
+
+### 요청 내용
+
+1. 두 화면에서 `usePermission()`으로 SUPER_ADMIN 여부를 확인해, 아니면 "권한이 없습니다."를 표시하고 화면의 API를 호출하지 않기
+   - 권한 조회 중에는 "권한이 없습니다."가 잠깐 보이지 않도록 `status`를 함께 확인 (가이드 3-3, 3-5)
+   - 관리자 전용 화면이므로 조회 중 "권한 확인 중..." 문구는 표시해도 됩니다 (권한 관리 화면과 같은 방식)
+2. `AccessRole.jsx`의 역할 목록에서 `ROLE_SUPER_ADMIN` 제외 (D-03)
+
+```jsx
+import usePermission from "../../../../hooks/usePermission";
+
+const { isSuperAdmin, status } = usePermission();
+
+if (status === "loading")
+  return (
+    <PageContainer>
+      <p>권한 확인 중...</p>
+    </PageContainer>
+  );
+if (status !== "loaded") return <PageContainer />;
+if (!isSuperAdmin)
+  return (
+    <PageContainer>
+      <p>권한이 없습니다.</p>
+    </PageContainer>
+  );
+// 이후 기존 화면 (권한이 있을 때만 마운트되는 하위 컴포넌트로 분리하면 API 호출도 막힘)
+```
+
+- 참고 구현: `frontend/src/components/admin/system/role/Role.jsx` (`Role` → `RoleManagement` 분리 구조)
+
+### 완료 조건
+
+- SUPER_ADMIN이 아닌 계정으로 두 화면에 들어가면 "권한이 없습니다."가 표시되고 API를 호출하지 않음
+- 권한별 접근 권한 관리 화면의 역할 목록에 `ROLE_SUPER_ADMIN`이 없음
 
 ### 처리 결과
 
