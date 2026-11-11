@@ -3,7 +3,7 @@
 - 대상 화면: `시스템 관리 > 권한 관리` (`/admin/system/role`)
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-09
-- 상태: 1단계(화면) 구현 · 수동 테스트 완료. 2단계(8장 내 권한 연동) 구현 · 수동 테스트 완료 (P4는 로딩 문구 추가 후 재확인 필요)
+- 상태: 1단계(화면) 구현 · 수동 테스트 완료. 2단계(8장 내 권한 연동) 구현 · 수동 테스트 완료 (P4 재확인 완료). 서버 권한 검사 켬 (2026-11-10)
 
 이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API 호출 규칙은 `frontend/docs/api-client-guide.md`, 권한 체계는 `backend/docs/access-control-guide.md`를 함께 보세요.
 
@@ -27,7 +27,7 @@
 | `src/api/admin/system/role/roleApi.js` | 완료. 함수 7개. errorCode 주석 보완 완료 (3장 끝)                 |
 | `src/components/admin/system/role/`    | 1단계 구현 완료 (7장 파일). 9장 수동 테스트 완료                  |
 | 라우트 · 메뉴                          | 등록 완료 (`MainRouterProvider.jsx`, `menuData.js`의 "권한 관리") |
-| 내 권한 연동 (8장)                     | 구현 완료. P1~P6 수동 테스트 완료 (P4 재확인 필요)                |
+| 내 권한 연동 (8장)                     | 구현 완료. P1~P6 수동 테스트 완료 (P4 재확인 완료)                |
 
 ---
 

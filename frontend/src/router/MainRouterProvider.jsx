@@ -32,10 +32,9 @@ import HomeworkDetails from "../components/admin/course/CourseTableComponent/Hom
 
 const router = createBrowserRouter([
   {
-    path: "/popup/homework/:courseid/:homeworkId",
+    path: "/popup/homework/:courseId/:homeworkId",
     element: <HomeworkDetails />,
   },
-  { path: "/login", element: <Login /> },
   {
     path: "/",
     element: <MainLayout />,

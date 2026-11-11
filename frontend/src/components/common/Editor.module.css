@@ -1,0 +1,572 @@
+.editor {
+    position: relative;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.editor:focus-within {
+    border-color: #888;
+}
+
+.disabled {
+    opacity: 0.7;
+}
+
+/* 툴바: 기능별 그룹 + 구분선, 화면이 좁으면 줄바꿈 */
+.toolbar {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 0;
+    padding: 4px 6px;
+    border-bottom: 1px solid #e4e4e4;
+    border-radius: 4px 4px 0 0;
+    background: #fafafa;
+}
+
+.group {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0 6px;
+    border-right: 1px solid #e0e0e0;
+}
+
+.group:first-child {
+    padding-left: 0;
+}
+
+.group:last-of-type {
+    border-right: 0;
+}
+
+.toolbarButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: #444;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.toolbarButton:hover:not(:disabled) {
+    border-color: #ddd;
+    background: #e9eef6;
+}
+
+.toolbarButton:focus-visible,
+.select:focus-visible,
+.contextButton:focus-visible {
+    outline: 2px solid #1976d2;
+    outline-offset: 1px;
+}
+
+.toolbarButton:disabled {
+    color: #bbb;
+    cursor: not-allowed;
+}
+
+.active {
+    border-color: #c5cae9 !important;
+    background: #e3e8f4 !important;
+    color: #1a237e !important;
+}
+
+.letterBold {
+    font-weight: 800;
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.letterItalic {
+    font-style: italic;
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.letterUnderline {
+    text-decoration: underline;
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.letterStrike {
+    text-decoration: line-through;
+    font-family: Georgia, 'Times New Roman', serif;
+}
+
+.select {
+    height: 28px;
+    padding: 0 2px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: #333;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.select:hover:not(:disabled) {
+    border-color: #ddd;
+    background: #e9eef6;
+}
+
+.select option:checked {
+    background: #e3e8f4;
+}
+
+.colorIcon {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+}
+
+.colorIcon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.colorBar {
+    display: block;
+    width: 16px;
+    height: 3px;
+    border: 1px solid #ccc;
+    border-radius: 1px;
+}
+
+/* Tooltip (hover · 키보드 포커스) */
+.tooltipHost {
+    position: relative;
+    display: inline-flex;
+}
+
+.tooltip {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: max-content;
+    max-width: 260px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    background: #333;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    text-align: left;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%);
+    transition: opacity 0.12s;
+}
+
+.tooltip strong {
+    font-weight: 700;
+}
+
+.tooltip span {
+    color: #ddd;
+    font-size: 11px;
+}
+
+.tooltipHost:hover > .tooltip,
+.tooltipHost:focus-within > .tooltip {
+    opacity: 1;
+    visibility: visible;
+    transition-delay: 0.25s;
+}
+
+/* 팝업 (색상 · 표 · 링크 · 이미지 URL) */
+.popoverHost {
+    position: relative;
+    display: inline-flex;
+}
+
+.popoverHost:has(.popover) .tooltip {
+    display: none;
+}
+
+.popover {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    z-index: 30;
+    min-width: 220px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    font-size: 12px;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 280px;
+}
+
+.form label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    color: #444;
+}
+
+.form input[type="url"],
+.form input[type="text"] {
+    height: 30px;
+    padding: 2px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.form .checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
+.formError {
+    margin: 0;
+    color: #c62828;
+}
+
+.palette {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 196px;
+}
+
+.swatches {
+    display: grid;
+    grid-template-columns: repeat(7, 22px);
+    gap: 4px;
+}
+
+.swatch {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.swatch:hover,
+.swatch:focus-visible {
+    outline: 2px solid #1976d2;
+    outline-offset: 1px;
+}
+
+.paletteRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.customColor {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #444;
+}
+
+.customColor input {
+    width: 28px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid #ccc;
+    cursor: pointer;
+}
+
+.paletteCurrent {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    color: #666;
+}
+
+.currentSwatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%);
+    background-size: 6px 6px;
+}
+
+.tablePicker {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pickerGrid {
+    display: grid;
+    gap: 2px;
+}
+
+.pickerCell {
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 1px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+}
+
+.pickerCellActive {
+    border-color: #1976d2;
+    background: #bbdefb;
+}
+
+.pickerLabel {
+    margin: 0;
+    color: #444;
+    text-align: center;
+}
+
+.numberField {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.numberField input {
+    width: 44px;
+    height: 24px;
+    padding: 0 4px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+/* 컨텍스트 바 (표 · 블록 · 이미지 · 링크 편집) */
+.contextBar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 6px;
+    border-bottom: 1px solid #e4e4e4;
+    background: #f3f6fb;
+    font-size: 12px;
+}
+
+.contextGroup {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+}
+
+.contextTitle {
+    margin-right: 4px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: #dde5f3;
+    color: #1a237e;
+    font-weight: 700;
+}
+
+.contextDivider {
+    width: 1px;
+    height: 18px;
+    margin: 0 2px;
+    background: #d0d7e2;
+}
+
+.contextButton {
+    height: 26px;
+    padding: 0 8px;
+    border: 1px solid #d0d7e2;
+    border-radius: 4px;
+    background: #fff;
+    color: #333;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.contextButton:hover:not(:disabled) {
+    border-color: #90a4c8;
+    background: #e9eef6;
+}
+
+.contextButton:disabled {
+    color: #aaa;
+    cursor: not-allowed;
+}
+
+.danger {
+    color: #c62828;
+}
+
+.danger:hover:not(:disabled) {
+    border-color: #ef9a9a !important;
+    background: #ffebee !important;
+}
+
+.contextField {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #444;
+}
+
+.contextField select,
+.contextField input {
+    height: 26px;
+    padding: 0 4px;
+    border: 1px solid #d0d7e2;
+    border-radius: 4px;
+    background: #fff;
+    font-size: 12px;
+}
+
+.contextField input {
+    width: 140px;
+}
+
+.contextLink {
+    max-width: 260px;
+    overflow: hidden;
+    color: #1a5fb4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* 입력 영역 (본문 서식은 editor/editorContent.css 의 .lw-editor-content) */
+.editorArea {
+    position: relative;
+    min-height: 280px;
+    max-height: 600px;
+    padding: 12px 14px;
+    overflow-y: auto;
+    outline: none;
+}
+
+.editorArea[data-empty="true"]::before {
+    content: attr(data-placeholder);
+    position: absolute;
+    color: #aaa;
+    pointer-events: none;
+}
+
+.dragOver {
+    background: #f1f7ff;
+    box-shadow: inset 0 0 0 2px #90caf9;
+}
+
+/* 편집 중에만 보이는 안내선 · 선택 표시 */
+.editorArea :global(.editor-flex-item) {
+    min-height: 1.6em;
+    outline: 1px dashed #b0bec5;
+    outline-offset: 2px;
+}
+
+.editorArea :global(.editor-details-body) {
+    min-height: 1.6em;
+}
+
+.editorArea :global([data-cell-selected]) {
+    background: #d6e8fb !important;
+}
+
+.editorArea :global([data-node-selected]) {
+    outline: 2px solid #1976d2;
+    outline-offset: 2px;
+}
+
+.editorArea :global(.editor-link-card),
+.editorArea img {
+    cursor: pointer;
+}
+
+.uploading {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #fff8e1;
+    color: #8d6e00;
+    font-size: 12px;
+}
+
+.error,
+.info {
+    position: relative;
+    margin: 0;
+    padding: 4px 28px 6px 8px;
+    font-size: 12px;
+    white-space: pre-line;
+}
+
+.error {
+    color: #c62828;
+}
+
+.info {
+    color: #1a5fb4;
+}
+
+.noticeClose {
+    position: absolute;
+    top: 2px;
+    right: 6px;
+    padding: 0 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+@media (max-width: 600px) {
+    .group {
+        padding: 0 3px;
+    }
+
+    .toolbarButton {
+        width: 34px;
+        height: 34px;
+    }
+
+    .popover {
+        position: fixed;
+        top: auto;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+    }
+
+    .form,
+    .palette {
+        width: auto;
+    }
+
+    .tooltip {
+        display: none;
+    }
+}

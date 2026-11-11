@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 // 역할 목록은 ROLE 모듈의 GET /roles 사용
+// 권한 설정 화면 전용이므로 모든 API를 ROLE_SUPER_ADMIN 전용으로 제한 (D-03)
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/access-role")

@@ -3,8 +3,10 @@ package com.learningworks.accessrole.service;
 import com.learningworks.accessrole.dao.AccessRoleDao;
 import com.learningworks.accessrole.vo.request.AccessRoleSaveRequestVO;
 import com.learningworks.accessrole.vo.response.AccessRolePermissionVO;
+import com.learningworks.common.action.AccessChecker;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
+import com.learningworks.role.RoleConstants;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +20,7 @@ import java.util.List;
 public class AccessRoleServiceImpl implements AccessRoleService {
 
     private final AccessRoleDao accessRoleDao;
+    private final AccessChecker accessChecker;
 
     // 허용 권한 목록 조회
     @Override
@@ -45,6 +48,11 @@ public class AccessRoleServiceImpl implements AccessRoleService {
     public void saveRolePermission(AccessRoleSaveRequestVO request) {
 
         String roleId = request.getRoleId();
+
+        // ROLE_SUPER_ADMIN은 항상 모든 권한을 가지므로 권한 설정 대상에서 제외 (D-03)
+        if (RoleConstants.SUPER_ADMIN_ROLE.equals(roleId)) {
+            throw new LearningworksException(ErrorCode.ACTION_ROLE_PROTECTED);
+        }
 
         validateRole(roleId);
 
@@ -77,6 +85,9 @@ public class AccessRoleServiceImpl implements AccessRoleService {
                     actionIds
             );
         }
+
+        // 바뀐 권한을 서버 검사 · 내 권한 조회에 바로 반영 (트랜잭션 커밋 후 캐시 비움, R-10)
+        accessChecker.evictRole(roleId);
     }
 
     // 역할 존재 여부 확인

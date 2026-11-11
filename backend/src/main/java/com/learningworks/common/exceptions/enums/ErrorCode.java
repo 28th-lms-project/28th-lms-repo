@@ -24,6 +24,11 @@ public enum ErrorCode {
   ROLE_MOVE_SAME(HttpStatus.BAD_REQUEST, "같은 역할로는 이동할 수 없습니다."), //
   ROLE_MOVE_TO_SUPER_ADMIN(HttpStatus.BAD_REQUEST, "최고 관리자 역할로는 회원을 이동할 수 없습니다."), //
   ACTION_CODE_NOT_EXISTS(HttpStatus.BAD_REQUEST, "등록되지 않은 권한 코드입니다."), //
+  INTERVIEW_STUDENT_NOT_IN_COURSE(HttpStatus.BAD_REQUEST, "해당 과정에 참여 중인 수강생이 아닙니다."), //
+  FILES_NOT_ALLOWED_EXTENSION(HttpStatus.BAD_REQUEST, "업로드할 수 없는 파일 형식입니다."), //
+  FILES_INVALID_CONTENT(HttpStatus.BAD_REQUEST, "파일 확장자와 실제 파일 형식이 일치하지 않습니다."), //
+  COURSE_DATA_EMPTY_CONTENT(HttpStatus.BAD_REQUEST, "교육 자료 내용을 입력해주세요."), //
+  LINK_PREVIEW_INVALID_URL(HttpStatus.BAD_REQUEST, "미리보기를 만들 수 없는 URL입니다. http:// 또는 https:// 로 시작하는 공개 주소만 사용할 수 있습니다."), //
 
   // 401 UNAUTHORIZED
   GLOBAL_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."), //
@@ -42,12 +47,14 @@ public enum ErrorCode {
   GLOBAL_NOT_FOUND_URL(HttpStatus.NOT_FOUND, "존재하지 않는 URL이거나 요청 주소가 잘못되었습니다."), //
   USER_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."), //
   COURSE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 강의입니다."), //
+  HOMEWORK_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 과제입니다."), //
   FILES_NOT_FOUND_FILE(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."), //
   ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), //
   SURVEY_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 설문입니다."), //
   SURVEY_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 설문 답변입니다."), //
   EXAM_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."), //
   ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
+  COURSE_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 교육 자료입니다."), //
 
   // 405 METHOD NOT ALLOWED
   GLOBAL_METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 HTTP 메서드 요청입니다."), //
@@ -60,6 +67,8 @@ public enum ErrorCode {
   ROLE_PROTECTED(HttpStatus.CONFLICT, "시스템 기본 역할은 삭제할 수 없습니다."), //
   ROLE_ORDER_OUTDATED(HttpStatus.CONFLICT, "역할 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요."), //
   ACTION_CODE_USED(HttpStatus.CONFLICT, "이미 등록된 권한 코드입니다."), //
+  ACTION_ROLE_PROTECTED(HttpStatus.CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다."), //
+  FILES_IN_USE(HttpStatus.CONFLICT, "등록된 교육 자료에서 사용 중인 파일은 삭제할 수 없습니다."), //
 
   // 413 CONTENT TOO LARGE
   FILES_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다."), //
@@ -74,11 +83,20 @@ public enum ErrorCode {
   EXAM_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "문제 등록에 실패했습니다."), //
   EXAM_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "문제 수정에 실패했습니다."), //
   ACTION_FAILURE_SAVE(HttpStatus.INTERNAL_SERVER_ERROR, "접근 권한 저장을 실패했습니다."), //
+  HOMEWORK_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "과제 등록을 실패했습니다."), //
+  HOMEWORK_REPLY_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "댓글 등록을 실패했습니다."), //
   FILES_SYSTEM_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."), //
   SURVEY_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 생성을 실패했습니다."), //
   SURVEY_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 수정을 실패했습니다."), //
   SURVEY_DATA_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 답변 생성을 실패했습니다."), //
   SURVEY_DATA_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 답변 수정을 실패했습니다."), //
+  INTERVIEW_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "면접 일정 등록에 실패했습니다."), //
+  COURSE_DATA_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 등록에 실패했습니다."), //
+  COURSE_DATA_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 수정에 실패했습니다."), //
+  COURSE_DATA_FAILURE_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 삭제에 실패했습니다."), //
+
+  // 502 BAD GATEWAY
+  LINK_PREVIEW_FAILURE(HttpStatus.BAD_GATEWAY, "링크 미리보기 정보를 가져올 수 없습니다."), //
   ;
 
   private final HttpStatus status;

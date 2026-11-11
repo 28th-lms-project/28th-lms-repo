@@ -10,6 +10,8 @@ export const courseSlice = createSlice({
     selectStudents: [],
     showStudents: [],
     homeworks: [],
+    homeworkReplies: [],
+    showHomework: undefined,
   },
   reducers: {
     load(state, action) {
@@ -35,6 +37,12 @@ export const courseSlice = createSlice({
     },
     loadhomeworks(state, action) {
       state.homeworks = [...(action.payload ?? [])];
+    },
+    showHomework(state, action) {
+      state.showHomework = action.payload;
+    },
+    loadHomeworkReplies(state, action) {
+      state.homeworkReplies = [...(action.payload ?? [])];
     },
   },
 });

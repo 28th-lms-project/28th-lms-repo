@@ -3,8 +3,7 @@ import { useState } from "react";
 import styles from "./SideMenu.module.css";
 import { MENU } from "./menuData";
 import UserProfile from "./UserProfile";
-import LoginButton from "./LoginButton";
-import IsLogin, { IsNotLogin } from "../login/IsLogin";
+import IsLogin from "../login/IsLogin";
 
 // 메뉴 항목이 현재 주소와 일치하는지 확인
 function isActiveItem(item, pathname) {
@@ -112,10 +111,6 @@ export default function SideMenu() {
           ))}
         </IsLogin>
 
-        {/* 비로그인 상태: 로그인 버튼 노출 */}
-        <IsNotLogin>
-          <LoginButton />
-        </IsNotLogin>
       </div>
     </nav>
   );

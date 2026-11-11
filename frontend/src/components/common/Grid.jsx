@@ -225,6 +225,8 @@ export const Grid = ({
                          clickableColumn = {},
                          doubleClickColumnIndex = [],
                          onChange = () => {},
+                         // 선택 행 배경색 표시: 선택된 행의 rowIndex 배열 (예: [0], [1, 3])
+                         activeRows = [],
                      }) => {
     const [columnSize, setColumnSize] = useState();
 
@@ -395,7 +397,10 @@ export const Grid = ({
                 {items.map((list, index) => (
                     <ul
                         key={`item-list-row-${index}`}
-                        className={`${styles.grid} ${styles.gridItem}`}
+                        className={`${styles.grid} ${styles.gridItem} ${
+                            activeRows.includes(index) ? styles.gridItemActive : ""
+                        }`}
+                        aria-selected={activeRows.includes(index) || undefined}
                         style={{
                             gridTemplateColumns:
                                 checkable && checkIdName ? "50px " + columnSize : columnSize,

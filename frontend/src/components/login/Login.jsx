@@ -5,6 +5,7 @@ import { login } from "../../api/login/loginApi";
 import { useState } from "react";
 import { decodeToken } from "../../utils/tokenStorage";
 import PageContainer from "../common/PageContainer";
+import styles from "./Login.module.css";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -53,28 +54,32 @@ export default function Login() {
 
   return (
     <PageContainer>
-      <div>
-        <form onSubmit={onSubmitLoginHandler}>
-          <input
-            type="text"
-            placeholder="아이디"
-            value={id}
-            onChange={(event) => setId(event.target.value)}
-            autoComplete="username"
-          />
-          <input
-            type="password"
-            placeholder="비밀번호"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
-          />
+      <div className={styles.wrapper}>
+        <form className={styles.form} onSubmit={onSubmitLoginHandler}>
+          <label className={styles.field}>
+            <span className={styles.span}>아이디</span>
+            <input
+              className={styles.input}
+              type="text"
+              placeholder="아이디"
+              value={id}
+              onChange={(event) => setId(event.target.value)}
+              autoComplete="username"
+            />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.span}>비밀번호</span>
+            <input
+              className={styles.input}
+              type="password"
+              placeholder="비밀번호"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              autoComplete="current-password"
+            />
+          </label>
           {errorMessage && <p role="alert">{errorMessage}</p>}
-          <button
-            type="submit"
-            disabled={submitting}
-            onClick={onSubmitLoginHandler}
-          >
+          <button type="submit" disabled={submitting}>
             로그인
           </button>
         </form>

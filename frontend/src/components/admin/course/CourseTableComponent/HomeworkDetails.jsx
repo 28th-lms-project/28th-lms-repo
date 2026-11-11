@@ -3,12 +3,12 @@ import { useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
 import { getOneHomeworks } from "../../../../api/admin/course/courseApi";
+import HomeworkItem from "./HomeworkItem";
 
 export default function HomeworkDetails() {
-  const { id, homeworkid } = useParams();
+  const { courseId, homeworkId } = useParams();
   const dispatch = useDispatch();
-  console.log(id);
-  console.log(homeworkid);
+
   useEffect(() => {
     const controller = new AbortController();
     const options = { signal: controller.signal };
@@ -16,9 +16,11 @@ export default function HomeworkDetails() {
 
     (async () => {
       try {
-        const [homeworks] = await Promise.all([getOneHomeworks(id, options)]);
-
-        dispatch(courseActions.loadhomeworks(homeworks));
+        const [homeworks] = await Promise.all([
+          getOneHomeworks(courseId, homeworkId, options),
+        ]);
+        console.log(homeworks);
+        dispatch(courseActions.showHomework(homeworks));
         dispatch(courseActions.finishLoading());
       } catch (error) {
         if (error.name !== "AbortError") {
@@ -29,11 +31,11 @@ export default function HomeworkDetails() {
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [dispatch, homeworkId, courseId]);
 
   return (
     <>
-      <div>ttt</div>
+      <HomeworkItem />
     </>
   );
 }
