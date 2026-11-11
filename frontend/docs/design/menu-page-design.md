@@ -28,6 +28,10 @@
 | 접근 거부 | 화면 전체에 "권한이 없습니다" (권한 관리 화면과 같은 방식) |
 | 순서 변경 | HTML5 Drag and Drop. **같은 상위 메뉴 안에서만** |
 | UI 부품 | `src/components/sample`의 컴포넌트를 씁니다 (6-1) |
+| 동시 수정 | 수정 요청에 화면이 받은 `mdfyDt`를 보내고, 다른 사람이 먼저 저장했으면 서버가 거부 (`MENU_OUTDATED`) |
+| 저장 안 한 변경 | 다른 메뉴 선택 · 다른 화면 이동 · 새로고침 모두 확인 창 (6-4) |
+| 메뉴 이름 | 같은 상위 메뉴 안에서 중복 불가 (`MENU_TITLE_USED`) |
+| 상위 메뉴 변경 | **현재**: 지원하지 않음. 옮기려면 삭제 후 다시 만들기 (백엔드 문서 4-4 "메뉴 옮기기"). **최종 목표**: ACCESS 담당자와 협의가 끝나면 6-6 "상위 메뉴 변경"으로 구현 |
 
 ---
 
@@ -42,6 +46,10 @@
 | 라우트의 `loader` | **막지 못합니다.** `loader`는 화면보다 먼저 실행됩니다. 지금은 `/admin/course/list`의 index `loader`(`getCourses`)가 해당합니다. 서버가 403으로 막으므로 데이터는 새지 않지만, 오류 화면이 보일 수 있습니다 |
 | 메뉴는 허용됐는데 API 권한이 없음 | 막지 못합니다. 메뉴와 권한 코드는 따로 설정하므로, 관리자가 두 설정을 맞춰야 합니다 |
 | 화면 안의 특정 버튼 | 막지 못합니다. 각 담당자가 `can()`으로 숨겨야 합니다 |
+
+### 알려진 차이: 브레드크럼
+
+`common/Breadcrumb.jsx`는 라우트의 `handle.crumb`을 씁니다. 메뉴 관리에서 메뉴 이름을 바꾸면 **사이드바는 바뀌지만 브레드크럼은 예전 이름**이 남습니다. 이번 구현에서는 그대로 둡니다 (공용 컴포넌트 수정, 메뉴에 없는 상세 화면 처리가 필요해서). 이름을 맞추려면 `crumb`도 함께 고치세요.
 
 ---
 
@@ -65,15 +73,17 @@
 | --- | --- | --- | --- |
 | `getMyMenus(options)` | `GET /menus/me` | `{ superAdmin, menus, guardUrls }` | `GLOBAL_UNAUTHORIZED` |
 | `getMenus(options)` | `GET /menus` | `{ roles, menus }` | — |
-| `createMenu(menu)` | `POST /menus` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_PARENT_INVALID`, `MENU_URL_USED`, `MENU_ROLE_INVALID` |
-| `modifyMenu(menuId, menu)` | `PUT /menus/{menuId}` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_URL_USED`, `MENU_ROLE_INVALID`, `MENU_SELF_LOCK` |
+| `createMenu(menu)` | `POST /menus` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_PARENT_INVALID`, `MENU_URL_USED`, `MENU_TITLE_USED`, `MENU_ROLE_INVALID` |
+| `modifyMenu(menuId, menu)` | `PUT /menus/{menuId}` (`menu`에 `mdfyDt` 포함) | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_URL_USED`, `MENU_TITLE_USED`, `MENU_ROLE_INVALID`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
 | `modifyMenuOrder(parentId, menuIds)` | `PUT /menus/order` | `{ roles, menus }` | `MENU_ORDER_INVALID`, `MENU_ORDER_OUTDATED` |
 | `deleteMenu(menuId)` | `DELETE /menus/{menuId}` | 메뉴 1건 | `MENU_NOT_EXISTS`, `MENU_HAS_CHILDREN`, `MENU_IN_USE`, `MENU_SELF_LOCK` |
+| `moveMenu(menuId, parentId, mdfyDt)` (**협의 후**, 6-6) | `PUT /menus/{menuId}/parent` | `{ roles, menus }` | `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
 
 메뉴 객체 필드: `id`, `title`, `parentId`, `menuOrder`, `useYn`, `spread`, `menuUrl`, `roleIds`, `crtDt`, `mdfyDt`. `getMyMenus`의 메뉴에는 `roleIds` · 날짜가 없습니다. `getMyMenus`의 `useYn`은 SUPER_ADMIN만 `N`을 받을 수 있습니다.
 
 - `spread`: 항상 `Y` 또는 `N`. 대 · 소메뉴는 서버가 `N`으로 저장하므로 의미가 없습니다 (화면에서는 중메뉴만 펼침 체크박스 표시).
 - `menuUrl`: 소메뉴만 값이 있고 100자 이하입니다.
+- `crtDt`, `mdfyDt`: `YYYY-MM-DD HH:mm:ss` 문자열. `mdfyDt`는 수정 요청에 **받은 값 그대로** 돌려보냅니다 (화면 표시만 분까지 잘라도 됨).
 
 권한 코드: 화면 `MENU_READ`, 추가 `MENU_CREATE`, 저장 · 순서 변경 `MENU_UPDATE`, 삭제 `MENU_DELETE`.
 
@@ -168,6 +178,7 @@
 - 위: 목록. 아래: 선택한 메뉴의 상세.
 - 대메뉴를 고르면 중메뉴 열에 그 하위가, 중메뉴를 고르면 소메뉴 열에 그 하위가 나옵니다. 상위 선택이 바뀌면 오른쪽 열의 선택은 풀립니다.
 - 미사용(`useYn = 'N'`) 메뉴는 목록에서 흐리게 표시하고 이름 뒤에 "(미사용)"을 붙입니다.
+- 소메뉴의 `menuUrl`이 라우트에 없으면(`getMenuUrlOptions(routes)`에 없음) 목록에 ⚠ 표시와 툴팁 "화면이 없는 URL입니다. URL을 다시 선택하세요."를 붙입니다. 라우트 경로가 바뀌어 메뉴 링크가 끊긴 것을 찾기 위한 것입니다.
 - 역할 체크박스 순서는 역할 순위 순서(`roles` 그대로)입니다.
 
 ### 6-3. 상태 설계
@@ -177,7 +188,7 @@
 | `listStatus`, `listError` | `getMenus` 결과 상태 |
 | `roles`, `menus` | `getMenus` 결과 (평평한 목록) |
 | `selectedIds` | `{ top, mid, btm }` 열별 선택 메뉴 ID |
-| `forms` | 열별 상세 입력값 `{ mode: "view" \| "new", id, title, useYn, spread, menuUrl, roleIds }` |
+| `forms` | 열별 상세 입력값 `{ mode: "view" \| "new", id, title, useYn, spread, menuUrl, roleIds, mdfyDt }` |
 | `formErrors` | 열별 입력 오류 |
 | `saving` | 저장 · 삭제 · 순서 변경 진행 중 (버튼 비활성) |
 
@@ -194,8 +205,11 @@
 #### 저장
 
 - `mode`가 `new`면 `createMenu`, 아니면 `modifyMenu`.
-- 입력 검사(백엔드와 같은 규칙): 이름 필수 · 100자 이하, 소메뉴 URL 필수.
+- 입력 검사(백엔드와 같은 규칙): 이름 필수 · 100자 이하, 소메뉴 URL 필수. 같은 열에 같은 이름(앞뒤 공백 제외)이 있으면 저장 전에 이름 칸에 "같은 상위 메뉴에 이미 같은 이름의 메뉴가 있습니다." 표시 (서버의 `MENU_TITLE_USED`도 같은 칸에 표시).
+- 수정은 화면이 받은 `mdfyDt`를 함께 보냅니다.
 - 성공하면 `getMenus` 다시 조회 + 저장한 메뉴 선택 + 내 메뉴 다시 조회(7장).
+- 대 · 중메뉴를 저장했을 때, 그 아래에 사이드바에 보일 소메뉴가 없으면 성공 알림에 "소메뉴를 추가해야 사이드바에 표시됩니다."를 덧붙입니다 (사이드바는 소메뉴가 없는 그룹 · 섹션을 그리지 않으므로, 저장이 실패한 것처럼 보이지 않게).
+- `MENU_OUTDATED`면 서버 메시지 알림 → `getMenus` 다시 조회 → 같은 메뉴를 선택한 채 입력값을 서버 값으로 바꿉니다 (내가 입력한 값은 버려짐).
 
 #### 취소
 
@@ -209,6 +223,9 @@
 #### 저장하지 않은 변경사항
 
 - 입력을 바꾼 상태에서 다른 메뉴를 고르거나 상위 선택을 바꾸면 `Confirm`("저장하지 않은 변경사항이 있습니다. 이동할까요?")을 띄웁니다.
+- 다른 화면으로 이동(사이드바, 뒤로 가기)할 때도 같은 확인 창을 띄웁니다: react-router의 `useBlocker`(데이터 라우터인 `createBrowserRouter`라서 사용 가능).
+- 새로고침 · 창 닫기는 `beforeunload`로 브라우저 기본 확인 창을 띄웁니다 (문구는 브라우저가 정함).
+- "입력을 바꾼 상태" 판단: 열마다 현재 입력값과 마지막 저장 값이 다르거나 `new` 모드인 경우.
 
 #### 순서 변경
 
@@ -224,6 +241,7 @@
 #### 역할 체크박스
 
 - SUPER_ADMIN은 항상 체크 · 비활성. 저장할 때 `roleIds`에 넣지 않습니다.
+- **상위 메뉴 때문에 실제로는 안 보이는 역할 표시**: 체크되어 있어도 상위 메뉴에서 그 역할이 빠져 있거나 상위 메뉴가 미사용이면, 체크박스 옆에 흐리게 "(상위 메뉴에서 허용 안 됨)"을 붙입니다. 백엔드 3장 규칙과 같은 계산을 `menuUtils.js`에서 `menus`로 합니다. 저장 값은 바꾸지 않습니다 (상위 메뉴를 다시 허용하면 그대로 보이게).
 
 #### 자기 잠금 방지 (메뉴 관리 메뉴)
 
@@ -240,6 +258,28 @@
 | `MENU_CREATE` | [추가] 숨김 |
 | `MENU_UPDATE` | 드래그 손잡이 숨김. 기존 메뉴의 입력칸 · [저장] · [취소] 비활성 |
 | `MENU_DELETE` | [삭제] 숨김 |
+
+### 6-6. 상위 메뉴 변경 (협의 후 구현 예정)
+
+> **상태: ACCESS 담당자 협의 대기** (백엔드 문서 4-7). 협의가 끝나면 이 절대로 구현하고, 1장 "상위 메뉴 변경"을 고칩니다. 그 전에는 이 기능을 만들지 않습니다.
+
+- 중 · 소메뉴 상세에 "상위 메뉴" 드롭다운(`NativeSelect`)을 둡니다. 선택지는 한 단계 위의 메뉴 전체(소메뉴 → 모든 중메뉴, 중메뉴 → 모든 대메뉴)이고, 표시는 `대메뉴 > 중메뉴` 경로입니다. 대메뉴 상세에는 표시하지 않습니다.
+- **이동은 다른 수정과 따로 저장합니다.** 저장 한 번에 API 하나만 부르게 해서, 일부만 저장되거나 검사(같은 이름, 자기 잠금, `mdfyDt`)가 중간 상태로 이뤄지는 일을 막습니다. 기존 수정 API · 저장 흐름은 바꾸지 않고 이동 기능만 덧붙입니다.
+- 잠금 규칙:
+  - 다른 칸(이름, 사용 여부, 펼침, URL, 역할)을 하나라도 바꾸면 상위 메뉴 드롭다운을 비활성화하고 "다른 변경을 저장하거나 취소한 뒤 옮길 수 있습니다."를 표시합니다.
+  - 상위 메뉴를 바꾸면 다른 칸을 모두 비활성화합니다. 이때 [저장]은 `moveMenu(menuId, parentId, mdfyDt)`(`PUT /menus/{menuId}/parent`)만 부릅니다.
+  - [취소]는 두 경우 모두 마지막 저장 값으로 되돌립니다 (잠금도 풀림).
+- 옮기면서 이름도 바꿔야 하면 두 번 저장합니다. 새 그룹에 같은 이름이 있으면 이름을 먼저 바꿔 저장한 뒤 옮깁니다 (`MENU_TITLE_USED` 메시지로 안내됨).
+- 저장 전 `Confirm`: "메뉴를 옮기면 이 메뉴를 쓰는 접근 권한(ACTION)의 메뉴도 함께 바뀝니다. 옮길까요?"
+- 성공하면 목록을 응답으로 교체하고, 옮긴 메뉴가 보이도록 열 선택을 새 위치로 바꾼 뒤 내 메뉴를 다시 조회합니다.
+- 오류: `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK`은 서버 메시지 알림.
+- 권한: 협의 결과에 따라 `MENU_UPDATE` 또는 SUPER_ADMIN 전용. SUPER_ADMIN 전용이면 `isSuperAdmin`일 때만 드롭다운 표시.
+- 드래그로 다른 열 · 다른 그룹에 놓는 방식은 쓰지 않습니다 (실수로 옮기기 쉬움).
+
+확인 시나리오 (구현 시 10장에 추가):
+
+- 소메뉴를 다른 중메뉴로 옮긴 뒤 목록 · 사이드바 위치 변경, 권한별 접근 권한 관리 화면의 메뉴 필터에서 해당 ACTION이 새 메뉴로 걸리는지 확인.
+- 이름을 바꾼 상태에서 상위 메뉴 드롭다운이 비활성인지, 상위 메뉴를 바꾼 상태에서 다른 칸이 비활성인지, [취소]로 둘 다 풀리는지 확인.
 
 ---
 
@@ -286,7 +326,12 @@ src/components/admin/system/menu/Menu.jsx       (권한 확인 래퍼 + 화면)
 src/components/admin/system/menu/MenuColumn.jsx (열 하나: 목록 + 상세)
 src/components/admin/system/menu/menuUtils.js   (트리 계산, 입력 검사, 오류 메시지)
 src/components/admin/system/menu/Menu.module.css
+src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문구 추가, 아래)
 ```
+
+### 권한 관리 화면 안내 추가
+
+새 역할은 `MENU_ROLE`이 비어 있어 그 역할의 사용자는 대시보드만 볼 수 있습니다 (권한 코드가 비어 있는 것과 같은 상황). 메뉴를 자동으로 넣지는 않고, 권한 관리 화면에서 역할 생성에 성공하면 안내 문구를 표시합니다: "새 역할은 메뉴와 권한이 비어 있습니다. 메뉴 관리와 권한별 접근 권한 관리에서 허용해 주세요." `frontend/docs/design/role-page-design.md`에도 같은 내용을 추가합니다.
 
 ### 지킬 것
 
@@ -302,7 +347,10 @@ src/components/admin/system/menu/Menu.module.css
 3. 메뉴 관리 화면 구현.
 4. 사이드바를 store로 전환.
 5. 라우터 표시 + 가드 적용. **2번이 끝나기 전에 켜면 SUPER_ADMIN 외에는 대시보드만 열립니다.**
-6. 팀에 공지: 새 화면을 만들면 라우트에 `handle.menu`를 붙이고, 메뉴 관리에서 메뉴와 역할을 등록해야 다른 역할이 들어갈 수 있다는 것.
+6. 팀에 공지:
+   - 새 화면을 만들면 라우트에 `handle.menu`를 붙이고, 메뉴 관리에서 메뉴와 역할을 등록해야 다른 역할이 들어갈 수 있습니다.
+   - 새 팝업 등 접두어로 메뉴를 찾을 수 없는 라우트에는 `handle.guardAs`로 소속 메뉴 URL을 적어야 합니다. 빠뜨리면 SUPER_ADMIN만 열 수 있습니다.
+   - 라우트 경로를 바꾸면 메뉴 관리에서 해당 메뉴의 URL도 다시 선택해야 합니다 (목록에 ⚠ 표시). 브레드크럼 이름(`crumb`)은 메뉴 이름과 따로 관리됩니다.
 
 ---
 
@@ -328,3 +376,10 @@ src/components/admin/system/menu/Menu.module.css
 | M15 | ADMIN으로 메뉴 관리 소메뉴 상세 열기 | 자기 잠금 안내 문구 표시 |
 | M16 | ADMIN이 메뉴 관리 소메뉴에서 본인 역할 해제 후 저장 | 서버 메시지 알림, 저장 안 됨, 메뉴 관리 화면 계속 사용 가능 |
 | M17 | SUPER_ADMIN으로 같은 작업 | 저장됨, 안내 문구 없음 |
+| M18 | 두 탭에서 같은 메뉴를 열고 차례로 저장 | 두 번째 탭에 알림, 입력값이 첫 번째 저장 내용으로 바뀜 |
+| M19 | 중메뉴에서 ADMIN 해제, 그 아래 소메뉴는 ADMIN 체크 | 소메뉴의 ADMIN 체크박스 옆에 "(상위 메뉴에서 허용 안 됨)" |
+| M20 | DB에서 소메뉴 URL을 없는 경로로 바꾼 뒤 화면 열기 | 목록에 ⚠ 표시, URL 선택에 "(등록되지 않은 경로)" |
+| M21 | 같은 열에 같은 이름으로 추가 | 이름 칸에 오류, 저장 안 됨 |
+| M22 | 입력 변경 후 사이드바로 다른 화면 이동 / 새로고침 | 확인 창 / 브라우저 확인 창 |
+| M23 | 대메뉴만 새로 추가하고 저장 | 성공 알림에 "소메뉴를 추가해야 사이드바에 표시됩니다." |
+| M24 | 권한 관리에서 역할 생성 | 메뉴 · 권한 허용 안내 문구 |
