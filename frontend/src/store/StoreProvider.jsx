@@ -6,6 +6,8 @@ import { permissionSlice } from "./slices/permissionSliceStore";
 import { testSliceStore } from "./slices/testSliceStore";
 import { questionSliceStore } from "./slices/questionSliceStore";
 
+import { surveySliceStore } from "./slices/surveySliceStore";
+
 const toolkitStore = configureStore({
   reducer: {
     login: loginSlice.reducer,
@@ -13,6 +15,8 @@ const toolkitStore = configureStore({
     permission: permissionSlice.reducer,
     test: testSliceStore.reducer,
     question: questionSliceStore.reducer,
+
+    survey: surveySliceStore.reducer,
   },
 });
 

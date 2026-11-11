@@ -40,10 +40,10 @@ export const questionSliceStore = createSlice({
     },
 
     updateValue(state, action) {
-      state.answerCount = action.answerCount;
-      state.question = action.question;
-      state.correctAnswer = action.correctAnswer;
-      state.pointAlloc = action.pointAlloc;
+      state.answerCount = action.payload.answerCount;
+      state.question = action.payload.question;
+      state.correctAnswer = action.payload.correctAnswer;
+      state.pointAlloc = action.payload.pointAlloc;
     },
 
     updateAnswer(state, action) {
