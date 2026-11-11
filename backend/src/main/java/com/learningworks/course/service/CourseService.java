@@ -2,9 +2,14 @@ package com.learningworks.course.service;
 
 import java.util.List;
 
+import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
+import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
+import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
+import com.learningworks.course.vo.request.RegistHomeworkVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
+import com.learningworks.course.vo.response.HomeworkReplyVO;
 import com.learningworks.course.vo.response.HomeworkVO;
 
 public interface CourseService {
@@ -28,5 +33,20 @@ public interface CourseService {
 	HomeworkVO getOneHomework(String courseId, String homeworkId);
 
 	HomeworkVO getHomeworkReplies(String courseId, String homeworkId);
+
+	HomeworkReplyVO addHomeworkReply(String courseId, String homeworkId, RegistHomeworkReplyVO registHomeworkReplyVO);
+
+	HomeworkVO addHomework(String courseId, RegistHomeworkVO registHomeworkVO);
+
+	HomeworkVO updateHomework(String courseId, String homeworkId, ModifyHomeworkVO modifyHomeworkVO);
+
+	HomeworkReplyVO updateHomeworkReply(String courseId, String homeworkId, String replyId,
+			ModifyHomeworkReplyVO modifyHomeworkReplyVO);
+
+	String deleteHomework(String courseId, String homeworkId);
+
+	String deleteHomeworkReply(String courseId, String homeworkId, String replyId);
+
+	
 
 }

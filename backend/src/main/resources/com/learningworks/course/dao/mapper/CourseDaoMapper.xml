@@ -17,8 +17,23 @@
       INNER JOIN COURSE_TUTOR CT
          ON C.ID = CT.COURSE_ID
       INNER JOIN "USER" U
-         ON CT.TUTOR_ID = U.ID 
-         
+         ON CT.TUTOR_ID = U.ID
+      <if test="userId != null">
+      WHERE C.ID IN (SELECT CS.COURSE_ID
+                       FROM COURSE_STUDENT CS
+                      WHERE CS.USER_ID = #{userId}
+                      UNION
+                     SELECT CT2.COURSE_ID
+                       FROM COURSE_TUTOR CT2
+                      WHERE CT2.TUTOR_ID = #{userId})
+      </if>
+	</select>
+
+	<!-- 로그인 사용자의 현재 역할 (강의 조회 권한 판단용) -->
+	<select id="readUserBaseRole" parameterType="string" resultType="string">
+	 SELECT BASE_ROLE
+	   FROM "USER"
+	  WHERE ID = #{_parameter}
 	</select>
 	
 	<select id="readOneCourse" resultType="com.learningworks.course.vo.response.CourseVO" parameterType="string">
@@ -198,7 +213,10 @@
     <result property="mdfyDt"   column="MDFY_DT"/>
     <result property="endDate"  column="END_DATE"/>
 
-    <collection property="homeworkReplies" ofType="com.learningworks.course.vo.response.HomeworkReplyVO">
+    <!-- 댓글이 없으면 LEFT JOIN 으로 REPLY_ID 가 null 인 행이 오는데, HOMEWORK_ID 는 과제 값이라 항상 채워져 있어
+         빈 댓글 객체가 만들어진다. notNullColumn 으로 REPLY_ID 가 있을 때만 댓글을 만들어 빈 배열이 되게 한다. -->
+    <collection property="homeworkReplies" ofType="com.learningworks.course.vo.response.HomeworkReplyVO"
+                notNullColumn="REPLY_ID">
         <id     property="id"              column="REPLY_ID"/>
         <result property="homeworkId"      column="HOMEWORK_ID"/>
         <result property="content"         column="REPLY_CONTENT"/>
@@ -243,4 +261,151 @@
       AND CH.DEL_YN    = 'N'
     ORDER BY CHR.CRT_DT DESC
    </select>
+
+   <insert id="addHomeworkReply" parameterType="com.learningworks.course.vo.request.RegistHomeworkReplyVO">
+       <selectKey order="BEFORE" keyProperty="id" resultType="string">
+        SELECT 'HR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_HOMEWORK_REPLY_PK.NEXTVAL, 6, '0')
+          FROM DUAL
+       </selectKey>
+       INSERT INTO COURSE_HOMEWORK_REPLY
+            ( ID
+            , HOMEWORK_ID
+            , CONTENT
+            , CRT_DT
+            , DEL_YN
+            , COURSE_STUDENT_ID)
+       VALUES
+            ( #{id}
+            , #{homeworkId}
+            , #{content}
+            , SYSDATE
+            , 'N'
+            , #{courseStudentId})
+   </insert>
+
+   <resultMap id="homeworkReplyMap" type="com.learningworks.course.vo.response.HomeworkReplyVO">
+       <id     property="id"              column="REPLY_ID"/>
+       <result property="homeworkId"      column="HOMEWORK_ID"/>
+       <result property="content"         column="REPLY_CONTENT"/>
+       <result property="crtDt"           column="REPLY_CRT_DT"/>
+       <result property="mdfyDt"          column="REPLY_MDFY_DT"/>
+       <result property="delYn"           column="REPLY_DEL_YN"/>
+       <result property="courseStudentId" column="COURSE_STUDENT_ID"/>
+
+       <association property="writer" javaType="com.learningworks.course.vo.response.CourseMemberVO">
+           <id     property="id"       column="USER_ID"/>
+           <result property="name"     column="NAME"/>
+           <result property="baseRole" column="BASE_ROLE"/>
+       </association>
+   </resultMap>
+
+   <select id="readOneHomeworkReply" parameterType="string" resultMap="homeworkReplyMap">
+   SELECT CHR.ID                                       AS REPLY_ID
+        , CHR.HOMEWORK_ID
+        , CHR.CONTENT                                  AS REPLY_CONTENT
+        , TO_CHAR(CHR.CRT_DT,  'YYYY-MM-DD HH24:MI')   AS REPLY_CRT_DT
+        , TO_CHAR(CHR.MDFY_DT, 'YYYY-MM-DD HH24:MI')   AS REPLY_MDFY_DT
+        , CHR.DEL_YN                                   AS REPLY_DEL_YN
+        , CHR.COURSE_STUDENT_ID
+        , U.ID                                         AS USER_ID
+        , U.NAME
+        , U.BASE_ROLE
+     FROM COURSE_HOMEWORK_REPLY CHR
+     LEFT JOIN "USER" U
+       ON U.ID = CHR.COURSE_STUDENT_ID
+    WHERE CHR.ID     = #{_parameter}
+      AND CHR.DEL_YN = 'N'
+   </select>
+
+   <!-- 해당 강의의 수강생 또는 강사이면 1 이상 -->
+   <select id="countCourseStudentOrTutor" resultType="int">
+   SELECT (SELECT COUNT(1)
+             FROM COURSE_STUDENT CS
+            WHERE CS.COURSE_ID = #{courseId}
+              AND CS.USER_ID   = #{userId})
+        + (SELECT COUNT(1)
+             FROM COURSE_TUTOR CT
+            WHERE CT.COURSE_ID = #{courseId}
+              AND CT.TUTOR_ID  = #{userId})
+     FROM DUAL
+   </select>
+   
+   
+   <insert id="addHomework"
+            parameterType="com.learningworks.course.vo.request.RegistHomeworkVO">
+       <selectKey order="BEFORE" keyProperty="id" resultType="string">
+        SELECT 'CH-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_HOMEWORK_PK.NEXTVAL, 6, '0')
+          FROM DUAL
+       </selectKey>
+       INSERT INTO COURSE_HOMEWORK 
+            ( ID
+            , COURSE_ID
+            , CRT_DT
+            , MDFY_DT
+            , SUBJECT
+            , CONTENT
+            , END_DATE
+            , DEL_YN)
+             VALUES 
+                (#{id}
+            , #{courseId}
+            , SYSDATE
+            , NULL
+            , #{subject}
+            , #{content}
+            , #{endDate}
+            , 'N')
+       </insert>
+       
+       
+       <update id="updateHomework">
+        UPDATE COURSE_HOMEWORK
+           SET CONTENT  = #{modifyHomeworkVO.content}
+             , END_DATE = #{modifyHomeworkVO.endDate}
+             , MDFY_DT  = SYSDATE
+         WHERE COURSE_ID = #{courseId}
+           AND ID        = #{homeworkId}
+           AND DEL_YN    = 'N'
+       </update>
+
+       <!-- 과제 댓글 수정: 작성자 본인(COURSE_STUDENT_ID)의 삭제되지 않은 댓글만 수정된다 -->
+       <update id="updateHomeworkReply"
+               parameterType="com.learningworks.course.vo.request.ModifyHomeworkReplyVO">
+        UPDATE COURSE_HOMEWORK_REPLY
+           SET CONTENT = #{content}
+             , MDFY_DT = SYSDATE
+         WHERE ID                = #{id}
+           AND HOMEWORK_ID       = #{homeworkId}
+           AND COURSE_STUDENT_ID = #{courseStudentId}
+           AND DEL_YN            = 'N'
+       </update>
+
+       <!-- 과제 삭제: 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다 -->
+       <update id="deleteHomework">
+        UPDATE COURSE_HOMEWORK
+           SET DEL_YN  = 'Y'
+             , MDFY_DT = SYSDATE
+         WHERE COURSE_ID = #{courseId}
+           AND ID        = #{homeworkId}
+           AND DEL_YN    = 'N'
+       </update>
+
+       <!-- 과제 댓글 삭제: 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다 (권한 검사는 서비스에서) -->
+       <update id="deleteHomeworkReply">
+        UPDATE COURSE_HOMEWORK_REPLY
+           SET DEL_YN  = 'Y'
+             , MDFY_DT = SYSDATE
+         WHERE ID          = #{replyId}
+           AND HOMEWORK_ID = #{homeworkId}
+           AND DEL_YN      = 'N'
+       </update>
+
+       <!-- 해당 강의의 강사이면 1 이상 -->
+       <select id="countCourseTutor" resultType="int">
+        SELECT COUNT(1)
+          FROM COURSE_TUTOR CT
+         WHERE CT.COURSE_ID = #{courseId}
+           AND CT.TUTOR_ID  = #{userId}
+       </select>
+
 </mapper>
