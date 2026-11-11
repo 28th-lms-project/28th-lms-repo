@@ -40,7 +40,7 @@
 | --- | --- | --- | --- |
 | `ID` | `VARCHAR2(20 CHAR)` | PK | `MN-YYYYMMDD-000001` |
 | `TITLE` | `VARCHAR2(100 CHAR)` | Y | 메뉴 이름 |
-| `PARENT_ID` | `VARCHAR2(20 BYTE)` | | 상위 메뉴 ID. 대메뉴는 null |
+| `PARENT_ID` | `VARCHAR2(20 CHAR)` | | 상위 메뉴 ID. 대메뉴는 null |
 | `MENU_ORDER` | `NUMBER` | Y | 같은 상위 메뉴 안의 순서. 1부터. DB는 null 허용이지만 코드가 항상 채움 |
 | `USE_YN` | `CHAR(1 CHAR)` | Y | `Y` 사용 / `N` 미사용(SUPER_ADMIN 외에는 사이드바에서 숨김, URL 접근 거부) |
 | `SPREAD` | `CHAR(1 CHAR)` | Y | **중메뉴만** 의미가 있음. `Y`면 화면을 처음 열 때 펼친 상태로 표시. 대 · 소메뉴는 항상 `N` 저장 |
@@ -63,12 +63,15 @@ UNIQUE (`MENU_ID`, `ROLE_ID`)
 
 ### 2-3. 변경 스크립트 (DB 담당: 프로젝트 담당자가 직접 실행)
 
-순서가 중요합니다. **`MENU.DEL_YN` 삭제는 ACCESS 모듈의 `selectMenuList`(`/access/menus`)가 없어진 뒤에** 실행하세요. 지금 그 쿼리가 `WHERE NVL(DEL_YN, 'N') = 'N'`을 씁니다.
+1단계는 **적용 완료**되었습니다. 남은 것은 2단계(`MENU.DEL_YN` 삭제)뿐입니다. 이 작업은 **ACCESS 모듈의 `selectMenuList`(`/access/menus`)가 없어진 뒤에** 실행하세요. 지금 그 쿼리가 `WHERE NVL(DEL_YN, 'N') = 'N'`을 씁니다.
 
 ```sql
--- 1단계: 바로 실행 가능 (지금 코드가 쓰지 않는 컬럼)
+-- 1단계: 적용 완료
 ALTER TABLE MENU RENAME COLUMN "ORDER" TO MENU_ORDER;
 ALTER TABLE MENU RENAME COLUMN "TO" TO MENU_URL;
+ALTER TABLE MENU MODIFY (PARENT_ID VARCHAR2(20 CHAR));  -- ID와 길이 단위 통일
+ALTER TABLE MENU MODIFY (MDFY_DT NULL);                 -- 생성 직후 null
+ALTER TABLE MENU ADD CONSTRAINT UK_MENU_URL UNIQUE (MENU_URL);  -- null은 여러 개 허용됨
 
 -- MENU_ROLE 정리: 논리 삭제된 행과 중복 행을 먼저 지운다
 DELETE FROM MENU_ROLE WHERE DEL_YN = 'Y';
@@ -77,10 +80,9 @@ ALTER TABLE MENU_ROLE DROP COLUMN DEL_YN;
 ALTER TABLE MENU_ROLE DROP COLUMN MDFY_DT;
 ALTER TABLE MENU_ROLE ADD CONSTRAINT UK_MENU_ROLE UNIQUE (MENU_ID, ROLE_ID);
 
--- 2단계: ACCESS 모듈이 /access/menus를 없앤 뒤 실행
+-- 2단계: ACCESS 모듈이 /access/menus를 없앤 뒤 실행 (미적용)
 DELETE FROM MENU WHERE DEL_YN = 'Y';   -- 참조하는 ACTION · MENU_ROLE · 하위 메뉴가 없는지 먼저 확인
 ALTER TABLE MENU DROP COLUMN DEL_YN;
-ALTER TABLE MENU ADD CONSTRAINT UK_MENU_URL UNIQUE (MENU_URL);  -- null은 여러 개 허용됨
 ```
 
 ### 2-4. ID 생성식 (MyBatis `selectKey`)
