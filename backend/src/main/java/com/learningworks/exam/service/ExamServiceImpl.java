@@ -140,8 +140,8 @@ public class ExamServiceImpl implements ExamService {
 	
 
 	@Override
-	public List<ExamSetVO> readAllExamInExamSet() {
-		List<ExamSetVO> examSet = this.examDao.selectAllExamInExamSet();
+	public List<ExamSetVO> readAllExamInExamSet(String courseId) {
+		List<ExamSetVO> examSet = this.examDao.selectAllExamInExamSet(courseId);
 		System.out.println("시험 세트 수" + examSet.size());
 
 		return examSet;

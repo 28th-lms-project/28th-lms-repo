@@ -17,8 +17,8 @@ public interface ExamDao {
 
 	long selectQuestionsCount(@Param("subjectId") String subjectId);
 
-	List<ExamSetVO> selectAllExamInExamSet();
-
+	List<ExamSetVO> selectAllExamInExamSet(String courseId);
+	
 	int insertNewExam(RegistExamQuestionVO registExamQuestionVO);
 
 	ExamQuestionVO selectQuestionById(String id);

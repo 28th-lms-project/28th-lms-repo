@@ -63,6 +63,7 @@
 	</select>
 
 	<select id="selectAllExamInExamSet"
+	   parameterType="string"
 		resultMap="ExamSetVOMap">
 		SELECT TS.ID AS SET_ID
 			 , TS.COURSE_ID
@@ -91,6 +92,7 @@
 		LEFT JOIN TESTS T
 		ON TST.TEST_ID = T.ID
 		WHERE T.DEL_YN = 'N'
+		  AND TS.COURSE_ID = #{courseId}
 	</select>
 
 	<resultMap type="com.learningworks.exam.vo.response.ExamSetVO"
@@ -137,14 +139,45 @@
 		LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
 			FROM DUAL
 		</selectKey>
-		INSERT INTO TESTS (ID , SUBJECT_ID , QUESTION , ANSWER_TYPE ,
-		ANSWER_SHEET_1 , ANSWER_SHEET_2 , ANSWER_SHEET_3 , ANSWER_SHEET_4 ,
-		ANSWER_SHEET_5 , ANSWER_COUNT , POINT_ALLOC , CRT_DT , MDFY_DT , CRTR_ID
-		, MDFYR_ID , DEL_YN , CORRECT_ANSWER , SUB_QUESTION) VALUES ( #{id} ,
-		#{subjectId} , #{question} , #{answerType} , #{answerSheet1} ,
-		#{answerSheet2} , #{answerSheet3} , #{answerSheet4} , #{answerSheet5} ,
-		#{answerCount} , #{pointAlloc} , SYSDATE , SYSDATE , 'admin' , 'admin' ,
-		'N' , #{correctAnswer} , #{subQuestion} ) </insert>
+		INSERT INTO TESTS 
+		(ID 
+		, SUBJECT_ID 
+		, QUESTION 
+		, ANSWER_TYPE 
+		, ANSWER_SHEET_1 
+		, ANSWER_SHEET_2 
+		, ANSWER_SHEET_3 
+		, ANSWER_SHEET_4 
+		, ANSWER_SHEET_5 
+		, ANSWER_COUNT 
+		, POINT_ALLOC 
+		, CRT_DT 
+		, MDFY_DT 
+		, CRTR_ID
+		, MDFYR_ID 
+		, DEL_YN 
+		, CORRECT_ANSWER 
+		, SUB_QUESTION) 
+		VALUES 
+		( #{id} 
+		, #{subjectId} 
+		, #{question} 
+		, #{answerType} 
+		, #{answerSheet1} 
+		, #{answerSheet2} 
+		, #{answerSheet3} 
+		, #{answerSheet4} 
+		, #{answerSheet5} 
+		, #{answerCount} 
+		, #{pointAlloc} 
+		, SYSDATE 
+		, SYSDATE 
+		, 'admin' 
+		, 'admin' 
+		, 'N' 
+		, #{correctAnswer} 
+		, #{subQuestion} ) 
+		</insert>
 
 	<delete id="deleteExamQuestion"
 		parameterType="string">

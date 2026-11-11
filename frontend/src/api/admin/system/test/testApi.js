@@ -20,3 +20,6 @@ export const updateTestQuestion = (questionId, body) =>
 /** 삭제된 문제 ID 반환. errorCode: EXAM_NOT_EXISTS */
 export const deleteTestQuestion = (questionId) =>
   api.delete(`/admin/system/test/${encodeURIComponent(questionId)}`);
+
+export const searchTestSets = (courseId) =>
+  api.get(`admin/system/${courseId}/testSet`);

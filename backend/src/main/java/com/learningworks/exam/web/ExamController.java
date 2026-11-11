@@ -34,9 +34,9 @@ public class ExamController {
 		return ApiResponse.CREATED(examQuestion);
 	}
 
-	@GetMapping("admin/system/testSet")
-	public ApiResponse<List<ExamSetVO>> getAllExamInExamSet() {
-		return ApiResponse.OK(this.examService.readAllExamInExamSet());
+	@GetMapping("admin/system/{courseId}/testSet")
+	public ApiResponse<List<ExamSetVO>> getAllExamInExamSet(@PathVariable String courseId) {
+		return ApiResponse.OK(this.examService.readAllExamInExamSet(courseId));
 	}
 	
 	@GetMapping("admin/system/tests/{subjectId}")

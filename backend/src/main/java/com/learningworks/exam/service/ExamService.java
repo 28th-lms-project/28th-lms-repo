@@ -10,7 +10,7 @@ import com.learningworks.exam.vo.response.ExamSetVO;
 
 public interface ExamService {
 
-	List<ExamSetVO> readAllExamInExamSet();
+	List<ExamSetVO> readAllExamInExamSet(String courseId);
 
 	ExamQuestionVO createNewExam(RegistExamQuestionVO registExamQuestionVO);
 
