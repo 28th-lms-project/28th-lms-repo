@@ -1,5 +1,5 @@
 
-import { api } from "../../common/apiClient";
+import { api } from "../../common/apiClient.js";
 
 const encode = (value) => encodeURIComponent(value);
 

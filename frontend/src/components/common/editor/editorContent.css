@@ -33,10 +33,29 @@
 .lw-editor-content h5 { font-size: 16px; }
 .lw-editor-content h6 { font-size: 14px; }
 
+/* 전역 reset(index.css 의 ul { list-style: none }) 을 본문 영역에서 되돌린다 */
 .lw-editor-content ul,
 .lw-editor-content ol {
   margin: 0 0 6px;
   padding-left: 24px;
+}
+
+.lw-editor-content ul { list-style: disc outside; }
+.lw-editor-content ul ul { list-style-type: circle; }
+.lw-editor-content ul ul ul { list-style-type: square; }
+.lw-editor-content ol { list-style: decimal outside; }
+.lw-editor-content ol ol { list-style-type: lower-alpha; }
+.lw-editor-content ol ol ol { list-style-type: lower-roman; }
+
+.lw-editor-content li {
+  display: list-item;
+}
+
+.lw-editor-content ul ul,
+.lw-editor-content ol ol,
+.lw-editor-content ul ol,
+.lw-editor-content ol ul {
+  margin-bottom: 0;
 }
 
 .lw-editor-content blockquote {
