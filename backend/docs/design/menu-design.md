@@ -101,6 +101,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 메뉴 가드(프론트)를 켜기 **전에** 지금 `frontend/src/components/menu/menuData.js`의 구성을 `MENU`에 넣고, 역할별 `MENU_ROLE`을 채워야 합니다. 비어 있으면 SUPER_ADMIN이 아닌 사용자는 대시보드 외에 아무 화면도 열 수 없습니다.
 
 - 대메뉴 = 섹션(Main / My Page / System Management), 중메뉴 = 그룹, 소메뉴 = 링크.
+- 대시보드(Main > Home > Dashboard, `MENU_URL = '/'`)도 메뉴로 넣습니다. 프론트 가드는 `/`를 항상 통과시키므로, 이 메뉴의 `MENU_ROLE`은 사이드바 링크 표시에만 쓰입니다.
 - `menuData.js`의 "DB 관리"(`/admin/system/db`)는 라우트가 없습니다. 라우트가 생길 때 추가하세요.
 - 입력은 SQL로 직접 하거나, 메뉴 관리 화면이 완성된 뒤 SUPER_ADMIN 계정으로 입력합니다.
 
@@ -160,7 +161,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 
 ```json
 {
-  "roles": [{ "roleId": "ROLE_SUPER_ADMIN", "roleDisplayName": "최고 관리자" }, "..."],
+  "roles": [{ "roleId": "ROLE_SUPER_ADMIN", "roleDisplayName": "슈퍼관리자" }, "..."],
   "menus": [
     {
       "id": "MN-...", "title": "과정 목록", "parentId": "MN-...", "menuOrder": 1,
