@@ -11,6 +11,11 @@ spring:
     url: jdbc:oracle:thin:@192.168.211.20:1521:XE
     username: LEARNING_WORKS
     password: LEARNING_WORKS_1234
+  # 파일 업로드 크기 제한 (교육 자료 파일 10MB)
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
 
 # MyBatis 설정
 mybatis:
@@ -27,3 +32,6 @@ app:
     enabled: true
     # 권한 어노테이션이 없는 API는 SUPER_ADMIN만 호출 가능 (false로 바꾸면 누구나 호출 가능)
     default-super-admin: true
+  # 교육 자료 첨부 파일 저장 경로 (웹 루트 외부). 환경별로 COURSE_DATA_UPLOAD_DIR 환경변수로 변경 가능
+  course-data:
+    upload-dir: ${COURSE_DATA_UPLOAD_DIR:${user.home}/learningworks/upload/course-data}

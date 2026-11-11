@@ -84,8 +84,15 @@ const parseJson = async (response) => {
   }
 };
 
-const request = async (method, url, { params, data, signal } = {}) => {
-  const headers = { Accept: "application/json" };
+const request = async (
+  method,
+  url,
+  { params, data, signal, responseType } = {},
+) => {
+  // 파일 다운로드(blob)는 어떤 형식이든 받되, 실패 시에는 JSON 에러 응답을 받는다
+  const headers = {
+    Accept: responseType === "blob" ? "*/*" : "application/json",
+  };
   let body;
 
   if (data instanceof FormData) {
@@ -119,6 +126,10 @@ const request = async (method, url, { params, data, signal } = {}) => {
       errorCode: CLIENT_ERROR_CODE.NETWORK_ERROR,
       message: DEFAULT_MESSAGES[0],
     });
+  }
+
+  if (response.ok && responseType === "blob") {
+    return response.blob();
   }
 
   const result = await parseJson(response);
@@ -180,4 +191,12 @@ export const api = {
   /** DELETE → body */
   delete: (url, params, options) =>
     requestBody("DELETE", url, { ...options, params }),
+
+  /**
+   * GET (파일 다운로드) → Blob
+   * 인증 헤더가 필요한 파일(이미지 표시 · 첨부 파일 다운로드)에 사용합니다.
+   * 실패 시에는 다른 함수와 같이 ApiError를 throw 합니다.
+   */
+  download: (url, params, options) =>
+    request("GET", url, { ...options, params, responseType: "blob" }),
 };

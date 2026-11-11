@@ -3,6 +3,19 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.learningworks.member.dao.MemberDao">
+	
+	<select id="selectMyInfo" parameterType="string"
+        resultType="com.learningworks.member.vo.response.MemberVO">
+       SELECT ID
+            , NAME
+            , GITHUB_URL
+            , BASE_ROLE
+            , CRT_DT AS CREATE_DATE
+            , MDFY_DT AS MODIFY_DATE
+         FROM "USER"
+        WHERE ID = #{id}
+          AND DEL_YN = 'N'
+	</select>
 
 	<select id="selectLoginMember" parameterType="string" resultType="com.learningworks.member.vo.response.MemberVO">
 		SELECT ID
@@ -44,5 +57,29 @@
            SET PWD_FAIL_CNT = #{failCount}
              , LOGIN_BLOCK_DATE = #{blockDate}
          WHERE ID = #{id}
+    </update>
+    
+    <update id="updateMyInfo">
+    	UPDATE "USER"
+    	   SET NAME = #{infoVO.name}
+    	     , GITHUB_URL = #{infoVO.githubUrl}
+             , MDFY_DT = SYSDATE
+         WHERE ID = #{id}
+           AND DEL_YN = 'N'
+    </update>
+    
+    <update id="updatePassword">
+    	UPDATE "USER"
+    	   SET PWD = #{password}
+    	     , PWD_CHANGE_DT = SYSDATE
+    	     , MDFY_DT = SYSDATE
+    	 WHERE ID = #{id}
+    	   AND DEL_YN = 'N'
+    </update>
+    
+    <update id="updateSalt">
+    	UPDATE SALT
+    	   SET SALT = #{salt}
+    	 WHERE ID = #{id}
     </update>
 </mapper>
