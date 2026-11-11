@@ -3,7 +3,7 @@
 - 대상: `MENU`, `MENU_ROLE` 테이블과 `com.learningworks.menu` 패키지
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-10
-- 상태: 설계 확정. 구현 전
+- 상태: 설계 확정. 백엔드 구현 완료 (4-7 제외, DB 연동 확인 전)
 
 이 문서는 백엔드 구현을 시작할 때 참고하는 설계입니다. 화면 설계는 `frontend/docs/design/menu-page-design.md`, 권한 체계는 `backend/docs/access-control-guide.md`, ACCESS 모듈과의 협의는 `backend/docs/access-role-collab/discussions.md`의 D-05를 함께 보세요.
 
@@ -185,12 +185,17 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 | `title` | 필수, 100자 이하. 앞뒤 공백 제거 후 저장. 같은 상위 메뉴 안에서 중복 불가(자기 자신 제외) | "메뉴 이름을 입력해주세요." / "메뉴 이름은 100자 이하로 입력해주세요." / 중복은 `MENU_TITLE_USED` |
 | `useYn` | 필수, `Y` 또는 `N` | "사용 여부가 올바르지 않습니다." |
 | `spread` | 중메뉴면 필수(`Y`/`N`), 그 외에는 무시하고 `N` 저장 (컬럼이 NOT NULL) | "펼침 여부가 올바르지 않습니다." |
-| `menuUrl` | 소메뉴면 필수, `/`로 시작, 공백 없음, 100자 이하. 그 외에는 무시하고 null 저장 | "메뉴 URL을 입력해주세요." / "메뉴 URL은 '/'로 시작해야 합니다." / "메뉴 URL은 100자 이하로 입력해주세요." |
-| `roleIds` | 배열(빈 배열 허용). 없는 역할이 있으면 거부. SUPER_ADMIN은 저장하지 않고 건너뜀 | — |
-| `parentId` (등록) | null(대메뉴) 또는 존재하는 대 · 중메뉴 | — |
+| `menuUrl` | 소메뉴면 필수, `/`로 시작, 공백 없음, 100자 이하. 그 외에는 무시하고 null 저장 | "메뉴 URL을 입력해주세요." / "메뉴 URL은 '/'로 시작해야 합니다." / "메뉴 URL에는 공백을 넣을 수 없습니다." / "메뉴 URL은 100자 이하로 입력해주세요." |
+| `roleIds` | 배열(빈 배열 허용, null 불가). 없는 역할이 있으면 거부. SUPER_ADMIN과 중복은 저장하지 않고 건너뜀 | null이면 "역할 목록을 입력해주세요." / 없는 역할은 `MENU_ROLE_INVALID` |
+| `parentId` (등록) | null(대메뉴) 또는 존재하는 대 · 중메뉴 | 없으면 `MENU_NOT_EXISTS` / 소메뉴면 `MENU_PARENT_INVALID` |
+| `menuIds` (순서 변경) | 비어 있지 않고 중복 없음. `parentId`는 null(대메뉴) 또는 존재하는 메뉴 | 빈 목록 · 중복은 `MENU_ORDER_INVALID` / 없는 `parentId`는 `MENU_NOT_EXISTS` |
 | `mdfyDt` (수정) | 화면이 받은 값 그대로 (생성 후 수정된 적 없으면 null) | 서버 값과 다르면 `MENU_OUTDATED` |
 
 백엔드는 프론트 라우트를 알 수 없으므로 `menuUrl`은 **형식만** 검사합니다. 실제 화면이 있는 URL만 고르게 하는 것은 프론트가 합니다.
+
+`spread` · `menuUrl`처럼 메뉴 단계에 따라 규칙이 달라지는 필드는 `@Valid`로 검사할 수 없어 서비스가 검사합니다. 이때는 `ValidationFailedException`(common)을 던지고, `@Valid` 실패와 같은 형식(`GLOBAL_INVALID_PARAMETER` + `validations`)으로 응답합니다.
+
+`MENU`의 `DEL_YN` 컬럼(2-3의 2단계 전까지 남아 있음)은 이 모듈의 쿼리에서 쓰지 않습니다.
 
 ### 4-4. 동작
 
