@@ -3,7 +3,7 @@
 - 대상 화면: `시스템 관리 > 메뉴 관리` (`/admin/system/menu`), 사이드바(`SideMenu.jsx`), 모든 화면의 URL 접근
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-10
-- 상태: 설계 확정. 구현 전
+- 상태: 설계 확정. 메뉴 관리 화면 구현 완료, 사이드바 · 가드 구현 전
 
 이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
 
@@ -57,10 +57,11 @@
 
 | 대상 | 상태 |
 | --- | --- |
-| 백엔드 `/menus` API | 구현 전 (`backend/docs/design/menu-design.md`) |
-| `components/admin/system/menu/Menu.jsx` | 빈 화면 (`<div>Menu</div>`) |
+| 백엔드 `/menus` API | 구현 완료 (`backend/docs/design/menu-design.md`) |
+| `components/admin/system/menu/Menu.jsx` | 메뉴 관리 화면 구현 완료 (9장 3단계). `menuSliceStore`는 만들었지만 사이드바는 아직 사용하지 않음 |
+| 라우트 `handle.menu` | 메뉴 관리 URL 선택지용으로 표시 완료. `routes` export 완료 |
 | `components/menu/SideMenu.jsx` | `menuData.js`의 고정 데이터를 그림. 현재 주소가 들어 있는 그룹만 처음에 펼침 |
-| `router/MainRouterProvider.jsx` | 메뉴 표시(`handle.menu`)와 가드 없음 |
+| `router/MainRouterProvider.jsx` | `handle.menu` 표시 완료. 가드 · `guardAs` 없음 |
 | 라우트 · 메뉴 등록 | "메뉴 관리" 라우트와 메뉴 항목은 등록되어 있음 |
 
 ---
