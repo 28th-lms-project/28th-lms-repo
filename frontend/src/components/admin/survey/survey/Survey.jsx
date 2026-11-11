@@ -336,16 +336,13 @@ export default function Survey() {
                       )}
                       {survey.type === "text" && (
                         <>
-                          {survey.surveyDataList.map((data) => (
-                            <label>
-                              <input
-                                name={survey.id}
-                                type="text"
-                                defaultValue={data.data}
-                              />
-                              {data.data}
-                            </label>
-                          ))}
+                          <label>
+                            <input
+                              name={survey.id}
+                              type="text"
+                              placeholder="  "
+                            />
+                          </label>
                         </>
                       )}
                     </div>
