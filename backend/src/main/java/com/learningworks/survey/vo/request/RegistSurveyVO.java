@@ -11,5 +11,4 @@ public class RegistSurveyVO {
 	private String group;
 	private String type;
 	
-	private List<RegistSurveyDataVO> surveyData;
 }

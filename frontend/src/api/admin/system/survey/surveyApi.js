@@ -29,7 +29,7 @@ export const updateSurveyData = (surveyId, surveyDataId, body) =>
 export const deleteSurvey = (surveyId) =>
   api.delete(`/admin/system/survey/${encodeURIComponent(surveyId)}`);
 
-export const deltedSurveyData = (surveyId, surveyDataId) =>
+export const deletedSurveyData = (surveyId, surveyDataId) =>
   api.delete(
     `/admin/system/survey/${encodeURIComponent(surveyId)}/data/${encodeURIComponent(surveyDataId)}`,
   );

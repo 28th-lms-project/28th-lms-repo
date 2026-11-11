@@ -35,7 +35,16 @@
  
 	 <update id="updateSurvey">
 	 UPDATE SURVEY
-	    SET SUBJECT = #{modifySurvey.subject}
+	 <set>
+	 <if test="modifySurvey.subject != null">
+	 	SUBJECT = #{modifySurvey.subject},
+	 </if>
+	 <if test="modifySurvey.type != null">
+	 	TYPE = #{modifySurvey.type},
+	 </if>
+	 </set>
+	    
+	    
 	  WHERE ID = #{surveyId}
 	 </update>
 	 
@@ -66,7 +75,7 @@
  	
  	<update id="updateSurveyData">
 	 UPDATE SURVEY_DATA
-	    SET DATA = #{modifySurveyData}
+	    SET DATA = #{modifySurveyData.data}
 	  WHERE ID = #{surveyDataId}
  	</update>
  	

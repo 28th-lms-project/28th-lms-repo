@@ -27,7 +27,7 @@ public interface SurveyDao {
 
 	SurveyDataVO selectSurveyDataById(String id);
 
-	int updateSurveyData(String surveyDataId, @Valid ModifySurveyDataVO modifySurveyData);
+	int updateSurveyData(@Param("surveyDataId") String surveyDataId, @Param("modifySurveyData") @Valid ModifySurveyDataVO modifySurveyData);
 
 	List<SurveyVO> selectAllSurveyByGroup(String group);
 

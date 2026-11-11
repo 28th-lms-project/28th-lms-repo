@@ -21,21 +21,21 @@ import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
-public class SurveyServiceImpl implements SurveyService{
+public class SurveyServiceImpl implements SurveyService {
 	private SurveyDao surveyDao;
 
 	@Override
 	@Transactional
 	public SurveyVO createSurvey(@Valid RegistSurveyVO registSurvey) {
-		if(registSurvey == null) {
+		if (registSurvey == null) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 		int insertCount = this.surveyDao.insertNewSurvey(registSurvey);
-		
-		if(insertCount > 0) {
+
+		if (insertCount > 0) {
 			System.out.println("설문이 등록되었습니다.");
 			SurveyVO survey = this.surveyDao.selectSurveyById(registSurvey.getId());
-			if(survey == null) {
+			if (survey == null) {
 				throw new LearningworksException(ErrorCode.SURVEY_FAILURE_CREATE);
 			}
 			return survey;
@@ -47,20 +47,25 @@ public class SurveyServiceImpl implements SurveyService{
 	@Transactional
 	public SurveyVO updateSurvey(ModifySurveyVO modifySurvey, String surveyId) {
 		if (surveyId == null || surveyId.isBlank() || modifySurvey == null) {
-            throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
-        }
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
 		SurveyVO survey = this.surveyDao.selectSurveyById(surveyId);
-		
-		if(survey == null) {
+
+		if (survey == null) {
 			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
 		}
-		
+
 		int updateRows = this.surveyDao.updateSurvey(surveyId, modifySurvey);
-		if(updateRows != 1) {
+		if (updateRows != 1) {
 			throw new LearningworksException(ErrorCode.SURVEY_FAILURE_UPDATE);
 		}
+		
+		if(modifySurvey.getType().equals("text")) {
+			this.surveyDao.deleteSurveyDatas(surveyId);
+		}
+		
 		SurveyVO updateSurvey = this.surveyDao.selectSurveyById(surveyId);
-		if(updateSurvey == null) {
+		if (updateSurvey == null) {
 			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
 		}
 		return updateSurvey;
@@ -69,16 +74,20 @@ public class SurveyServiceImpl implements SurveyService{
 	@Override
 	@Transactional
 	public SurveyDataVO createSurveyData(@Valid RegistSurveyDataVO registSurveyDataVO, String surveyId) {
-		
-		if(registSurveyDataVO == null) {
+
+		if (registSurveyDataVO == null) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
-		int insertCount = this.surveyDao.insertNewSurveyData(surveyId , registSurveyDataVO);
 		
-		if(insertCount > 0) {
+		SurveyVO survey = this.surveyDao.selectSurveyById(surveyId);
+		
+		
+		int insertCount = this.surveyDao.insertNewSurveyData(surveyId, registSurveyDataVO);
+
+		if (insertCount > 0) {
 			System.out.println("설문 답변이 등록되었습니다.");
 			SurveyDataVO surveyData = this.surveyDao.selectSurveyDataById(registSurveyDataVO.getId());
-			if(surveyData == null) {
+			if (surveyData == null) {
 				throw new LearningworksException(ErrorCode.SURVEY_DATA_FAILURE_CREATE);
 			}
 			return surveyData;
@@ -88,26 +97,27 @@ public class SurveyServiceImpl implements SurveyService{
 
 	@Override
 	@Transactional
-	public SurveyVO updateSurveyData(@Valid ModifySurveyDataVO modifySurveyData, String surveyId, String surveyDataId) {
+	public SurveyDataVO updateSurveyData(@Valid ModifySurveyDataVO modifySurveyData, String surveyId,
+			String surveyDataId) {
 		if (surveyDataId == null || surveyDataId.isBlank() || surveyId == null || surveyId.isBlank()) {
-            throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
-        }
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
 		SurveyDataVO surveyData = this.surveyDao.selectSurveyDataById(surveyDataId);
-		
-		if(surveyId == null) {
+
+		if (surveyId == null) {
 			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
 		}
-		
-		if(surveyData == null) {
+
+		if (surveyData == null) {
 			throw new LearningworksException(ErrorCode.SURVEY_DATA_NOT_EXISTS);
 		}
-		
+
 		int updateRows = this.surveyDao.updateSurveyData(surveyDataId, modifySurveyData);
-		if(updateRows != 1) {
+		if (updateRows != 1) {
 			throw new LearningworksException(ErrorCode.SURVEY_DATA_FAILURE_UPDATE);
 		}
-		SurveyVO updateSurveyData = this.surveyDao.selectSurveyById(surveyDataId);
-		if(updateSurveyData == null) {
+		SurveyDataVO updateSurveyData = this.surveyDao.selectSurveyDataById(surveyDataId);
+		if (updateSurveyData == null) {
 			throw new LearningworksException(ErrorCode.SURVEY_DATA_NOT_EXISTS);
 		}
 		return updateSurveyData;
@@ -117,7 +127,7 @@ public class SurveyServiceImpl implements SurveyService{
 	public SurveyListVO readAllSurveyByGroup(String group) {
 		List<SurveyVO> surveies = this.surveyDao.selectAllSurveyByGroup(group);
 		long surveyCount = this.surveyDao.selectSurveyCount(group);
-		
+
 		SurveyListVO surveyList = new SurveyListVO();
 		surveyList.setSurveyList(surveies);
 		surveyList.setCount(surveyCount);
@@ -127,26 +137,22 @@ public class SurveyServiceImpl implements SurveyService{
 	@Override
 	@Transactional
 	public String deleteSurvey(String surveyId) {
+		this.surveyDao.deleteSurveyDatas(surveyId);
 		int deletedRows = this.surveyDao.deleteOneSurvey(surveyId);
-		if(deletedRows == 0) {
+		if (deletedRows == 0) {
 			System.out.println("설문 문항을 삭제하는데 실패했습니다.");
 			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
 		}
-		int deletedData = this.surveyDao.deleteSurveyDatas(surveyId);
-		
-		if(deletedData == 0) {
-			System.out.println("설문 답변을 삭제하는데 실패했습니다");
-			throw new LearningworksException(ErrorCode.SURVEY_DATA_NOT_EXISTS);
-		}
+
 		return surveyId;
 	}
 
 	@Override
 	@Transactional
 	public String deleteSurveyData(String surveyId, String surveyDataId) {
-		// TODO Auto-generated method stub
-		return null;
+		int deleteRow = this.surveyDao.deleteOneSurveyData(surveyId, surveyDataId);
+
+		return surveyDataId;
 	}
 
-	
 }

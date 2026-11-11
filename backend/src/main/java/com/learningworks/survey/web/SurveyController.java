@@ -59,9 +59,9 @@ public class SurveyController {
 	}
 
 	@PutMapping("/admin/system/survey/{surveyId}/data/{surveyDataId}")
-	public ApiResponse<SurveyVO> updateSurveyData(@Valid @RequestBody ModifySurveyDataVO modifySurveyData,
+	public ApiResponse<SurveyDataVO> updateSurveyData(@Valid @RequestBody ModifySurveyDataVO modifySurveyData,
 			@PathVariable String surveyId, @PathVariable String surveyDataId) {
-		SurveyVO survey = this.surveyService.updateSurveyData(modifySurveyData, surveyId, surveyDataId);
+		SurveyDataVO survey = this.surveyService.updateSurveyData(modifySurveyData, surveyId, surveyDataId);
 		return ApiResponse.OK(survey);
 	}
 	

@@ -50,13 +50,56 @@ body {
 }
 .surveyList {
   width: 100%;
+  border: 1px solid #aaa;
+
+  border-radius: 10px 10px 0 0;
+
+  overflow: hidden;
 }
+
+.survey {
+  border: 1px solid #aaa;
+}
+
 .surveyList > ul {
   display: flex;
   justify-content: space-around;
-  padding: 10px;
+  /* padding: 10px; */
   background-color: #ccc;
   &.active {
     background-color: #fff;
   }
+  cursor: pointer;
+  & > li {
+    padding: 10px 50px 10px 50px;
+  }
+}
+
+.surveyForm {
+  padding: 10px 5px 10px 5px;
+}
+
+.surveySubject,
+.surveyData {
+  height: 30px;
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+.surveyForm > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  & > label {
+    margin-right: 1rem;
+  }
+  & > input {
+    width: 30%;
+  }
+}
+
+.surveyType {
+  width: 30%;
+  size: 10px;
 }

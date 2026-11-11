@@ -18,7 +18,7 @@ public interface SurveyService {
 
 	SurveyDataVO createSurveyData(@Valid RegistSurveyDataVO registSurveyDataVO, String surveyId);
 
-	SurveyVO updateSurveyData(@Valid ModifySurveyDataVO modifySurveyData, String surveyId, String surveyDataId);
+	SurveyDataVO updateSurveyData(@Valid ModifySurveyDataVO modifySurveyData, String surveyId, String surveyDataId);
 
 	SurveyListVO readAllSurveyByGroup(String group);
 
