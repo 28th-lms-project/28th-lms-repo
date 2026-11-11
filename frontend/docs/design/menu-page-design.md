@@ -23,7 +23,8 @@
 | 팝업 (`/popup/...`) | 같은 가드를 적용합니다. 소속 메뉴는 라우트에 직접 적습니다 (5-2) |
 | 메뉴를 받는 중 | 아무것도 그리지 않습니다 |
 | 비로그인 | 가드 대상 URL이면 `/login`으로 이동 |
-| SUPER_ADMIN | `MENU_ROLE`과 관계없이 모든 메뉴 표시 · 접근. 메뉴 관리 화면의 SUPER_ADMIN 체크박스는 **체크된 채로 비활성화** |
+| SUPER_ADMIN | `MENU_ROLE`과 관계없이 모든 메뉴 표시 · 접근. **미사용 메뉴도** 사이드바에 흐리게 "(미사용)"으로 표시하고 접근 가능. 메뉴 관리 화면의 SUPER_ADMIN 체크박스는 **체크된 채로 비활성화** |
+| 자기 잠금 방지 | SUPER_ADMIN이 아닌 관리자가 메뉴 관리 메뉴(와 상위 메뉴)에서 본인 역할 해제 · 미사용 · URL 변경 · 삭제를 하면 서버가 거부 (`MENU_SELF_LOCK`). 화면은 안내 문구와 서버 메시지 알림 (6-4) |
 | 접근 거부 | 화면 전체에 "권한이 없습니다" (권한 관리 화면과 같은 방식) |
 | 순서 변경 | HTML5 Drag and Drop. **같은 상위 메뉴 안에서만** |
 | UI 부품 | `src/components/sample`의 컴포넌트를 씁니다 (6-1) |
@@ -65,11 +66,14 @@
 | `getMyMenus(options)` | `GET /menus/me` | `{ superAdmin, menus, guardUrls }` | `GLOBAL_UNAUTHORIZED` |
 | `getMenus(options)` | `GET /menus` | `{ roles, menus }` | — |
 | `createMenu(menu)` | `POST /menus` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_PARENT_INVALID`, `MENU_URL_USED`, `MENU_ROLE_INVALID` |
-| `modifyMenu(menuId, menu)` | `PUT /menus/{menuId}` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_URL_USED`, `MENU_ROLE_INVALID` |
+| `modifyMenu(menuId, menu)` | `PUT /menus/{menuId}` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_URL_USED`, `MENU_ROLE_INVALID`, `MENU_SELF_LOCK` |
 | `modifyMenuOrder(parentId, menuIds)` | `PUT /menus/order` | `{ roles, menus }` | `MENU_ORDER_INVALID`, `MENU_ORDER_OUTDATED` |
-| `deleteMenu(menuId)` | `DELETE /menus/{menuId}` | 메뉴 1건 | `MENU_NOT_EXISTS`, `MENU_HAS_CHILDREN`, `MENU_IN_USE` |
+| `deleteMenu(menuId)` | `DELETE /menus/{menuId}` | 메뉴 1건 | `MENU_NOT_EXISTS`, `MENU_HAS_CHILDREN`, `MENU_IN_USE`, `MENU_SELF_LOCK` |
 
-메뉴 객체 필드: `id`, `title`, `parentId`, `menuOrder`, `useYn`, `spread`, `menuUrl`, `roleIds`, `crtDt`, `mdfyDt`. `getMyMenus`의 메뉴에는 `useYn` · `roleIds` · 날짜가 없습니다.
+메뉴 객체 필드: `id`, `title`, `parentId`, `menuOrder`, `useYn`, `spread`, `menuUrl`, `roleIds`, `crtDt`, `mdfyDt`. `getMyMenus`의 메뉴에는 `roleIds` · 날짜가 없습니다. `getMyMenus`의 `useYn`은 SUPER_ADMIN만 `N`을 받을 수 있습니다.
+
+- `spread`: 항상 `Y` 또는 `N`. 대 · 소메뉴는 서버가 `N`으로 저장하므로 의미가 없습니다 (화면에서는 중메뉴만 펼침 체크박스 표시).
+- `menuUrl`: 소메뉴만 값이 있고 100자 이하입니다.
 
 권한 코드: 화면 `MENU_READ`, 추가 `MENU_CREATE`, 저장 · 순서 변경 `MENU_UPDATE`, 삭제 `MENU_DELETE`.
 
@@ -181,37 +185,52 @@
 
 ### 6-4. 기능별 상세
 
-**추가**
+#### 추가
+
 - 대메뉴 열은 항상, 중 · 소메뉴 열은 상위 메뉴를 골랐을 때만 활성화.
 - 누르면 그 열의 상세가 빈 입력(`mode: "new"`, 사용 체크, 펼침 해제, 역할 없음)이 됩니다. 저장하면 `createMenu`.
 - 새 메뉴는 같은 상위 메뉴의 맨 뒤에 들어갑니다.
 
-**저장**
+#### 저장
+
 - `mode`가 `new`면 `createMenu`, 아니면 `modifyMenu`.
 - 입력 검사(백엔드와 같은 규칙): 이름 필수 · 100자 이하, 소메뉴 URL 필수.
 - 성공하면 `getMenus` 다시 조회 + 저장한 메뉴 선택 + 내 메뉴 다시 조회(7장).
 
-**취소**
+#### 취소
+
 - 입력값을 마지막 저장 값으로 되돌립니다. `new` 모드면 상세를 비우고 이전 선택으로 돌아갑니다.
 
-**삭제**
+#### 삭제
+
 - `Confirm`으로 확인 후 `deleteMenu`. `new` 모드에서는 비활성화.
 - `MENU_HAS_CHILDREN` · `MENU_IN_USE`는 서버 메시지를 그대로 알림으로 표시.
 
-**저장하지 않은 변경사항**
+#### 저장하지 않은 변경사항
+
 - 입력을 바꾼 상태에서 다른 메뉴를 고르거나 상위 선택을 바꾸면 `Confirm`("저장하지 않은 변경사항이 있습니다. 이동할까요?")을 띄웁니다.
 
-**순서 변경**
+#### 순서 변경
+
 - 권한 관리 화면과 같은 HTML5 Drag and Drop. 같은 열(같은 상위 메뉴) 안에서만.
 - 놓으면 `modifyMenuOrder(parentId, 그 열의 전체 ID 목록)`. 성공하면 응답으로 목록 교체 + 내 메뉴 다시 조회.
 - `MENU_ORDER_OUTDATED`면 "메뉴 목록이 변경되었습니다…" 알림 후 목록 다시 조회.
 
-**URL 선택 (소메뉴만)**
+#### URL 선택 (소메뉴만)
+
 - 선택지: `getMenuUrlOptions(routes)` 중 **다른 메뉴가 쓰지 않는** URL. 표시는 `crumb (URL)`.
 - 저장된 URL이 선택지에 없으면(라우트가 없어짐) `(등록되지 않은 경로) /xxx`로 맨 위에 보여 줍니다.
 
-**역할 체크박스**
+#### 역할 체크박스
+
 - SUPER_ADMIN은 항상 체크 · 비활성. 저장할 때 `roleIds`에 넣지 않습니다.
+
+#### 자기 잠금 방지 (메뉴 관리 메뉴)
+
+- 보호 대상: `menuUrl`이 `MENU_MANAGEMENT_URL`(`"/admin/system/menu"`, `menuUtils.js` 상수)인 소메뉴와 그 상위 중 · 대메뉴. 백엔드 `MenuConstants`와 같은 값입니다.
+- 내가 SUPER_ADMIN이 아니면, 보호 대상 메뉴의 상세에 안내 문구를 표시합니다: "메뉴 관리 화면이 속한 메뉴입니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 저장되지 않습니다."
+- 실제 차단은 서버가 합니다. `MENU_SELF_LOCK`이면 서버 메시지를 알림으로 띄우고 입력값은 그대로 둡니다 (사용자가 [취소]로 되돌림).
+- 다른 역할의 체크 해제는 그대로 저장됩니다.
 
 ### 6-5. 권한별 표시
 
@@ -242,6 +261,7 @@
 
 - `menus`를 대(섹션) → 중(그룹) → 소(링크) 트리로 만들어 `menuOrder` 순으로 그립니다.
 - 소메뉴가 하나도 없는 중메뉴, 중메뉴가 하나도 없는 대메뉴는 그리지 않습니다.
+- `useYn = 'N'`인 메뉴(SUPER_ADMIN만 받음)는 흐리게 표시하고 이름 뒤에 "(미사용)"을 붙입니다. 미사용 중메뉴 아래의 소메뉴도 그대로 보입니다.
 - 처음 펼칠 그룹: `spread = 'Y'`인 그룹 + 현재 주소가 들어 있는 그룹 (지금 동작 유지).
 - `NavLink`의 `end`는 URL이 `/`일 때만 켭니다 (지금 `menuData.js`에서 `end`를 쓴 곳은 `/`와 `/sample`이고, `/sample`은 하위 경로가 없어 차이가 없습니다).
 - 그룹을 펼친 상태는 지금처럼 이름이 아니라 **메뉴 ID**로 기억합니다 (같은 이름 그룹이 생길 수 있으므로).
@@ -297,10 +317,14 @@ src/components/admin/system/menu/Menu.module.css
 | M5 | 비로그인으로 `/admin/course/add` | `/login`으로 이동 |
 | M6 | 과정 목록이 허용된 TUTOR로 숙제 팝업 열기 | 팝업 표시 (`guardAs`) |
 | M7 | 메뉴 관리에서 소메뉴 이름 변경 · 미사용 · 역할 해제 후 저장 | 내 사이드바 즉시 반영 |
-| M8 | 중메뉴 미사용 | 그 아래 소메뉴가 사이드바에서 사라지고 URL 접근도 거부 |
+| M8 | 중메뉴 미사용 (SUPER_ADMIN이 아닌 역할) | 그 아래 소메뉴가 사이드바에서 사라지고 URL 접근도 거부 |
+| M8-1 | 중메뉴 미사용 (SUPER_ADMIN) | 사이드바에 흐리게 "(미사용)"으로 보이고 그 아래 화면에 들어갈 수 있음 |
 | M9 | `spread` 켠 중메뉴 | 새로고침 시 펼쳐진 상태 |
 | M10 | 드래그로 순서 변경 | 목록 · 사이드바 순서 변경 |
 | M11 | 하위 메뉴가 있는 대메뉴 삭제 | 서버 메시지 알림, 삭제 안 됨 |
 | M12 | URL 드롭다운 | 이미 쓰인 URL과 파라미터 경로(`:id`)가 없음 |
 | M13 | 입력 변경 후 다른 메뉴 선택 | 확인 창 |
 | M14 | `MENU_UPDATE`만 없는 역할 | 드래그 손잡이 없음, 입력 비활성 |
+| M15 | ADMIN으로 메뉴 관리 소메뉴 상세 열기 | 자기 잠금 안내 문구 표시 |
+| M16 | ADMIN이 메뉴 관리 소메뉴에서 본인 역할 해제 후 저장 | 서버 메시지 알림, 저장 안 됨, 메뉴 관리 화면 계속 사용 가능 |
+| M17 | SUPER_ADMIN으로 같은 작업 | 저장됨, 안내 문구 없음 |

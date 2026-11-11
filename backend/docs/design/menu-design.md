@@ -21,7 +21,8 @@
 | MENU_ROLE ID | 팀 공통 규칙을 따릅니다 (`MR-YYYYMMDD-000001`, 생성식은 2-4) |
 | 메뉴 단계 | 3단계 고정. 대메뉴(`PARENT_ID` null) → 중메뉴 → 소메뉴. 소메뉴 아래에는 메뉴를 만들 수 없습니다 |
 | 상위 메뉴 변경 | 지원하지 않습니다. 순서는 같은 상위 메뉴 안에서만 바꿉니다 |
-| SUPER_ADMIN | `MENU_ROLE`과 관계없이 모든 메뉴를 봅니다. SUPER_ADMIN의 `MENU_ROLE` 행은 저장하지 않습니다 |
+| SUPER_ADMIN | `MENU_ROLE`과 관계없이 모든 메뉴를 봅니다. **미사용(`USE_YN = N`) 메뉴도** 사이드바에 받고 접근할 수 있습니다. SUPER_ADMIN의 `MENU_ROLE` 행은 저장하지 않습니다 |
+| 자기 잠금 방지 | SUPER_ADMIN이 아닌 사용자가 **본인이 메뉴 관리 화면에 다시 들어올 수 없게 되는 변경**을 저장하면 거부합니다 (`MENU_SELF_LOCK`, 4-6) |
 | 내 메뉴 API 권한 | `@LoginRequired` |
 | 메뉴 관리 API 권한 | `@RequireAction(domain = "MENU", ...)` (4장) |
 | ACTION의 메뉴 컬럼 3개 | 그대로 둡니다. 권한별 접근 권한 관리 화면(`/admin/system/access-role`)의 필터로 계속 쓰고, 메뉴 삭제 때 참조 검사에도 씁니다 |
@@ -35,13 +36,13 @@
 
 | 컬럼 | 타입 | 필수 | 설명 |
 | --- | --- | --- | --- |
-| `ID` | `VARCHAR2` | PK | `MN-YYYYMMDD-000001` |
-| `TITLE` | `VARCHAR2(100)` | Y | 메뉴 이름 |
-| `PARENT_ID` | `VARCHAR2` | | 상위 메뉴 ID. 대메뉴는 null |
-| `MENU_ORDER` | `NUMBER` | Y | 같은 상위 메뉴 안의 순서. 1부터 |
-| `USE_YN` | `CHAR(1)` | Y | `Y` 사용 / `N` 미사용(사이드바에서 숨김, URL 접근 거부) |
-| `SPREAD` | `CHAR(1)` | | **중메뉴만** 사용. `Y`면 화면을 처음 열 때 펼친 상태로 표시. 대 · 소메뉴는 null |
-| `MENU_URL` | `VARCHAR2` | | **소메뉴만** 사용(필수). 대 · 중메뉴는 null. UNIQUE |
+| `ID` | `VARCHAR2(20 CHAR)` | PK | `MN-YYYYMMDD-000001` |
+| `TITLE` | `VARCHAR2(100 CHAR)` | Y | 메뉴 이름 |
+| `PARENT_ID` | `VARCHAR2(20 BYTE)` | | 상위 메뉴 ID. 대메뉴는 null |
+| `MENU_ORDER` | `NUMBER` | Y | 같은 상위 메뉴 안의 순서. 1부터. DB는 null 허용이지만 코드가 항상 채움 |
+| `USE_YN` | `CHAR(1 CHAR)` | Y | `Y` 사용 / `N` 미사용(SUPER_ADMIN 외에는 사이드바에서 숨김, URL 접근 거부) |
+| `SPREAD` | `CHAR(1 CHAR)` | Y | **중메뉴만** 의미가 있음. `Y`면 화면을 처음 열 때 펼친 상태로 표시. 대 · 소메뉴는 항상 `N` 저장 |
+| `MENU_URL` | `VARCHAR2(100 CHAR)` | | **소메뉴만** 사용(필수). 대 · 중메뉴는 null. UNIQUE |
 | `CRT_DT` | `DATE` | Y | 생성일 |
 | `MDFY_DT` | `DATE` | | 수정일. 생성 직후에는 null |
 
@@ -49,12 +50,14 @@
 
 | 컬럼 | 타입 | 필수 | 설명 |
 | --- | --- | --- | --- |
-| `ID` | `VARCHAR2` | PK | `MR-YYYYMMDD-000001` |
-| `MENU_ID` | `VARCHAR2` | Y | `MENU.ID` |
-| `ROLE_ID` | `VARCHAR2` | Y | `ROLE.ROLE_ID` |
+| `ID` | `VARCHAR2(20 CHAR)` | PK | `MR-YYYYMMDD-000001` |
+| `MENU_ID` | `VARCHAR2(20 CHAR)` | Y | `MENU.ID` |
+| `ROLE_ID` | `VARCHAR2(20 CHAR)` | Y | `ROLE.ROLE_ID` |
 | `CRT_DT` | `DATE` | Y | 생성일 |
 
 UNIQUE (`MENU_ID`, `ROLE_ID`)
+
+외래 키(FK)는 두지 않습니다 (의도된 설계). 상위 메뉴 존재, 하위 메뉴 · ACTION 참조, 역할 존재 여부는 서비스 코드가 검사합니다 (4-3, 4-4). 시퀀스 `SEQ_MENU_PK`, `SEQ_MENU_ROLE_PK`는 생성되어 있습니다.
 
 ### 2-3. 변경 스크립트 (DB 담당: 프로젝트 담당자가 직접 실행)
 
@@ -89,6 +92,8 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 
 ### 2-5. 초기 데이터
 
+현재 `MENU` · `MENU_ROLE`에는 메뉴 구현 전에 ACCESS 개발용으로 넣은 데이터(숫자 ID, 자리표시 값)가 있습니다. **메뉴 구현 후 모든 데이터를 이 문서의 규칙에 맞게 새로 만듭니다.** 이때 ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID`도 새 메뉴 ID로 다시 지정해야 하므로 ACCESS 담당자와 함께 진행합니다 (기존 ID를 지우면 권한별 접근 권한 관리 화면의 필터가 비게 됨).
+
 메뉴 가드(프론트)를 켜기 **전에** 지금 `frontend/src/components/menu/menuData.js`의 구성을 `MENU`에 넣고, 역할별 `MENU_ROLE`을 채워야 합니다. 비어 있으면 SUPER_ADMIN이 아닌 사용자는 대시보드 외에 아무 화면도 열 수 없습니다.
 
 - 대메뉴 = 섹션(Main / My Page / System Management), 중메뉴 = 그룹, 소메뉴 = 링크.
@@ -99,10 +104,12 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 
 ## 3. 메뉴 판정 규칙
 
-"내 메뉴"에 들어가는 조건입니다. **자기 자신과 모든 상위 메뉴가** 아래를 만족해야 합니다.
+"내 메뉴"에 들어가는 조건입니다.
 
-1. `USE_YN = 'Y'`
-2. SUPER_ADMIN이거나, `MENU_ROLE`에 (메뉴, 내 역할) 행이 있음
+- **SUPER_ADMIN**: 모든 메뉴 (미사용 포함).
+- **그 외 역할**: **자기 자신과 모든 상위 메뉴가** 아래 두 조건을 모두 만족하는 메뉴.
+  1. `USE_YN = 'Y'`
+  2. `MENU_ROLE`에 (메뉴, 내 역할) 행이 있음
 
 예: 중메뉴 "과정 관리"가 STUDENT에게 허용되지 않았다면, 그 아래 소메뉴는 STUDENT에게 허용되어 있어도 보이지 않습니다.
 
@@ -132,15 +139,16 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 {
   "superAdmin": false,
   "menus": [
-    { "id": "MN-...", "title": "System Management", "parentId": null, "menuOrder": 3, "spread": null, "menuUrl": null },
-    { "id": "MN-...", "title": "과정 관리", "parentId": "MN-...", "menuOrder": 1, "spread": "Y", "menuUrl": null },
-    { "id": "MN-...", "title": "과정 목록", "parentId": "MN-...", "menuOrder": 1, "spread": null, "menuUrl": "/admin/course/list" }
+    { "id": "MN-...", "title": "System Management", "parentId": null, "menuOrder": 3, "useYn": "Y", "spread": "N", "menuUrl": null },
+    { "id": "MN-...", "title": "과정 관리", "parentId": "MN-...", "menuOrder": 1, "useYn": "Y", "spread": "Y", "menuUrl": null },
+    { "id": "MN-...", "title": "과정 목록", "parentId": "MN-...", "menuOrder": 1, "useYn": "Y", "spread": "N", "menuUrl": "/admin/course/list" }
   ],
   "guardUrls": ["/admin/course/add", "/admin/course/list", "..."]
 }
 ```
 
 - `menus`: 3장 규칙을 통과한 메뉴만. 평평한 목록, 정렬은 (단계, `PARENT_ID`, `MENU_ORDER`).
+- `useYn`: SUPER_ADMIN이 받은 미사용 메뉴를 사이드바에서 흐리게 표시하는 데 씁니다. 다른 역할은 항상 `Y`만 받습니다.
 - `guardUrls`: **모든** 소메뉴의 `MENU_URL` (미사용 · 미허용 포함). 프론트 가드가 "이 URL이 어느 메뉴 소속인지" 찾을 때 씁니다. 미사용 메뉴도 넣어야, 숨긴 메뉴의 URL이 더 짧은 다른 메뉴에 매칭되어 열리는 일이 없습니다.
 - URL 목록은 이미 프론트 코드에 들어 있는 정보라서 로그인 사용자 모두에게 보내도 됩니다.
 
@@ -152,7 +160,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
   "menus": [
     {
       "id": "MN-...", "title": "과정 목록", "parentId": "MN-...", "menuOrder": 1,
-      "useYn": "Y", "spread": null, "menuUrl": "/admin/course/list",
+      "useYn": "Y", "spread": "N", "menuUrl": "/admin/course/list",
       "roleIds": ["ROLE_ADMIN", "ROLE_TUTOR"],
       "crtDt": "2026-11-10 14:03", "mdfyDt": null
     }
@@ -171,8 +179,8 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 | --- | --- | --- |
 | `title` | 필수, 100자 이하 | "메뉴 이름을 입력해주세요." / "메뉴 이름은 100자 이하로 입력해주세요." |
 | `useYn` | 필수, `Y` 또는 `N` | "사용 여부가 올바르지 않습니다." |
-| `spread` | 중메뉴면 필수(`Y`/`N`), 그 외에는 무시하고 null 저장 | "펼침 여부가 올바르지 않습니다." |
-| `menuUrl` | 소메뉴면 필수, `/`로 시작, 공백 없음, 컬럼 길이 이하. 그 외에는 무시하고 null 저장 | "메뉴 URL을 입력해주세요." / "메뉴 URL은 '/'로 시작해야 합니다." |
+| `spread` | 중메뉴면 필수(`Y`/`N`), 그 외에는 무시하고 `N` 저장 (컬럼이 NOT NULL) | "펼침 여부가 올바르지 않습니다." |
+| `menuUrl` | 소메뉴면 필수, `/`로 시작, 공백 없음, 100자 이하. 그 외에는 무시하고 null 저장 | "메뉴 URL을 입력해주세요." / "메뉴 URL은 '/'로 시작해야 합니다." / "메뉴 URL은 100자 이하로 입력해주세요." |
 | `roleIds` | 배열(빈 배열 허용). 없는 역할이 있으면 거부. SUPER_ADMIN은 저장하지 않고 건너뜀 | — |
 | `parentId` (등록) | null(대메뉴) 또는 존재하는 대 · 중메뉴 | — |
 
@@ -185,6 +193,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 - **순서 변경**: `menuIds`는 해당 상위 메뉴의 **현재 하위 메뉴 전체**여야 합니다. 개수 · 구성이 다르면 `MENU_ORDER_OUTDATED`. 받은 순서대로 1부터 다시 매깁니다 (역할 순서 변경과 같은 방식).
 - **삭제**: 하위 메뉴가 있으면 `MENU_HAS_CHILDREN`, ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID` 중 하나라도 참조하면 `MENU_IN_USE`. 통과하면 `MENU_ROLE` 행 삭제 → `MENU` 삭제 → 같은 상위 메뉴의 순서를 1부터 다시 매김. 한 트랜잭션.
 - 역할 삭제 시 `MENU_ROLE` 물리 삭제는 이미 `RoleDaoMapper.deleteMenuRoleByRoleId`가 합니다 (변경 없음).
+- 수정 · 삭제는 4-6의 자기 잠금 검사를 먼저 통과해야 합니다.
 
 ### 4-5. ErrorCode (추가)
 
@@ -198,6 +207,27 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 | `MENU_ORDER_INVALID` | 400 | "메뉴 순서 정보가 올바르지 않습니다." |
 | `MENU_ORDER_OUTDATED` | 409 | "메뉴 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요." |
 | `MENU_ROLE_INVALID` | 400 | "존재하지 않는 역할이 포함되어 있습니다." |
+| `MENU_SELF_LOCK` | 409 | "저장하면 본인이 메뉴 관리 화면에 들어올 수 없게 됩니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 다른 관리자나 최고 관리자에게 요청해주세요." |
+
+### 4-6. 자기 잠금 방지 (`MENU_SELF_LOCK`)
+
+메뉴 관리 API는 `@RequireAction`이라 SUPER_ADMIN이 아니어도 메뉴를 바꿀 수 있습니다. 관리자가 실수로 자기 역할을 빼면 메뉴 관리 화면에 다시 들어올 수 없고, SUPER_ADMIN이 복구해야 합니다. 이를 서버에서 막습니다.
+
+**보호 대상 메뉴**: `MENU_URL`이 `MenuConstants.MENU_MANAGEMENT_URL`(`"/admin/system/menu"`)인 소메뉴와 그 상위 메뉴 2개(중 · 대메뉴). 이 상수는 프론트 라우트 경로와 맞물리므로, 경로를 바꾸면 함께 바꿔야 합니다.
+
+**검사 조건**: 요청자가 SUPER_ADMIN이 **아니고**, 대상 메뉴가 보호 대상이며, 아래 중 하나에 해당하면 거부합니다.
+
+| 요청 | 거부하는 경우 |
+| --- | --- |
+| `PUT /menus/{menuId}` | `roleIds`에서 **요청자의 역할**이 빠짐 |
+| `PUT /menus/{menuId}` | `useYn`이 `N` |
+| `PUT /menus/{menuId}` | 메뉴 관리 소메뉴의 `menuUrl`이 바뀜 |
+| `DELETE /menus/{menuId}` | 보호 대상 메뉴 삭제 (하위 메뉴 검사보다 먼저) |
+
+- 다른 역할을 빼는 것은 허용합니다 (관리자가 의도한 권한 조정).
+- SUPER_ADMIN은 항상 들어올 수 있으므로 검사하지 않습니다.
+- 메뉴 관리 메뉴가 아직 없으면(초기 데이터 입력 전) 보호 대상도 없습니다. 이때 `/admin/system/menu`는 어느 메뉴에도 속하지 않아 SUPER_ADMIN만 들어갈 수 있으므로, 처음 등록은 SUPER_ADMIN이 합니다.
+- 권한 코드 쪽(`MENU_READ` 제거)은 따로 막을 필요가 없습니다. 권한 저장(`/access-role/save`)이 SUPER_ADMIN 전용이기 때문입니다.
 
 ---
 
@@ -213,6 +243,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 
 ```text
 backend/src/main/java/com/learningworks/menu/
+  MenuConstants.java   (MENU_MANAGEMENT_URL)
   web/MenuController.java
   service/MenuService.java, MenuServiceImpl.java
   dao/MenuDao.java
@@ -241,9 +272,9 @@ ACTION의 메뉴 컬럼 3개는 바꾸지 않습니다. 메뉴의 상위 메뉴�
 | # | 시나리오 | 기대 결과 |
 | --- | --- | --- |
 | B1 | 비로그인으로 `GET /menus/me` | 401 |
-| B2 | SUPER_ADMIN으로 `GET /menus/me` | `superAdmin: true`, 미사용을 뺀 모든 메뉴 |
+| B2 | SUPER_ADMIN으로 `GET /menus/me` | `superAdmin: true`, 미사용을 포함한 모든 메뉴 (`useYn`으로 구분) |
 | B3 | 중메뉴가 미허용인 역할로 `GET /menus/me` | 그 아래 소메뉴가 없음 |
-| B4 | `USE_YN = 'N'` 소메뉴 | `menus`에 없고 `guardUrls`에는 있음 |
+| B4 | `USE_YN = 'N'` 소메뉴 (SUPER_ADMIN이 아닌 역할) | `menus`에 없고 `guardUrls`에는 있음 |
 | B5 | `MENU_READ` 없는 역할로 `GET /menus` | 403 |
 | B6 | 소메뉴 아래에 등록 | `MENU_PARENT_INVALID` |
 | B7 | 같은 URL로 소메뉴 두 개 | 두 번째에서 `MENU_URL_USED` |
@@ -251,3 +282,7 @@ ACTION의 메뉴 컬럼 3개는 바꾸지 않습니다. 메뉴의 상위 메뉴�
 | B9 | 하위 메뉴가 있는 메뉴 삭제 / ACTION이 참조하는 메뉴 삭제 | `MENU_HAS_CHILDREN` / `MENU_IN_USE` |
 | B10 | 순서 변경 중 다른 사람이 같은 상위 메뉴에 메뉴 추가 | `MENU_ORDER_OUTDATED` |
 | B11 | `roleIds`에 `ROLE_SUPER_ADMIN` 포함해서 저장 | 저장은 성공, SUPER_ADMIN 행은 생기지 않음 |
+| B12 | ADMIN이 메뉴 관리 소메뉴 · 시스템 관리 중메뉴 · 대메뉴에서 ROLE_ADMIN 해제 | 각각 `MENU_SELF_LOCK` |
+| B13 | ADMIN이 메뉴 관리 소메뉴를 미사용 · URL 변경 · 삭제 | 각각 `MENU_SELF_LOCK` |
+| B14 | ADMIN이 메뉴 관리 소메뉴에서 ROLE_TUTOR만 해제 | 성공 |
+| B15 | SUPER_ADMIN이 메뉴 관리 소메뉴에서 모든 역할 해제 | 성공 (SUPER_ADMIN은 검사 안 함) |
