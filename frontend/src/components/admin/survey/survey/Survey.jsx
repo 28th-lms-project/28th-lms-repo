@@ -15,8 +15,8 @@ import {
 } from "../../../../api/admin/system/survey/surveyApi";
 import { surveyActions } from "../../../../store/slices/surveySliceStore";
 import Select from "react-select";
-import { icons } from "../../../sample/input/icons";
 import { IconButton } from "../../../sample/input/IconButton";
+import { SUBJECTS } from "../../test/test/subjects";
 
 export default function Survey() {
   /** 설문 타입에 단일, 다중, 직접입력 3가지가 있어
@@ -32,7 +32,7 @@ export default function Survey() {
   const { surveyList } = useSelector((state) => state.survey);
   const dispatch = useDispatch();
 
-  const [selectedSubject, setSelectedSubject] = useState("Course");
+  const [selectedSubject, setSelectedSubject] = useState(SUBJECTS[0].value);
   const [selectGroup, setSelectGroup] = useState("pre");
 
   const currentCourse = selectedSubject;
@@ -145,7 +145,7 @@ export default function Survey() {
   const deleteButtonHandler = (surveyId) => {
     (async () => {
       try {
-        const deleteResult = await deleteSurvey(surveyId);
+        await deleteSurvey(surveyId);
         dispatch(surveyActions.deleteSurvey({ surveyId }));
       } catch (e) {
         alert(e.message);
@@ -195,18 +195,18 @@ export default function Survey() {
             >
               수강
             </li>
-            {courseList.map((course) => (
+            {SUBJECTS.map((subject) => (
               <li
-                key={course.id}
+                key={subject.value}
                 onClick={() => {
-                  setSelectedSubject(course.courseName);
+                  setSelectedSubject(subject.label);
                 }}
                 className={
-                  (currentCourse === course.courseName && style.active) ||
+                  (selectedSubject === subject.label && style.active) ||
                   undefined
                 }
               >
-                {course.courseName}
+                {subject.label}
               </li>
             ))}
           </ul>

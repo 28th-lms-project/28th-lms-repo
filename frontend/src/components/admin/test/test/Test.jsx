@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { testActions } from "../../../../store/slices/testSliceStore";
 import AddTest from "./AddTest";
 import UpdateTest from "./UpdateTest";
+import { SUBJECTS } from "./subjects";
 
 const INPUT_TYPE = { "객관식-다항": "checkbox" };
 
@@ -20,17 +21,10 @@ const getCorrectNumbers = (correctAnswer) => {
 };
 
 export default function Test() {
-  const subjects = [
-    { value: "JAVA", label: "JAVA" },
-    { value: "TEST", label: "TEST" },
-    { value: "CSS", label: "CSS" },
-    { value: "FRONTEND", label: "REACT" },
-    { value: "DATABASE", label: "DB" },
-  ];
   const { questions } = useSelector((state) => state.test);
   const dispatch = useDispatch();
 
-  const [selectedSubjectId, setSelectedSubjectId] = useState(subjects[0].value);
+  const [selectedSubjectId, setSelectedSubjectId] = useState(SUBJECTS[0].value);
   const [showAnswer, setShowAnswer] = useState(false);
 
   useEffect(() => {
@@ -58,7 +52,7 @@ export default function Test() {
       <div className={style.testContainer}>
         <div className={style.testHeader}>
           <ul className={style.testCourseList}>
-            {subjects.map((subject) => (
+            {SUBJECTS.map((subject) => (
               <li
                 key={subject.value}
                 onClick={() => setSelectedSubjectId(subject.value)}
