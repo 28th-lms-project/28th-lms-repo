@@ -10,6 +10,10 @@
     background-color: #ddd !important;
 }
 
+.gridItemActive:hover {
+    background-color: #d0d0d0 !important;
+}
+
 .grid {
     background-color: #fff;
     margin: 0;

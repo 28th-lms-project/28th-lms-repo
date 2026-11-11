@@ -35,7 +35,6 @@ const router = createBrowserRouter([
     path: "/popup/homework/:courseid/:homeworkId",
     element: <HomeworkDetails />,
   },
-  { path: "/login", element: <Login /> },
   {
     path: "/",
     element: <MainLayout />,
