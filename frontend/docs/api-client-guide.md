@@ -58,6 +58,7 @@ import { api } from "../../../common/apiClient";
 | `api.post(url, data?, options?)`      | POST   | `body`                       |
 | `api.put(url, data?, options?)`       | PUT    | `body`                       |
 | `api.delete(url, params?, options?)`  | DELETE | `body`                       |
+| `api.download(url, params?, options?)` | GET   | `Blob` (파일 다운로드 · 인증이 필요한 이미지 표시) |
 
 | 인자      | 설명                                                                                                   |
 | --------- | ------------------------------------------------------------------------------------------------------ |
