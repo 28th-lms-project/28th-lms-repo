@@ -11,7 +11,9 @@ import com.learningworks.member.dao.MemberDao;
 import com.learningworks.member.vo.request.MemberCreateVO;
 import com.learningworks.member.vo.request.MemberSearchVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
+import com.learningworks.member.vo.request.ModifyMemberVO;
 import com.learningworks.member.vo.request.ModifyPasswordVO;
+import com.learningworks.member.vo.request.ResetPasswordVO;
 import com.learningworks.member.vo.response.MemberDetailVO;
 import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
@@ -173,4 +175,54 @@ public class MemberServiceImpl implements MemberService {
     }
     return detail;
   }
+
+  @Transactional
+  @Override
+  public MemberDetailVO updateMember(String actorId, String targetId, ModifyMemberVO modifyVO) {
+    this.roleAssignPolicy.checkManageable(actorId, targetId);
+    int updatedRows = this.memberDao.updateMember(targetId, modifyVO);
+    if (updatedRows == 0) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+
+    return this.memberDao.selectMemberDetail(targetId);
+  }
+
+  @Transactional
+  @Override
+  public void deleteMember(String actorId, String targetId) {
+    this.roleAssignPolicy.checkManageable(actorId, targetId);
+    int updatedRows = this.memberDao.deleteMember(targetId);
+    if (updatedRows == 0) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+
+  }
+
+  @Transactional
+  @Override
+  public void resetPassword(String actorId, String targetId, ResetPasswordVO resetPasswordVO) {
+    this.roleAssignPolicy.checkManageable(actorId, targetId);
+
+    String salt = SHA.generateSalt();
+    String encryptedPassword = SHA.getEncrypt(resetPasswordVO.getPassword(), salt);
+    if (this.memberDao.resetPassword(targetId, encryptedPassword) == 0) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+    if (this.memberDao.updateSalt(targetId, salt, actorId) == 0) {
+      throw new LearningworksException(ErrorCode.GLOBAL_SYSTEM_ERROR);
+    }
+  }
+
+  @Transactional
+  @Override
+  public MemberDetailVO changeRole(String actorId, String targetId, String newRoleId) {
+    this.roleAssignPolicy.checkAssignable(actorId, targetId, newRoleId);
+    int updatedRows = this.memberDao.updateBaseRole(targetId, newRoleId);
+    if (updatedRows == 0) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+    return this.memberDao.selectMemberDetail(targetId);
+  }
+
 }

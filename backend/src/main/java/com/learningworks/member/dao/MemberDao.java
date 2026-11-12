@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Param;
 import com.learningworks.member.vo.request.MemberCreateVO;
 import com.learningworks.member.vo.request.MemberSearchVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
+import com.learningworks.member.vo.request.ModifyMemberVO;
 import com.learningworks.member.vo.response.MemberDetailVO;
 import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
@@ -47,4 +48,12 @@ public interface MemberDao {
   List<MemberListVO> selectMemberList(MemberSearchVO searchVO);
 
   MemberDetailVO selectMemberDetail(String id);
+
+  int updateMember(@Param("id") String id, @Param("modifyVO") ModifyMemberVO modifyVO);
+
+  int deleteMember(String id);
+
+  int resetPassword(@Param("id") String id, @Param("password") String password);
+
+  int updateBaseRole(@Param("id") String id, @Param("roleId") String roleId);
 }
