@@ -22,4 +22,4 @@ export const deleteTestQuestion = (questionId) =>
   api.delete(`/admin/system/test/${encodeURIComponent(questionId)}`);
 
 export const searchTestSets = (courseId) =>
-  api.get(`admin/system/${courseId}/testSet`);
+  api.get(`/admin/system/${courseId}/testSet`);

@@ -7,11 +7,14 @@ import {
 } from "../../../../api/admin/system/test/testApi";
 import { testActions } from "../../../../store/slices/testSliceStore";
 
+import TestSubjectSelect from "../selector/TestSubjectSelect";
+
 export default function ExamPage() {
   const { id } = useParams();
   console.log(id);
   const dispatch = useDispatch();
   const { questions } = useSelector((store) => store.test);
+
   useEffect(() => {
     if (!id) {
       return;
@@ -41,4 +44,10 @@ export default function ExamPage() {
       ignoreUpdateState = true;
     };
   }, [dispatch, id]);
+
+  return (
+    <>
+      <TestSubjectSelect />
+    </>
+  );
 }
