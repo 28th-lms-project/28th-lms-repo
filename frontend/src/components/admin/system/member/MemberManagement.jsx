@@ -5,6 +5,7 @@ import { getMembers } from "../../../../api/admin/system/member/memberApi.js";
 import styles from "./MemberManagement.module.css";
 import { Grid } from "../../../common/Grid.jsx";
 import { Paginator } from "../../../common/Paginator.jsx";
+import MemberDetail from "./MemberDetail.jsx";
 
 export default function MemberManagement() {
   const { can } = usePermission();
@@ -38,6 +39,15 @@ export default function MemberManagement() {
       .then(({ body, paginate }) => {
         setMembers(body);
         setPagination(paginate);
+        setSelectedMemberId((prevId) => {
+          if (body.some((member) => member.id === prevId)) {
+            return prevId;
+          }
+          if (body.length > 0) {
+            return body[0].id;
+          }
+          return null;
+        });
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
@@ -75,29 +85,35 @@ export default function MemberManagement() {
 
   return (
     <PageContainer>
-      <div className={styles.memberGrid}>
-        {members.length === 0 && <p>조회된 회원이 없습니다.</p>}
-        <Grid
-          title=""
-          header={header}
-          content={content}
-          columnStyle="1.5fr 1fr 1fr 1.5fr 80px"
-          clickableColumn={{
-            0: (value) => {
-              setSelectedMemberId(value);
-            },
-          }}
-          activeRows={activeRows}
-        />
-        {pagination && (
-          <Paginator
-            id="member"
-            start={pagination.groupStartPageNo}
-            countPerPageGroup={pagination.pageCountInGroup}
-            activePage={pagination.pageNo}
-            totalPageCount={pagination.pageCount}
-            setActivePage={(pageNo) => setSearch({ ...search, pageNo })}
+      <div className={styles.layout}>
+        <div className={styles.listArea}>
+          {members.length === 0 && <p>조회된 회원이 없습니다.</p>}
+          <Grid
+            className={styles.grid}
+            title=""
+            header={header}
+            content={content}
+            columnStyle="1.5fr 1fr 1fr 1.5fr 80px"
+            clickableColumn={{
+              0: (value) => {
+                setSelectedMemberId(value);
+              },
+            }}
+            activeRows={activeRows}
           />
+          {pagination && (
+            <Paginator
+              id="member"
+              start={pagination.groupStartPageNo}
+              countPerPageGroup={pagination.pageCountInGroup}
+              activePage={pagination.pageNo}
+              totalPageCount={pagination.pageCount}
+              setActivePage={(pageNo) => setSearch({ ...search, pageNo })}
+            />
+          )}
+        </div>
+        {selectedMemberId && can("MEMBER_READ_DETAIL") && (
+          <MemberDetail key={selectedMemberId} memberId={selectedMemberId} />
         )}
       </div>
     </PageContainer>
