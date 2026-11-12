@@ -3,9 +3,9 @@
 - 대상: `MENU`, `MENU_ROLE` 테이블과 `com.learningworks.menu` 패키지
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-10
-- 상태: 설계 확정. 백엔드 구현 완료 (4-7 제외, DB 연동 확인 전)
+- 상태: 설계 확정. 백엔드 구현 완료 (4-7 제외)
 
-이 문서는 백엔드 구현을 시작할 때 참고하는 설계입니다. 화면 설계는 `frontend/docs/design/menu-page-design.md`, 권한 체계는 `backend/docs/access-control-guide.md`, ACCESS 모듈과의 협의는 `backend/docs/access-role-collab/discussions.md`의 D-05를 함께 보세요.
+이 문서는 백엔드 구현을 시작할 때 참고하는 설계입니다. 화면 설계는 `frontend/docs/design/menu-page-design.md`, 권한 체계는 `backend/docs/access-control-guide.md`, ACCESS 모듈과의 연동 정리는 `backend/docs/access-role-collab/remaining-issues.md`를 함께 보세요.
 
 ---
 
@@ -20,7 +20,7 @@
 | MENU_ROLE 삭제 | **물리 삭제.** `DEL_YN`, `MDFY_DT` 컬럼은 없앱니다. (`MENU_ID`, `ROLE_ID`)에 UNIQUE 제약을 겁니다 |
 | MENU_ROLE ID | 팀 공통 규칙을 따릅니다 (`MR-YYYYMMDD-000001`, 생성식은 2-4) |
 | 메뉴 단계 | 3단계 고정. 대메뉴(`PARENT_ID` null) → 중메뉴 → 소메뉴. 소메뉴 아래에는 메뉴를 만들 수 없습니다 |
-| 상위 메뉴 변경 | **현재**: 지원하지 않습니다. 순서는 같은 상위 메뉴 안에서만 바꿉니다. 다른 그룹으로 옮기려면 삭제 후 다시 만듭니다 (4-4 "메뉴 옮기기"). **최종 목표**: ACCESS 담당자와 협의가 끝나면 4-7 "상위 메뉴 변경"(ACTION 메뉴 ID 함께 수정)으로 구현합니다 |
+| 상위 메뉴 변경 | **현재**: 지원하지 않습니다. 순서는 같은 상위 메뉴 안에서만 바꿉니다. 다른 그룹으로 옮기려면 삭제 후 다시 만듭니다 (4-4 "메뉴 옮기기"). **최종 목표**: 4-7 "상위 메뉴 변경"(ACTION 메뉴 ID 함께 수정)으로 구현합니다. 방식 · 권한은 결정 완료 (2026-11-12), 구현 예정 |
 | 동시 수정 | 화면을 열 때 받은 `mdfyDt`를 수정 요청에 함께 보내고, 서버 값과 다르면 거부합니다 (`MENU_OUTDATED`) |
 | 메뉴 이름 | 같은 상위 메뉴 안에서는 중복 불가 (`MENU_TITLE_USED`). 상위 메뉴가 다르면 허용 |
 | SUPER_ADMIN | `MENU_ROLE`과 관계없이 모든 메뉴를 봅니다. **미사용(`USE_YN = N`) 메뉴도** 사이드바에 받고 접근할 수 있습니다. SUPER_ADMIN의 `MENU_ROLE` 행은 저장하지 않습니다 |
@@ -28,7 +28,7 @@
 | 내 메뉴 API 권한 | `@LoginRequired` |
 | 메뉴 관리 API 권한 | `@RequireAction(domain = "MENU", ...)` (4장) |
 | ACTION의 메뉴 컬럼 3개 | 그대로 둡니다. 권한별 접근 권한 관리 화면(`/admin/system/access-role`)의 필터로 계속 쓰고, 메뉴 삭제 때 참조 검사에도 씁니다 |
-| `/access/menus` | 이 모듈의 `GET /menus`로 바꾸고 삭제합니다. ACCESS 담당자에게 요청합니다 (7장) |
+| `/access/menus` | 이 모듈의 `GET /menus`로 바꾸고 삭제했습니다 (`feature/access-cleanup`, 7장) |
 
 ---
 
@@ -63,7 +63,7 @@ UNIQUE (`MENU_ID`, `ROLE_ID`)
 
 ### 2-3. 변경 스크립트 (DB 담당: 프로젝트 담당자가 직접 실행)
 
-1단계는 **적용 완료**되었습니다. 남은 것은 2단계(`MENU.DEL_YN` 삭제)뿐입니다. 이 작업은 **ACCESS 모듈의 `selectMenuList`(`/access/menus`)가 없어진 뒤에** 실행하세요. 지금 그 쿼리가 `WHERE NVL(DEL_YN, 'N') = 'N'`을 씁니다.
+1단계는 **적용 완료**되었습니다. 남은 것은 2단계(`MENU.DEL_YN` 삭제)뿐입니다. 이 컬럼을 쓰던 ACCESS 모듈의 `selectMenuList`(`/access/menus`)는 `feature/access-cleanup`에서 삭제했으므로, **그 브랜치가 배포된 뒤에** 실행하세요. 확인 쿼리를 포함한 실행용 SQL은 `access-role-collab/access-cleanup.sql`의 1번입니다.
 
 ```sql
 -- 1단계: 적용 완료
@@ -80,7 +80,7 @@ ALTER TABLE MENU_ROLE DROP COLUMN DEL_YN;
 ALTER TABLE MENU_ROLE DROP COLUMN MDFY_DT;
 ALTER TABLE MENU_ROLE ADD CONSTRAINT UK_MENU_ROLE UNIQUE (MENU_ID, ROLE_ID);
 
--- 2단계: ACCESS 모듈이 /access/menus를 없앤 뒤 실행 (미적용)
+-- 2단계: feature/access-cleanup(/access/menus 삭제) 배포 후 실행 (미적용)
 DELETE FROM MENU WHERE DEL_YN = 'Y';   -- 참조하는 ACTION · MENU_ROLE · 하위 메뉴가 없는지 먼저 확인
 ALTER TABLE MENU DROP COLUMN DEL_YN;
 ```
@@ -204,10 +204,11 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
   - 이 검사가 없으면 두 관리자가 같은 메뉴를 열어 두었을 때 나중에 저장한 쪽이 먼저 저장한 변경(특히 역할 체크)을 말없이 덮어씁니다.
 - **순서 변경**: `menuIds`는 해당 상위 메뉴의 **현재 하위 메뉴 전체**여야 합니다. 개수 · 구성이 다르면 `MENU_ORDER_OUTDATED`. 받은 순서대로 1부터 다시 매깁니다 (역할 순서 변경과 같은 방식). `MDFY_DT`는 바꾸지 않습니다 (열어 둔 다른 화면의 수정이 `MENU_OUTDATED`로 거부되지 않게).
 - **삭제**: 하위 메뉴가 있으면 `MENU_HAS_CHILDREN`, ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID` 중 하나라도 참조하면 `MENU_IN_USE`. 통과하면 `MENU_ROLE` 행 삭제 → `MENU` 삭제 → 같은 상위 메뉴의 순서를 1부터 다시 매김. 한 트랜잭션.
+  - 검사 전에 메뉴 행을 `SELECT ... FOR UPDATE`로 잠급니다. ACTION 저장도 같은 소메뉴 행을 잠그므로(7장 "ACTION 저장 시 메뉴 검증"), 검사와 삭제 사이에 이 메뉴를 쓰는 ACTION이 저장되지 않습니다.
 - 역할 삭제 시 `MENU_ROLE` 물리 삭제는 이미 `RoleDaoMapper.deleteMenuRoleByRoleId`가 합니다 (변경 없음).
 - 수정 · 삭제는 4-6의 자기 잠금 검사를 먼저 통과해야 합니다.
 - **메뉴 옮기기** (지원하지 않음, 운영 절차): 소메뉴를 다른 그룹으로 옮기려면 새 위치에 메뉴를 만들고 기존 메뉴를 삭제합니다. 기존 메뉴를 ACTION이 참조하면 삭제가 `MENU_IN_USE`로 거부되므로, 먼저 접근 관리 화면에서 해당 ACTION의 메뉴를 새 메뉴로 바꿔야 합니다 (그 저장은 SUPER_ADMIN 전용). 운영 중 메뉴 구조 변경은 드물다는 전제입니다.
-  - 이 절차는 **협의 전까지의 임시 방안**입니다. 협의가 끝나면 4-7로 구현하고 이 항목은 삭제합니다.
+  - 이 절차는 **4-7 구현 전까지의 임시 방안**입니다. 4-7을 구현하면 이 항목은 삭제합니다.
 
 ### 4-5. ErrorCode (추가)
 
@@ -224,7 +225,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 | `MENU_TITLE_USED` | 409 | "같은 상위 메뉴에 이미 같은 이름의 메뉴가 있습니다." |
 | `MENU_OUTDATED` | 409 | "다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도해주세요." |
 | `MENU_SELF_LOCK` | 409 | "저장하면 본인이 메뉴 관리 화면에 들어올 수 없게 됩니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 다른 관리자나 최고 관리자에게 요청해주세요." |
-| `MENU_MOVE_INVALID` (**협의 후**, 4-7) | 400 | "같은 단계의 다른 상위 메뉴로만 옮길 수 있습니다." |
+| `MENU_MOVE_INVALID` (**4-7 구현 시**) | 400 | "같은 단계의 다른 상위 메뉴로만 옮길 수 있습니다." |
 
 ### 4-6. 자기 잠금 방지 (`MENU_SELF_LOCK`)
 
@@ -246,24 +247,24 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 - 메뉴 관리 메뉴가 아직 없으면(초기 데이터 입력 전) 보호 대상도 없습니다. 이때 `/admin/system/menu`는 어느 메뉴에도 속하지 않아 SUPER_ADMIN만 들어갈 수 있으므로, 처음 등록은 SUPER_ADMIN이 합니다.
 - 권한 코드 쪽(`MENU_READ` 제거)은 따로 막을 필요가 없습니다. 권한 저장(`/access-role/save`)이 SUPER_ADMIN 전용이기 때문입니다.
 
-### 4-7. 상위 메뉴 변경 (협의 후 구현 예정)
+### 4-7. 상위 메뉴 변경 (결정 완료, 구현 예정)
 
-> **상태: ACCESS 담당자 협의 대기.** 협의가 끝나면 이 절의 방식으로 구현하고, 1장 "상위 메뉴 변경"과 4-4 "메뉴 옮기기"(임시 방안)를 이 절 기준으로 고칩니다. 협의 결과는 `access-role-collab/discussions.md` D-05에 기록합니다.
+> **상태: 결정 완료 (2026-11-12), 구현 전.** ACCESS 담당자가 모듈에서 손을 떼어 ROLE 담당자가 ACCESS 모듈까지 맡게 되면서, 아래 "결정"의 두 가지를 정했습니다. 구현하면 1장 "상위 메뉴 변경"과 4-4 "메뉴 옮기기"(임시 방안)를 이 절 기준으로 고칩니다.
 
 **왜 필요한가**: 지금은 메뉴를 다른 그룹으로 옮기려면 삭제 후 다시 만들어야 하는데, ACTION이 참조하는 메뉴는 삭제가 거부되고(`MENU_IN_USE`), ACTION의 메뉴를 바꾸는 저장은 SUPER_ADMIN 전용입니다. 그래서 메뉴 구조를 바꾸는 일이 사실상 SUPER_ADMIN 작업이 되고 절차도 깁니다.
 
-**협의할 것**: 메뉴를 옮길 때 서버가 **ACTION 테이블의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID`도 함께 고칩니다.** ACTION은 ACCESS 모듈의 테이블이므로 다음을 정해야 합니다.
+**결정**: 메뉴를 옮길 때 서버가 **ACTION 테이블의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID`도 함께 고칩니다.** ACTION은 ACCESS 모듈의 테이블이므로 아래 두 가지를 정했습니다. 이유는 `access-role-collab/remaining-issues.md` 4번을 보세요.
 
-1. ACTION 수정을 메뉴 모듈의 매퍼에서 직접 할지, ACCESS 모듈이 제공하는 메서드(서비스 · DAO)를 호출할지 (추천: ACCESS 모듈이 메서드 제공)
-2. 메뉴 이동 권한 (`MENU_UPDATE`로 충분한지, ACTION을 바꾸므로 SUPER_ADMIN 전용으로 할지)
+1. ACTION 수정은 **ACCESS 모듈이 제공하는 메서드**를 메뉴 모듈이 호출합니다. 테이블을 고치는 SQL은 그 테이블의 담당 모듈에만 둡니다.
+2. 메뉴 이동 권한은 **`MENU_UPDATE`** 입니다. 이동이 바꾸는 것은 ACTION의 메뉴 컬럼뿐이고, 권한 코드 · 권한 부여 · 권한 캐시는 바뀌지 않습니다.
 
 #### API (안)
 
 | 메서드 · 경로 | 권한 | 요청 | 응답 |
 | --- | --- | --- | --- |
-| `PUT /menus/{menuId}/parent` | `MENU_UPDATE` (협의 2번) | `{ parentId, mdfyDt }` | `{ roles, menus }` (변경 후 전체) |
+| `PUT /menus/{menuId}/parent` | `MENU_UPDATE` (결정 2번) | `{ parentId, mdfyDt }` | `{ roles, menus }` (변경 후 전체) |
 
-- **수정 API(`PUT /menus/{menuId}`)와 따로 둡니다.** 화면은 이동과 다른 수정을 따로 저장하므로(프론트 문서 6-6), 한 요청은 항상 한 가지 일만 합니다. 기존 수정 API · 검사 로직 · 테스트를 고치지 않고 덧붙일 수 있고, 협의 결과 SUPER_ADMIN 전용이 되면 이 메서드에 `@RequireSuperAdmin`만 붙이면 됩니다.
+- **수정 API(`PUT /menus/{menuId}`)와 따로 둡니다.** 화면은 이동과 다른 수정을 따로 저장하므로(프론트 문서 6-6), 한 요청은 항상 한 가지 일만 합니다. 기존 수정 API · 검사 로직 · 테스트를 고치지 않고 덧붙일 수 있고, 나중에 SUPER_ADMIN 전용으로 바꿔야 하면 이 메서드에 `@RequireSuperAdmin`만 붙이면 됩니다.
 - 이동 요청은 이름 · 역할 등을 바꾸지 않습니다. 같은 이름 · 자기 잠금 검사는 "현재 값 + 새 상위 메뉴" 기준으로 합니다.
 
 #### 규칙
@@ -318,16 +319,19 @@ common/exceptions/enums/ErrorCode.java   (4-5 추가)
 
 ---
 
-## 7. ACCESS 담당자에게 요청할 것 (D-05)
+## 7. ACCESS 모듈 연동 (D-05)
 
-| # | 요청 | 이유 |
+ACCESS 담당자가 모듈에서 손을 떼어, ROLE 담당자가 `feature/access-cleanup`에서 직접 처리했습니다. 항목별 상세는 `access-role-collab/remaining-issues.md`를 보세요.
+
+| # | 내용 | 상태 |
 | --- | --- | --- |
-| 1 | 메뉴 목록을 `/access/menus` 대신 `GET /menus`로 받고, `/access/menus`와 `selectMenuList` 삭제 | 메뉴 목록 API를 하나로 통일. 이 작업이 끝나야 `MENU.DEL_YN`을 지울 수 있음 (2-3) |
-| 2 | 접근 관리 · 권한별 접근 권한 관리 화면을 쓰는 역할에 `MENU_READ`도 허용 | 1번 이후 메뉴 필터가 `GET /menus`를 부르기 때문 |
-| 3 | (선택) 메뉴 이름순 · ID순 정렬을 `MENU_ORDER` 순으로 | 사이드바와 같은 순서로 보이게 |
-| 4 | **협의**: 메뉴 상위 변경 시 ACTION의 메뉴 ID를 함께 고치는 방식과 권한 (4-7 "협의할 것") | 협의가 끝나면 4-7을 구현해 메뉴 구조 변경을 화면에서 바로 할 수 있게 함 |
+| 1 | 메뉴 목록을 `/access/menus` 대신 `GET /menus`로 받고, `/access/menus`와 `selectMenuList` 삭제 | **완료.** 배포 후 `MENU.DEL_YN` 삭제 (2-3) |
+| 2 | 접근 관리 · 권한별 접근 권한 관리 화면을 쓰는 역할에 `MENU_READ`도 허용 | **불필요.** 접근 관리 화면은 SUPER_ADMIN 전용이고, 권한별 접근 권한 관리 화면은 `GET /menus`를 부르지 않음 |
+| 3 | 메뉴 이름순 · ID순 정렬을 `MENU_ORDER` 순으로 | **완료.** 메뉴 드롭다운(`GET /menus`), 접근 관리 목록, 권한별 접근 권한 관리 목록 모두 메뉴 순서 |
+| 4 | 메뉴 상위 변경 시 ACTION의 메뉴 ID를 함께 고치는 방식과 권한 | **결정 완료**, 구현 예정 (4-7) |
+| 5 | ACTION 저장 시 메뉴 검증 | **완료.** 저장 전에 `MenuService.checkAndLockMenuPath`로 대 > 중 > 소 계층을 확인하고 소메뉴 행을 잠금. 틀리면 `ACTION_MENU_INVALID`(400) |
 
-ACTION의 메뉴 컬럼 3개는 구조를 바꾸지 않습니다. 협의 전에는 메뉴의 상위 메뉴를 바꿀 수 없으므로 ACTION에 저장된 대 · 중 · 소 조합이 어긋날 일이 없고, 4-7을 구현한 뒤에는 메뉴를 옮길 때 서버가 조합을 함께 고칩니다.
+ACTION의 메뉴 컬럼 3개는 구조를 바꾸지 않습니다. 지금은 메뉴의 상위 메뉴를 바꿀 수 없고 ACTION 저장 시 계층을 검사하므로 ACTION에 저장된 대 · 중 · 소 조합이 어긋날 일이 없습니다. 4-7을 구현한 뒤에는 메뉴를 옮길 때 서버가 조합을 함께 고칩니다.
 
 ---
 
