@@ -1,6 +1,7 @@
 package com.learningworks.member.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.learningworks.common.exceptions.LearningworksException;
@@ -8,8 +9,11 @@ import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.crypto.SHA;
 import com.learningworks.member.dao.MemberDao;
 import com.learningworks.member.vo.request.MemberCreateVO;
+import com.learningworks.member.vo.request.MemberSearchVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
 import com.learningworks.member.vo.request.ModifyPasswordVO;
+import com.learningworks.member.vo.response.MemberDetailVO;
+import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
 import com.learningworks.role.service.RoleAssignPolicy;
 import com.learningworks.security.auth.LoginPasswordValidator;
@@ -147,4 +151,26 @@ public class MemberServiceImpl implements MemberService {
     return createVO.getId();
   }
 
+  @Transactional(readOnly = true)
+  @Override
+  public List<MemberListVO> readMemberList(String actorId, MemberSearchVO searchVO) {
+    long count = this.memberDao.selectMemberCount(searchVO);
+    searchVO.calculatePageCount(count);
+
+    if (count == 0) {
+      return List.of();
+    }
+
+    return this.memberDao.selectMemberList(searchVO);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public MemberDetailVO readMember(String actorId, String targetId) {
+    MemberDetailVO detail = this.memberDao.selectMemberDetail(targetId);
+    if (detail == null) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+    return detail;
+  }
 }

@@ -1,6 +1,8 @@
 package com.learningworks.member.web;
 
+import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,9 +14,12 @@ import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.common.utils.AuthUtil;
 import com.learningworks.member.service.MemberService;
 import com.learningworks.member.vo.request.MemberCreateVO;
+import com.learningworks.member.vo.request.MemberSearchVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
 import com.learningworks.member.vo.request.ModifyPasswordVO;
 import com.learningworks.member.vo.request.VerifyRequestVO;
+import com.learningworks.member.vo.response.MemberDetailVO;
+import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +36,20 @@ public class MemberController {
   public ApiResponse<String> createMember(@Valid @RequestBody MemberCreateVO createVO) {
     String memberId = this.memberService.createMember(AuthUtil.getLoginId(), createVO);
     return ApiResponse.CREATED(memberId);
+  }
+
+  @RequireAction(domain = "MEMBER", action = "READ_LIST", description = "회원 목록 조회")
+  @GetMapping
+  public ApiResponse<List<MemberListVO>> readMemberList(MemberSearchVO searchVO) {
+    List<MemberListVO> list = this.memberService.readMemberList(AuthUtil.getLoginId(), searchVO);
+    return ApiResponse.OK(list, searchVO);
+  }
+
+  @RequireAction(domain = "MEMBER", action = "READ_DETAIL", description = "회원 상세 조회")
+  @GetMapping("/{id}")
+  public ApiResponse<MemberDetailVO> readMember(@PathVariable("id") String targetId) {
+    MemberDetailVO result = this.memberService.readMember(AuthUtil.getLoginId(), targetId);
+    return ApiResponse.OK(result);
   }
 
   @LoginRequired

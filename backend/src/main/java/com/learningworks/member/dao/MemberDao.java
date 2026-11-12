@@ -1,10 +1,14 @@
 package com.learningworks.member.dao;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import com.learningworks.member.vo.request.MemberCreateVO;
+import com.learningworks.member.vo.request.MemberSearchVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
+import com.learningworks.member.vo.response.MemberDetailVO;
+import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
 
 @Mapper
@@ -36,4 +40,10 @@ public interface MemberDao {
       @Param("creatorId") String creatorId);
 
   int selectIdCount(String id);
+
+  long selectMemberCount(MemberSearchVO searchVO);
+
+  List<MemberListVO> selectMemberList(MemberSearchVO searchVO);
+
+  MemberDetailVO selectMemberDetail(String id);
 }
