@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { testActions } from "../../../../store/slices/testSliceStore";
 import AddTest from "./AddTest";
 import UpdateTest from "./UpdateTest";
-import { SUBJECTS } from "./subjects";
+import { getCodeOptionList } from "../../../../api/admin/system/code/codeApi";
 
 const INPUT_TYPE = { "객관식-다항": "checkbox" };
 
@@ -24,15 +24,38 @@ export default function Test() {
   const { questions } = useSelector((state) => state.test);
   const dispatch = useDispatch();
 
-  const [selectedSubjectId, setSelectedSubjectId] = useState(SUBJECTS[0].value);
   const [showAnswer, setShowAnswer] = useState(false);
+  const [subjectList, setSubjectList] = useState([]);
+
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
+  const [answerTypeList, setAnswerTypeList] = useState([]);
 
   useEffect(() => {
-    let ignoreUpdateState = false;
+    getCodeOptionList("TEST_SUBJECT")
+      .then((codes) => {
+        setSubjectList(codes);
 
+        getCodeOptionList("TEST_ANSWER_TYPE")
+          .then(setAnswerTypeList)
+          .catch((e) => alert(e.message));
+
+        if (codes.length > 0) {
+          setSelectedSubjectId(codes[0].id);
+        }
+      })
+      .catch((e) => alert(e.message));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedSubjectId) {
+      // 과목 목록을 받기 전에는 조회하지 않음
+      return;
+    }
+    let ignoreUpdateState = false;
     (async () => {
       try {
         const response = await searchTest(selectedSubjectId);
+
         if (!ignoreUpdateState) {
           dispatch(testActions.setTestList(response));
         }
@@ -52,28 +75,36 @@ export default function Test() {
       <div className={style.testContainer}>
         <div className={style.testHeader}>
           <ul className={style.testCourseList}>
-            {SUBJECTS.map((subject) => (
+            {subjectList.map((subject) => (
               <li
-                key={subject.value}
-                onClick={() => setSelectedSubjectId(subject.value)}
+                key={subject.id}
+                onClick={() => setSelectedSubjectId(subject.id)}
                 className={
-                  (selectedSubjectId === subject.value && style.active) ||
+                  (selectedSubjectId === subject.id && style.active) ||
                   undefined
                 }
               >
-                {subject.label}
+                {subject.name}
               </li>
             ))}
           </ul>
         </div>
         <div className={style.testSection}>
-          <AddTest subjectId={selectedSubjectId} />
+          {selectedSubjectId && (
+            <AddTest
+              subjectId={selectedSubjectId}
+              answerTypes={answerTypeList}
+            />
+          )}
           <div className={style.testQuestionsContainer}>
             {questions.map((question) => (
               <div key={question.id} className={style.testQuestion}>
                 <div className={style.testQuestionButton}>
                   <div className={style.testButtonContainer}>
-                    <UpdateTest questionId={question.id} />
+                    <UpdateTest
+                      questionId={question.id}
+                      answerTypes={answerTypeList}
+                    />
                   </div>
                 </div>
 
