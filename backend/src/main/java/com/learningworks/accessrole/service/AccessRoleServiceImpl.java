@@ -78,12 +78,9 @@ public class AccessRoleServiceImpl implements AccessRoleService {
         // 기존 권한 삭제
         accessRoleDao.deleteRolePermission(roleId);
 
-        // 선택된 권한 등록
-        if (!actionIds.isEmpty()) {
-            accessRoleDao.insertRolePermission(
-                    roleId,
-                    actionIds
-            );
+        // 선택된 권한 등록 (한 행씩: ROLE_ACTION_ID가 시퀀스라 INSERT ALL로는 행마다 다른 ID를 만들 수 없음)
+        for (String actionId : actionIds) {
+            accessRoleDao.insertRolePermission(roleId, actionId);
         }
 
         // 바뀐 권한을 서버 검사 · 내 권한 조회에 바로 반영 (트랜잭션 커밋 후 캐시 비움, R-10)

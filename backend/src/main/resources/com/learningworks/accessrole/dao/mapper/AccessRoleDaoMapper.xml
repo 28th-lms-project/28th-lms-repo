@@ -98,21 +98,18 @@
 
     </delete>
 
-    <!-- 선택한 역할 권한 등록 -->
+    <!-- 역할 권한 1건 등록 (팀 공통 PK 규칙 'RA-YYYYMMDD-000001') -->
+    <!-- INSERT ALL에 NEXTVAL을 쓰면 모든 행이 같은 ID를 받으므로 서비스에서 한 행씩 호출한다 -->
     <insert id="insertRolePermission">
-        INSERT ALL
-        <foreach collection="actionIds" item="actionId">
-            INTO ROLE_ACTION (
-                              ROLE_ACTION_ID
-                            , ROLE_ID
-                            , ACTION_ID
-            ) VALUES (
-                      SUBSTR(RAWTOHEX(SYS_GUID()), 1, 20)
-                    , #{roleId}
-                    , #{actionId}
-            )
-        </foreach>
-        SELECT 1 FROM DUAL
+        INSERT INTO ROLE_ACTION (
+                                 ROLE_ACTION_ID
+                               , ROLE_ID
+                               , ACTION_ID
+        ) VALUES (
+                  'RA-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_ROLE_ACTION_PK.NEXTVAL, 6, '0')
+                , #{roleId}
+                , #{actionId}
+        )
     </insert>
 
 </mapper>
