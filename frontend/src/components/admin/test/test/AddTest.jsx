@@ -55,7 +55,7 @@ export default function AddTest({ subjectId }) {
     if (!message) {
       return false;
     }
-    return message.lenth > 0;
+    return message.length > 0;
   };
 
   const count = Number(answerCnt);
@@ -165,6 +165,7 @@ export default function AddTest({ subjectId }) {
           <div className={style.testForm}>
             {renderFieldErrors("subjectId")}
             {renderFieldErrors("global")}
+
             <div className={style.testTypes}>
               {answerTypes.map((type) => (
                 <div key={type.value} className={style.type}>
@@ -191,6 +192,7 @@ export default function AddTest({ subjectId }) {
                 </div>
               ))}
             </div>
+
             {renderFieldErrors("answerType")}
             <textarea
               className={style.testQuestion}
@@ -208,6 +210,7 @@ export default function AddTest({ subjectId }) {
             {isManualGraded && (
               <p>수강생이 작성한 답변은 제출 후 강사가 채점합니다.</p>
             )}
+
             {isOx && (
               <fieldset>
                 <legend>정답</legend>
@@ -226,6 +229,7 @@ export default function AddTest({ subjectId }) {
                 {renderFieldErrors("correctAnswer")}
               </fieldset>
             )}
+
             {isMulti && (
               <fieldset>
                 <legend>정답 (2개 이상 선택)</legend>
