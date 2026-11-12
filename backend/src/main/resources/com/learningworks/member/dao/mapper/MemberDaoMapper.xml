@@ -3,6 +3,70 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.learningworks.member.dao.MemberDao">
+
+  <sql id="memberSearchCondition">
+     WHERE U.DEL_YN = 'N'
+      <if test='roleId != null and roleId != ""'>
+       AND U.BASE_ROLE = #{roleId}
+      </if>
+      <if test='keyword != null and keyword != ""'>
+       AND (U.ID LIKE '%' || #{keyword} || '%'
+            OR U.NAME LIKE '%' || #{keyword} || '%')
+      </if>
+  </sql>
+
+	<select id="selectIdCount" parameterType="string" resultType="_int">
+       SELECT COUNT(ID)
+         FROM "USER"
+        WHERE ID = #{id}
+	</select>
+	
+	<select id="selectMemberCount" 
+          parameterType="com.learningworks.member.vo.request.MemberSearchVO" 
+          resultType="_long">
+       SELECT COUNT(U.ID)
+         FROM "USER" U
+       <include refid="memberSearchCondition" />
+	</select>
+	
+	<select id="selectMemberList" 
+			parameterType="com.learningworks.member.vo.request.MemberSearchVO" 
+			resultType="com.learningworks.member.vo.response.MemberListVO">
+		<include refid="Commons.paginate_header" />
+		SELECT U.ID
+             , U.NAME
+             , U.BASE_ROLE
+             , R.ROLE_DISPLAY_NAME AS ROLE_NAME
+             , TO_CHAR(U.CRT_DT, 'YYYY-MM-DD HH24:MI:SS') AS CREATE_DATE
+             , TO_CHAR(U.LOGIN_BLOCK_DATE, 'YYYY-MM-DD HH24:MI:SS') AS LOGIN_BLOCK_DATE
+          FROM "USER" U
+          LEFT OUTER JOIN "ROLE" R
+            ON U.BASE_ROLE = R.ROLE_ID
+        <include refid="memberSearchCondition" />
+         ORDER BY U.CRT_DT DESC
+             , U.ID ASC
+        <include refid="Commons.paginate_footer" />
+	</select>
+
+	<select id="selectMemberDetail"
+            parameterType="string"
+            resultType="com.learningworks.member.vo.response.MemberDetailVO">
+	   SELECT U.ID 
+		    , U.NAME 
+		    , U.BASE_ROLE 
+		    , R.ROLE_DISPLAY_NAME AS ROLE_NAME
+		    , U.GITHUB_URL 
+		    , TO_CHAR(U.CRT_DT, 'YYYY-MM-DD HH24:MI:SS') AS CREATE_DATE 
+		    , TO_CHAR(U.MDFY_DT, 'YYYY-MM-DD HH24:MI:SS') AS MODIFY_DATE 
+		    , TO_CHAR(U.PWD_CHANGE_DT, 'YYYY-MM-DD HH24:MI:SS') AS PWD_CHANGE_DATE 
+		    , U.PWD_FAIL_CNT AS LOGIN_FAIL_COUNT
+		    , TO_CHAR(U.LOGIN_BLOCK_DATE, 'YYYY-MM-DD HH24:MI:SS') AS LOGIN_BLOCK_DATE 
+         FROM "USER" U
+         LEFT OUTER JOIN "ROLE" R
+           ON U.BASE_ROLE = R.ROLE_ID 
+        WHERE U.ID = #{id}
+          AND U.DEL_YN = 'N'
+	</select>
 	
 	<select id="selectMyInfo" parameterType="string"
         resultType="com.learningworks.member.vo.response.MemberVO">
@@ -79,7 +143,46 @@
     
     <update id="updateSalt">
     	UPDATE SALT
-    	   SET SALT = #{salt}
-    	 WHERE ID = #{id}
+        SET SALT = #{salt}
+          , MDFY_DT = SYSDATE
+          , MDFYR_ID = #{id}
+      WHERE ID = #{id}
     </update>
+    
+    <insert id="insertUser">
+    	INSERT INTO "USER" (
+            ID
+          , PWD
+          , NAME
+          , GITHUB_URL
+          , BASE_ROLE
+          , DEL_YN
+          , PWD_FAIL_CNT
+          , CRT_DT
+          , MDFY_DT
+        ) VALUES (
+            #{member.id}
+          , #{encryptedPassword}
+          , #{member.name}
+          , #{member.githubUrl}
+          , #{member.baseRole}
+          , 'N'
+          , 0
+          , SYSDATE
+          , SYSDATE
+        )
+    </insert>
+    
+    <insert id="insertSalt">
+    	INSERT INTO SALT
+         	   (ID
+             , SALT
+             , CRT_DT
+             , CRTR_ID)
+        VALUES
+               (#{id}
+             , #{salt}
+             , SYSDATE
+             , #{creatorId})
+    </insert>
 </mapper>

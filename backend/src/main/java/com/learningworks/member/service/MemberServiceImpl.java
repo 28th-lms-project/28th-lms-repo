@@ -1,15 +1,21 @@
 package com.learningworks.member.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.crypto.SHA;
 import com.learningworks.member.dao.MemberDao;
+import com.learningworks.member.vo.request.MemberCreateVO;
+import com.learningworks.member.vo.request.MemberSearchVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
 import com.learningworks.member.vo.request.ModifyPasswordVO;
+import com.learningworks.member.vo.response.MemberDetailVO;
+import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
+import com.learningworks.role.service.RoleAssignPolicy;
 import com.learningworks.security.auth.LoginPasswordValidator;
 import com.learningworks.security.auth.LoginUser;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
 
+  private final RoleAssignPolicy roleAssignPolicy;
   private final MemberDao memberDao;
   // 상태가 없는 검증기이므로 빈으로 주입받지 않고 직접 생성한다. (SecurityConfig 와 동일)
   private final LoginPasswordValidator loginPasswordValidator = new LoginPasswordValidator();
@@ -122,4 +129,48 @@ public class MemberServiceImpl implements MemberService {
 
   }
 
+  @Transactional
+  @Override
+  public String createMember(String actorId, MemberCreateVO createVO) {
+    this.roleAssignPolicy.checkCreatable(actorId, createVO.getBaseRole());
+
+    if (this.memberDao.selectIdCount(createVO.getId()) > 0) {
+      throw new LearningworksException(ErrorCode.USER_USED);
+    }
+
+    String salt = SHA.generateSalt();
+    String encryptedPassword = SHA.getEncrypt(createVO.getPassword(), salt);
+
+    if (this.memberDao.insertUser(createVO, encryptedPassword) == 0) {
+      throw new LearningworksException(ErrorCode.GLOBAL_SYSTEM_ERROR);
+    }
+    if (this.memberDao.insertSalt(createVO.getId(), salt, actorId) == 0) {
+      throw new LearningworksException(ErrorCode.GLOBAL_SYSTEM_ERROR);
+    }
+
+    return createVO.getId();
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public List<MemberListVO> readMemberList(String actorId, MemberSearchVO searchVO) {
+    long count = this.memberDao.selectMemberCount(searchVO);
+    searchVO.calculatePageCount(count);
+
+    if (count == 0) {
+      return List.of();
+    }
+
+    return this.memberDao.selectMemberList(searchVO);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public MemberDetailVO readMember(String actorId, String targetId) {
+    MemberDetailVO detail = this.memberDao.selectMemberDetail(targetId);
+    if (detail == null) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+    return detail;
+  }
 }

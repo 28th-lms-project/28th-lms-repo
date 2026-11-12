@@ -1,7 +1,6 @@
 package com.learningworks.member.vo.response;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
