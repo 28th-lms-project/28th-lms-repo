@@ -334,12 +334,17 @@ public class MenuServiceImpl implements MenuService {
    * 메뉴 물리 삭제. 한 트랜잭션에서 MENU_ROLE 삭제 → MENU 삭제 → 같은 상위 메뉴의 순서를 1부터 다시 매긴다.
    * - 자기 잠금 검사(MENU_SELF_LOCK)를 하위 메뉴 검사보다 먼저 한다
    * - 하위 메뉴가 있으면 MENU_HAS_CHILDREN, ACTION이 참조하면 MENU_IN_USE (FK가 없으므로 서비스에서 검사)
+   * - 메뉴 행을 잠근 뒤 검사한다. ACTION 저장(checkAndLockMenuPath)도 같은 행을 잠그므로,
+   *   검사와 삭제 사이에 이 메뉴를 쓰는 ACTION이 저장되지 않는다.
    */
   @Transactional(rollbackFor = Exception.class)
   @Override
   public MenuVO deleteMenu(String actorId, String menuId) {
     String actorRoleId = this.findRoleId(actorId);
 
+    if (this.menuDao.selectMenuByIdForUpdate(menuId) == null) {
+      throw new LearningworksException(ErrorCode.MENU_NOT_EXISTS);
+    }
     MenuVO menu = this.readMenu(menuId);
     MenuTree tree = new MenuTree(this.menuDao.selectAllMenus());
 
@@ -365,6 +370,30 @@ public class MenuServiceImpl implements MenuService {
     }
 
     return menu;
+  }
+
+  /**
+   * ACTION 저장용 메뉴 경로 확인. 소메뉴 행만 잠근다.
+   * 경로가 맞으면 중 · 대메뉴는 소메뉴의 상위이므로 하위 메뉴가 있어 삭제되지 않는다 (MENU_HAS_CHILDREN).
+   */
+  @Override
+  public boolean checkAndLockMenuPath(String topMenuId, String midMenuId, String btmMenuId) {
+    if (topMenuId == null || midMenuId == null || btmMenuId == null) {
+      return false;
+    }
+
+    MenuVO btmMenu = this.menuDao.selectMenuByIdForUpdate(btmMenuId);
+    if (btmMenu == null || !midMenuId.equals(btmMenu.getParentId())) {
+      return false;
+    }
+
+    MenuVO midMenu = this.menuDao.selectMenuById(midMenuId);
+    if (midMenu == null || !topMenuId.equals(midMenu.getParentId())) {
+      return false;
+    }
+
+    MenuVO topMenu = this.menuDao.selectMenuById(topMenuId);
+    return topMenu != null && topMenu.getParentId() == null;
   }
 
 }
