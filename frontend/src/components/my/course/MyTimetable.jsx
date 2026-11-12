@@ -8,7 +8,7 @@ import usePermission from "../../../hooks/usePermission";
 import {
   getTimetable,
   uploadTimetable,
-} from "../../../api/admin/course/timetableApi";
+} from "../../../api/my/course/timetableApi.js";
 
 // 오늘 날짜
 function getLocalDate() {
