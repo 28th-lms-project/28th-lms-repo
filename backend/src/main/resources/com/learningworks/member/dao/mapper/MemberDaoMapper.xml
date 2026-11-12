@@ -80,6 +80,8 @@
     <update id="updateSalt">
     	UPDATE SALT
     	   SET SALT = #{salt}
+             , MDFY_DT = SYSDATE
+             , MDFYR_ID = #{id}
     	 WHERE ID = #{id}
     </update>
 </mapper>
