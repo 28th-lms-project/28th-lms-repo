@@ -4,10 +4,7 @@
  */
 import { api } from "../../../common/apiClient";
 
-/**
- * 메뉴 목록 조회
- */
-export const getAccessMenuList = () => api.get("/access/menus");
+// 메뉴 목록은 메뉴 API(api/admin/system/menu/menuApi.js)의 getMenus를 사용합니다.
 
 /**
  * 접근 권한 목록 조회

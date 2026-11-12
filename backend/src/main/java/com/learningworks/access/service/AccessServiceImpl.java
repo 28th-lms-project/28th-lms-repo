@@ -11,7 +11,6 @@ import com.learningworks.access.dao.AccessDao;
 import com.learningworks.access.vo.request.AccessSaveRequestVO;
 import com.learningworks.access.vo.request.AccessSearchRequestVO;
 import com.learningworks.access.vo.response.AccessListVO;
-import com.learningworks.access.vo.response.AccessMenuVO;
 import com.learningworks.access.vo.response.AccessVO;
 import com.learningworks.common.action.ActionCodeRegistry;
 import com.learningworks.common.exceptions.LearningworksException;
@@ -41,11 +40,6 @@ public class AccessServiceImpl implements AccessService {
         }
 
         return accessList;
-    }
-
-    @Override
-    public List<AccessMenuVO> selectMenuList() {
-        return accessDao.selectMenuList();
     }
 
     // 필수값 검증은 AccessVO의 @Valid 검증에서 처리

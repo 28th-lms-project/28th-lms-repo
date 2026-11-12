@@ -44,20 +44,6 @@
     </select>
 
 
-    <!-- 전체 메뉴 조회 -->
-    <select id="selectMenuList"
-            resultType="com.learningworks.access.vo.response.AccessMenuVO">
-
-        SELECT ID AS id
-             , TITLE AS title
-             , PARENT_ID AS parentId
-          FROM MENU
-         WHERE NVL(DEL_YN, 'N') = 'N'
-         ORDER BY ID DESC
-
-    </select>
-
-
     <!-- 접근 권한 등록 -->
     <insert id="insertAccess"
             parameterType="com.learningworks.access.vo.response.AccessVO">
