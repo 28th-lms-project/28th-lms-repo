@@ -30,7 +30,15 @@
             ON A.BTM_MENU_ID = BTM_M.ID
          WHERE R.ROLE_ID = #{roleId}
            AND RA.ROLE_ACTION_ID IS NOT NULL
-         ORDER BY A.TOP_MENU_ID, A.MID_MENU_ID, A.BTM_MENU_ID, A.ACTION_ID DESC
+         <!-- 메뉴 순서 (대 → 중 → 소), 같은 메뉴 안에서는 권한명 순 -->
+         ORDER BY TOP_M.MENU_ORDER NULLS LAST
+                , A.TOP_MENU_ID
+                , MID_M.MENU_ORDER NULLS LAST
+                , A.MID_MENU_ID
+                , BTM_M.MENU_ORDER NULLS LAST
+                , A.BTM_MENU_ID
+                , A.ACTION_NAME
+                , A.ACTION_ID
 
     </select>
 
@@ -58,7 +66,15 @@
             ON A.BTM_MENU_ID = BTM_M.ID
          WHERE R.ROLE_ID = #{roleId}
            AND RA.ROLE_ACTION_ID IS NULL
-         ORDER BY A.TOP_MENU_ID, A.MID_MENU_ID, A.BTM_MENU_ID, A.ACTION_ID
+         <!-- 메뉴 순서 (대 → 중 → 소), 같은 메뉴 안에서는 권한명 순 -->
+         ORDER BY TOP_M.MENU_ORDER NULLS LAST
+                , A.TOP_MENU_ID
+                , MID_M.MENU_ORDER NULLS LAST
+                , A.MID_MENU_ID
+                , BTM_M.MENU_ORDER NULLS LAST
+                , A.BTM_MENU_ID
+                , A.ACTION_NAME
+                , A.ACTION_ID
 
     </select>
 
