@@ -23,6 +23,7 @@ export const getActionCodes = () => api.get("/action-codes");
  * 접근 권한 신규 등록 및 수정
  * @param {{ addedList: object[], modifiedList: object[] }} params
  * @returns {Promise<object[]>} 저장 후 전체 접근 권한 목록
- * errorCode: GLOBAL_INVALID_PARAMETER(validations), GLOBAL_BAD_REQUEST, ACTION_CODE_NOT_EXISTS, ACTION_CODE_USED, ACTION_NOT_EXISTS, ACTION_FAILURE_SAVE
+ * errorCode: GLOBAL_INVALID_PARAMETER(validations), GLOBAL_BAD_REQUEST, ACTION_CODE_NOT_EXISTS, ACTION_CODE_USED, ACTION_NOT_EXISTS, ACTION_FAILURE_SAVE,
+ *            ACTION_MENU_INVALID(없는 메뉴이거나 대 · 중 · 소 메뉴 계층이 맞지 않음 → 메뉴 목록을 다시 불러와 선택)
  */
 export const saveAccessList = (params) => api.post("/access/save", params);
