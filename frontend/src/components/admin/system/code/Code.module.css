@@ -1,0 +1,35 @@
+.container {
+  height: calc(100% - 10rem);
+}
+
+.codeListContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+
+  height: 100%;
+  width: 100%;
+
+  & > .codeList {
+    background-color: aliceblue;
+    padding: 10px;
+    margin: 10px;
+
+    height: 90%;
+
+    overflow: hidden;
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.codeGrid {
+  margin: 20px 0px;
+  overflow: hidden;
+
+  & :global(.ellipsis) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

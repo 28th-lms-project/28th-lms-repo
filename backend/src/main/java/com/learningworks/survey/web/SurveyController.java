@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.learningworks.common.action.RequireAction;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.survey.service.SurveyService;
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
@@ -26,18 +27,21 @@ import lombok.AllArgsConstructor;
 public class SurveyController {
 	private SurveyService surveyService;
 
+	@RequireAction(domain = "SURVEY", action = "READ", description = "설문 조회")
 	@GetMapping("/admin/system/survey/{group}")
 	public ApiResponse<SurveyListVO> getAllSurveybuGroup(@PathVariable String group) {
 		SurveyListVO surveyList = this.surveyService.readAllSurveyByGroup(group);
 		return ApiResponse.OK(surveyList);
 	}
 
+	@RequireAction(domain = "SURVEY", action = "CREATE", description = "설문 등록")
 	@PostMapping("/admin/system/survey")
 	public ApiResponse<SurveyVO> makeNewSurvey(@Valid @RequestBody RegistSurveyVO registSurvey) {
 		SurveyVO survey = this.surveyService.createSurvey(registSurvey);
 		return ApiResponse.CREATED(survey);
 	}
 
+	@RequireAction(domain = "SURVEY", action = "UPDATE", description = "설문 수정")
 	@PutMapping("/admin/system/survey/{surveyId}")
 	public ApiResponse<SurveyVO> updateSurvey(@Valid @RequestBody ModifySurveyVO modifySurvey,
 			@PathVariable String surveyId) {
@@ -45,12 +49,14 @@ public class SurveyController {
 		return ApiResponse.OK(survey);
 	}
 
+	@RequireAction(domain = "SURVEY", action = "DELETE", description = "설문 삭제")
 	@DeleteMapping("/admin/system/survey/{surveyId}")
 	public ApiResponse<String> deleteSurvey(@PathVariable String surveyId) {
 		String survey = this.surveyService.deleteSurvey(surveyId);
 		return ApiResponse.OK(survey);
 	}
 
+	@RequireAction(domain = "SURVEY", action = "CREATE", description = "설문 등록")
 	@PostMapping("/admin/system/survey/{surveyId}/data")
 	public ApiResponse<SurveyDataVO> makeNewSurveyData(@Valid @RequestBody RegistSurveyDataVO registSurveyDataVO,
 			@PathVariable String surveyId) {
@@ -58,6 +64,7 @@ public class SurveyController {
 		return ApiResponse.CREATED(surveyDataVO);
 	}
 
+	@RequireAction(domain = "SURVEY", action = "UPDATE", description = "설문 수정")
 	@PutMapping("/admin/system/survey/{surveyId}/data/{surveyDataId}")
 	public ApiResponse<SurveyDataVO> updateSurveyData(@Valid @RequestBody ModifySurveyDataVO modifySurveyData,
 			@PathVariable String surveyId, @PathVariable String surveyDataId) {
@@ -65,6 +72,7 @@ public class SurveyController {
 		return ApiResponse.OK(survey);
 	}
 	
+	@RequireAction(domain = "SURVEY", action = "DELETE", description = "설문 삭제")
 	@DeleteMapping("/admin/system/survey/{surveyId}/data/{surveyDataId}")
 	public ApiResponse<String> deleteSurveyData(@PathVariable String surveyId, @PathVariable String surveyDataId) {
 		String survey = this.surveyService.deleteSurveyData(surveyId, surveyDataId);
