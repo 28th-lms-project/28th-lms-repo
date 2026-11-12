@@ -11,6 +11,7 @@ public class ExamSetVO {
 	private String courseId;
 	private String testType;
 	private String setName;
+	private String showYn;
 	
 	private ExamQuestionListVO questionList;
 

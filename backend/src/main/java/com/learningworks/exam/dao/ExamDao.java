@@ -7,6 +7,9 @@ import org.apache.ibatis.annotations.Param;
 
 import com.learningworks.exam.vo.request.ModifyExamQuestionVO;
 import com.learningworks.exam.vo.request.RegistExamQuestionVO;
+import com.learningworks.exam.vo.request.RegistTestAnswersVO;
+import com.learningworks.exam.vo.request.RegistTestSetVO;
+import com.learningworks.exam.vo.response.ExamQuestionListVO;
 import com.learningworks.exam.vo.response.ExamQuestionVO;
 import com.learningworks.exam.vo.response.ExamSetVO;
 
@@ -27,6 +30,28 @@ public interface ExamDao {
 	int deleteExamQuestion(String examId);
 
 	int updateExamQuestion(@Param("examId")String examId, @Param("modifyExamQuestionVO") ModifyExamQuestionVO modifyExamQuestionVO);
+
+	int makeNewTestSet(@Param("courseId")String courseId, @Param("RegistTestSetVO")RegistTestSetVO registTestSetVO);
+
+	RegistTestSetVO selectExamsetById(String id);
+
+	int makeNewTestSetTest(@Param("testSetId")String testSetId,@Param("questionId") String questionId);
+
+	int updateTestSetShowYn(@Param("testSetId") String testSetId, @Param("showYn") String showYn);
+
+	int deleteTestSet(String testSetId);
+
+	List<ExamQuestionVO> viewTestSetQuestions(String testSetId);
+
+	/** 시험 세트 문제들의 정답 · 유형 (채점용, 한 번에 조회) */
+	List<ExamQuestionVO> selectAnswerKeysByTestSetId(String testSetId);
+
+	/** 이미 제출한 답안 수 (중복 제출 확인) */
+	int countSubmittedAnswers(@Param("testSetId") String testSetId,
+			@Param("courseStudentId") String courseStudentId);
+
+	/** 답안 1건 저장. 파라미터가 VO 하나라 selectKey 로 만든 id 가 VO 에 채워진다 */
+	int insertTestAnswer(RegistTestAnswersVO registTestAnswersVO);
 
 
 //	String getTestSetIdByCourseName(String courseName);

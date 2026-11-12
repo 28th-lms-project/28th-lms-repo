@@ -23,3 +23,25 @@ export const deleteTestQuestion = (questionId) =>
 
 export const searchTestSets = (courseId) =>
   api.get(`/admin/system/${courseId}/testSet`);
+
+/** 시험등록  */
+export const makeNewTestSet = (courseId, addTestSet) =>
+  api.post(`/admin/system/${courseId}/test/addTestSet`, addTestSet);
+
+/** 시험 세트 공개 여부 수정. showYn: "Y" | "N". 수정된 시험 세트 반환 */
+export const updateTestSetShowYn = (testSetId, showYn) =>
+  api.put(`/admin/system/testSet/${encodeURIComponent(testSetId)}/showYn`, {
+    showYn,
+  });
+
+/** 시험 삭제 API */
+export const deleteTestSet = (testSetId) =>
+  api.delete(`admin/system/testSet/${testSetId}`);
+
+/** 시험 세부 화면 출력 API */
+export const viewTestSetQuestions = (testSetId) =>
+  api.get(`admin/system/${testSetId}/questionlist`);
+
+/** 시험 제출 API */
+export const createTestAnswers = (testSetId, submitAnswers) =>
+  api.post(`my/test/${testSetId}`, { answersList: [...submitAnswers] });
