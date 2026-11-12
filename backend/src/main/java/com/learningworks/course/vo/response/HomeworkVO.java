@@ -1,5 +1,7 @@
 package com.learningworks.course.vo.response;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -12,5 +14,6 @@ public class HomeworkVO {
 	private String content    ;
 	private String endDate    ;
 	
-	
+	private List<HomeworkReplyVO> homeworkReplies ;  
+	private List<CourseMemberVO> courseMembers ; 
 }

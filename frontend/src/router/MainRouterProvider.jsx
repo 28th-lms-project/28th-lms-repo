@@ -37,7 +37,7 @@ import HomeworkDetails from "../components/admin/course/CourseTableComponent/Hom
 // eslint-disable-next-line react-refresh/only-export-components
 export const routes = [
   {
-    path: "/popup/homework/:courseid/:homeworkId",
+    path: "/popup/homework/:courseId/:homeworkId",
     element: <HomeworkDetails />,
   },
   {

@@ -7,46 +7,32 @@ import { useDispatch, useSelector } from "react-redux";
 import { testActions } from "../../../../store/slices/testSliceStore";
 import AddTest from "./AddTest";
 import UpdateTest from "./UpdateTest";
-import { courseActions } from "../../../../store/slices/courseSliceStore";
+import { SUBJECTS } from "./subjects";
+
+const INPUT_TYPE = { "객관식-다항": "checkbox" };
+
+const getCorrectNumbers = (correctAnswer) => {
+  if (correctAnswer === null || correctAnswer === undefined) {
+    return [];
+  }
+  return String(correctAnswer)
+    .split(",")
+    .map((number) => number.trim());
+};
 
 export default function Test() {
-  let firstSubjectId = "";
-
-  const { courseList } = useSelector((state) => state.courses);
   const { questions } = useSelector((state) => state.test);
   const dispatch = useDispatch();
 
-  const [selectedSubjectId, setSelectedSubjectId] = useState(firstSubjectId);
+  const [selectedSubjectId, setSelectedSubjectId] = useState(SUBJECTS[0].value);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  const currentCourseId = selectedSubjectId || courseList[0]?.id || "";
-
   useEffect(() => {
-    if (courseList.length > 0) {
-      return;
-    }
-    let ignoreUpdateState = false;
-    (async () => {
-      const result = await fetch("http://localhost:8080/course/view");
-      const resultJson = await result.json();
-      if (!ignoreUpdateState) {
-        dispatch(courseActions.load(resultJson));
-      }
-    })();
-    return () => {
-      ignoreUpdateState = true;
-    };
-  }, [dispatch, courseList.length]);
-
-  useEffect(() => {
-    if (!currentCourseId) {
-      return;
-    }
     let ignoreUpdateState = false;
 
     (async () => {
       try {
-        const response = await searchTest(currentCourseId);
+        const response = await searchTest(selectedSubjectId);
         if (!ignoreUpdateState) {
           dispatch(testActions.setTestList(response));
         }
@@ -59,27 +45,29 @@ export default function Test() {
     return () => {
       ignoreUpdateState = true;
     };
-  }, [dispatch, currentCourseId]);
+  }, [dispatch, selectedSubjectId]);
 
   return (
     <PageContainer>
       <div className={style.testContainer}>
         <div className={style.testHeader}>
           <ul className={style.testCourseList}>
-            {courseList.map((course) => (
+            {SUBJECTS.map((subject) => (
               <li
-                key={course.id}
-                onClick={() => setSelectedSubjectId(course.id)}
-                className={currentCourseId === course.id ? "active" : ""}
+                key={subject.value}
+                onClick={() => setSelectedSubjectId(subject.value)}
+                className={
+                  (selectedSubjectId === subject.value && style.active) ||
+                  undefined
+                }
               >
-                {course.courseName}
+                {subject.label}
               </li>
             ))}
           </ul>
         </div>
         <div className={style.testSection}>
-          {/* <IconButton icon={icons.add} onClick={onClickAddButtonHandler(selectedSubjectId)}>추가</IconButton> */}
-          <AddTest subjectId={currentCourseId} />
+          <AddTest subjectId={selectedSubjectId} />
           <div className={style.testQuestionsContainer}>
             {questions.map((question) => (
               <div key={question.id} className={style.testQuestion}>
@@ -106,72 +94,67 @@ export default function Test() {
                   <span>{question.correctRate}</span>
                 </div>
 
-                {question.answerType === "O/X" ? (
+                {question.answerType === "O/X" && (
                   <div className={style.answerList}>
                     <ul>
-                      {["O", "X"].map((option) => (
-                        <li
-                          key={option}
-                          className={
-                            question.correctAnswer === option
-                              ? style.active
-                              : ""
-                          }
-                        >
-                          <label>
-                            <input
-                              type="radio"
-                              checked={question.correctAnswer === option}
-                              readOnly
-                            />
-                            {option}
-                          </label>
-                        </li>
-                      ))}
+                      {["O", "X"].map((option) => {
+                        const isCorrect = question.correctAnswer === option;
+                        return (
+                          <li
+                            key={option}
+                            className={(isCorrect && style.active) || undefined}
+                          >
+                            <label>
+                              <input
+                                type="radio"
+                                checked={isCorrect}
+                                readOnly
+                              />
+                              {option}
+                            </label>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
-                ) : (
-                  !["주관식", "코드작성"].includes(question.answerType) && (
-                    <div className={style.answerList}>
-                      <div onClick={() => setShowAnswer(!showAnswer)}>
-                        내용보기
-                      </div>
-                      {showAnswer && (
-                        <ul>
-                          {question.answers.map((answer) => (
+                )}
+                {!["O/X", "주관식", "코드작성"].includes(
+                  question.answerType,
+                ) && (
+                  <div className={style.answerList}>
+                    <div onClick={() => setShowAnswer(!showAnswer)}>
+                      내용보기
+                    </div>
+                    {showAnswer && (
+                      <ul>
+                        {question.answers.map((answer) => {
+                          const isCorrect = getCorrectNumbers(
+                            question.correctAnswer,
+                          ).includes(answer.no);
+                          return (
                             <li
                               key={answer.no}
                               className={
-                                String(question.correctAnswer ?? "")
-                                  .split(",")
-                                  .map((number) => number.trim())
-                                  .includes(answer.no)
-                                  ? style.active
-                                  : ""
+                                (isCorrect && style.active) || undefined
                               }
                             >
                               <input
                                 type={
-                                  question.answerType === "객관식-다항"
-                                    ? "checkbox"
-                                    : "radio"
+                                  INPUT_TYPE[question.answerType] || "radio"
                                 }
-                                checked={String(question.correctAnswer ?? "")
-                                  .split(",")
-                                  .map((number) => number.trim())
-                                  .includes(answer.no)}
-                                onChange={() => {}}
+                                checked={isCorrect}
+                                readOnly
                               />
                               <label>
                                 {" "}
                                 {answer.no}. {answer.text}
                               </label>
                             </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  )
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
                 )}
               </div>
             ))}

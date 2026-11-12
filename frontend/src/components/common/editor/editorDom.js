@@ -203,7 +203,28 @@ const collectTextNodes = (root, range) => {
  */
 export const applyInlineStyle = (root, range, property, value) => {
   if (range.collapsed) {
-    if (!value) return range;
+    if (!value) {
+      // 커서만 있는 경우 해제: 커서 위치를 해당 속성이 걸린 상위 요소 밖으로 분리해 기본값으로 이어서 입력
+      const text = document.createTextNode(ZWSP);
+      range.insertNode(text);
+      let styled = false;
+      for (let el = text.parentElement; el && el !== root && !el.matches(BLOCK_SELECTOR); el = el.parentElement) {
+        if (el.style?.getPropertyValue(property) || (el.tagName === "FONT" && el.hasAttribute(FONT_ATTRIBUTE[property] ?? ""))) {
+          styled = true;
+        }
+      }
+      if (!styled) {
+        text.remove();
+        return range;
+      }
+      const whole = document.createRange();
+      whole.selectNodeContents(text);
+      applyInlineStyle(root, whole, property, "");
+      const next = document.createRange();
+      next.setStart(text, 1);
+      next.collapse(true);
+      return next;
+    }
     // 커서만 있는 경우: 스타일 span 을 넣고 그 안에서 이어서 입력
     const span = document.createElement("span");
     span.style.setProperty(property, value);

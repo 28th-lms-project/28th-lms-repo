@@ -50,8 +50,11 @@ public enum ErrorCode {
   GLOBAL_NOT_FOUND_URL(HttpStatus.NOT_FOUND, "존재하지 않는 URL이거나 요청 주소가 잘못되었습니다."), //
   USER_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 회원입니다."), //
   COURSE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 강의입니다."), //
+  HOMEWORK_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 과제입니다."), //
   FILES_NOT_FOUND_FILE(HttpStatus.NOT_FOUND, "파일을 찾을 수 없습니다."), //
   ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), //
+  SURVEY_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 설문입니다."), //
+  SURVEY_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 설문 답변입니다."), //
   EXAM_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."), //
   ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
   COURSE_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 교육 자료입니다."), //
@@ -91,7 +94,13 @@ public enum ErrorCode {
   EXAM_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "문제 등록에 실패했습니다."), //
   EXAM_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "문제 수정에 실패했습니다."), //
   ACTION_FAILURE_SAVE(HttpStatus.INTERNAL_SERVER_ERROR, "접근 권한 저장을 실패했습니다."), //
+  HOMEWORK_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "과제 등록을 실패했습니다."), //
+  HOMEWORK_REPLY_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "댓글 등록을 실패했습니다."), //
   FILES_SYSTEM_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "파일 처리 중 오류가 발생했습니다."), //
+  SURVEY_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 생성을 실패했습니다."), //
+  SURVEY_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 수정을 실패했습니다."), //
+  SURVEY_DATA_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 답변 생성을 실패했습니다."), //
+  SURVEY_DATA_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 답변 수정을 실패했습니다."), //
   INTERVIEW_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "면접 일정 등록에 실패했습니다."), //
   COURSE_DATA_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 등록에 실패했습니다."), //
   COURSE_DATA_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 수정에 실패했습니다."), //
