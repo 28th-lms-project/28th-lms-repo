@@ -240,6 +240,42 @@ public List<NoticeVO> readNotices(String userId) {
 - 캐시는 서버 메모리에 있으므로, 서버를 여러 대 띄우면 다른 서버의 캐시는 비워지지 않습니다 (현재는 서버 한 대 기준).
 - 권한이 바뀌는 기능을 새로 만든다면(예: ACTION 삭제) ROLE 담당자에게 알려 주세요. 캐시를 비우는 호출이 필요합니다.
 
+### 권한 코드를 바꾸거나 없앨 때
+
+새 API를 추가하거나, 기존 API의 URL · 로직 · `description`만 바꿀 때는 할 일이 없습니다. 아래 경우에만 해당합니다.
+
+| 변경 | 그대로 두면 생기는 일 |
+| --- | --- |
+| `@RequireAction`의 `domain` · `action` 이름 변경 | 새 코드는 등록 · 부여 전이라 **SUPER_ADMIN 외에는 그 API를 못 씀**. 옛 코드는 "(미사용)"으로 남음 |
+| `@RequireAction`이 붙은 API 삭제 (그 코드를 쓰는 API가 하나도 없어짐) | 옛 코드가 "(미사용)"으로 남음 |
+| `@RequireAction`을 `@RequireSuperAdmin` · `@LoginRequired` 등으로 변경 | 위와 같음 |
+
+"(미사용)"으로 남은 코드는 당장 동작에 영향이 없습니다. 하지만 **나중에 같은 이름으로 API를 다시 만들면, 예전에 부여된 역할이 그 API를 바로 쓸 수 있게 됩니다.** 그래서 정리해야 합니다.
+
+할 일은 다음과 같습니다.
+
+1. 이름을 바꿨다면, 둘 중 하나를 합니다.
+   - 접근 관리 화면에서 새 코드를 등록하고 역할에 다시 부여합니다.
+   - 또는 DB 담당자에게 코드 이름 변경을 요청합니다. 기존 부여가 그대로 이어집니다.
+
+     ```sql
+     UPDATE ACTION SET ACTION_CODE = '새_코드' WHERE ACTION_CODE = '옛_코드';
+     ```
+
+2. 쓰이지 않게 된 옛 코드는 DB 담당자에게 삭제를 요청합니다. ACTION 삭제 기능은 아직 없습니다.
+
+   ```sql
+   DELETE FROM ROLE_ACTION
+    WHERE ACTION_ID IN (SELECT ACTION_ID FROM ACTION WHERE ACTION_CODE = '옛_코드');
+   DELETE FROM ACTION WHERE ACTION_CODE = '옛_코드';
+   ```
+
+3. SQL로 바꾼 뒤에는 **서버를 재시작**합니다. 권한 캐시는 화면에서 저장할 때만 비워지기 때문입니다.
+
+**빠뜨렸을 때**: 서버가 시작될 때 ACTION에 등록됐지만 코드에 없는 권한 코드를 경고 로그로 남깁니다 (7장). 삭제는 하지 않습니다.
+
+**공용 개발 DB 주의**: 개발 서버는 내 브랜치의 코드만 알기 때문에, 아직 머지되지 않은 **다른 팀원 브랜치의 권한 코드도 "(미사용)"으로 보이고 경고 로그에 나옵니다.** 지우기 전에 다른 브랜치에서 쓰는 코드인지 확인하세요 (예: `git grep "action = \"READ_DETAIL\"" $(git branch -r --format="%(refname:short)")`).
+
 ---
 
 ## 7. 확인 방법
@@ -249,7 +285,10 @@ public List<NoticeVO> readNotices(String userId) {
 ```text
 INFO  c.l.common.action.ActionCodeRegistry -- 권한 코드 6개 등록: [ACCESS_READ, ..., ROLE_USER_READ]
 INFO  c.l.common.action.ActionCodeRegistry -- 권한 어노테이션이 없는 API 14개 (app.access-check.default-super-admin: true이면 SUPER_ADMIN만 호출 가능): [com.learningworks.course.web.CourseController#addCourse(RegistCourseVO), ...]
+WARN  c.l.common.action.UnusedActionCodeReporter -- 코드에서 쓰이지 않는 권한 코드 2개가 ACTION에 등록되어 있습니다 (...): [MENU_READ_DETAIL, MENU_READ_PERMISSION]
 ```
+
+- 세 번째 줄(`WARN`)은 ACTION에 등록됐지만 코드의 어떤 `@RequireAction`에도 없는 권한 코드입니다. 없으면 표시되지 않습니다. 정리 방법은 6장 "권한 코드를 바꾸거나 없앨 때"를 보세요.
 
 - **권한 코드 목록 API** (SUPER_ADMIN): `GET /action-codes`. 도메인별 목록과 등록 여부(`registered`)를 볼 수 있습니다. 다른 모듈에서 이미 쓰는 domain 이름을 확인할 때도 사용합니다.
 - **내 권한 API** (로그인 사용자): `GET /action-codes/me`. 현재 역할과 허용된 권한 코드를 반환합니다. 프론트에서 버튼 표시 여부를 판단할 때 사용하며, 프론트 공통 코드가 로그인 시 자동으로 호출합니다 (`frontend/docs/permission-guide.md`). 권한 검사 설정과 관계없이 항상 동작합니다.
@@ -285,7 +324,7 @@ INFO  c.l.common.action.ActionCodeRegistry -- 권한 어노테이션이 없는 A
   - 예: `if ("ROLE_TUTOR".equals(roleId))`, `AuthUtil.isGranted("ROLE_TUTOR")`. 위와 같은 이유입니다. `isGranted`는 토큰의 역할(로그인 시점 값)을 보므로 바뀐 역할도 반영되지 않습니다.
 - **등록한 뒤에 `domain` · `action` 바꾸기**
   - 권한 코드가 바뀌면 기존 등록 · 부여와 연결이 끊겨, 부여받았던 역할이 그 API를 쓸 수 없게 됩니다. 기존 코드는 접근 관리 화면에 "(미사용)"으로 표시됩니다.
-  - 꼭 바꿔야 하면 바꾼 뒤 새 코드를 다시 등록 · 부여하고, ROLE 담당자에게 알려 주세요.
+  - 꼭 바꿔야 하면 6장 "권한 코드를 바꾸거나 없앨 때"를 따라 주세요.
   - `description`만 바꾸는 것은 괜찮습니다.
 - 클래스에 어노테이션 붙이기 (메서드에만 붙일 수 있습니다)
 - 한 메서드에 권한 어노테이션을 두 개 이상 붙이기
@@ -320,6 +359,7 @@ INFO  c.l.common.action.ActionCodeRegistry -- 권한 어노테이션이 없는 A
 | `common/action/LoginRequired.java`          | 로그인 사용자 누구나 어노테이션    |
 | `common/action/PublicApi.java`              | 비로그인 포함 누구나 어노테이션    |
 | `common/action/ActionCodeRegistry.java`     | 서버 시작 시 권한 코드 수집 · 검증 |
+| `common/action/UnusedActionCodeReporter.java` | 서버 시작 후 미사용 권한 코드 경고 로그 |
 | `common/action/AccessChecker.java`          | 권한 검사 (역할별 허용 목록 캐시)  |
 | `common/action/ActionCheckInterceptor.java` | 요청마다 어노테이션을 읽어 검사    |
 
