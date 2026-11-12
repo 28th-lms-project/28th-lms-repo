@@ -7,8 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { testActions } from "../../../../store/slices/testSliceStore";
 import AddTest from "./AddTest";
 import UpdateTest from "./UpdateTest";
-import { courseActions } from "../../../../store/slices/courseSliceStore";
-import { getCourses } from "../../../../api/admin/course/courseApi";
+import { SUBJECTS } from "./subjects";
 
 const INPUT_TYPE = { "객관식-다항": "checkbox" };
 
@@ -22,47 +21,18 @@ const getCorrectNumbers = (correctAnswer) => {
 };
 
 export default function Test() {
-  let firstSubjectId = "";
-
-  const { courseList } = useSelector((state) => state.courses);
   const { questions } = useSelector((state) => state.test);
   const dispatch = useDispatch();
 
-  const [selectedSubjectId, setSelectedSubjectId] = useState(firstSubjectId);
+  const [selectedSubjectId, setSelectedSubjectId] = useState(SUBJECTS[0].value);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  const currentCourseId =
-    selectedSubjectId || (courseList[0] && courseList[0].id) || "";
-
   useEffect(() => {
-    if (courseList.length > 0) {
-      return;
-    }
-    let ignoreUpdateState = false;
-    (async () => {
-      try {
-        const result = await getCourses();
-        if (!ignoreUpdateState) {
-          dispatch(courseActions.load(result));
-        }
-      } catch (e) {
-        alert(e.message);
-      }
-    })();
-    return () => {
-      ignoreUpdateState = true;
-    };
-  }, [dispatch, courseList.length]);
-
-  useEffect(() => {
-    if (!currentCourseId) {
-      return;
-    }
     let ignoreUpdateState = false;
 
     (async () => {
       try {
-        const response = await searchTest(currentCourseId);
+        const response = await searchTest(selectedSubjectId);
         if (!ignoreUpdateState) {
           dispatch(testActions.setTestList(response));
         }
@@ -75,28 +45,29 @@ export default function Test() {
     return () => {
       ignoreUpdateState = true;
     };
-  }, [dispatch, currentCourseId]);
+  }, [dispatch, selectedSubjectId]);
 
   return (
     <PageContainer>
       <div className={style.testContainer}>
         <div className={style.testHeader}>
           <ul className={style.testCourseList}>
-            {courseList.map((course) => (
+            {SUBJECTS.map((subject) => (
               <li
-                key={course.id}
-                onClick={() => setSelectedSubjectId(course.id)}
+                key={subject.value}
+                onClick={() => setSelectedSubjectId(subject.value)}
                 className={
-                  (currentCourseId === course.id && style.active) || undefined
+                  (selectedSubjectId === subject.value && style.active) ||
+                  undefined
                 }
               >
-                {course.courseName}
+                {subject.label}
               </li>
             ))}
           </ul>
         </div>
         <div className={style.testSection}>
-          <AddTest subjectId={currentCourseId} />
+          <AddTest subjectId={selectedSubjectId} />
           <div className={style.testQuestionsContainer}>
             {questions.map((question) => (
               <div key={question.id} className={style.testQuestion}>
