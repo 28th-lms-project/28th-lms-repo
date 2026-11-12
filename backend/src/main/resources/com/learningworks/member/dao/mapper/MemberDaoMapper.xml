@@ -145,7 +145,7 @@
     	UPDATE SALT
         SET SALT = #{salt}
           , MDFY_DT = SYSDATE
-          , MDFYR_ID = #{id}
+          , MDFYR_ID = #{modifierId}
       WHERE ID = #{id}
     </update>
     

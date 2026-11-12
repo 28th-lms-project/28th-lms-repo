@@ -123,7 +123,7 @@ public class MemberServiceImpl implements MemberService {
     if (this.memberDao.updatePassword(id, newHash) == 0) {
       throw new IllegalStateException("비밀번호 변경 실패");
     }
-    if (this.memberDao.updateSalt(id, newSalt) == 0) {
+    if (this.memberDao.updateSalt(id, newSalt, id) == 0) {
       throw new IllegalStateException("Salt 변경 실패");
     }
 

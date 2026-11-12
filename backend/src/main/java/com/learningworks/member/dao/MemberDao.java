@@ -31,7 +31,8 @@ public interface MemberDao {
 
   int updatePassword(@Param("id") String id, @Param("password") String password);
 
-  int updateSalt(@Param("id") String id, @Param("salt") String salt);
+  int updateSalt(@Param("id") String id, @Param("salt") String salt,
+      @Param("modifierId") String modifierId);
 
   int insertUser(@Param("member") MemberCreateVO createVO,
       @Param("encryptedPassword") String encryptedPassword);
