@@ -1,11 +1,14 @@
 package com.learningworks.member.service;
 
 import java.time.LocalDateTime;
+import com.learningworks.member.vo.request.MemberCreateVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
 import com.learningworks.member.vo.request.ModifyPasswordVO;
 import com.learningworks.member.vo.response.MemberVO;
 
 public interface MemberService {
+
+  String createMember(String actorId, MemberCreateVO createVO);
 
   void increaseLoginFailCount(String id, LocalDateTime now);
 

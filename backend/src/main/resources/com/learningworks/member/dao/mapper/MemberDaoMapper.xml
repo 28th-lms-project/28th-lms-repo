@@ -4,6 +4,13 @@
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.learningworks.member.dao.MemberDao">
 	
+
+	<select id="selectIdCount" parameterType="string" resultType="_int">
+       SELECT COUNT(ID)
+         FROM "USER"
+        WHERE ID = #{id}
+	</select>
+	
 	<select id="selectMyInfo" parameterType="string"
         resultType="com.learningworks.member.vo.response.MemberVO">
        SELECT ID
@@ -84,4 +91,41 @@
              , MDFYR_ID = #{id}
     	 WHERE ID = #{id}
     </update>
+    
+    <insert id="insertUser">
+    	INSERT INTO "USER" (
+            ID
+          , PWD
+          , NAME
+          , GITHUB_URL
+          , BASE_ROLE
+          , DEL_YN
+          , PWD_FAIL_CNT
+          , CRT_DT
+          , MDFY_DT
+        ) VALUES (
+            #{member.id}
+          , #{encryptedPassword}
+          , #{member.name}
+          , #{member.githubUrl}
+          , #{member.baseRole}
+          , 'N'
+          , 0
+          , SYSDATE
+          , SYSDATE
+        )
+    </insert>
+    
+    <insert id="insertSalt">
+    	INSERT INTO SALT
+         	   (ID
+             , SALT
+             , CRT_DT
+             , CRTR_ID)
+        VALUES
+               (#{id}
+             , #{salt}
+             , SYSDATE
+             , #{creatorId})
+    </insert>
 </mapper>
