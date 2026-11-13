@@ -9,7 +9,12 @@ import AddTest from "./AddTest";
 import UpdateTest from "./UpdateTest";
 import { getCodeOptionList } from "../../../../api/admin/system/code/codeApi";
 
-const INPUT_TYPE = { "객관식-다항": "checkbox" };
+const toChoiceInputType = (answerType) => {
+  if (answerType === "ANSWER_MULTIPLE") {
+    return "checkbox";
+  }
+  return "radio";
+};
 
 const getCorrectNumbers = (correctAnswer) => {
   if (correctAnswer === null || correctAnswer === undefined) {
@@ -30,18 +35,26 @@ export default function Test() {
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [answerTypeList, setAnswerTypeList] = useState([]);
 
+  const toAnswerTypeName = (id) => {
+    const found = answerTypeList.find((type) => type.id === id);
+    if (!found) {
+      return id;
+    }
+    return found.name;
+  };
+
   useEffect(() => {
     getCodeOptionList("TEST_SUBJECT")
       .then((codes) => {
         setSubjectList(codes);
 
-        getCodeOptionList("TEST_ANSWER_TYPE")
-          .then(setAnswerTypeList)
-          .catch((e) => alert(e.message));
-
         if (codes.length > 0) {
           setSelectedSubjectId(codes[0].id);
         }
+
+        getCodeOptionList("TEST_ANSWER_TYPE")
+          .then(setAnswerTypeList)
+          .catch((e) => alert(e.message));
       })
       .catch((e) => alert(e.message));
   }, []);
@@ -109,7 +122,7 @@ export default function Test() {
                 </div>
 
                 <div className={style.testQuestionTitle}>
-                  <div>[{question.answerType}]</div>
+                  <div>[{toAnswerTypeName(question.answerType)}]</div>
                   <h3>
                     {question.question} ({question.pointAlloc} 점)
                   </h3>
@@ -125,7 +138,7 @@ export default function Test() {
                   <span>{question.correctRate}</span>
                 </div>
 
-                {question.answerType === "O/X" && (
+                {question.answerType === "ANSWER_CHECK" && (
                   <div className={style.answerList}>
                     <ul>
                       {["O", "X"].map((option) => {
@@ -149,7 +162,7 @@ export default function Test() {
                     </ul>
                   </div>
                 )}
-                {!["O/X", "주관식", "코드작성"].includes(
+                {!["ANSWER_CHECK", "ANSWER_WRITE", "ANSWER_CODE"].includes(
                   question.answerType,
                 ) && (
                   <div className={style.answerList}>
@@ -170,9 +183,7 @@ export default function Test() {
                               }
                             >
                               <input
-                                type={
-                                  INPUT_TYPE[question.answerType] || "radio"
-                                }
+                                type={toChoiceInputType(question.answerType)}
                                 checked={isCorrect}
                                 readOnly
                               />
