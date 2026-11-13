@@ -7,9 +7,11 @@ import org.apache.ibatis.annotations.Param;
 import com.learningworks.member.vo.request.MemberCreateVO;
 import com.learningworks.member.vo.request.MemberSearchVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
+import com.learningworks.member.vo.request.ModifyMemberVO;
 import com.learningworks.member.vo.response.MemberDetailVO;
 import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
+import com.learningworks.role.vo.response.RoleVO;
 
 @Mapper
 public interface MemberDao {
@@ -31,7 +33,8 @@ public interface MemberDao {
 
   int updatePassword(@Param("id") String id, @Param("password") String password);
 
-  int updateSalt(@Param("id") String id, @Param("salt") String salt);
+  int updateSalt(@Param("id") String id, @Param("salt") String salt,
+      @Param("modifierId") String modifierId);
 
   int insertUser(@Param("member") MemberCreateVO createVO,
       @Param("encryptedPassword") String encryptedPassword);
@@ -46,4 +49,16 @@ public interface MemberDao {
   List<MemberListVO> selectMemberList(MemberSearchVO searchVO);
 
   MemberDetailVO selectMemberDetail(String id);
+
+  /** ROLE_RANK가 rankBoundary보다 큰 역할 목록 (excludeRoleId 제외, 순위순) */
+  List<RoleVO> selectAssignableRoles(@Param("rankBoundary") int rankBoundary,
+      @Param("excludeRoleId") String excludeRoleId);
+
+  int updateMember(@Param("id") String id, @Param("modifyVO") ModifyMemberVO modifyVO);
+
+  int deleteMember(String id);
+
+  int resetPassword(@Param("id") String id, @Param("password") String password);
+
+  int updateBaseRole(@Param("id") String id, @Param("roleId") String roleId);
 }

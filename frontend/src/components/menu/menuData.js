@@ -41,14 +41,9 @@ export const MENU = [
         items: [{ to: "/admin/test", label: "시험 문제 관리" }],
       },
       {
-        title: "수강생 관리",
-        items: [{ to: "/admin/students", label: "수강생 관리" }],
-      },
-      {
         title: "시스템 관리",
         items: [
-          { to: "/admin/system/account", label: "관리자 관리" },
-          { to: "/admin/system/tutor", label: "강사 관리" },
+          { to: "/admin/system/member", label: "회원 관리" },
           { to: "/admin/system/menu", label: "메뉴 관리" },
           { to: "/admin/system/role", label: "권한 관리" },
           { to: "/admin/system/access", label: "접근 관리" },
