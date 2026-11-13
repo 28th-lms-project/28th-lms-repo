@@ -6,15 +6,7 @@ import { useDispatch } from "react-redux";
 import { createNewQuestion } from "../../../../api/admin/system/test/testApi";
 import { testActions } from "../../../../store/slices/testSliceStore";
 
-export default function AddTest({ subjectId }) {
-  const answerTypes = [
-    { value: "객관식-단항", label: "객관식 - 단항" },
-    { value: "객관식-다항", label: "객관식 - 다항" },
-    { value: "주관식", label: "주관식" },
-    { value: "O/X", label: "O/X" },
-    { value: "코드작성", label: "코드작성" },
-  ];
-
+export default function AddTest({ subjectId, answerTypes }) {
   const answerNumbers = [1, 2, 3, 4, 5];
 
   const [addState, setAddState] = useState(false);
@@ -25,10 +17,6 @@ export default function AddTest({ subjectId }) {
   const [multiAnswers, setMultiAnswers] = useState([]);
 
   const answerTypeGroup = useId();
-  const isManualGraded = ["주관식", "코드작성"].includes(selectedAnswerType);
-  const isOx = selectedAnswerType === "O/X";
-  const isMulti = selectedAnswerType === "객관식-다항";
-  const usesChoices = !isManualGraded && !isOx;
 
   const questionRef = useRef();
   const pointRef = useRef();
@@ -60,7 +48,12 @@ export default function AddTest({ subjectId }) {
 
   const count = Number(answerCnt);
   const getAnswer = (index) => {
-    if (!usesChoices) {
+    // 주관식 · 코드작성 · O/X는 보기가 없음
+    if (
+      selectedAnswerType === "ANSWER_WRITE" ||
+      selectedAnswerType === "ANSWER_CODE" ||
+      selectedAnswerType === "ANSWER_CHECK"
+    ) {
       return null;
     }
     if (index < count) {
@@ -69,24 +62,28 @@ export default function AddTest({ subjectId }) {
     return "";
   };
   const getCorrectAnswer = () => {
-    if (isManualGraded) {
+    // 주관식 · 코드작성은 강사가 채점하므로 정답 없음
+    if (
+      selectedAnswerType === "ANSWER_WRITE" ||
+      selectedAnswerType === "ANSWER_CODE"
+    ) {
       return null;
     }
-    if (isOx) {
+    if (selectedAnswerType === "ANSWER_CHECK") {
       return oxAnswer;
     }
-    if (isMulti) {
+    if (selectedAnswerType === "ANSWER_MULTIPLE") {
       return [...multiAnswers].sort((a, b) => Number(a) - Number(b)).join(",");
     }
     return correctRef.current.value;
   };
   let minAnswerCnt = "1";
-  if (isMulti) {
+  if (selectedAnswerType === "ANSWER_MULTIPLE") {
     minAnswerCnt = "2";
   }
   const onClickAddButtonHandler = () => {
     setFieldErrors({});
-    if (isMulti && multiAnswers.length < 2) {
+    if (selectedAnswerType === "ANSWER_MULTIPLE" && multiAnswers.length < 2) {
       setFieldErrors({ correctAnswer: ["정답을 2개 이상 선택해주세요."] });
       return;
     }
@@ -95,7 +92,12 @@ export default function AddTest({ subjectId }) {
     const subQuest = subQuestRef.current.value;
     const correct = getCorrectAnswer();
     let answerCount = null;
-    if (usesChoices) {
+    // 보기가 있는 유형만 보기 개수를 보냄 (주관식 · 코드작성 · O/X 제외)
+    if (
+      selectedAnswerType !== "ANSWER_WRITE" &&
+      selectedAnswerType !== "ANSWER_CODE" &&
+      selectedAnswerType !== "ANSWER_CHECK"
+    ) {
       answerCount = Number(answerCnt);
     }
     const registTestQ = {
@@ -168,19 +170,20 @@ export default function AddTest({ subjectId }) {
 
             <div className={style.testTypes}>
               {answerTypes.map((type) => (
-                <div key={type.value} className={style.type}>
+                <div key={type.id} className={style.type}>
                   <input
                     type="radio"
                     name={answerTypeGroup}
                     className={style.Type}
-                    value={type.value}
-                    checked={selectedAnswerType === type.value}
+                    value={type.id}
+                    checked={selectedAnswerType === type.id}
                     onChange={() => {
-                      setSelectedAnswerType(type.value);
+                      setSelectedAnswerType(type.id);
                       setOxAnswer("");
                       setMultiAnswers([]);
                       if (
-                        ["객관식-단항", "객관식-다항"].includes(type.value) &&
+                        (type.id === "ANSWER_SELECT" ||
+                          type.id === "ANSWER_MULTIPLE") &&
                         Number(answerCnt) < 2
                       ) {
                         setAnswerCnt(4);
@@ -188,7 +191,7 @@ export default function AddTest({ subjectId }) {
                       setFieldErrors({});
                     }}
                   />
-                  <label>{type.label}</label>
+                  <label>{type.name}</label>
                 </div>
               ))}
             </div>
@@ -207,11 +210,12 @@ export default function AddTest({ subjectId }) {
             ></textarea>
             {renderFieldErrors("subQuestion")}
 
-            {isManualGraded && (
+            {(selectedAnswerType === "ANSWER_WRITE" ||
+              selectedAnswerType === "ANSWER_CODE") && (
               <p>수강생이 작성한 답변은 제출 후 강사가 채점합니다.</p>
             )}
 
-            {isOx && (
+            {selectedAnswerType === "ANSWER_CHECK" && (
               <fieldset>
                 <legend>정답</legend>
                 {["O", "X"].map((option) => (
@@ -230,7 +234,7 @@ export default function AddTest({ subjectId }) {
               </fieldset>
             )}
 
-            {isMulti && (
+            {selectedAnswerType === "ANSWER_MULTIPLE" && (
               <fieldset>
                 <legend>정답 (2개 이상 선택)</legend>
                 {answerNumbers
@@ -261,7 +265,15 @@ export default function AddTest({ subjectId }) {
                 {renderFieldErrors("correctAnswer")}
               </fieldset>
             )}
-            <div hidden={!usesChoices || isMulti}>
+            {/* 정답 번호 입력: 객관식-단항만 (다항은 위 체크박스로 선택) */}
+            <div
+              hidden={
+                selectedAnswerType === "ANSWER_WRITE" ||
+                selectedAnswerType === "ANSWER_CODE" ||
+                selectedAnswerType === "ANSWER_CHECK" ||
+                selectedAnswerType === "ANSWER_MULTIPLE"
+              }
+            >
               <input
                 type="number"
                 min="1"
@@ -283,7 +295,13 @@ export default function AddTest({ subjectId }) {
               />
               {renderFieldErrors("pointAlloc")}
             </div>
-            <div hidden={!usesChoices}>
+            <div
+              hidden={
+                selectedAnswerType === "ANSWER_WRITE" ||
+                selectedAnswerType === "ANSWER_CODE" ||
+                selectedAnswerType === "ANSWER_CHECK"
+              }
+            >
               <label>보기</label>
               <input
                 type="number"
@@ -306,7 +324,9 @@ export default function AddTest({ subjectId }) {
               <div
                 key={num}
                 hidden={
-                  !usesChoices ||
+                  selectedAnswerType === "ANSWER_WRITE" ||
+                  selectedAnswerType === "ANSWER_CODE" ||
+                  selectedAnswerType === "ANSWER_CHECK" ||
                   (index >= Number(answerCnt) &&
                     !hasFieldError(`answerSheet${num}`))
                 }
