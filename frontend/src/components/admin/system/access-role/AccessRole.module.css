@@ -94,17 +94,6 @@
     cursor: not-allowed;
 }
 
-/* 목록 헤더 */
-.listHeader {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 40px;
-    font-size: 14px;
-    font-weight: bold;
-    border-bottom: 1px solid #ddd;
-}
-
 /* 역할 목록 */
 .roleList {
     overflow-y: auto;
@@ -117,34 +106,6 @@
     min-height: 300px;
     max-height: calc(100vh - 390px);
     overflow-y: auto;
-}
-
-/* 목록 공통 */
-.listItem {
-    display: flex;
-    align-items: center;
-    min-height: 42px;
-    padding: 0 10px;
-    font-size: 14px;
-    color: #333;
-    border-bottom: 1px dashed #ddd;
-    cursor: pointer;
-    transition: background-color 0.15s ease;
-}
-
-/* 마우스 오버 */
-.listItem:hover {
-    background-color: #e5e5e5;
-}
-
-/* 선택된 항목 */
-.selected {
-    background-color: #d5d5d5;
-}
-
-/* 선택된 항목에 마우스 오버 */
-.selected:hover {
-    background-color: #c8c8c8;
 }
 
 /* 빈 목록 */

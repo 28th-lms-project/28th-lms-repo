@@ -30,6 +30,9 @@ public enum ErrorCode {
   COURSE_DATA_EMPTY_CONTENT(HttpStatus.BAD_REQUEST, "교육 자료 내용을 입력해주세요."), //
   LINK_PREVIEW_INVALID_URL(HttpStatus.BAD_REQUEST, "미리보기를 만들 수 없는 URL입니다. http:// 또는 https:// 로 시작하는 공개 주소만 사용할 수 있습니다."), //
   CODE_PARENT_INVALID(HttpStatus.BAD_REQUEST, "상위 변수로 지정할 수 없는 값입니다."), //
+  MENU_PARENT_INVALID(HttpStatus.BAD_REQUEST, "소메뉴 아래에는 메뉴를 추가할 수 없습니다."), //
+  MENU_ORDER_INVALID(HttpStatus.BAD_REQUEST, "메뉴 순서 정보가 올바르지 않습니다."), //
+  MENU_ROLE_INVALID(HttpStatus.BAD_REQUEST, "존재하지 않는 역할이 포함되어 있습니다."), //
 
   // 401 UNAUTHORIZED
   GLOBAL_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."), //
@@ -57,6 +60,9 @@ public enum ErrorCode {
   ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
   COURSE_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 교육 자료입니다."), //
   CODE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 환경 변수입니다."), //
+  COUNSEL_NOT_EXISTS(HttpStatus.NOT_FOUND, "상담 기본 정보가 없습니다. 성별과 연락처를 먼저 등록해주세요."), //
+  COUNSEL_STUDENT_NOT_IN_COURSE(HttpStatus.NOT_FOUND, "과정에 등록된 학생이 아닙니다."), //
+  MENU_NOT_EXISTS(HttpStatus.NOT_FOUND, "메뉴가 존재하지 않습니다."), //
 
   // 405 METHOD NOT ALLOWED
   GLOBAL_METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 HTTP 메서드 요청입니다."), //
@@ -72,6 +78,13 @@ public enum ErrorCode {
   ACTION_ROLE_PROTECTED(HttpStatus.CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다."), //
   FILES_IN_USE(HttpStatus.CONFLICT, "등록된 교육 자료에서 사용 중인 파일은 삭제할 수 없습니다."), //
   CODE_ID_USED(HttpStatus.CONFLICT, "이미 사용 중인 환경 변수 ID입니다."), //
+  MENU_URL_USED(HttpStatus.CONFLICT, "이미 다른 메뉴에서 사용 중인 URL입니다."), //
+  MENU_HAS_CHILDREN(HttpStatus.CONFLICT, "하위 메뉴가 있어 삭제할 수 없습니다. 하위 메뉴를 먼저 삭제해주세요."), //
+  MENU_IN_USE(HttpStatus.CONFLICT, "이 메뉴를 사용하는 접근 권한(ACTION)이 있어 삭제할 수 없습니다. 접근 관리에서 먼저 변경해주세요."), //
+  MENU_ORDER_OUTDATED(HttpStatus.CONFLICT, "메뉴 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요."), //
+  MENU_TITLE_USED(HttpStatus.CONFLICT, "같은 상위 메뉴에 이미 같은 이름의 메뉴가 있습니다."), //
+  MENU_OUTDATED(HttpStatus.CONFLICT, "다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도해주세요."), //
+  MENU_SELF_LOCK(HttpStatus.CONFLICT, "저장하면 본인이 메뉴 관리 화면에 들어올 수 없게 됩니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 다른 관리자나 최고 관리자에게 요청해주세요."), //
 
   // 413 CONTENT TOO LARGE
   FILES_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다."), //
@@ -99,6 +112,8 @@ public enum ErrorCode {
   COURSE_DATA_FAILURE_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 삭제에 실패했습니다."), //
   CODE_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "환경 변수 생성에 실패했습니다."), //
   CODE_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "환경 변수 수정에 실패했습니다."), //
+  COUNSEL_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "상담 정보 등록에 실패했습니다."), //
+  COUNSEL_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "상담 정보 수정에 실패했습니다."), //
 
   // 502 BAD GATEWAY
   LINK_PREVIEW_FAILURE(HttpStatus.BAD_GATEWAY, "링크 미리보기 정보를 가져올 수 없습니다."), //

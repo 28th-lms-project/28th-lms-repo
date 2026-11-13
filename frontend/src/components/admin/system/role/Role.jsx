@@ -195,7 +195,10 @@ function RoleManagement({ isSuperAdmin, canReadUsers, canMoveUsers }) {
       });
 
       setNewRole(INITIAL_NEW_ROLE);
-      alert("역할이 추가되었습니다.");
+      // 새 역할은 MENU_ROLE · ROLE_ACTION이 비어 있어 대시보드만 볼 수 있다 (메뉴 설계 8장)
+      alert(
+        "역할이 추가되었습니다.\n새 역할은 메뉴와 권한이 비어 있습니다. 메뉴 관리와 권한별 접근 권한 관리에서 허용해 주세요.",
+      );
       await loadRoles();
     } catch (error) {
       if (error.errorCode === "GLOBAL_INVALID_PARAMETER" && error.validations) {

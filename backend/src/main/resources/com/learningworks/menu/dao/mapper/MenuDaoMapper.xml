@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+  namespace="com.learningworks.menu.dao.MenuDao">
+
+  <!--
+    날짜는 'YYYY-MM-DD HH24:MI:SS' 문자열. MDFY_DT는 동시 수정 검사(MENU_OUTDATED)에 그대로 쓰이므로 초까지 내보낸다.
+    MENU_ORDER는 DB에서 null 허용이지만 코드가 항상 채운다 (혹시 null이면 0).
+  -->
+  <sql id="menuColumns">
+    SELECT ID
+         , TITLE
+         , PARENT_ID
+         , NVL(MENU_ORDER, 0) AS MENU_ORDER
+         , USE_YN
+         , SPREAD
+         , MENU_URL
+         , TO_CHAR(CRT_DT, 'YYYY-MM-DD HH24:MI:SS') AS CRT_DT
+         , TO_CHAR(MDFY_DT, 'YYYY-MM-DD HH24:MI:SS') AS MDFY_DT
+      FROM MENU
+  </sql>
+
+  <!-- 같은 상위 메뉴 조건. parentId가 null이면 대메뉴 -->
+  <sql id="parentCondition">
+    <choose>
+      <when test="parentId == null">
+       PARENT_ID IS NULL
+      </when>
+      <otherwise>
+       PARENT_ID = #{parentId}
+      </otherwise>
+    </choose>
+  </sql>
+
+  <!-- List<MenuVO> selectAllMenus(); -->
+  <select id="selectAllMenus"
+          resultType="com.learningworks.menu.vo.response.MenuVO">
+    <include refid="menuColumns" />
+  </select>
+
+  <!-- MenuVO selectMenuById(String menuId); -->
+  <select id="selectMenuById"
+          parameterType="string"
+          resultType="com.learningworks.menu.vo.response.MenuVO">
+    <include refid="menuColumns" />
+     WHERE ID = #{_parameter}
+  </select>
+
+  <!-- MenuVO selectMenuByIdForUpdate(String menuId); -->
+  <select id="selectMenuByIdForUpdate"
+          parameterType="string"
+          resultType="com.learningworks.menu.vo.response.MenuVO">
+    <include refid="menuColumns" />
+     WHERE ID = #{_parameter}
+       FOR UPDATE
+  </select>
+
+  <!-- List<String> selectChildMenuIds(String parentId); -->
+  <select id="selectChildMenuIds"
+          resultType="string">
+    SELECT ID
+      FROM MENU
+     WHERE <include refid="parentCondition" />
+     ORDER BY MENU_ORDER
+         , ID
+  </select>
+
+  <!-- int selectMaxMenuOrder(String parentId); -->
+  <select id="selectMaxMenuOrder"
+          resultType="_int">
+    SELECT NVL(MAX(MENU_ORDER), 0)
+      FROM MENU
+     WHERE <include refid="parentCondition" />
+  </select>
+
+  <!-- long selectTitleCount(String parentId, String title, String excludeMenuId); -->
+  <select id="selectTitleCount"
+          resultType="_long">
+    SELECT COUNT(ID)
+      FROM MENU
+     WHERE <include refid="parentCondition" />
+       AND TITLE = #{title}
+    <if test="excludeMenuId != null">
+       AND ID != #{excludeMenuId}
+    </if>
+  </select>
+
+  <!-- long selectMenuUrlCount(String menuUrl, String excludeMenuId); -->
+  <select id="selectMenuUrlCount"
+          resultType="_long">
+    SELECT COUNT(ID)
+      FROM MENU
+     WHERE MENU_URL = #{menuUrl}
+    <if test="excludeMenuId != null">
+       AND ID != #{excludeMenuId}
+    </if>
+  </select>
+
+  <!-- long selectActionCountByMenuId(String menuId); -->
+  <select id="selectActionCountByMenuId"
+          parameterType="string"
+          resultType="_long">
+    SELECT COUNT(ACTION_ID)
+      FROM ACTION
+     WHERE TOP_MENU_ID = #{_parameter}
+        OR MID_MENU_ID = #{_parameter}
+        OR BTM_MENU_ID = #{_parameter}
+  </select>
+
+  <!-- int insertMenu(MenuVO menu); -->
+  <insert id="insertMenu"
+          parameterType="com.learningworks.menu.vo.response.MenuVO">
+    <selectKey keyProperty="id"
+               resultType="string"
+               order="BEFORE">
+      SELECT 'MN-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_PK.NEXTVAL, 6, '0')
+        FROM DUAL
+    </selectKey>
+    INSERT INTO MENU
+     (ID
+    , TITLE
+    , PARENT_ID
+    , MENU_ORDER
+    , USE_YN
+    , SPREAD
+    , MENU_URL
+    , CRT_DT
+    , MDFY_DT)
+    VALUES
+     (#{id}
+    , #{title}
+    , #{parentId}
+    , #{menuOrder}
+    , #{useYn}
+    , #{spread}
+    , #{menuUrl}
+    , SYSDATE
+    , NULL)
+  </insert>
+
+  <!-- int updateMenu(MenuVO menu); -->
+  <update id="updateMenu"
+          parameterType="com.learningworks.menu.vo.response.MenuVO">
+    UPDATE MENU
+       SET TITLE = #{title}
+         , USE_YN = #{useYn}
+         , SPREAD = #{spread}
+         , MENU_URL = #{menuUrl}
+         , MDFY_DT = SYSDATE
+     WHERE ID = #{id}
+  </update>
+
+  <!-- int updateMenuOrders(List<String> menuIds); MDFY_DT는 바꾸지 않는다 -->
+  <update id="updateMenuOrders">
+    UPDATE MENU
+       SET MENU_ORDER = CASE ID
+                        <foreach collection="menuIds" item="menuId" index="idx">
+                          WHEN #{menuId} THEN #{idx} + 1
+                        </foreach>
+                        END
+     WHERE ID IN
+           <foreach collection="menuIds" item="menuId" open="(" separator="," close=")">
+             #{menuId}
+           </foreach>
+  </update>
+
+  <!-- int deleteMenu(String menuId); -->
+  <delete id="deleteMenu"
+          parameterType="string">
+    DELETE
+      FROM MENU
+     WHERE ID = #{_parameter}
+  </delete>
+
+  <!-- List<MenuRoleVO> selectAllMenuRoles(); -->
+  <select id="selectAllMenuRoles"
+          resultType="com.learningworks.menu.vo.response.MenuRoleVO">
+    SELECT MR.MENU_ID
+         , MR.ROLE_ID
+      FROM MENU_ROLE MR
+      LEFT JOIN "ROLE" R
+        ON MR.ROLE_ID = R.ROLE_ID
+     ORDER BY MR.MENU_ID
+         , R.ROLE_RANK
+         , MR.ROLE_ID
+  </select>
+
+  <!-- List<String> selectRoleIdsByMenuId(String menuId); -->
+  <select id="selectRoleIdsByMenuId"
+          parameterType="string"
+          resultType="string">
+    SELECT MR.ROLE_ID
+      FROM MENU_ROLE MR
+      LEFT JOIN "ROLE" R
+        ON MR.ROLE_ID = R.ROLE_ID
+     WHERE MR.MENU_ID = #{_parameter}
+     ORDER BY R.ROLE_RANK
+         , MR.ROLE_ID
+  </select>
+
+  <!-- int insertMenuRole(String menuId, String roleId); ID 생성식은 설계 문서 2-4 -->
+  <insert id="insertMenuRole">
+    INSERT INTO MENU_ROLE
+     (ID
+    , MENU_ID
+    , ROLE_ID
+    , CRT_DT)
+    VALUES
+     ('MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 6, '0')
+    , #{menuId}
+    , #{roleId}
+    , SYSDATE)
+  </insert>
+
+  <!-- int deleteMenuRolesByMenuId(String menuId); -->
+  <delete id="deleteMenuRolesByMenuId"
+          parameterType="string">
+    DELETE
+      FROM MENU_ROLE
+     WHERE MENU_ID = #{_parameter}
+  </delete>
+
+</mapper>
