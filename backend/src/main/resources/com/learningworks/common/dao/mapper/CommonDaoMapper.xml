@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+  여러 Mapper 에서 공통으로 사용하는 SQL 조각.
+  사용: <include refid="Commons.paginate_header" /> 실제 조회 쿼리(ORDER BY 포함) <include refid="Commons.paginate_footer" />
+  파라미터 객체에 pageNo(0부터), listSize 가 있어야 한다. (PaginationVO 상속)
+-->
+<mapper namespace="Commons">
+
+    <sql id="paginate_header">
+        SELECT *
+          FROM (SELECT T.*
+                     , ROWNUM AS RNUM
+                  FROM (
+    </sql>
+
+    <sql id="paginate_footer">
+                        ) T
+                 WHERE ROWNUM <![CDATA[ <= ]]> (#{pageNo} + 1) * #{listSize})
+         WHERE RNUM <![CDATA[ >= ]]> #{pageNo} * #{listSize} + 1
+    </sql>
+</mapper>

@@ -205,6 +205,35 @@ public RoleVO createRole(RegistRoleVO registRoleVO) {
 | NOT NULL · 길이 초과           | 500                                                   | VO에서 미리 검증하기 (3장 참고)                                         |
 | SQL 문법 오류 등               | 500 + 서버 로그                                       | 코드 수정 대상                                                          |
 
+### 서비스에서 입력값 오류를 필드별로 알릴 때
+
+VO 어노테이션으로 검사할 수 없는 입력값 규칙이 있습니다. 예를 들어 DB를 조회해야 필수 여부를 알 수 있는 필드가 그렇습니다(메뉴 단계에 따라 `menuUrl`이 필수인 경우 등). 이때 `LearningworksException`을 던지면 `validations`가 없어서 프론트가 메시지를 입력 칸에 표시할 수 없습니다. 이런 경우에는 `ValidationFailedException`을 던집니다.
+
+```java
+if (menuUrl == null || menuUrl.isBlank()) {
+  throw ValidationFailedException.of("menuUrl", "메뉴 URL을 입력해주세요.");
+}
+```
+
+`@Valid` 실패와 같은 형식으로 응답됩니다.
+
+```json
+{
+  "httpStatusCode": 400,
+  "httpStatusMessage": "Bad Request",
+  "errorCode": "GLOBAL_INVALID_PARAMETER",
+  "error": "입력값을 확인해주세요.",
+  "validations": {
+    "menuUrl": ["메뉴 URL을 입력해주세요."]
+  }
+}
+```
+
+- 첫 번째 인자는 **요청 VO의 필드명**입니다. 프론트가 이 이름으로 입력 칸을 찾습니다.
+- 여러 필드를 한 번에 알리려면 생성자에 `Map<String, List<String>>`를 넘깁니다: `new ValidationFailedException(Map.of("spread", List.of("..."), "menuUrl", List.of("...")))`
+- 에러 코드는 항상 `GLOBAL_INVALID_PARAMETER`입니다. 특정 필드가 아닌 업무 규칙 위반(중복, 상태 충돌 등)은 지금처럼 도메인 `ErrorCode`로 `LearningworksException`을 던집니다.
+- VO 어노테이션으로 검사할 수 있는 규칙은 VO에서 검사합니다(3장). 이 예외는 그럴 수 없을 때만 씁니다.
+
 ---
 
 ## 5. Mapper
@@ -271,6 +300,7 @@ ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), /
 - [ ] JSON 요청은 `@Valid @RequestBody`로 받는가?
 - [ ] 요청 VO에 DB 컬럼 제약(`@NotBlank`, `@Size` 등)이 반영되어 있는가?
 - [ ] 실패 상황은 `LearningworksException(ErrorCode)`로 던지는가?
+- [ ] VO로 검사할 수 없는 필드 입력값 오류는 `ValidationFailedException`으로 던지는가?
 - [ ] 조회 결과가 없을 때 404를 던지는가?
 - [ ] 새 에러 상황에 맞는 ErrorCode를 추가했는가?
 
