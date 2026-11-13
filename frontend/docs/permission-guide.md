@@ -16,7 +16,7 @@ export default function ExamList() {
 
 - `can("권한 코드")`: 내 역할에 그 권한이 있으면 `true`, 없으면 `false`입니다. SUPER_ADMIN은 항상 `true`입니다.
 - **권한 코드**는 백엔드 컨트롤러의 `@RequireAction(domain, action)`을 `domain_action`으로 붙인 값입니다.
-  - 예: `@RequireAction(domain = "EXAM", action = "CREATE")` → `"EXAM_CREATE"`
+  - 예: `@RequireAction(domain = "EXAM", action = "CREATE")` → `"EXAM_CREATE"` (이 문서의 `EXAM_*` 코드는 설명용 예시입니다. 실제 코드는 4장 방법으로 확인하세요)
 - 권한 정보를 아직 받아오지 못했을 때(로그인 직후 · 새로고침 직후 잠깐)는 `false`입니다. 버튼은 숨겨져 있다가 권한이 확인되면 나타납니다.
 - **화면에서 숨기는 것은 표시용입니다.** 실제 차단은 서버가 합니다. 백엔드 API에도 반드시 `@RequireAction`을 붙이세요 (`backend/docs/access-control-guide.md`).
 
@@ -35,7 +35,7 @@ export default function ExamList() {
            ② 권한별 접근 권한 관리: 역할(예: ROLE_TUTOR)에 권한 코드 부여
               ↓
 [로그인]   MainLayout이 GET /action-codes/me 호출 (로그인 · 새로고침 시 한 번)
-           → { roleId: "ROLE_TUTOR", superAdmin: false, actionCodes: ["EXAM_CREATE", "EXAM_READ"] }
+           → { roleId: "ROLE_TUTOR", roleDisplayName: "강사", superAdmin: false, actionCodes: ["EXAM_CREATE", "EXAM_READ"] }
            → Redux(permission)에 저장
               ↓
 [화면]     can("EXAM_CREATE") → 저장된 actionCodes에 "EXAM_CREATE"가 있는지 확인 → true
@@ -89,7 +89,7 @@ return (
 
 ### 3-2. 권한이 있을 때만 데이터 조회
 
-조회 API에 권한이 걸려 있다면, **권한이 확인된 뒤에만 호출**하세요. 서버 검사가 켜진 뒤 권한 없이 호출하면 403 오류가 나서 오류 창이 뜹니다.
+조회 API에 권한이 걸려 있다면, **권한이 확인된 뒤에만 호출**하세요. 서버 권한 검사가 켜져 있으므로 권한 없이 호출하면 403 오류가 납니다 (아래 예시의 `catch`처럼 오류 창이 뜹니다).
 
 ```jsx
 const { can } = usePermission();
@@ -180,7 +180,8 @@ if (!can("ACCESS_READ")) return <p>권한이 없습니다.</p>;
 3. **그 역할의 계정**으로 로그인: 부여한 버튼만 보이는지 확인
 4. **권한이 없는 계정**(예: `ROLE_STUDENT`)으로 로그인: 버튼이 숨겨지는지 확인
 
-- 권한을 바꾼 뒤에는 **새로고침하거나 다시 로그인해야** 화면에 반영됩니다. 메뉴로 다른 페이지에 다녀오는 것만으로는 반영되지 않습니다.- 공유 개발 DB이므로 테스트용으로 부여한 권한은 끝나면 정리하세요.
+- 권한을 바꾼 뒤에는 **새로고침하거나 다시 로그인해야** 화면에 반영됩니다. 메뉴로 다른 페이지에 다녀오는 것만으로는 반영되지 않습니다.
+- 공유 개발 DB이므로 테스트용으로 부여한 권한은 끝나면 정리하세요.
 
 ---
 
@@ -192,7 +193,7 @@ if (!can("ACCESS_READ")) return <p>권한이 없습니다.</p>;
 | 역할 이름으로 판단 (`user.roleName === "ROLE_ADMIN"`)                            | 역할별 권한은 관리자가 화면에서 바꿀 수 있습니다. 항상 권한 코드(`can`)로 판단하세요 |
 | 토큰을 디코딩해서 역할 확인                                                      | 토큰의 역할은 로그인 시점 값이라 바뀐 역할이 반영되지 않습니다                       |
 | 화면에서 숨겼으니 API 권한은 생략                                                | 화면 숨김은 표시용입니다. API에는 반드시 `@RequireAction`을 붙이세요                 |
-| 권한 확인 전에 권한이 걸린 API 호출                                              | 서버 검사가 켜지면 403 오류 창이 뜹니다. 3-2처럼 `can()`이 `true`일 때 호출하세요    |
+| 권한 확인 전에 권한이 걸린 API 호출                                              | 403 오류가 납니다. 3-2처럼 `can()`이 `true`일 때 호출하세요                          |
 | 일반 사용자 화면에 "권한 확인 중..." 표시                                        | 3-5 참고. 숨긴 상태로 두면 됩니다                                                    |
 | 공통 파일 수정 (`permissionSliceStore.js`, `usePermission.js`, `MainLayout.jsx`) | 수정이 필요하면 ROLE 담당자에게 요청하세요                                           |
 
@@ -213,7 +214,7 @@ if (!can("ACCESS_READ")) return <p>권한이 없습니다.</p>;
 권한을 조회하지 않으므로 `status`는 `"idle"`이고 `can()`은 항상 `false`입니다.
 
 **Q. 메뉴도 권한에 따라 숨길 수 있나요?**
-아직은 안 됩니다. 사이드 메뉴(`menuData.js`)는 고정 목록이라 권한과 관계없이 모두에게 보입니다. 메뉴 안의 화면에서 3-3처럼 권한을 확인하세요.
+사이드바는 메뉴 관리 화면에서 역할을 지정한 메뉴만 보여 주고, 메뉴 가드가 그 밖의 화면을 주소로 직접 여는 것도 막습니다 (`GET /menus/me`, 설계: `frontend/docs/design/menu-page-design.md` 5 · 7장, 새 화면 등록 순서: `frontend/docs/page-guide.md`). 이 문서의 권한(`actionCodes`)과는 별개입니다. 가드는 화면을 여는 것만 막으므로, 화면 안의 버튼 · 기능은 지금처럼 3-3대로 권한을 확인하세요.
 
 ---
 

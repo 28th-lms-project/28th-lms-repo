@@ -108,11 +108,11 @@ ACCESS 모듈도 MENU를 씁니다 (ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · 
 
 **이유**
 
-- MENU 구조는 계속 바뀝니다(`ORDER` → `MENU_ORDER` 이름 변경, `DEL_YN` 삭제, 메뉴 이동). MENU를 읽는 SQL이 두 모듈에 있으면 매번 같이 고쳐야 합니다.
+- MENU 구조는 계속 바뀝니다(`ORDER` → `MENU_ORDER` 이름 변경, `DEL_YN` 삭제, 메뉴 이동). MENU 목록을 조회하는 SQL이 두 모듈에 있으면 매번 같이 고쳐야 합니다. (ACCESS 목록의 메뉴 이름 표시 · 정렬용 JOIN은 남아 있으므로, MENU 컬럼 이름이 바뀌면 함께 고칩니다.)
 - 권한 영향이 없습니다. 접근 관리 화면은 SUPER_ADMIN 전용이고, SUPER_ADMIN은 `MENU_READ`를 항상 통과합니다.
 - 드롭다운이 사이드바 · 메뉴 관리 화면과 같은 순서로 나옵니다.
 
-**채택하지 않은 방식**: `/access/menus`를 두고 SQL의 `DEL_YN` 조건만 지우기. 작업은 가장 작지만 MENU를 읽는 곳이 두 곳으로 남습니다.
+**채택하지 않은 방식**: `/access/menus`를 두고 SQL의 `DEL_YN` 조건만 지우기. 작업은 가장 작지만 MENU 목록을 조회하는 곳이 두 곳으로 남습니다.
 
 ## D-08. `ROLE_ACTION_ID`를 팀 PK 규칙으로
 
@@ -130,7 +130,7 @@ ACCESS 모듈도 MENU를 씁니다 (ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · 
 
 **결정**: `POST /access/save`는 저장하기 전에 모든 ACTION의 메뉴가 대 > 중 > 소로 이어지는지 확인하고, 하나라도 틀리면 `ACTION_MENU_INVALID`(400)로 거부합니다(아무것도 저장하지 않음).
 
-- 확인은 메뉴 모듈의 `MenuService.checkAndLockMenuPath(top, mid, btm)`로 합니다. ACCESS 매퍼는 MENU를 직접 읽지 않습니다 (D-07과 같은 이유).
+- 확인은 메뉴 모듈의 `MenuService.checkAndLockMenuPath(top, mid, btm)`로 합니다. ACCESS 매퍼는 경로 확인을 위해 MENU를 직접 조회하지 않습니다 (D-07과 같은 이유). ACCESS 매퍼가 MENU를 읽는 곳은 목록의 메뉴 이름 표시 · 정렬용 JOIN뿐입니다.
 - 확인하면서 소메뉴 행을 `SELECT ... FOR UPDATE`로 잠급니다. 메뉴 삭제(`DELETE /menus/{menuId}`)도 같은 행을 잠근 뒤 ACTION 참조를 검사하므로, 둘이 동시에 일어나도 없는 메뉴를 가리키는 ACTION이 생기지 않습니다.
 - 여러 ACTION을 한 번에 저장할 때는 소메뉴 ID 순서로 잠가 교착 상태를 피합니다.
 
@@ -177,10 +177,9 @@ ACCESS 모듈도 MENU를 씁니다 (ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · 
 
 | 일 | 내용 |
 | --- | --- |
-| 데이터 정리 | 예전 개발용 메뉴(숫자 ID) 10개가 남아 있고, ACTION 22건 중 15건이 아직 예전 메뉴를 가리킵니다. 접근 관리 화면에서 ACTION의 메뉴를 새 메뉴로 다시 지정한 뒤 예전 메뉴를 삭제합니다 (ACTION이 가리키는 메뉴는 삭제가 거부됨) |
-| 미사용 권한 코드 | `MENU_READ_DETAIL`(부여 없음), `MENU_READ_PERMISSION`(2개 역할에 부여)이 남아 있습니다. 다른 브랜치에서 쓰는지 확인한 뒤 `access-control-guide.md` 6장의 SQL로 지우고 서버를 재시작합니다 |
+| 미사용 권한 코드 (보류) | `MENU_READ_DETAIL`(1개 역할에 부여), `MENU_READ_PERMISSION`(2개 역할에 부여)이 ACTION에 남아 있습니다. 어느 원격 브랜치에서도 쓰지 않는 것을 확인했지만 일부러 남겨 둡니다 (서버 시작 시 `UnusedActionCodeReporter` 경고만 나옴). 지울 때는 `access-control-guide.md` 6장의 SQL로 지우고 서버를 재시작합니다 |
 | 메뉴 이동 (D-10) | 메뉴 모듈 API · 화면과 ACCESS 모듈 메서드 구현 |
-| 오래된 원격 브랜치 | `dev`를 받지 않은 브랜치에는 `MENU.DEL_YN`을 조회하는 예전 `GET /access/menus`가 남아 있어, 그 브랜치로 띄우면 접근 관리 화면의 메뉴 조회가 실패합니다. 작업 중인 브랜치는 `dev`를 머지합니다 |
+| 오래된 원격 브랜치 | `dev`를 받지 않은 브랜치(2026-11-13 기준 원격 브랜치 19개)에는 `MENU.DEL_YN`을 조회하는 예전 `GET /access/menus`가 남아 있어, 그 브랜치로 띄우면 접근 관리 화면의 메뉴 조회가 실패합니다. 작업 중인 브랜치는 `dev`를 머지합니다 |
 
 ## 참고
 
