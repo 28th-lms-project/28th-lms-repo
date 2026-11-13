@@ -17,6 +17,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import com.learningworks.common.exceptions.LearningworksException;
+import com.learningworks.common.exceptions.ValidationFailedException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +51,13 @@ public class GlobalExceptionHandler {
     }
 
     return ApiResponse.ERROR(errorCode);
+  }
+
+  // 서비스에서 검사한 입력값 오류. @Valid 실패와 같은 형식(validations)으로 응답한다.
+  // LearningworksException의 하위 타입이므로 위 핸들러가 아니라 이 핸들러가 선택된다.
+  @ExceptionHandler(ValidationFailedException.class)
+  public ApiResponse<Void> handleValidationFailedException(ValidationFailedException vfe) {
+    return ApiResponse.BAD_REQUEST(vfe.getValidations());
   }
 
   // 파라미터 Validation 예외 처리 (@NotBlank @RequestParam 등 파라미터에 직접 제약이 붙은 경우)
