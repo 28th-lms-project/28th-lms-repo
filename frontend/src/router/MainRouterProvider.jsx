@@ -27,6 +27,7 @@ import CourseMain from "../components/admin/course/CourseMain.jsx";
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 import { getCourses } from "../api/admin/course/courseApi";
 import HomeworkDetails from "../components/admin/course/CourseTableComponent/HomeworkDetails.jsx";
+import CourseSurveyAns from "../components/admin/course/CourseTableComponent/CourseSurveyAns.jsx";
 
 /**
  * 라우트 목록. 메뉴 관리 화면이 메뉴 URL 선택지를 만드는 데 사용한다 (routeUtils.getMenuUrlOptions).
@@ -39,13 +40,25 @@ export const routes = [
     element: <HomeworkDetails />,
   },
   {
+    path: "/survey/answer/:courseId/:courseSurveyId",
+    element: <CourseSurveyAns />,
+  },
+  {
     path: "/",
     element: <MainLayout />,
     errorElement: <div>404 Not Found</div>,
     children: [
-      { index: true, element: <Main />, handle: { crumb: "Dashboard", menu: true } },
+      {
+        index: true,
+        element: <Main />,
+        handle: { crumb: "Dashboard", menu: true },
+      },
       { path: "login", element: <Login />, handle: { crumb: "로그인" } },
-      { path: "sample", element: <Sample />, handle: { crumb: "Sample", menu: true } },
+      {
+        path: "sample",
+        element: <Sample />,
+        handle: { crumb: "Sample", menu: true },
+      },
       {
         path: "my",
         handle: { crumb: "My Page" },
@@ -60,7 +73,11 @@ export const routes = [
             handle: { crumb: "수강 과정" },
             children: [
               { index: true, element: <Navigate to="list" replace /> },
-              { path: "list", element: <MyCourseList />, handle: { menu: true } },
+              {
+                path: "list",
+                element: <MyCourseList />,
+                handle: { menu: true },
+              },
               // ?tab=0~8 로 탭 전환 (MyCourse 의 TABS 참고)
               {
                 path: "list/:courseId",

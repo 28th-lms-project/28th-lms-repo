@@ -10,8 +10,10 @@ import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.survey.dao.SurveyDao;
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
 import com.learningworks.survey.vo.request.ModifySurveyVO;
+import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
+import com.learningworks.survey.vo.response.CourseSurveyVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
 import com.learningworks.survey.vo.response.SurveyListVO;
 import com.learningworks.survey.vo.response.SurveyVO;
@@ -60,7 +62,7 @@ public class SurveyServiceImpl implements SurveyService {
 			throw new LearningworksException(ErrorCode.SURVEY_FAILURE_UPDATE);
 		}
 		
-		if(modifySurvey.getType().equals("text")) {
+		if("text".equals(modifySurvey.getType())) {
 			this.surveyDao.deleteSurveyDatas(surveyId);
 		}
 		
@@ -155,4 +157,45 @@ public class SurveyServiceImpl implements SurveyService {
 		return surveyDataId;
 	}
 
+	@Override
+	public List<CourseSurveyVO> readAllCourseSurvey(String courseId) {
+		return this.surveyDao.selectAllCourseSurvey(courseId);
+	}
+
+	@Override
+	@Transactional
+	public CourseSurveyVO createCourseSurvey(@Valid RegistCourseSurveyVO registCourseSurvey, String courseId) {
+		if(registCourseSurvey == null || courseId == null || courseId.isBlank()) {
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
+		registCourseSurvey.setCourseId(courseId);
+		
+		int insertCount = this.surveyDao.insertNewCourseSurvey(registCourseSurvey);
+		if(insertCount != 1) {
+			throw new LearningworksException(ErrorCode.SURVEY_FAILURE_CREATE);
+		}
+		CourseSurveyVO courseSurvey = this.surveyDao.selectCourseSurvey(registCourseSurvey.getId());
+		if(courseSurvey == null) {
+			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+		}
+		
+		return courseSurvey;
+	}
+
+	@Override
+	@Transactional
+	public String deleteCourseSurvey(String courseId, String courseSurveyId) {
+		// 답변 상세 → 답변 → 설문 순서로 삭제
+		this.surveyDao.deleteCourseSurveyAnswerDatas(courseSurveyId);
+		this.surveyDao.deleteCourseSurveyAnswers(courseSurveyId);
+
+		int deletedRows = this.surveyDao.deleteOneCourseSurvey(courseId, courseSurveyId);
+		if (deletedRows == 0) {
+			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+		}
+		return courseSurveyId;
+	}
+
+	
+	
 }

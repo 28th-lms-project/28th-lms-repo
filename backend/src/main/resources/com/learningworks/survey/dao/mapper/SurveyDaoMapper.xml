@@ -25,16 +25,16 @@
 	<select id="selectSurveyById"
 		resultType="com.learningworks.survey.vo.response.SurveyVO"
 		parameterType="string">
-	SELECT ID
-		 , SUBJECT
-		 , "GROUP"
-		 , TYPE
-	  FROM SURVEY
-	 WHERE ID= #{_parameter}
+		SELECT ID
+			 , SUBJECT
+			 , "GROUP"
+			 , TYPE
+		  FROM SURVEY
+		 WHERE ID= #{_parameter}
  	</select>
  
 	 <update id="updateSurvey">
-	 UPDATE SURVEY
+	 	UPDATE SURVEY
 	 <set>
 	 <if test="modifySurvey.subject != null">
 	 	SUBJECT = #{modifySurvey.subject},
@@ -43,9 +43,7 @@
 	 	TYPE = #{modifySurvey.type},
 	 </if>
 	 </set>
-	    
-	    
-	  WHERE ID = #{surveyId}
+	  	WHERE ID = #{surveyId}
 	 </update>
 	 
 	 <insert id="insertNewSurveyData">
@@ -80,30 +78,30 @@
  	</update>
  	
  	<resultMap id="surveyWithDataMap" type="com.learningworks.survey.vo.response.SurveyVO">
-	<id     property="id"      column="S_ID"/>
-	<result property="subject" column="SUBJECT"/>
-	<result property="group"   column="GROUP"/>
-	<result property="type"    column="TYPE"/>
-	<collection property="surveyDataList" ofType="com.learningworks.survey.vo.response.SurveyDataVO">
-		<id     property="id"       column="SD_ID"/>
-		<result property="surveyId" column="SURVEY_ID"/>
-		<result property="data"     column="DATA"/>
-	</collection>
-</resultMap>
+		<id     property="id"      column="S_ID"/>
+		<result property="subject" column="SUBJECT"/>
+		<result property="group"   column="GROUP"/>
+		<result property="type"    column="TYPE"/>
+		<collection property="surveyDataList" ofType="com.learningworks.survey.vo.response.SurveyDataVO">
+			<id     property="id"       column="SD_ID"/>
+			<result property="surveyId" column="SURVEY_ID"/>
+			<result property="data"     column="DATA"/>
+		</collection>
+	</resultMap>
 
-<select id="selectAllSurveyByGroup" parameterType="string" resultMap="surveyWithDataMap">
-	SELECT S.ID AS S_ID
-		 , S.SUBJECT
-		 , S."GROUP"
-		 , S.TYPE
-	     , SD.ID AS SD_ID
-	     , SD.SURVEY_ID
-	     , SD.DATA
-	  FROM SURVEY S
-	  LEFT JOIN SURVEY_DATA SD ON SD.SURVEY_ID = S.ID
-	 WHERE S."GROUP" = #{_parameter}
-	 ORDER BY S.ID, SD.ID
-</select>
+	<select id="selectAllSurveyByGroup" parameterType="string" resultMap="surveyWithDataMap">
+		SELECT S.ID AS S_ID
+			 , S.SUBJECT
+			 , S."GROUP"
+			 , S.TYPE
+		     , SD.ID AS SD_ID
+		     , SD.SURVEY_ID
+		     , SD.DATA
+		  FROM SURVEY S
+		  LEFT JOIN SURVEY_DATA SD ON SD.SURVEY_ID = S.ID
+		 WHERE S."GROUP" = #{_parameter}
+		 ORDER BY S.ID, SD.ID
+	</select>
 
  	
  	<select id="selectSurveyCount"
@@ -129,5 +127,93 @@
  		DELETE FROM SURVEY_DATA
  		 WHERE SURVEY_ID = #{_parameter}
  	</delete>
+	 
+	<select id="selectAllCourseSurvey"
+		parameterType="string"
+		resultType="com.learningworks.survey.vo.response.CourseSurveyVO">
+		SELECT CS.ID
+			 , CS.COURSE_ID 
+			 , CS.TITLE 
+			 , CS.SURVEY_GROUP 
+			 , CS.SURVEY_SUBJECT 
+			 , CS.SURVEY_TYPE 
+			 , CS."COUNT"
+			 , NVL(ANS.ANSWER_COUNT , 0) AS ANSWER_COUNT
+			 , STU.STUDENT_COUNT 
+		  FROM COURSE_SURVEY CS
+		 INNER JOIN (SELECT COUNT(ID) AS STUDENT_COUNT
+		 			   FROM COURSE_STUDENT
+		 			  WHERE COURSE_ID = #{_parameter}) STU
+		 	ON 1 = 1
+		  LEFT OUTER JOIN (SELECT COURSE_SURVEY_ID
+		  						, COUNT(DISTINCT COURSE_STUDENT_ID) AS ANSWER_COUNT
+		  					 FROM COURSE_SURVEY_ANSWER
+		  					WHERE COURSE_SURVEY_ID IN (SELECT ID
+		  												 FROM COURSE_SURVEY
+		  												WHERE COURSE_ID = #{_parameter})
+		  					GROUP BY COURSE_SURVEY_ID) ANS
+		  	ON ANS.COURSE_SURVEY_ID  = CS.ID 
+		 WHERE CS.COURSE_ID = #{_parameter}
+		 ORDER BY CS.ID
+	</select>
+	
+	<insert id="insertNewCourseSurvey"
+			parameterType="com.learningworks.survey.vo.request.RegistCourseSurveyVO">
+			<selectKey order="BEFORE" keyProperty="id" resultType="string">
+				SELECT ('CS-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_SURVEY_PK.NEXTVAL,6, '0'))
+				FROM DUAL
+			</selectKey>
+		INSERT INTO COURSE_SURVEY
+		 	  ( ID
+		 	  , TITLE
+		 	  , SURVEY_GROUP
+		 	  , SURVEY_TYPE
+		 	  , "COUNT"
+		 	  , SURVEY_SUBJECT
+		 	  , COURSE_ID)
+		 SELECT #{id}
+		 	  , #{title}
+		 	  , #{surveyGroup}
+		 	  , #{surveyType}
+		 	  , COUNT(ID)
+		 	  , #{surveySubject}
+		 	  , #{courseId}
+		  FROM SURVEY
+		 WHERE "GROUP" = #{surveyGroup}
+	</insert>
+
+	<select id="selectCourseSurvey"
+			parameterType="string"
+			resultType="com.learningworks.survey.vo.response.CourseSurveyVO">
+			SELECT ID
+				 , COURSE_ID
+				 , TITLE
+				 , SURVEY_SUBJECT
+				 , SURVEY_GROUP
+				 , SURVEY_TYPE
+				 , "COUNT"
+			  FROM COURSE_SURVEY
+			 WHERE ID = #{_parameter}
+	</select>
+
+	<delete id="deleteCourseSurveyAnswerDatas" parameterType="string">
+		DELETE FROM COURSE_SURVEY_ANSWER_DATA
+		 WHERE COURSE_SURVEY_ANSWER_ID IN (SELECT ID 
+		 				FROM COURSE_SURVEY_ANSWER
+		 			   WHERE COURSE_SURVEY_ID = #{_parameter})
+	</delete>
+	
+	<delete id="deleteCourseSurveyAnswers" parameterType="string">
+		DELETE FROM COURSE_SURVEY_ANSWER
+		 WHERE COURSE_SURVEY_ID = #{_parameter}
+	</delete>
+
+	<delete id="deleteOneCourseSurvey">
+		DELETE FROM COURSE_SURVEY
+		 WHERE ID = #{courseSurveyId}
+		   AND COURSE_ID = #{courseId}
+	</delete>
+	
+	 
 	 
 </mapper>

@@ -33,3 +33,14 @@ export const deletedSurveyData = (surveyId, surveyDataId) =>
   api.delete(
     `/admin/system/survey/${encodeURIComponent(surveyId)}/data/${encodeURIComponent(surveyDataId)}`,
   );
+
+export const getCourseSurvey = (courseId) =>
+  api.get(`/survey/${encodeURIComponent(courseId)}`);
+
+export const createNewCourseSurvey = (courseId, body) =>
+  api.post(`/survey/${encodeURIComponent(courseId)}`, body);
+
+export const deleteCourseSurvey = (courseId, courseSurveyId) =>
+  api.delete(
+    `/survey/${encodeURIComponent(courseId)}/${encodeURIComponent(courseSurveyId)}`,
+  );

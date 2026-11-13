@@ -1,5 +1,7 @@
 package com.learningworks.survey.web;
 
+import java.util.List;
+
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,8 +15,10 @@ import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.survey.service.SurveyService;
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
 import com.learningworks.survey.vo.request.ModifySurveyVO;
+import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
+import com.learningworks.survey.vo.response.CourseSurveyVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
 import com.learningworks.survey.vo.response.SurveyListVO;
 import com.learningworks.survey.vo.response.SurveyVO;
@@ -78,5 +82,25 @@ public class SurveyController {
 		String survey = this.surveyService.deleteSurveyData(surveyId, surveyDataId);
 		return ApiResponse.OK(survey);
 	}
+	
+	@RequireAction(domain = "COURSE_SURVEY", action = "READ", description = "과정 설문 조회")
+	@GetMapping("/survey/{courseId}")
+	public ApiResponse<List<CourseSurveyVO>> getCourseSurvey(@PathVariable String courseId){
+		List<CourseSurveyVO> survey = this.surveyService.readAllCourseSurvey(courseId);
+		return ApiResponse.OK(survey);
+	}
+	
+	@RequireAction(domain = "COURSE_SURVEY", action = "CREATE", description = "과정 설문 등록")
+	@PostMapping("/survey/{courseId}")
+	public ApiResponse<CourseSurveyVO> makeNewCourseSurvey(@PathVariable String courseId,
+			@Valid @RequestBody RegistCourseSurveyVO registCourseSurvey) {
+		return ApiResponse.CREATED(this.surveyService.createCourseSurvey(registCourseSurvey, courseId));
+	}
 
+	@RequireAction(domain = "COURSE_SURVEY", action = "DELETE", description = "과정 설문 삭제")
+	@DeleteMapping("/survey/{courseId}/{courseSurveyId}")
+	public ApiResponse<String> deleteCourseSurvey(@PathVariable String courseId,
+			@PathVariable String courseSurveyId) {
+		return ApiResponse.OK(this.surveyService.deleteCourseSurvey(courseId, courseSurveyId));
+	}
 }

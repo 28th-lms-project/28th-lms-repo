@@ -12,7 +12,7 @@ body {
 
   border: 1px solid #aaa;
   border-radius: 10px 10px 0 0;
-  overflow: hidden;
+  overflow: scroll;
 }
 .surveyHeader {
   display: flex;

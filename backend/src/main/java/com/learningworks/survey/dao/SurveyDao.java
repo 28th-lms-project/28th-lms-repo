@@ -7,8 +7,10 @@ import org.apache.ibatis.annotations.Param;
 
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
 import com.learningworks.survey.vo.request.ModifySurveyVO;
+import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
+import com.learningworks.survey.vo.response.CourseSurveyVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
 import com.learningworks.survey.vo.response.SurveyVO;
 
@@ -38,6 +40,18 @@ public interface SurveyDao {
 	int deleteOneSurveyData(@Param("surveyId") String surveyId, @Param("surveyDataId") String surveyDataId);
 	
 	int deleteSurveyDatas(String surveyId);
+
+	List<CourseSurveyVO> selectAllCourseSurvey(String courseId);
+
+	int insertNewCourseSurvey(RegistCourseSurveyVO registCourseSurvey);
+
+	CourseSurveyVO selectCourseSurvey(String id);
+
+	int deleteCourseSurveyAnswerDatas(String courseSurveyId);
+
+	int deleteCourseSurveyAnswers(String courseSurveyId);
+
+	int deleteOneCourseSurvey(@Param("courseId") String courseId,@Param("courseSurveyId") String courseSurveyId);
 	
 	
 
