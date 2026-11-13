@@ -372,5 +372,4 @@ WARN  c.l.common.action.UnusedActionCodeReporter -- 코드에서 쓰이지 않�
 ### 관련 문서
 
 - 프론트 화면 권한 적용: `frontend/docs/permission-guide.md`
-- 권한 체계를 이렇게 정한 이유와 검토한 다른 방식: `backend/docs/access-role-collab/discussions.md`의 D-01 · D-02
-- 권한 검사를 켜기 전에 남은 작업: `backend/docs/access-role-collab/README.md`의 "남은 작업"
+- 권한 체계를 이렇게 정한 이유와 검토한 다른 방식: `backend/docs/design/access-design.md`의 D-01 · D-02 · D-03
