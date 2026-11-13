@@ -33,7 +33,9 @@ export default function MenuGuard({ children }) {
   const myMenus = useSelector(selectMyMenus);
   const guardUrls = useSelector(selectGuardUrls);
 
-  const isOpenPath = OPEN_PATHS.includes(pathname);
+  // 없는 주소(404 라우트, handle.notFound)도 권한과 상관없으므로 통과시킨다
+  const isOpenPath =
+    OPEN_PATHS.includes(pathname) || matches.some((match) => match.handle?.notFound);
 
   // 팝업은 MainLayout 밖이라 가드가 조회를 시작한다. idle일 때만 실행되므로 MainLayout과 겹쳐도 한 번만 조회한다.
   useEffect(() => {
@@ -42,7 +44,7 @@ export default function MenuGuard({ children }) {
     }
   }, [dispatch, isOpenPath, user?.id, status]);
 
-  // 1. 대시보드 · 로그인은 통과
+  // 1. 대시보드 · 로그인 · 없는 주소는 통과
   if (isOpenPath) return children;
 
   // 2. 비로그인이면 로그인 화면으로
