@@ -18,6 +18,35 @@ import Select from "react-select";
 import { IconButton } from "../../../sample/input/IconButton";
 import { SUBJECTS } from "../../test/test/subjects";
 import usePermission from "../../../../hooks/usePermission";
+import { PollItem } from "../../../sample/Poll";
+
+function toPollItem(survey, index) {
+  let pollType = survey.type;
+  if (survey.type === "checkBox") {
+    pollType = "checkbox";
+  }
+  let answers = [];
+  if (pollType === "text") {
+    answers = [
+      { id: `${survey.id}-text`, name: survey.id, title: "", value: "" },
+    ];
+  } else {
+    answers = survey.surveyDataList.map((data) => ({
+      id: data.id,
+      name: survey.id,
+      title: data.data,
+      value: data.data,
+    }));
+  }
+  return {
+    id: survey.id,
+    number: index + 1,
+    title: survey.subject,
+    type: pollType,
+    required: false,
+    answers,
+  };
+}
 
 export default function Survey() {
   const { isSuperAdmin, status } = usePermission();
@@ -103,10 +132,12 @@ function SurveyManagement() {
   }, [currGroup, dispatch]);
 
   const onInputUpdateHandler = (surveyId, e) => {
-    if (e.target.value === "" || e.target.value === null) {
+    const subject = e.target.value;
+    dispatch(surveyActions.updateSurvey({ id: surveyId, subject }));
+    if (subject === "" || subject === null) {
       return;
     }
-    const modifySurvey = { subject: e.target.value };
+    const modifySurvey = { subject };
     (async () => {
       try {
         const updateResult = await updateSurvey(surveyId, modifySurvey);
@@ -117,10 +148,16 @@ function SurveyManagement() {
     })();
   };
   const onInputDataHandler = (surveyId, surveyDataId, e) => {
-    if (e.target.value === "" || e.target.value === null) {
+    const data = e.target.value;
+
+    dispatch(
+      surveyActions.updateSurveyData({ surveyId, dataId: surveyDataId, data }),
+    );
+
+    if (data === "" || data === null) {
       return;
     }
-    const updateData = { data: e.target.value };
+    const updateData = { data };
     (async () => {
       try {
         const updateResult = await updateSurveyData(
@@ -260,7 +297,7 @@ function SurveyManagement() {
               <IconButton onClick={() => onClickAddSurveyHandler()}>
                 추가
               </IconButton>
-              {surveyList.map((survey) => (
+              {surveyList.map((survey, index) => (
                 <div className={style.surveyQuestion} key={survey.id}>
                   <li>
                     <div className={style.surveyForm}>
@@ -324,50 +361,14 @@ function SurveyManagement() {
                         </div>
                       )}
                     </div>
-                    <div className="surveyPreview">
+                    <div className={style.surveyPreview}>
                       미리보기
-                      <div className="title"></div>
-                      {survey.type === "radio" && (
-                        <>
-                          {survey.surveyDataList.map((data) => (
-                            <label>
-                              <input
-                                name={survey.id}
-                                type="radio"
-                                defaultValue={data.data}
-                              />
-                              {data.data}
-                            </label>
-                          ))}
-                        </>
-                      )}
-                      {survey.type === "checkBox" && (
-                        <>
-                          {survey.surveyDataList.map((data) => (
-                            <label key={data.id}>
-                              <>
-                                <input
-                                  name={survey.id}
-                                  type="checkbox"
-                                  defaultValue={data.data}
-                                />
-                                {data.data}
-                              </>
-                            </label>
-                          ))}
-                        </>
-                      )}
-                      {survey.type === "text" && (
-                        <>
-                          <label>
-                            <input
-                              name={survey.id}
-                              type="text"
-                              placeholder="  "
-                            />
-                          </label>
-                        </>
-                      )}
+                      <ul>
+                        <PollItem
+                          key={`${survey.id}-${survey.type}-${survey.surveyDataList.length}`}
+                          item={toPollItem(survey, index)}
+                        />
+                      </ul>
                     </div>
                   </li>
                 </div>

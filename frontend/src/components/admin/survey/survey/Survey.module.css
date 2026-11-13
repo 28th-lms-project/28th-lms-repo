@@ -103,6 +103,11 @@ body {
   width: 30%;
   size: 10px;
 }
+.surveyPreview label {
+  order: 1; /* 라벨을 아이콘 뒤로 */
+  margin-left: 6px; /* 아이콘과 간격 */
+  cursor: pointer;
+}
 
 /* 권한 확인 중 · 권한 없음 안내 (권한 관리 화면과 같은 스타일) */
 .notice {

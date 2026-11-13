@@ -16,6 +16,7 @@ import MyTimetable from "../../../my/course/MyTimetable";
 import MyInterview from "../../../my/course/MyInterview.jsx";
 import MyCourseData from "../../../my/course/MyCourseData.jsx";
 import MyCounsel from "../../../my/course/MyCounsel.jsx";
+import StudentSurvey from "../CourseTableComponent/StudentSurvey.jsx";
 const TABS = [
   { label: "수강생", Component: <CourseStudentList /> }, // <CourseStudentList/>
   { label: "접속시간", Component: <StudentConnected /> }, // <StudentConnected/>
@@ -24,7 +25,7 @@ const TABS = [
   { label: "시험", Component: <div>시험</div> }, //<Exam/>
   { label: "면접일정", Component: <MyInterview /> }, //<InterviewTimeTable/>
   { label: "교육자료", Component: <MyCourseData /> }, //<EducationMaterialsList/>
-  { label: "설문", Component: <div>설문</div> }, //<Survey/>
+  { label: "설문", Component: <StudentSurvey /> }, //<Survey/>
   { label: "상담목록", Component: <MyCounsel /> }, //<ConsultationList/>
 ];
 export default function CourseItem() {
