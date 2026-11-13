@@ -5,7 +5,9 @@
  * 공통 errorCode (모든 함수)
  * - GLOBAL_FORBIDDEN: 권한 코드(MEMBER_*)가 없는 역할로 호출
  *
- * 대상 회원을 다루는 함수(modify · delete · resetPassword · changeRole) 공통 errorCode
+ * 회원 목록(getMembers)은 자기보다 아래 역할의 회원만 내려오며 본인은 빠진다. (SUPER_ADMIN 은 본인 외 전체)
+ *
+ * 대상 회원을 다루는 함수(getMember · modify · delete · resetPassword · changeRole) 공통 errorCode
  * - ROLE_SELF_CHANGE: 자기 자신을 대상으로 요청 (내 정보는 /members/me 사용)
  * - ROLE_TARGET_FORBIDDEN: 자신보다 높거나 같은 역할의 회원 (SUPER_ADMIN 은 제외)
  * - USER_NOT_EXISTS: 없거나 삭제된 회원
@@ -28,13 +30,22 @@ export const getMembers = (params, options) =>
   api.getPage("/members", params, options);
 
 /**
+ * 내가 회원에게 지정할 수 있는 역할 목록 (등록 · 역할 변경 · 검색 필터 선택지). 권한 코드: MEMBER_READ_LIST
+ * 자기보다 아래 순위의 역할만 순위순으로 내려오며, 최고 관리자 역할은 항상 빠진다.
+ * @param {{ signal?: AbortSignal }} [options]
+ * @returns {Promise<Array<{ roleId: string, roleDisplayName: string }>>}
+ */
+export const getAssignableRoles = (options) =>
+  api.get("/members/assignable-roles", undefined, options);
+
+/**
  * 회원 상세 조회. 권한 코드: MEMBER_READ_DETAIL
  * @param {string} memberId
  * @param {{ signal?: AbortSignal }} [options]
  * @returns {Promise<{ id: string, name: string, baseRole: string, roleName: string, githubUrl: string | null,
  *   createDate: string, modifyDate: string | null, pwdChangeDate: string | null,
  *   loginFailCount: number, loginBlockDate: string | null }>}
- * errorCode: USER_NOT_EXISTS
+ * errorCode: 대상 회원 공통 errorCode (목록에 나온 회원만 조회할 수 있다)
  */
 export const getMember = (memberId, options) =>
   api.get(memberPath(memberId), undefined, options);
@@ -43,7 +54,7 @@ export const getMember = (memberId, options) =>
  * 회원 등록. 권한 코드: MEMBER_CREATE
  * @param {{ id: string, password: string, name: string, githubUrl?: string, baseRole: string }} member
  * @returns {Promise<string>} 등록된 회원 ID
- * errorCode: GLOBAL_INVALID_PARAMETER(validations: id, password, name, baseRole),
+ * errorCode: GLOBAL_INVALID_PARAMETER(validations: id, password, name, baseRole, githubUrl),
  *            USER_USED(이미 사용 중인 ID), ROLE_NOT_EXISTS,
  *            ROLE_ASSIGN_FORBIDDEN(자신보다 높거나 같은 역할 · 최고 관리자 역할로 등록)
  */

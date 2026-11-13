@@ -177,7 +177,6 @@ ACCESS 모듈도 MENU를 씁니다 (ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · 
 
 | 일 | 내용 |
 | --- | --- |
-| 데이터 정리 | 예전 개발용 메뉴(숫자 ID) 10개가 남아 있고, ACTION 22건 중 15건이 아직 예전 메뉴를 가리킵니다. 접근 관리 화면에서 ACTION의 메뉴를 새 메뉴로 다시 지정한 뒤 예전 메뉴를 삭제합니다 (ACTION이 가리키는 메뉴는 삭제가 거부됨) |
 | 미사용 권한 코드 | `MENU_READ_DETAIL`(부여 없음), `MENU_READ_PERMISSION`(2개 역할에 부여)이 남아 있습니다. 다른 브랜치에서 쓰는지 확인한 뒤 `access-control-guide.md` 6장의 SQL로 지우고 서버를 재시작합니다 |
 | 메뉴 이동 (D-10) | 메뉴 모듈 API · 화면과 ACCESS 모듈 메서드 구현 |
 | 오래된 원격 브랜치 | `dev`를 받지 않은 브랜치에는 `MENU.DEL_YN`을 조회하는 예전 `GET /access/menus`가 남아 있어, 그 브랜치로 띄우면 접근 관리 화면의 메뉴 조회가 실패합니다. 작업 중인 브랜치는 `dev`를 머지합니다 |

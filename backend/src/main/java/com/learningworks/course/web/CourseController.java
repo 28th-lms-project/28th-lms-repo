@@ -189,7 +189,7 @@ public class CourseController {
 	 * @return ApiResponse.OK(수정된 과제)
 	 */
 	@RequireAction(domain = "COURSE_HOMEWORK", action = "UPDATE", description = "과제 수정")
-	@PutMapping("{courseId}/{homeworkId}/update")
+	@PutMapping("/{courseId}/{homeworkId}/update")
 	public ApiResponse<HomeworkVO> updateHomework(@PathVariable String courseId,
 			@PathVariable String homeworkId, @Valid @RequestBody ModifyHomeworkVO modifyHomeworkVO){
 		return ApiResponse.OK(this.courseService.updateHomework(courseId, homeworkId, modifyHomeworkVO));

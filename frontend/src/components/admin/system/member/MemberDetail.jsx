@@ -54,14 +54,12 @@ export default function MemberDetail({ memberId, roles = [], onChanged }) {
   }
 
   const isSelf = loginUser?.id === member.id;
-  const assignableRoles = roles.filter(
-    (role) => role.roleId !== "ROLE_SUPER_ADMIN",
-  );
+  // roles 는 내가 지정할 수 있는 역할만 담고 있다 (getAssignableRoles).
+  // 회원의 현재 역할이 그 안에 있을 때만 변경 가능 (예: 다른 최고 관리자는 변경 불가)
   const canChangeRole =
     !isSelf &&
     can("MEMBER_CHANGE_ROLE") &&
-    member.baseRole !== "ROLE_SUPER_ADMIN" &&
-    assignableRoles.length > 0;
+    roles.some((role) => role.roleId === member.baseRole);
 
   const canUpdate = !isSelf && can("MEMBER_UPDATE");
   const canResetPassword = !isSelf && can("MEMBER_RESET_PASSWORD");
@@ -155,7 +153,7 @@ export default function MemberDetail({ memberId, roles = [], onChanged }) {
                   onChange={(event) => setSelectedRoleId(event.target.value)}
                   disabled={submitting}
                 >
-                  {assignableRoles.map((role) => (
+                  {roles.map((role) => (
                     <option key={role.roleId} value={role.roleId}>
                       {role.roleDisplayName}
                     </option>

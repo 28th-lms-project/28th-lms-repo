@@ -11,6 +11,7 @@ import com.learningworks.member.vo.request.ResetPasswordVO;
 import com.learningworks.member.vo.response.MemberDetailVO;
 import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
+import com.learningworks.role.vo.response.RoleVO;
 
 public interface MemberService {
 
@@ -19,6 +20,8 @@ public interface MemberService {
   List<MemberListVO> readMemberList(String actorId, MemberSearchVO searchVO);
 
   MemberDetailVO readMember(String actorId, String targetId);
+
+  List<RoleVO> readAssignableRoles(String actorId);
 
   MemberDetailVO updateMember(String actorId, String targetId, ModifyMemberVO modifyVO);
 
