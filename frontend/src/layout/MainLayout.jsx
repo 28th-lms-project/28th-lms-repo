@@ -40,7 +40,8 @@ export default function MainLayout() {
 
   return (
     <div className={styles.container}>
-      <SideMenu />
+      {/* 로그아웃 · 다른 계정 로그인 시 사이드바를 새로 만들어, 이전 사용자가 펼치거나 접은 그룹 상태를 버린다 */}
+      <SideMenu key={user?.id ?? "guest"} />
       <main className={styles.content}>
         <Outlet />
       </main>

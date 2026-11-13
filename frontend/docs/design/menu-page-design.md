@@ -319,9 +319,12 @@
 - `menus`를 대(섹션) → 중(그룹) → 소(링크) 트리로 만들어 `menuOrder` 순으로 그립니다.
 - 소메뉴가 하나도 없는 중메뉴, 중메뉴가 하나도 없는 대메뉴는 그리지 않습니다.
 - `useYn = 'N'`인 메뉴(SUPER_ADMIN만 받음)는 흐리게 표시하고 이름 뒤에 "(미사용)"을 붙입니다. 미사용 중메뉴 아래의 소메뉴도 그대로 보입니다.
-- 처음 펼칠 그룹: `spread = 'Y'`인 그룹 + 현재 주소가 들어 있는 그룹 (지금 동작 유지).
+- 그룹 펼침
+  - 사용자가 직접 펼치거나 접지 않은 그룹은 **매번** 규칙으로 정합니다: `spread = 'Y'`이거나 현재 주소가 들어 있으면 펼침. 메뉴 관리에서 `spread`를 바꾸면 바로 반영됩니다.
+  - 사용자가 직접 펼치거나 접은 그룹은 그 상태를 따릅니다. 새로고침 · 로그아웃 · 다른 계정 로그인 때 사라집니다 (`MainLayout`이 사용자 ID로 사이드바에 `key`를 줌).
+  - 페이지를 옮기면 새 현재 그룹의 조작 기록을 지워 펼칩니다. 지금 보고 있는 페이지의 링크가 숨겨지지 않게 하기 위해서입니다.
 - `NavLink`의 `end`는 URL이 `/`일 때만 켭니다 (지금 `menuData.js`에서 `end`를 쓴 곳은 `/`와 `/sample`이고, `/sample`은 하위 경로가 없어 차이가 없습니다).
-- 그룹을 펼친 상태는 지금처럼 이름이 아니라 **메뉴 ID**로 기억합니다 (같은 이름 그룹이 생길 수 있으므로).
+- 그룹 조작 기록은 이름이 아니라 **메뉴 ID**로 기억합니다 (같은 이름 그룹이 생길 수 있으므로).
 - 메뉴를 받는 중에는 메뉴 영역을 비워 둡니다.
 - 전환이 끝나면 `menuData.js`를 삭제합니다.
 
@@ -338,7 +341,7 @@ src/router/MainRouterProvider.jsx               (routes export, handle.menu, gua
 src/components/menu/MenuGuard.jsx               (새 파일)
 src/layout/MainLayout.jsx                       (Outlet 감싸기)
 src/components/menu/SideMenu.jsx                (store 사용)
-src/components/menu/sideMenuUtils.js            (새 파일: 트리 변환, 처음 펼칠 그룹)
+src/components/menu/sideMenuUtils.js            (새 파일: 트리 변환, 그룹 펼침 규칙)
 src/components/menu/menuData.js                 (전환 후 삭제)
 src/components/admin/system/menu/Menu.jsx       (권한 확인 래퍼 + 화면)
 src/components/admin/system/menu/MenuColumn.jsx (열 하나: 목록 + 상세)

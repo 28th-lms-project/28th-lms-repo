@@ -4,13 +4,12 @@ import { useDispatch, useSelector } from "react-redux";
 import styles from "./SideMenu.module.css";
 import UserProfile from "./UserProfile";
 import IsLogin from "../login/IsLogin";
-import { selectUser } from "../../store/slices/loginSliceStore";
 import {
   refreshMyMenus,
   selectMyMenus,
   selectMyMenuStatus,
 } from "../../store/slices/menuSliceStore";
-import { buildMenuTree, getInitialOpenGroupIds } from "./sideMenuUtils";
+import { buildMenuTree, getCurrentGroupIds, isGroupOpen } from "./sideMenuUtils";
 
 // 미사용 메뉴(SUPER_ADMIN만 받음)는 흐리게 표시하고 이름 뒤에 "(미사용)"
 const titleOf = (menu) => (menu.useYn === "N" ? `${menu.title} (미사용)` : menu.title);
@@ -26,28 +25,34 @@ const titleOf = (menu) => (menu.useYn === "N" ? `${menu.title} (미사용)` : me
 export default function SideMenu() {
   const dispatch = useDispatch();
   const { pathname } = useLocation();
-  const user = useSelector(selectUser);
   const menuStatus = useSelector(selectMyMenuStatus);
   const myMenus = useSelector(selectMyMenus);
 
   const [collapsed, setCollapsed] = useState(false);
 
-  // 사용자가 그룹을 펼치거나 접은 뒤의 상태 (메뉴 ID). 사용자별로 기억하고,
-  // 아직 건드리지 않았으면 null → 처음 펼칠 그룹(spread · 현재 주소)을 쓴다
-  const [openState, setOpenState] = useState({ userId: null, groupIds: null });
-
   const tree = useMemo(() => buildMenuTree(myMenus), [myMenus]);
+  const currentGroupIds = getCurrentGroupIds(tree, pathname);
 
-  const openGroupIds =
-    openState.userId === user?.id && openState.groupIds !== null
-      ? openState.groupIds
-      : getInitialOpenGroupIds(tree, pathname);
+  // 사용자가 직접 펼치거나 접은 그룹만 기억한다 { 메뉴 ID: 펼침 여부 }. 새로고침하면 사라진다.
+  // 조작하지 않은 그룹은 매번 규칙(DB spread · 현재 주소)으로 정한다 (isGroupOpen).
+  // 계정이 바뀌거나 로그아웃하면 MainLayout이 key로 사이드바를 새로 만들어 함께 초기화된다.
+  const [overrides, setOverrides] = useState({});
 
-  function toggleGroup(groupId) {
-    const next = openGroupIds.includes(groupId)
-      ? openGroupIds.filter((id) => id !== groupId)
-      : [...openGroupIds, groupId];
-    setOpenState({ userId: user?.id, groupIds: next });
+  // 페이지를 옮기면 새 현재 그룹의 조작 기록을 지워, 지금 보고 있는 페이지의 링크가 보이게 한다.
+  // (렌더 중 이전 값과 비교해 갱신: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
+  const [lastPathname, setLastPathname] = useState(pathname);
+  if (lastPathname !== pathname) {
+    setLastPathname(pathname);
+    if (currentGroupIds.some((id) => id in overrides)) {
+      const next = { ...overrides };
+      currentGroupIds.forEach((id) => delete next[id]);
+      setOverrides(next);
+    }
+  }
+
+  function toggleGroup(group) {
+    const isOpen = isGroupOpen(group, currentGroupIds.includes(group.id), overrides);
+    setOverrides((prev) => ({ ...prev, [group.id]: !isOpen }));
   }
 
   let navClass = styles.sideMenu;
@@ -106,7 +111,11 @@ export default function SideMenu() {
                   {titleOf(section)}
                 </h4>
                 {groups.map(({ group, links }) => {
-                  const isOpen = openGroupIds.includes(group.id);
+                  const isOpen = isGroupOpen(
+                    group,
+                    currentGroupIds.includes(group.id),
+                    overrides,
+                  );
 
                   let arrowClass = styles.arrow;
                   let submenuClass = styles.submenuWrap;
@@ -120,7 +129,7 @@ export default function SideMenu() {
                       <button
                         type="button"
                         className={`${styles.listItemTitle} ${group.useYn === "N" ? styles.unused : ""}`}
-                        onClick={() => toggleGroup(group.id)}
+                        onClick={() => toggleGroup(group)}
                         aria-expanded={isOpen}
                       >
                         <span className={arrowClass}>›</span>

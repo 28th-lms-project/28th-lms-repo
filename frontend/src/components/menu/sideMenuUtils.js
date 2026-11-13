@@ -36,16 +36,27 @@ export const isActiveUrl = (menuUrl, pathname) => {
 };
 
 /**
- * 처음 펼칠 그룹의 메뉴 ID: spread = 'Y'인 그룹 + 현재 주소가 들어 있는 그룹
+ * 현재 주소의 링크가 들어 있는 그룹의 메뉴 ID
  * @param {ReturnType<typeof buildMenuTree>} tree
  * @param {string} pathname
  * @returns {string[]}
  */
-export const getInitialOpenGroupIds = (tree, pathname) =>
+export const getCurrentGroupIds = (tree, pathname) =>
   tree
     .flatMap(({ groups }) => groups)
-    .filter(
-      ({ group, links }) =>
-        group.spread === "Y" || links.some((link) => isActiveUrl(link.menuUrl, pathname)),
-    )
+    .filter(({ links }) => links.some((link) => isActiveUrl(link.menuUrl, pathname)))
     .map(({ group }) => group.id);
+
+/**
+ * 그룹을 펼칠지 정한다.
+ * - 사용자가 직접 펼치거나 접은 그룹: 마지막으로 조작한 상태
+ * - 그 외: DB의 spread = 'Y'이거나 현재 주소가 든 그룹이면 펼침
+ *
+ * 페이지를 옮기면 새 현재 그룹의 조작 기록을 지우므로(SideMenu), 지금 보고 있는 페이지의 링크는 이동 직후 항상 보인다.
+ *
+ * @param {object} group 중메뉴
+ * @param {boolean} isCurrent 현재 주소가 든 그룹인지
+ * @param {Record<string, boolean>} overrides 사용자가 조작한 그룹 { 메뉴 ID: 펼침 여부 }
+ */
+export const isGroupOpen = (group, isCurrent, overrides) =>
+  group.id in overrides ? overrides[group.id] : group.spread === "Y" || isCurrent;
