@@ -27,12 +27,12 @@ public class ExamServiceImpl implements ExamService {
 	private ExamDao examDao;
 
 	private boolean isManuallyGraded(String answerType) {
-		return "주관식".equals(answerType) || "코드작성".equals(answerType);
+		return "ANSWER_WRITE".equals(answerType) || "ANSWER_CODE".equals(answerType);
 	}
 
 	private void prepareQuestionAnswers(RegistExamQuestionVO request) {
 		boolean manuallyGraded = this.isManuallyGraded(request.getAnswerType());
-		boolean oxQuestion = "O/X".equals(request.getAnswerType());
+		boolean oxQuestion = "ANSWER_CHECK".equals(request.getAnswerType());
 		if (manuallyGraded || oxQuestion) {
 			if (oxQuestion) {
 				this.validateOxAnswer(request.getCorrectAnswer());
@@ -54,7 +54,7 @@ public class ExamServiceImpl implements ExamService {
 
 	private void prepareQuestionAnswers(ModifyExamQuestionVO request) {
 		boolean manuallyGraded = this.isManuallyGraded(request.getAnswerType());
-		boolean oxQuestion = "O/X".equals(request.getAnswerType());
+		boolean oxQuestion = "ANSWER_CHECK".equals(request.getAnswerType());
 		if (manuallyGraded || oxQuestion) {
 			if (oxQuestion) {
 				this.validateOxAnswer(request.getCorrectAnswer());
@@ -98,7 +98,7 @@ public class ExamServiceImpl implements ExamService {
 			}
 		}
 
-		if ("객관식-다항".equals(answerType)) {
+		if ("ANSWER_MULTIPLE".equals(answerType)) {
 			return this.validateMultipleAnswers(answerCount, correctAnswerValue);
 		}
 
