@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { searchTestSets } from "../../../api/admin/system/test/testApi";
 import ExamSetTable from "../../admin/course/CourseTableComponent/ExamSetTable";
+import MyScore from "./MyScore";
 
 /**
  * 수강생 시험 목록 (/my/course/list/:courseId?tab=4).
@@ -40,9 +41,11 @@ export default function MyTest() {
     };
   }, [courseId]);
 
-  if (loadFailed) {
-    return <div>시험 목록을 불러오지 못했습니다.</div>;
-  }
-
-  return <ExamSetTable testSets={testSets} studentView />;
+  return (
+    <>
+      <MyScore courseId={courseId} />
+      {loadFailed && <div>시험 목록을 불러오지 못했습니다.</div>}
+      {!loadFailed && <ExamSetTable testSets={testSets} studentView />}
+    </>
+  );
 }
