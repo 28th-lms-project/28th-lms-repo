@@ -324,7 +324,7 @@ ACCESS 담당자가 모듈에서 손을 떼어, ROLE 담당자가 `feature/acces
 | 1 | 메뉴 목록을 `/access/menus` 대신 `GET /menus`로 받고, `/access/menus`와 `selectMenuList` 삭제 | **완료.** `MENU.DEL_YN` 삭제 완료 (2-3) |
 | 2 | 접근 관리 · 권한별 접근 권한 관리 화면을 쓰는 역할에 `MENU_READ`도 허용 | **불필요.** 접근 관리 화면은 SUPER_ADMIN 전용이고, 권한별 접근 권한 관리 화면은 `GET /menus`를 부르지 않음 |
 | 3 | 메뉴 이름순 · ID순 정렬을 `MENU_ORDER` 순으로 | **완료.** 메뉴 드롭다운(`GET /menus`), 접근 관리 목록, 권한별 접근 권한 관리 목록 모두 메뉴 순서 |
-| 4 | 메뉴 상위 변경 시 ACTION의 메뉴 ID를 함께 고치는 방식과 권한 | **결정 완료**, 구현 예정 (4-7) |
+| 4 | 메뉴 상위 변경 시 ACTION의 메뉴 ID를 함께 고치는 방식과 권한 | **적용 완료** (4-7) |
 | 5 | ACTION 저장 시 메뉴 검증 | **완료.** 저장 전에 `MenuService.checkAndLockMenuPath`로 대 > 중 > 소 계층을 확인하고 소메뉴 행을 잠금. 틀리면 `ACTION_MENU_INVALID`(400) |
 
 ACTION의 메뉴 컬럼 3개는 구조를 바꾸지 않습니다. 지금은 메뉴의 상위 메뉴를 바꿀 수 없고 ACTION 저장 시 계층을 검사하므로 ACTION에 저장된 대 · 중 · 소 조합이 어긋날 일이 없습니다. 4-7을 구현한 뒤에는 메뉴를 옮길 때 서버가 조합을 함께 고칩니다.

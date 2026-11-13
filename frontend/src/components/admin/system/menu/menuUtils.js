@@ -16,7 +16,7 @@ export const LEVEL_TITLES = { top: "대메뉴", mid: "중메뉴", btm: "소메�
 const TITLE_MAX_LENGTH = 100;
 const MENU_URL_MAX_LENGTH = 100;
 
-export const EMPTY_FORM_ERRORS = { title: [], menuUrl: [], etc: [] };
+export const EMPTY_FORM_ERRORS = { title: [], menuUrl: [], parentId: [], etc: [] };
 
 export const isAbortError = (error) => error?.name === "AbortError";
 
@@ -89,6 +89,8 @@ export const hasBottomMenu = (menus, menuId, level) => {
 export const menuToForm = (menu) => ({
   mode: "view",
   id: menu.id,
+  // 상위 메뉴 변경(옮기기)용. 다른 칸과 따로 저장한다 (설계 6-6)
+  parentId: menu.parentId ?? null,
   title: menu.title ?? "",
   useYn: menu.useYn === "N" ? "N" : "Y",
   spread: menu.spread === "Y" ? "Y" : "N",
@@ -119,12 +121,11 @@ export const createNewForm = (prevId) => ({
 const sameRoleIds = (a, b) => a.length === b.length && a.every((roleId) => b.includes(roleId));
 
 /**
- * 저장하지 않은 변경이 있는지: new 모드이거나, 입력값이 마지막 저장 값과 다르면 true.
+ * 상위 메뉴 외의 칸(이름 · 사용 · 펼침 · URL · 역할)이 마지막 저장 값과 다른지. view 모드만 해당.
  * 저장된 메뉴가 없어졌으면(다른 사용자가 삭제) false.
  */
-export const isFormDirty = (form, menus) => {
-  if (!form) return false;
-  if (form.mode === "new") return true;
+export const isFieldsDirty = (form, menus) => {
+  if (form?.mode !== "view") return false;
 
   const savedMenu = findMenu(menus, form.id);
   if (!savedMenu) return false;
@@ -139,6 +140,62 @@ export const isFormDirty = (form, menus) => {
   );
 };
 
+/** 상위 메뉴를 바꿨는지 (옮기기). view 모드만 해당 */
+export const isParentChanged = (form, menus) => {
+  if (form?.mode !== "view") return false;
+  const savedMenu = findMenu(menus, form.id);
+  return Boolean(savedMenu) && form.parentId !== (savedMenu.parentId ?? null);
+};
+
+/**
+ * 저장하지 않은 변경이 있는지: new 모드이거나, 입력값 · 상위 메뉴가 마지막 저장 값과 다르면 true.
+ * 저장된 메뉴가 없어졌으면(다른 사용자가 삭제) false.
+ */
+export const isFormDirty = (form, menus) =>
+  form?.mode === "new" || isFieldsDirty(form, menus) || isParentChanged(form, menus);
+
+/**
+ * 상위 메뉴 선택지 (옮기기). 한 단계 위의 메뉴 전체, 사이드바 순서.
+ * 중메뉴 → 모든 대메뉴, 소메뉴 → 모든 중메뉴("대메뉴 > 중메뉴"로 표시). 대메뉴는 옮길 수 없으므로 빈 배열
+ * @param {object[]} menus
+ * @param {string} level "top" | "mid" | "btm"
+ * @returns {{ value: string, text: string }[]}
+ */
+export const getParentOptions = (menus, level) => {
+  const unusedMark = (menu) => (menu.useYn === "N" ? " (미사용)" : "");
+  const tops = getChildMenus(menus, null);
+  if (level === "mid") {
+    return tops.map((top) => ({ value: top.id, text: `${top.title}${unusedMark(top)}` }));
+  }
+  if (level === "btm") {
+    return tops.flatMap((top) =>
+      getChildMenus(menus, top.id).map((mid) => ({
+        value: mid.id,
+        text: `${top.title} > ${mid.title}${unusedMark(mid)}`,
+      })),
+    );
+  }
+  return [];
+};
+
+/**
+ * 옮기기 전 입력 검사 (서버 검증이 최종): 옮길 상위 메뉴에 같은 이름이 있으면 안내.
+ * @returns {{ title: string[], menuUrl: string[], parentId: string[], etc: string[] }}
+ */
+export const validateMove = (form, menus) => {
+  const title = form.title.trim();
+  const duplicated = getChildMenus(menus, form.parentId).some(
+    (menu) => menu.id !== form.id && (menu.title ?? "").trim() === title,
+  );
+  return {
+    ...EMPTY_FORM_ERRORS,
+    parentId: duplicated ? [MOVE_TITLE_USED_MESSAGE] : [],
+  };
+};
+
+export const MOVE_TITLE_USED_MESSAGE =
+  "옮길 상위 메뉴에 같은 이름의 메뉴가 있습니다. 이름을 먼저 바꿔 저장한 뒤 옮기세요.";
+
 /**
  * 저장 전 입력 검사 (서버 요청 줄이기용, 서버 검증이 최종). 백엔드 4-3과 같은 규칙.
  * @param {object} form
@@ -147,7 +204,7 @@ export const isFormDirty = (form, menus) => {
  * @returns {{ title: string[], menuUrl: string[], etc: string[] }}
  */
 export const validateMenuForm = (form, level, siblings) => {
-  const errors = { title: [], menuUrl: [], etc: [] };
+  const errors = { title: [], menuUrl: [], parentId: [], etc: [] };
 
   const title = form.title.trim();
   if (!title) {
@@ -178,7 +235,7 @@ export const validateMenuForm = (form, level, siblings) => {
 export const toFormErrors = (error) => {
   if (error.errorCode === "GLOBAL_INVALID_PARAMETER" && error.validations) {
     const { title = [], menuUrl = [], ...rest } = error.validations;
-    return { title, menuUrl, etc: Object.values(rest).flat() };
+    return { title, menuUrl, parentId: [], etc: Object.values(rest).flat() };
   }
   if (error.errorCode === "MENU_TITLE_USED") {
     return { ...EMPTY_FORM_ERRORS, title: [error.message] };

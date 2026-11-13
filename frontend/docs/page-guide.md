@@ -75,4 +75,4 @@ SUPER_ADMIN은 세 가지 모두 항상 통과합니다. **테스트는 꼭 다�
 | 라우트 경로 | 메뉴 관리에서 그 메뉴의 URL을 다시 선택 (경로가 없어진 메뉴는 목록에 ⚠ 표시) |
 | 화면 이름 | 사이드바 이름(메뉴 관리)과 `crumb`(라우트)은 따로 관리됩니다. 둘 다 고치세요 |
 | `@RequireAction`의 `domain` · `action`, 또는 API 삭제 | [access-control-guide.md](../../backend/docs/access-control-guide.md) 6장 "권한 코드를 바꾸거나 없앨 때" |
-| 메뉴를 다른 그룹으로 옮기기 | 아직 지원하지 않습니다. [menu-design.md](../../backend/docs/design/menu-design.md) 4-4 "메뉴 옮기기" |
+| 메뉴를 다른 그룹으로 옮기기 | 메뉴 관리에서 메뉴를 선택하고 "상위 메뉴"를 바꿔 저장합니다. 그 메뉴를 쓰는 ACTION의 메뉴도 함께 바뀝니다 ([menu-page-design.md](design/menu-page-design.md) 6-6) |
