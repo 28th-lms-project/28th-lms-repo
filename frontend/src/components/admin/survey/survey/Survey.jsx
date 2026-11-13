@@ -17,8 +17,29 @@ import { surveyActions } from "../../../../store/slices/surveySliceStore";
 import Select from "react-select";
 import { IconButton } from "../../../sample/input/IconButton";
 import { SUBJECTS } from "../../test/test/subjects";
+import usePermission from "../../../../hooks/usePermission";
 
 export default function Survey() {
+  const { isSuperAdmin, status } = usePermission();
+
+  if (status === "loaded" && isSuperAdmin) return <SurveyManagement />;
+
+  // idle: 비로그인(조회하지 않음) → 표시 없음
+  let content = null;
+  if (status === "loading") {
+    content = <p className={style.notice}>권한 확인 중...</p>;
+  } else if (status === "failed") {
+    content = (
+      <p className={style.notice}>
+        권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
+      </p>
+    );
+  } else if (status === "loaded") {
+    content = <p className={style.notice}>권한이 없습니다.</p>;
+  }
+  return <PageContainer>{content}</PageContainer>;
+}
+function SurveyManagement() {
   /** 설문 타입에 단일, 다중, 직접입력 3가지가 있어
    *  해당 사항 선택하기 위한 배열
    */
@@ -236,7 +257,9 @@ export default function Survey() {
           </div>
           <div className={style.survey}>
             <ul>
-              <div onClick={() => onClickAddSurveyHandler()}>추가</div>
+              <IconButton onClick={() => onClickAddSurveyHandler()}>
+                추가
+              </IconButton>
               {surveyList.map((survey) => (
                 <div className={style.surveyQuestion} key={survey.id}>
                   <li>
@@ -267,7 +290,7 @@ export default function Survey() {
                           onChange={(e) => onTypeChangeHandler(survey, e)}
                         />
                       </div>
-                      {!survey.type !== "text" && (
+                      {survey.type !== "text" && (
                         <div>
                           {survey.surveyDataList.map((data) => (
                             <Fragment key={data.id}>

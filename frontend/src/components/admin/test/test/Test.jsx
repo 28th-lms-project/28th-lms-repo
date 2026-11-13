@@ -8,6 +8,7 @@ import { testActions } from "../../../../store/slices/testSliceStore";
 import AddTest from "./AddTest";
 import UpdateTest from "./UpdateTest";
 import { getCodeOptionList } from "../../../../api/admin/system/code/codeApi";
+import usePermission from "../../../../hooks/usePermission";
 
 const toChoiceInputType = (answerType) => {
   if (answerType === "ANSWER_MULTIPLE") {
@@ -26,6 +27,27 @@ const getCorrectNumbers = (correctAnswer) => {
 };
 
 export default function Test() {
+  const { isSuperAdmin, status } = usePermission();
+
+  if (status === "loaded" && isSuperAdmin) return <TestManagement />;
+
+  // idle: 비로그인(조회하지 않음) → 표시 없음
+  let content = null;
+  if (status === "loading") {
+    content = <p className={style.notice}>권한 확인 중...</p>;
+  } else if (status === "failed") {
+    content = (
+      <p className={style.notice}>
+        권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
+      </p>
+    );
+  } else if (status === "loaded") {
+    content = <p className={style.notice}>권한이 없습니다.</p>;
+  }
+  return <PageContainer>{content}</PageContainer>;
+}
+
+function TestManagement() {
   const { questions } = useSelector((state) => state.test);
   const dispatch = useDispatch();
 
