@@ -31,7 +31,7 @@
 | 동시 수정 | 수정 요청에 화면이 받은 `mdfyDt`를 보내고, 다른 사람이 먼저 저장했으면 서버가 거부 (`MENU_OUTDATED`) |
 | 저장 안 한 변경 | 다른 메뉴 선택 · 다른 화면 이동 · 새로고침 모두 확인 창 (6-4) |
 | 메뉴 이름 | 같은 상위 메뉴 안에서 중복 불가 (`MENU_TITLE_USED`) |
-| 상위 메뉴 변경 | **현재**: 지원하지 않음. 옮기려면 삭제 후 다시 만들기 (백엔드 문서 4-4 "메뉴 옮기기"). **최종 목표**: ACCESS 담당자와 협의가 끝나면 6-6 "상위 메뉴 변경"으로 구현 |
+| 상위 메뉴 변경 | **현재**: 지원하지 않음. 옮기려면 삭제 후 다시 만들기 (백엔드 문서 4-4 "메뉴 옮기기"). **최종 목표**: 6-6 "상위 메뉴 변경"으로 구현 (방식 · 권한 결정 완료, 구현 예정) |
 
 ---
 
@@ -78,7 +78,7 @@
 | `modifyMenu(menuId, menu)` | `PUT /menus/{menuId}` (`menu`에 `mdfyDt` 포함) | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_URL_USED`, `MENU_TITLE_USED`, `MENU_ROLE_INVALID`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
 | `modifyMenuOrder(parentId, menuIds)` | `PUT /menus/order` | `{ roles, menus }` | `MENU_ORDER_INVALID`, `MENU_ORDER_OUTDATED` |
 | `deleteMenu(menuId)` | `DELETE /menus/{menuId}` | 메뉴 1건 | `MENU_NOT_EXISTS`, `MENU_HAS_CHILDREN`, `MENU_IN_USE`, `MENU_SELF_LOCK` |
-| `moveMenu(menuId, parentId, mdfyDt)` (**협의 후**, 6-6) | `PUT /menus/{menuId}/parent` | `{ roles, menus }` | `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
+| `moveMenu(menuId, parentId, mdfyDt)` (**구현 예정**, 6-6) | `PUT /menus/{menuId}/parent` | `{ roles, menus }` | `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
 
 메뉴 객체 필드: `id`, `title`, `parentId`, `menuOrder`, `useYn`, `spread`, `menuUrl`, `roleIds`, `crtDt`, `mdfyDt`. `getMyMenus`의 메뉴에는 `roleIds` · 날짜가 없습니다. `getMyMenus`의 `useYn`은 SUPER_ADMIN만 `N`을 받을 수 있습니다.
 
@@ -276,9 +276,9 @@
 | `MENU_UPDATE` | 드래그 손잡이 숨김. 기존 메뉴의 입력칸 비활성 (입력을 바꿀 수 없으므로 [저장] · [취소]도 나타나지 않음) |
 | `MENU_DELETE` | [삭제] 숨김 |
 
-### 6-6. 상위 메뉴 변경 (협의 후 구현 예정)
+### 6-6. 상위 메뉴 변경 (결정 완료, 구현 예정)
 
-> **상태: ACCESS 담당자 협의 대기** (백엔드 문서 4-7). 협의가 끝나면 이 절대로 구현하고, 1장 "상위 메뉴 변경"을 고칩니다. 그 전에는 이 기능을 만들지 않습니다.
+> **상태: 결정 완료 (2026-11-12), 구현 전** (백엔드 문서 4-7). 백엔드 이동 API가 생기면 이 절대로 구현하고, 1장 "상위 메뉴 변경"을 고칩니다.
 
 - 중 · 소메뉴 상세에 "상위 메뉴" 드롭다운(`NativeSelect`)을 둡니다. 선택지는 한 단계 위의 메뉴 전체(소메뉴 → 모든 중메뉴, 중메뉴 → 모든 대메뉴)이고, 표시는 `대메뉴 > 중메뉴` 경로입니다. 대메뉴 상세에는 표시하지 않습니다.
 - **이동은 다른 수정과 따로 저장합니다.** 저장 한 번에 API 하나만 부르게 해서, 일부만 저장되거나 검사(같은 이름, 자기 잠금, `mdfyDt`)가 중간 상태로 이뤄지는 일을 막습니다. 기존 수정 API · 저장 흐름은 바꾸지 않고 이동 기능만 덧붙입니다.
@@ -290,7 +290,7 @@
 - 저장 전 `Confirm`: "메뉴를 옮기면 이 메뉴를 쓰는 접근 권한(ACTION)의 메뉴도 함께 바뀝니다. 옮길까요?"
 - 성공하면 목록을 응답으로 교체하고, 옮긴 메뉴가 보이도록 열 선택을 새 위치로 바꾼 뒤 내 메뉴를 다시 조회합니다.
 - 오류: `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK`은 서버 메시지 알림.
-- 권한: 협의 결과에 따라 `MENU_UPDATE` 또는 SUPER_ADMIN 전용. SUPER_ADMIN 전용이면 `isSuperAdmin`일 때만 드롭다운 표시.
+- 권한: `MENU_UPDATE` (2026-11-12 결정). `MENU_UPDATE`가 없으면 드롭다운을 표시하지 않습니다.
 - 드래그로 다른 열 · 다른 그룹에 놓는 방식은 쓰지 않습니다 (실수로 옮기기 쉬움).
 
 확인 시나리오 (구현 시 10장에 추가):

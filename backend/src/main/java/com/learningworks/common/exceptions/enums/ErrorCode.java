@@ -24,6 +24,7 @@ public enum ErrorCode {
   ROLE_MOVE_SAME(HttpStatus.BAD_REQUEST, "같은 역할로는 이동할 수 없습니다."), //
   ROLE_MOVE_TO_SUPER_ADMIN(HttpStatus.BAD_REQUEST, "최고 관리자 역할로는 회원을 이동할 수 없습니다."), //
   ACTION_CODE_NOT_EXISTS(HttpStatus.BAD_REQUEST, "등록되지 않은 권한 코드입니다."), //
+  ACTION_MENU_INVALID(HttpStatus.BAD_REQUEST, "메뉴 정보가 올바르지 않습니다. 새로고침 후 다시 선택해주세요."), //
   INTERVIEW_STUDENT_NOT_IN_COURSE(HttpStatus.BAD_REQUEST, "해당 과정에 참여 중인 수강생이 아닙니다."), //
   FILES_NOT_ALLOWED_EXTENSION(HttpStatus.BAD_REQUEST, "업로드할 수 없는 파일 형식입니다."), //
   FILES_INVALID_CONTENT(HttpStatus.BAD_REQUEST, "파일 확장자와 실제 파일 형식이 일치하지 않습니다."), //

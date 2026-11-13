@@ -25,4 +25,13 @@ public interface MenuService {
   /** actorId: 자기 잠금 검사(MENU_SELF_LOCK)용 요청자 ID */
   MenuVO deleteMenu(String actorId, String menuId);
 
+  /**
+   * ACTION 저장용: 대메뉴 > 중메뉴 > 소메뉴로 이어지는 경로인지 확인하고, 소메뉴 행을 잠근다.
+   * 잠금은 호출한 쪽의 트랜잭션이 끝날 때까지 유지되므로, 반드시 트랜잭션 안에서 호출할 것.
+   * 메뉴 삭제(deleteMenu)도 같은 행을 잠그므로, ACTION 저장과 메뉴 삭제가 동시에 일어나도 차례대로 처리된다.
+   *
+   * @return 세 메뉴가 모두 있고 계층이 맞으면 true (값이 비어 있으면 false)
+   */
+  boolean checkAndLockMenuPath(String topMenuId, String midMenuId, String btmMenuId);
+
 }
