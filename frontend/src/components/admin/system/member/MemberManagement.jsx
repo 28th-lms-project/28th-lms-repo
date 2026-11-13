@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import usePermission from "../../../../hooks/usePermission.js";
 import PageContainer from "../../../common/PageContainer.jsx";
-import { getMembers } from "../../../../api/admin/system/member/memberApi.js";
-import { getRoles } from "../../../../api/admin/system/role/roleApi.js";
+import {
+  getAssignableRoles,
+  getMembers,
+} from "../../../../api/admin/system/member/memberApi.js";
 import styles from "./MemberManagement.module.css";
 import { Grid } from "../../../common/Grid.jsx";
 import { Paginator } from "../../../common/Paginator.jsx";
@@ -53,8 +55,6 @@ function MemberManagementContent() {
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const canReadRoles = can("ROLE_READ");
-
   const formatStatus = (member) => {
     if (member.loginBlockDate) {
       return "잠김";
@@ -62,18 +62,13 @@ function MemberManagementContent() {
     return "정상";
   };
 
-  // 시스템 역할 목록 조회 (ROLE_READ 권한이 있을 때만 호출)
+  // 내가 지정할 수 있는 역할 목록 (자기보다 아래 역할만, 최고 관리자 제외)
+  // 검색 필터 · 등록 모달 · 역할 변경 선택지로 쓴다.
   useEffect(() => {
-    if (!canReadRoles) {
-      return;
-    }
-
     const controller = new AbortController();
-    getRoles({ signal: controller.signal })
-      .then((data) => {
-        if (data && data.roleList) {
-          setRoles(data.roleList);
-        }
+    getAssignableRoles({ signal: controller.signal })
+      .then((roleList) => {
+        setRoles(roleList);
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
@@ -81,7 +76,7 @@ function MemberManagementContent() {
         }
       });
     return () => controller.abort();
-  }, [canReadRoles]);
+  }, []);
 
   // 회원 목록 조회 (MEMBER_READ_LIST 권한이 확인된 후 마운트됨)
   useEffect(() => {
@@ -165,7 +160,7 @@ function MemberManagementContent() {
         {/* 상단 툴바 (검색 / 필터 / 등록 버튼) */}
         <div className={styles.toolbar}>
           <div className={styles.searchGroup}>
-            {canReadRoles && (
+            {roles.length > 0 && (
               <select
                 className={styles.select}
                 value={selectedRoleFilter}
@@ -209,7 +204,7 @@ function MemberManagementContent() {
             </button>
           </div>
 
-          {can("MEMBER_CREATE") && canReadRoles && (
+          {can("MEMBER_CREATE") && roles.length > 0 && (
             <button
               type="button"
               className={styles.btnCreate}

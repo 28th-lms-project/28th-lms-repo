@@ -7,10 +7,6 @@ export default function MemberCreateModal({ roles, onClose, onCompleted }) {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
-  const assignableRoles = roles.filter(
-    (role) => role.roleId !== "ROLE_SUPER_ADMIN",
-  );
-
   const validate = (id, password, name, baseRole, githubUrl) => {
     const newErrors = {};
 
@@ -129,7 +125,7 @@ export default function MemberCreateModal({ roles, onClose, onCompleted }) {
               <option value="" disabled>
                 역할을 선택해주세요
               </option>
-              {assignableRoles.map((role) => (
+              {roles.map((role) => (
                 <option key={role.roleId} value={role.roleId}>
                   {role.roleDisplayName}
                 </option>
