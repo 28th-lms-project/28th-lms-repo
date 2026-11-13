@@ -60,9 +60,17 @@ export const routes = [
         // 화면 오류 · loader 오류: 사이드바는 두고 본문만 오류 화면 (경로 없는 라우트)
         errorElement: <RouteError />,
         children: [
-          { index: true, element: <Main />, handle: { crumb: "Dashboard", menu: true } },
+          {
+            index: true,
+            element: <Main />,
+            handle: { crumb: "Dashboard", menu: true },
+          },
           { path: "login", element: <Login />, handle: { crumb: "로그인" } },
-          { path: "sample", element: <Sample />, handle: { crumb: "Sample", menu: true } },
+          {
+            path: "sample",
+            element: <Sample />,
+            handle: { crumb: "Sample", menu: true },
+          },
           {
             path: "my",
             handle: { crumb: "My Page" },
@@ -82,7 +90,11 @@ export const routes = [
                     element: <Navigate to="list" replace />,
                     handle: { guardAs: "/my/course/list" },
                   },
-                  { path: "list", element: <MyCourseList />, handle: { menu: true } },
+                  {
+                    path: "list",
+                    element: <MyCourseList />,
+                    handle: { menu: true },
+                  },
                   // ?tab=0~8 로 탭 전환 (MyCourse 의 TABS 참고)
                   {
                     path: "list/:courseId",
@@ -197,7 +209,11 @@ export const routes = [
             ],
           },
           // 없는 주소: 레이아웃 안에서 404 (메뉴 가드는 handle.notFound를 보고 통과)
-          { path: "*", element: <NotFound />, handle: { crumb: "페이지 없음", notFound: true } },
+          {
+            path: "*",
+            element: <NotFound />,
+            handle: { crumb: "페이지 없음", notFound: true },
+          },
         ],
       },
     ],
