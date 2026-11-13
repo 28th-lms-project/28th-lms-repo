@@ -111,6 +111,11 @@ export default function ExamSetTable({
       alert("수강생만 응시할 수 있습니다.");
       return;
     }
+    // 공개(Y)되지 않은 시험은 응시 불가 (서버에서도 한 번 더 막음)
+    if (testSet.showYn !== "Y") {
+      alert("공개되지 않은 시험입니다.");
+      return;
+    }
     try {
       const result = await viewTestSetQuestions(testSet.id);
       dispatch(

@@ -301,6 +301,15 @@ public class ExamServiceImpl implements ExamService {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 
+		// 존재하고 공개(Y)된 시험만 응시 가능 (화면 차단과 별개로 서버에서 확인)
+		RegistTestSetVO testSet = this.examDao.selectExamsetById(testSetId);
+		if (testSet == null) {
+			throw new LearningworksException(ErrorCode.EXAM_NOT_EXISTS);
+		}
+		if (!"Y".equals(testSet.getShowYn())) {
+			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+		}
+
 		// 중복 제출 방지 (응시자 = 로그인 userId)
 		if (this.examDao.countSubmittedAnswers(testSetId, userId) > 0) {
 			throw new LearningworksException(ErrorCode.GLOBAL_BAD_REQUEST);
