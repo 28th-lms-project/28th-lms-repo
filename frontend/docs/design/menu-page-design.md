@@ -3,7 +3,7 @@
 - 대상 화면: `시스템 관리 > 메뉴 관리` (`/admin/system/menu`), 사이드바(`SideMenu.jsx`), 모든 화면의 URL 접근
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-10
-- 상태: 설계 확정. 메뉴 관리 화면 · 사이드바 구현 완료, 가드 구현 전
+- 상태: 설계 확정. 메뉴 관리 화면 · 사이드바 · 가드 구현 완료 (상위 메뉴 변경 6-6 제외)
 
 이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
 
@@ -61,7 +61,8 @@
 | `components/admin/system/menu/Menu.jsx` | 메뉴 관리 화면 구현 완료 (9장 3단계) |
 | 라우트 `handle.menu` | 메뉴 관리 URL 선택지용으로 표시 완료. `routes` export 완료 |
 | `components/menu/SideMenu.jsx` | 내 메뉴(`menuSliceStore`)를 그림 (9장 4단계 완료). 조회는 `MainLayout`이 로그인 시 시작. `menuData.js` 삭제 |
-| `router/MainRouterProvider.jsx` | `handle.menu` 표시 완료. 가드 · `guardAs` 없음 |
+| `components/menu/MenuGuard.jsx` | 가드 구현 완료 (9장 5단계). `MainLayout`의 `<Outlet />`과 숙제 팝업을 감쌈 |
+| `router/MainRouterProvider.jsx` | `handle.menu` 표시 완료. `guardAs`: 숙제 팝업(`/admin/course/list`), `/my/course` index(`/my/course/list`) |
 | 라우트 · 메뉴 등록 | "메뉴 관리" 라우트와 메뉴 항목은 등록되어 있음 |
 
 ---
@@ -111,11 +112,14 @@
 
 ```jsx
 {
-  path: "/popup/homework/:courseid/:homeworkId",
+  path: "/popup/homework/:courseId/:homeworkId",
   element: <MenuGuard><HomeworkDetails /></MenuGuard>,
   handle: { guardAs: "/admin/course/list" },   // 과정 목록 화면에서 여는 팝업
 },
 ```
+
+- 다른 주소로 보내기만 하는 중간 경로도 같습니다. `/my/course`는 메뉴가 아니어서 가드에 걸리므로, `list`로 보내는 index 라우트에 `guardAs: "/my/course/list"`를 붙였습니다.
+- 가장 안쪽 라우트의 `guardAs`가 우선합니다.
 
 ### 5-3. 가드 판정 순서 (`MenuGuard`)
 
@@ -137,6 +141,13 @@
 - `MainLayout.jsx`: `<Outlet />`을 `<MenuGuard><Outlet /></MenuGuard>`로 감쌉니다.
 - 팝업 라우트: 5-2처럼 화면을 직접 감쌉니다 (`MainLayout` 밖이라서).
 - 내 메뉴 조회(`fetchMyMenus`)는 `MainLayout`이 로그인 시 시작하고(4단계), `MenuGuard`도 시작합니다. 팝업은 `MainLayout` 밖이라 가드가 시작해야 합니다. `idle`일 때만 실행되므로 두 곳에서 불러도 한 번만 조회합니다. 사이드바는 같은 store 값을 읽기만 합니다.
+
+### 5-5. 가드가 막지 않는 것
+
+- **API 호출, 화면 안의 버튼:** 가드는 화면을 여는 것만 막습니다. 데이터는 API 권한(`@RequireAction`)이 막고, 버튼은 화면에서 `can()`으로 확인합니다 (`permission-guide.md`).
+- **라우트 loader:** react-router는 loader를 화면보다 먼저 실행하므로 가드보다 먼저 돕니다 (예: `/admin/course/list`의 `getCourses`). loader가 부르는 API는 API 권한으로 막힙니다.
+- **없는 경로** (예: `/abc`): 라우트가 없으면 가드까지 오지 않고 `/` 라우트의 `errorElement`(404)가 표시됩니다.
+- **다른 사람이 바꾼 메뉴 역할:** 내 메뉴는 로그인 · 새로고침 · 내가 메뉴 관리에서 저장할 때만 다시 받습니다. 역할이 빠진 사용자도 새로고침 전까지는 그 화면에 들어갈 수 있습니다.
 
 ---
 
@@ -339,6 +350,7 @@ src/store/StoreProvider.jsx                     (reducer 등록)
 src/router/routeUtils.js                        (새 파일: getMenuUrlOptions, findGuardUrl)
 src/router/MainRouterProvider.jsx               (routes export, handle.menu, guardAs, 팝업 감싸기)
 src/components/menu/MenuGuard.jsx               (새 파일)
+src/components/menu/MenuGuard.module.css        (새 파일: 안내 문구)
 src/layout/MainLayout.jsx                       (Outlet 감싸기)
 src/components/menu/SideMenu.jsx                (store 사용)
 src/components/menu/sideMenuUtils.js            (새 파일: 트리 변환, 그룹 펼침 규칙)
@@ -380,7 +392,7 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 | --- | --- | --- |
 | M1 | STUDENT로 `/admin/course/add` 직접 입력 | 알림 없이 "권한이 없습니다" |
 | M2 | STUDENT로 `/my/course/list/123` (수강 과정 허용) | 화면 표시 (접두어 매칭) |
-| M3 | ADMIN으로 `/admin/system/access-role` (접근 관리만 허용) | "권한이 없습니다" (경계 검사) |
+| M3 | 메뉴 관리에서 ADMIN을 "접근 관리"(`/admin/system/access`) 소메뉴에만 체크하고 "권한별 접근 권한 관리"(`/admin/system/access-role`)는 해제한 뒤, ADMIN으로 `/admin/system/access-role` 입력 | "권한이 없습니다" (`/admin/system/access`로 시작하는 문자열이어도 다른 메뉴로 판정하는지 확인하는 경계 검사). `/admin/system/access`는 열림 |
 | M4 | 메뉴에 없는 URL을 SUPER_ADMIN / 그 외로 입력 | 열림 / "권한이 없습니다" |
 | M5 | 비로그인으로 `/admin/course/add` | `/login`으로 이동 |
 | M6 | 과정 목록이 허용된 TUTOR로 숙제 팝업 열기 | 팝업 표시 (`guardAs`) |
@@ -406,3 +418,7 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 | M25 | URL 드롭다운에서 `Dashboard (/)` 선택 가능 / Dashboard 메뉴에서 STUDENT 해제 후 STUDENT로 `/` 접속 | 선택 가능 / 사이드바에 Dashboard 링크가 없고 화면은 열림 |
 | M26 | 메뉴 선택 → 이름 수정 → [취소] | 선택 시 [삭제]만, 수정하면 [저장] · [취소]로 바뀜, [취소] 후 다시 [삭제]만 |
 | M27 | 이름 수정 중 목록 머리 [추가] | 저장하지 않은 변경 확인 창 |
+| M28 | STUDENT로 `/my/course` 입력 (수강 과정 허용) | `/my/course/list`로 이동 (`guardAs`) |
+| M29 | STUDENT로 `/my` 입력 (라우트는 있지만 메뉴가 아님) | "권한이 없습니다" |
+| M30 | `/abc` 입력 | "404 Not Found" (가드와 무관) |
+| M31 | 숙제 팝업 주소를 과정 목록이 허용되지 않은 역할로 열기 | 팝업에 "권한이 없습니다" |
