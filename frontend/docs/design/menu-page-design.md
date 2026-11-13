@@ -101,7 +101,7 @@
 ```
 
 - `menu: true`를 붙일 수 있는 라우트: 파라미터(`:id`)가 없고 화면이 있는 경로.
-- 지금 `menuData.js`에 있는 링크에 모두 붙입니다. 대시보드도 포함합니다: `{ index: true, element: <Main />, handle: { crumb: "Dashboard", menu: true } }`.
+- 사이드바 메뉴로 쓰는 화면 라우트에 모두 붙입니다. 대시보드도 포함합니다: `{ index: true, element: <Main />, handle: { crumb: "Dashboard", menu: true } }`.
 - `router/routeUtils.js`의 `getMenuUrlOptions(routes)`가 라우트 트리를 돌며 `menu: true`인 경로의 전체 URL을 모읍니다. index 라우트는 상위 경로(대시보드는 `/`)로 계산합니다. 이를 위해 `MainRouterProvider.jsx`의 라우트 배열을 `routes`로 따로 export 합니다.
 - 대시보드(`/`)는 메뉴로 등록하지만 가드는 항상 통과시킵니다 (5-3의 1번). 그래서 Dashboard 메뉴의 역할 체크는 **사이드바 링크 표시에만** 영향을 줍니다 (역할을 빼면 링크만 사라지고 `/`는 계속 열림).
 
@@ -324,10 +324,9 @@
   - 사용자가 직접 펼치거나 접은 그룹은 그 상태를 따릅니다. 새로고침 · 로그아웃 · 다른 계정 로그인 때 사라집니다 (`MainLayout`이 사용자 ID로 사이드바에 `key`를 줌).
   - 페이지를 옮겼을 때 새 현재 그룹을 사용자가 접어 둔 상태면 그 기록을 지워 펼칩니다. 지금 보고 있는 페이지의 링크가 숨겨지지 않게 하기 위해서입니다.
   - 펼쳐 둔 기록은 지우지 않습니다. 여러 그룹의 페이지를 오가며 작업할 때 그룹마다 처음 한 번만 클릭하면 됩니다. 클릭 없이 들어가기만 한 그룹(뒤로 가기, 페이지 안 링크)은 떠나면 규칙대로 돌아갑니다.
-- `NavLink`의 `end`는 URL이 `/`일 때만 켭니다 (지금 `menuData.js`에서 `end`를 쓴 곳은 `/`와 `/sample`이고, `/sample`은 하위 경로가 없어 차이가 없습니다).
+- `NavLink`의 `end`는 URL이 `/`일 때만 켭니다 (그 외 메뉴는 하위 경로에서도 활성 표시).
 - 그룹 조작 기록은 이름이 아니라 **메뉴 ID**로 기억합니다 (같은 이름 그룹이 생길 수 있으므로).
 - 메뉴를 받는 중에는 메뉴 영역을 비워 둡니다.
-- 전환이 끝나면 `menuData.js`를 삭제합니다.
 
 ---
 
@@ -343,7 +342,6 @@ src/components/menu/MenuGuard.jsx               (새 파일)
 src/layout/MainLayout.jsx                       (Outlet 감싸기)
 src/components/menu/SideMenu.jsx                (store 사용)
 src/components/menu/sideMenuUtils.js            (새 파일: 트리 변환, 그룹 펼침 규칙)
-src/components/menu/menuData.js                 (전환 후 삭제)
 src/components/admin/system/menu/Menu.jsx       (권한 확인 래퍼 + 화면)
 src/components/admin/system/menu/MenuColumn.jsx (열 하나: 목록 + 상세)
 src/components/admin/system/menu/menuUtils.js   (트리 계산, 입력 검사, 오류 메시지)

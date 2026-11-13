@@ -96,14 +96,12 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 
 ### 2-5. 초기 데이터
 
-현재 `MENU` · `MENU_ROLE`에는 메뉴 구현 전에 ACCESS 개발용으로 넣은 데이터(숫자 ID, 자리표시 값)가 있습니다. **메뉴 구현 후 모든 데이터를 이 문서의 규칙에 맞게 새로 만듭니다.** 이때 ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID`도 새 메뉴 ID로 다시 지정해야 하므로 ACCESS 담당자와 함께 진행합니다 (기존 ID를 지우면 권한별 접근 권한 관리 화면의 필터가 비게 됨).
-
-메뉴 가드(프론트)를 켜기 **전에** 지금 `frontend/src/components/menu/menuData.js`의 구성을 `MENU`에 넣고, 역할별 `MENU_ROLE`을 채워야 합니다. 비어 있으면 SUPER_ADMIN이 아닌 사용자는 대시보드 외에 아무 화면도 열 수 없습니다.
+**정리 완료 (2026-11-13).** 메뉴 구현 전에 ACCESS 개발용으로 넣었던 데이터(숫자 ID)는 모두 지우고, 메뉴 관리 화면에서 이 문서의 규칙대로 새로 만들었습니다. ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID`도 모두 새 메뉴 ID를 가리킵니다. 사이드바는 고정 목록(`menuData.js`, 삭제됨) 대신 이 데이터를 그립니다.
 
 - 대메뉴 = 섹션(Main / My Page / System Management), 중메뉴 = 그룹, 소메뉴 = 링크.
-- 대시보드(Main > Home > Dashboard, `MENU_URL = '/'`)도 메뉴로 넣습니다. 프론트 가드는 `/`를 항상 통과시키므로, 이 메뉴의 `MENU_ROLE`은 사이드바 링크 표시에만 쓰입니다.
-- `menuData.js`의 "DB 관리"(`/admin/system/db`)는 라우트가 없습니다. 라우트가 생길 때 추가하세요.
-- 입력은 SQL로 직접 하거나, 메뉴 관리 화면이 완성된 뒤 SUPER_ADMIN 계정으로 입력합니다.
+- 대시보드(Main > Home > Dashboard, `MENU_URL = '/'`)도 메뉴입니다. 프론트 가드는 `/`를 항상 통과시키므로, 이 메뉴의 `MENU_ROLE`은 사이드바 링크 표시에만 쓰입니다.
+- 메뉴 가드(프론트)를 켜면 `MENU_ROLE`이 없는 메뉴는 SUPER_ADMIN만 열 수 있습니다. 새 메뉴를 만들 때 역할을 함께 지정합니다.
+- 추가 · 수정은 메뉴 관리 화면(SUPER_ADMIN)에서 합니다.
 
 ---
 
