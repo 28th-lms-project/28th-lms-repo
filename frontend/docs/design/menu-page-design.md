@@ -3,7 +3,7 @@
 - 대상 화면: `시스템 관리 > 메뉴 관리` (`/admin/system/menu`), 사이드바(`SideMenu.jsx`), 모든 화면의 URL 접근
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-10
-- 상태: 설계 확정. 메뉴 관리 화면 구현 완료, 사이드바 · 가드 구현 전
+- 상태: 설계 확정. 메뉴 관리 화면 · 사이드바 구현 완료, 가드 구현 전
 
 이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
 
@@ -58,9 +58,9 @@
 | 대상 | 상태 |
 | --- | --- |
 | 백엔드 `/menus` API | 구현 완료 (`backend/docs/design/menu-design.md`) |
-| `components/admin/system/menu/Menu.jsx` | 메뉴 관리 화면 구현 완료 (9장 3단계). `menuSliceStore`는 만들었지만 사이드바는 아직 사용하지 않음 |
+| `components/admin/system/menu/Menu.jsx` | 메뉴 관리 화면 구현 완료 (9장 3단계) |
 | 라우트 `handle.menu` | 메뉴 관리 URL 선택지용으로 표시 완료. `routes` export 완료 |
-| `components/menu/SideMenu.jsx` | `menuData.js`의 고정 데이터를 그림. 현재 주소가 들어 있는 그룹만 처음에 펼침 |
+| `components/menu/SideMenu.jsx` | 내 메뉴(`menuSliceStore`)를 그림 (9장 4단계 완료). 조회는 `MainLayout`이 로그인 시 시작. `menuData.js` 삭제 |
 | `router/MainRouterProvider.jsx` | `handle.menu` 표시 완료. 가드 · `guardAs` 없음 |
 | 라우트 · 메뉴 등록 | "메뉴 관리" 라우트와 메뉴 항목은 등록되어 있음 |
 
@@ -101,7 +101,7 @@
 ```
 
 - `menu: true`를 붙일 수 있는 라우트: 파라미터(`:id`)가 없고 화면이 있는 경로.
-- 지금 `menuData.js`에 있는 링크에 모두 붙입니다. 대시보드도 포함합니다: `{ index: true, element: <Main />, handle: { crumb: "Dashboard", menu: true } }`.
+- 사이드바 메뉴로 쓰는 화면 라우트에 모두 붙입니다. 대시보드도 포함합니다: `{ index: true, element: <Main />, handle: { crumb: "Dashboard", menu: true } }`.
 - `router/routeUtils.js`의 `getMenuUrlOptions(routes)`가 라우트 트리를 돌며 `menu: true`인 경로의 전체 URL을 모읍니다. index 라우트는 상위 경로(대시보드는 `/`)로 계산합니다. 이를 위해 `MainRouterProvider.jsx`의 라우트 배열을 `routes`로 따로 export 합니다.
 - 대시보드(`/`)는 메뉴로 등록하지만 가드는 항상 통과시킵니다 (5-3의 1번). 그래서 Dashboard 메뉴의 역할 체크는 **사이드바 링크 표시에만** 영향을 줍니다 (역할을 빼면 링크만 사라지고 `/`는 계속 열림).
 
@@ -136,7 +136,7 @@
 
 - `MainLayout.jsx`: `<Outlet />`을 `<MenuGuard><Outlet /></MenuGuard>`로 감쌉니다.
 - 팝업 라우트: 5-2처럼 화면을 직접 감쌉니다 (`MainLayout` 밖이라서).
-- 내 메뉴 조회(`fetchMyMenus`)는 `MenuGuard`가 시작합니다. 팝업에서도 동작해야 하기 때문입니다. 사이드바는 같은 store 값을 읽기만 합니다.
+- 내 메뉴 조회(`fetchMyMenus`)는 `MainLayout`이 로그인 시 시작하고(4단계), `MenuGuard`도 시작합니다. 팝업은 `MainLayout` 밖이라 가드가 시작해야 합니다. `idle`일 때만 실행되므로 두 곳에서 불러도 한 번만 조회합니다. 사이드바는 같은 store 값을 읽기만 합니다.
 
 ---
 
@@ -319,11 +319,14 @@
 - `menus`를 대(섹션) → 중(그룹) → 소(링크) 트리로 만들어 `menuOrder` 순으로 그립니다.
 - 소메뉴가 하나도 없는 중메뉴, 중메뉴가 하나도 없는 대메뉴는 그리지 않습니다.
 - `useYn = 'N'`인 메뉴(SUPER_ADMIN만 받음)는 흐리게 표시하고 이름 뒤에 "(미사용)"을 붙입니다. 미사용 중메뉴 아래의 소메뉴도 그대로 보입니다.
-- 처음 펼칠 그룹: `spread = 'Y'`인 그룹 + 현재 주소가 들어 있는 그룹 (지금 동작 유지).
-- `NavLink`의 `end`는 URL이 `/`일 때만 켭니다 (지금 `menuData.js`에서 `end`를 쓴 곳은 `/`와 `/sample`이고, `/sample`은 하위 경로가 없어 차이가 없습니다).
-- 그룹을 펼친 상태는 지금처럼 이름이 아니라 **메뉴 ID**로 기억합니다 (같은 이름 그룹이 생길 수 있으므로).
+- 그룹 펼침
+  - 사용자가 직접 펼치거나 접지 않은 그룹은 **매번** 규칙으로 정합니다: `spread = 'Y'`이거나 현재 주소가 들어 있으면 펼침. 메뉴 관리에서 `spread`를 바꾸면 바로 반영됩니다.
+  - 사용자가 직접 펼치거나 접은 그룹은 그 상태를 따릅니다. 새로고침 · 로그아웃 · 다른 계정 로그인 때 사라집니다 (`MainLayout`이 사용자 ID로 사이드바에 `key`를 줌).
+  - 페이지를 옮겼을 때 새 현재 그룹을 사용자가 접어 둔 상태면 그 기록을 지워 펼칩니다. 지금 보고 있는 페이지의 링크가 숨겨지지 않게 하기 위해서입니다.
+  - 펼쳐 둔 기록은 지우지 않습니다. 여러 그룹의 페이지를 오가며 작업할 때 그룹마다 처음 한 번만 클릭하면 됩니다. 클릭 없이 들어가기만 한 그룹(뒤로 가기, 페이지 안 링크)은 떠나면 규칙대로 돌아갑니다.
+- `NavLink`의 `end`는 URL이 `/`일 때만 켭니다 (그 외 메뉴는 하위 경로에서도 활성 표시).
+- 그룹 조작 기록은 이름이 아니라 **메뉴 ID**로 기억합니다 (같은 이름 그룹이 생길 수 있으므로).
 - 메뉴를 받는 중에는 메뉴 영역을 비워 둡니다.
-- 전환이 끝나면 `menuData.js`를 삭제합니다.
 
 ---
 
@@ -338,7 +341,7 @@ src/router/MainRouterProvider.jsx               (routes export, handle.menu, gua
 src/components/menu/MenuGuard.jsx               (새 파일)
 src/layout/MainLayout.jsx                       (Outlet 감싸기)
 src/components/menu/SideMenu.jsx                (store 사용)
-src/components/menu/menuData.js                 (전환 후 삭제)
+src/components/menu/sideMenuUtils.js            (새 파일: 트리 변환, 그룹 펼침 규칙)
 src/components/admin/system/menu/Menu.jsx       (권한 확인 래퍼 + 화면)
 src/components/admin/system/menu/MenuColumn.jsx (열 하나: 목록 + 상세)
 src/components/admin/system/menu/menuUtils.js   (트리 계산, 입력 검사, 오류 메시지)

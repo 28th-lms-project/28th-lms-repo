@@ -26,7 +26,7 @@
 | 백엔드 `RoleController` (`/roles`)     | 완료. API 7개                                                     |
 | `src/api/admin/system/role/roleApi.js` | 완료. 함수 7개. errorCode 주석 보완 완료 (3장 끝)                 |
 | `src/components/admin/system/role/`    | 1단계 구현 완료 (7장 파일). 9장 수동 테스트 완료                  |
-| 라우트 · 메뉴                          | 등록 완료 (`MainRouterProvider.jsx`, `menuData.js`의 "권한 관리") |
+| 라우트 · 메뉴                          | 등록 완료 (`MainRouterProvider.jsx`, 메뉴 관리의 "권한 관리")     |
 | 내 권한 연동 (8장)                     | 구현 완료. P1~P6 수동 테스트 완료 (P4 재확인 완료)                |
 
 ---
