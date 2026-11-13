@@ -5,10 +5,13 @@ import java.util.List;
 import com.learningworks.member.vo.request.MemberCreateVO;
 import com.learningworks.member.vo.request.MemberSearchVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
+import com.learningworks.member.vo.request.ModifyMemberVO;
 import com.learningworks.member.vo.request.ModifyPasswordVO;
+import com.learningworks.member.vo.request.ResetPasswordVO;
 import com.learningworks.member.vo.response.MemberDetailVO;
 import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
+import com.learningworks.role.vo.response.RoleVO;
 
 public interface MemberService {
 
@@ -17,6 +20,16 @@ public interface MemberService {
   List<MemberListVO> readMemberList(String actorId, MemberSearchVO searchVO);
 
   MemberDetailVO readMember(String actorId, String targetId);
+
+  List<RoleVO> readAssignableRoles(String actorId);
+
+  MemberDetailVO updateMember(String actorId, String targetId, ModifyMemberVO modifyVO);
+
+  void deleteMember(String actorId, String targetId);
+
+  void resetPassword(String actorId, String targetId, ResetPasswordVO resetPasswordVO);
+
+  MemberDetailVO changeRole(String actorId, String targetId, String newRoleId);
 
   void increaseLoginFailCount(String id, LocalDateTime now);
 

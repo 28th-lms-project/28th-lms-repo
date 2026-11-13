@@ -11,11 +11,15 @@ import com.learningworks.member.dao.MemberDao;
 import com.learningworks.member.vo.request.MemberCreateVO;
 import com.learningworks.member.vo.request.MemberSearchVO;
 import com.learningworks.member.vo.request.ModifyInfoVO;
+import com.learningworks.member.vo.request.ModifyMemberVO;
 import com.learningworks.member.vo.request.ModifyPasswordVO;
+import com.learningworks.member.vo.request.ResetPasswordVO;
 import com.learningworks.member.vo.response.MemberDetailVO;
 import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
+import com.learningworks.role.RoleConstants;
 import com.learningworks.role.service.RoleAssignPolicy;
+import com.learningworks.role.vo.response.RoleVO;
 import com.learningworks.security.auth.LoginPasswordValidator;
 import com.learningworks.security.auth.LoginUser;
 import lombok.RequiredArgsConstructor;
@@ -123,7 +127,7 @@ public class MemberServiceImpl implements MemberService {
     if (this.memberDao.updatePassword(id, newHash) == 0) {
       throw new IllegalStateException("비밀번호 변경 실패");
     }
-    if (this.memberDao.updateSalt(id, newSalt) == 0) {
+    if (this.memberDao.updateSalt(id, newSalt, id) == 0) {
       throw new IllegalStateException("Salt 변경 실패");
     }
 
@@ -154,6 +158,10 @@ public class MemberServiceImpl implements MemberService {
   @Transactional(readOnly = true)
   @Override
   public List<MemberListVO> readMemberList(String actorId, MemberSearchVO searchVO) {
+    // 관리 대상(자기보다 아래 역할, 본인 제외)만 조회. 클라이언트가 보낸 값은 덮어쓴다.
+    searchVO.setActorRankBoundary(this.roleAssignPolicy.findManageableRankBoundary(actorId));
+    searchVO.setActorId(actorId);
+
     long count = this.memberDao.selectMemberCount(searchVO);
     searchVO.calculatePageCount(count);
 
@@ -167,10 +175,73 @@ public class MemberServiceImpl implements MemberService {
   @Transactional(readOnly = true)
   @Override
   public MemberDetailVO readMember(String actorId, String targetId) {
+    this.roleAssignPolicy.checkManageable(actorId, targetId);
+
     MemberDetailVO detail = this.memberDao.selectMemberDetail(targetId);
     if (detail == null) {
       throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
     }
     return detail;
   }
+
+  /**
+   * 요청자가 회원에게 지정할 수 있는 역할 목록 (등록 · 역할 변경 · 검색 필터 선택지).
+   * 자기보다 아래 순위의 역할만 반환하며, SUPER_ADMIN 역할은 누구에게도 지정할 수 없으므로 항상 제외한다.
+   */
+  @Transactional(readOnly = true)
+  @Override
+  public List<RoleVO> readAssignableRoles(String actorId) {
+    int rankBoundary = this.roleAssignPolicy.findManageableRankBoundary(actorId);
+    return this.memberDao.selectAssignableRoles(rankBoundary, RoleConstants.SUPER_ADMIN_ROLE);
+  }
+
+  @Transactional
+  @Override
+  public MemberDetailVO updateMember(String actorId, String targetId, ModifyMemberVO modifyVO) {
+    this.roleAssignPolicy.checkManageable(actorId, targetId);
+    int updatedRows = this.memberDao.updateMember(targetId, modifyVO);
+    if (updatedRows == 0) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+
+    return this.memberDao.selectMemberDetail(targetId);
+  }
+
+  @Transactional
+  @Override
+  public void deleteMember(String actorId, String targetId) {
+    this.roleAssignPolicy.checkManageable(actorId, targetId);
+    int updatedRows = this.memberDao.deleteMember(targetId);
+    if (updatedRows == 0) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+
+  }
+
+  @Transactional
+  @Override
+  public void resetPassword(String actorId, String targetId, ResetPasswordVO resetPasswordVO) {
+    this.roleAssignPolicy.checkManageable(actorId, targetId);
+
+    String salt = SHA.generateSalt();
+    String encryptedPassword = SHA.getEncrypt(resetPasswordVO.getPassword(), salt);
+    if (this.memberDao.resetPassword(targetId, encryptedPassword) == 0) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+    if (this.memberDao.updateSalt(targetId, salt, actorId) == 0) {
+      throw new LearningworksException(ErrorCode.GLOBAL_SYSTEM_ERROR);
+    }
+  }
+
+  @Transactional
+  @Override
+  public MemberDetailVO changeRole(String actorId, String targetId, String newRoleId) {
+    this.roleAssignPolicy.checkAssignable(actorId, targetId, newRoleId);
+    int updatedRows = this.memberDao.updateBaseRole(targetId, newRoleId);
+    if (updatedRows == 0) {
+      throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+    }
+    return this.memberDao.selectMemberDetail(targetId);
+  }
+
 }
