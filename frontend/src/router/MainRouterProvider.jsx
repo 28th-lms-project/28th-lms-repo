@@ -6,6 +6,7 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import MainLayout from "../layout/MainLayout";
+import MenuGuard from "../components/menu/MenuGuard";
 import Login from "../components/login/Login";
 import Main from "../components/main/Main";
 import MyInfo from "../components/my/info/MyInfo";
@@ -31,12 +32,20 @@ import HomeworkDetails from "../components/admin/course/CourseTableComponent/Hom
 /**
  * 라우트 목록. 메뉴 관리 화면이 메뉴 URL 선택지를 만드는 데 사용한다 (routeUtils.getMenuUrlOptions).
  * handle.menu: true → 메뉴 관리에서 메뉴 URL로 고를 수 있는 화면 (파라미터가 없고 화면이 있는 경로)
+ * handle.guardAs: "메뉴 URL" → 주소로 메뉴를 찾을 수 없는 라우트(팝업 등)가 속한 메뉴. 메뉴 가드가 이 메뉴로 판정한다.
+ *   빠뜨리면 SUPER_ADMIN만 열 수 있다. (설계: frontend/docs/design/menu-page-design.md 5-2)
  */
 // eslint-disable-next-line react-refresh/only-export-components
 export const routes = [
   {
+    // 팝업은 MainLayout 밖이라 가드로 직접 감싼다. 과정 목록 화면에서 여는 팝업이므로 그 메뉴 기준으로 판정
     path: "/popup/homework/:courseId/:homeworkId",
-    element: <HomeworkDetails />,
+    element: (
+      <MenuGuard>
+        <HomeworkDetails />
+      </MenuGuard>
+    ),
+    handle: { guardAs: "/admin/course/list" },
   },
   {
     path: "/",
@@ -59,7 +68,12 @@ export const routes = [
             path: "course",
             handle: { crumb: "수강 과정" },
             children: [
-              { index: true, element: <Navigate to="list" replace /> },
+              // /my/course는 메뉴가 아니므로, 수강 과정 메뉴 기준으로 판정해야 list로 넘어갈 수 있다
+              {
+                index: true,
+                element: <Navigate to="list" replace />,
+                handle: { guardAs: "/my/course/list" },
+              },
               { path: "list", element: <MyCourseList />, handle: { menu: true } },
               // ?tab=0~8 로 탭 전환 (MyCourse 의 TABS 참고)
               {
