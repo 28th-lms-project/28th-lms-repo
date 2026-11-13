@@ -145,7 +145,7 @@
     	UPDATE SALT
         SET SALT = #{salt}
           , MDFY_DT = SYSDATE
-          , MDFYR_ID = #{id}
+          , MDFYR_ID = #{modifierId}
       WHERE ID = #{id}
     </update>
     
@@ -185,4 +185,40 @@
              , SYSDATE
              , #{creatorId})
     </insert>
+    
+    <update id="updateMember">
+     UPDATE "USER"
+    	SET NAME = #{modifyVO.name}
+          , GITHUB_URL = #{modifyVO.githubUrl}
+          , MDFY_DT = SYSDATE
+      WHERE ID = #{id}
+        AND DEL_YN = 'N'
+    </update>
+    
+    <update id="deleteMember">
+     UPDATE "USER"
+        SET DEL_YN = 'Y'
+          , MDFY_DT = SYSDATE
+      WHERE ID = #{id}
+        AND DEL_YN = 'N'
+    </update>
+    
+    <update id="resetPassword">
+     UPDATE "USER"
+        SET PWD = #{password}
+          , PWD_FAIL_CNT = 0
+          , LOGIN_BLOCK_DATE = NULL
+          , PWD_CHANGE_DT = SYSDATE
+          , MDFY_DT = SYSDATE
+      WHERE ID = #{id}
+        AND DEL_YN = 'N'
+    </update>
+    
+    <update id="updateBaseRole">
+     UPDATE "USER"
+        SET BASE_ROLE = #{roleId}
+          , MDFY_DT = SYSDATE
+      WHERE ID = #{id}
+        AND DEL_YN = 'N'
+    </update>
 </mapper>

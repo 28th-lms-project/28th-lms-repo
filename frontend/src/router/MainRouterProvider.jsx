@@ -18,6 +18,7 @@ import Test from "../components/admin/test/test/Test";
 import Students from "../components/admin/students/students/Students";
 import Account from "../components/admin/system/account/Account";
 import Tutor from "../components/admin/system/tutor/Tutor";
+import MemberManagement from "../components/admin/system/member/MemberManagement.jsx";
 import Menu from "../components/admin/system/menu/Menu";
 import Role from "../components/admin/system/role/Role";
 import Access from "../components/admin/system/access/Access";
@@ -147,6 +148,11 @@ export const routes = [
             path: "system",
             handle: { crumb: "시스템 관리" },
             children: [
+              {
+                path: "member",
+                element: <MemberManagement />,
+                handle: { crumb: "회원 관리" },
+              },
               {
                 path: "account",
                 element: <Account />,

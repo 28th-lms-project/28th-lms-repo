@@ -47,6 +47,7 @@ export const MENU = [
       {
         title: "시스템 관리",
         items: [
+          { to: "/admin/system/member", label: "회원 관리" },
           { to: "/admin/system/account", label: "관리자 관리" },
           { to: "/admin/system/tutor", label: "강사 관리" },
           { to: "/admin/system/menu", label: "메뉴 관리" },
