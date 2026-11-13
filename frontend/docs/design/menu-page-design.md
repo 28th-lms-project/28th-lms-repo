@@ -3,7 +3,7 @@
 - 대상 화면: `시스템 관리 > 메뉴 관리` (`/admin/system/menu`), 사이드바(`SideMenu.jsx`), 모든 화면의 URL 접근
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-10
-- 상태: 설계 확정. 메뉴 관리 화면 구현 완료, 사이드바 · 가드 구현 전
+- 상태: 설계 확정. 메뉴 관리 화면 · 사이드바 구현 완료, 가드 구현 전
 
 이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
 
@@ -58,9 +58,9 @@
 | 대상 | 상태 |
 | --- | --- |
 | 백엔드 `/menus` API | 구현 완료 (`backend/docs/design/menu-design.md`) |
-| `components/admin/system/menu/Menu.jsx` | 메뉴 관리 화면 구현 완료 (9장 3단계). `menuSliceStore`는 만들었지만 사이드바는 아직 사용하지 않음 |
+| `components/admin/system/menu/Menu.jsx` | 메뉴 관리 화면 구현 완료 (9장 3단계) |
 | 라우트 `handle.menu` | 메뉴 관리 URL 선택지용으로 표시 완료. `routes` export 완료 |
-| `components/menu/SideMenu.jsx` | `menuData.js`의 고정 데이터를 그림. 현재 주소가 들어 있는 그룹만 처음에 펼침 |
+| `components/menu/SideMenu.jsx` | 내 메뉴(`menuSliceStore`)를 그림 (9장 4단계 완료). 조회는 `MainLayout`이 로그인 시 시작. `menuData.js` 삭제 |
 | `router/MainRouterProvider.jsx` | `handle.menu` 표시 완료. 가드 · `guardAs` 없음 |
 | 라우트 · 메뉴 등록 | "메뉴 관리" 라우트와 메뉴 항목은 등록되어 있음 |
 
@@ -136,7 +136,7 @@
 
 - `MainLayout.jsx`: `<Outlet />`을 `<MenuGuard><Outlet /></MenuGuard>`로 감쌉니다.
 - 팝업 라우트: 5-2처럼 화면을 직접 감쌉니다 (`MainLayout` 밖이라서).
-- 내 메뉴 조회(`fetchMyMenus`)는 `MenuGuard`가 시작합니다. 팝업에서도 동작해야 하기 때문입니다. 사이드바는 같은 store 값을 읽기만 합니다.
+- 내 메뉴 조회(`fetchMyMenus`)는 `MainLayout`이 로그인 시 시작하고(4단계), `MenuGuard`도 시작합니다. 팝업은 `MainLayout` 밖이라 가드가 시작해야 합니다. `idle`일 때만 실행되므로 두 곳에서 불러도 한 번만 조회합니다. 사이드바는 같은 store 값을 읽기만 합니다.
 
 ---
 
@@ -338,6 +338,7 @@ src/router/MainRouterProvider.jsx               (routes export, handle.menu, gua
 src/components/menu/MenuGuard.jsx               (새 파일)
 src/layout/MainLayout.jsx                       (Outlet 감싸기)
 src/components/menu/SideMenu.jsx                (store 사용)
+src/components/menu/sideMenuUtils.js            (새 파일: 트리 변환, 처음 펼칠 그룹)
 src/components/menu/menuData.js                 (전환 후 삭제)
 src/components/admin/system/menu/Menu.jsx       (권한 확인 래퍼 + 화면)
 src/components/admin/system/menu/MenuColumn.jsx (열 하나: 목록 + 상세)
