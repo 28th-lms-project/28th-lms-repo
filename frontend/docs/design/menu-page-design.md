@@ -3,7 +3,7 @@
 - 대상 화면: `시스템 관리 > 메뉴 관리` (`/admin/system/menu`), 사이드바(`SideMenu.jsx`), 모든 화면의 URL 접근
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-10
-- 상태: 설계 확정. 메뉴 관리 화면 · 사이드바 · 가드 구현 완료 (상위 메뉴 변경 6-6 제외)
+- 상태: 설계 확정. 메뉴 관리 화면(상위 메뉴 변경 포함) · 사이드바 · 가드 구현 완료
 
 이 문서는 메뉴 관리 화면 · 사이드바 · 가드의 설계이자 현재 구현 기준입니다. 새 화면을 메뉴에 등록하는 순서는 `frontend/docs/page-guide.md`에 있습니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
 
@@ -31,7 +31,7 @@
 | 동시 수정 | 수정 요청에 화면이 받은 `mdfyDt`를 보내고, 다른 사람이 먼저 저장했으면 서버가 거부 (`MENU_OUTDATED`) |
 | 저장 안 한 변경 | 다른 메뉴 선택 · 다른 화면 이동 · 새로고침 모두 확인 창 (6-4) |
 | 메뉴 이름 | 같은 상위 메뉴 안에서 중복 불가 (`MENU_TITLE_USED`) |
-| 상위 메뉴 변경 | **현재**: 지원하지 않음. 옮기려면 삭제 후 다시 만들기 (백엔드 문서 4-4 "메뉴 옮기기"). **최종 목표**: 6-6 "상위 메뉴 변경"으로 구현 (방식 · 권한 결정 완료, 구현 예정) |
+| 상위 메뉴 변경 | 중 · 소메뉴 상세의 "상위 메뉴" 드롭다운으로 옮깁니다 (6-6). 다른 수정과 따로 저장 |
 
 ---
 
@@ -79,7 +79,7 @@
 | `modifyMenu(menuId, menu)` | `PUT /menus/{menuId}` (`menu`에 `mdfyDt` 포함) | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_URL_USED`, `MENU_TITLE_USED`, `MENU_ROLE_INVALID`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
 | `modifyMenuOrder(parentId, menuIds)` | `PUT /menus/order` | `{ roles, menus }` | `MENU_ORDER_INVALID`, `MENU_ORDER_OUTDATED`, `MENU_NOT_EXISTS` |
 | `deleteMenu(menuId)` | `DELETE /menus/{menuId}` | 메뉴 1건 | `MENU_NOT_EXISTS`, `MENU_HAS_CHILDREN`, `MENU_IN_USE`, `MENU_SELF_LOCK` |
-| `moveMenu(menuId, parentId, mdfyDt)` (**구현 예정**, 6-6) | `PUT /menus/{menuId}/parent` | `{ roles, menus }` | `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
+| `moveMenu(menuId, parentId, mdfyDt)` (6-6) | `PUT /menus/{menuId}/parent` | `{ roles, menus }` | `MENU_MOVE_INVALID`, `MENU_NOT_EXISTS`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
 
 메뉴 객체 필드: `id`, `title`, `parentId`, `menuOrder`, `useYn`, `spread`, `menuUrl`, `roleIds`, `crtDt`, `mdfyDt`. `getMyMenus`의 메뉴에는 `roleIds` · 날짜가 없습니다. `getMyMenus`의 `useYn`은 SUPER_ADMIN만 `N`을 받을 수 있습니다.
 
@@ -215,7 +215,7 @@
 | `listStatus`, `listError` | `getMenus` 결과 상태 |
 | `roles`, `menus` | `getMenus` 결과 (평평한 목록) |
 | `selectedIds` | `{ top, mid, btm }` 열별 선택 메뉴 ID |
-| `forms` | 열별 상세 입력값 `{ mode: "view" \| "new", id, title, useYn, spread, menuUrl, roleIds, crtDt, mdfyDt }` (`new` 모드는 [취소] 때 돌아갈 `prevId` 포함) |
+| `forms` | 열별 상세 입력값 `{ mode: "view" \| "new", id, parentId, title, useYn, spread, menuUrl, roleIds, crtDt, mdfyDt }` (`new` 모드는 [취소] 때 돌아갈 `prevId` 포함) |
 | `formErrors` | 열별 입력 오류 |
 | `saving` | 저장 · 삭제 · 순서 변경 진행 중 (버튼 비활성) |
 
@@ -287,27 +287,25 @@
 | `MENU_UPDATE` | 드래그 손잡이 숨김. 기존 메뉴의 입력칸 비활성 (입력을 바꿀 수 없으므로 [저장] · [취소]도 나타나지 않음) |
 | `MENU_DELETE` | [삭제] 숨김 |
 
-### 6-6. 상위 메뉴 변경 (결정 완료, 구현 예정)
+### 6-6. 상위 메뉴 변경
 
-> **상태: 결정 완료 (2026-11-12), 구현 전** (백엔드 문서 4-7). 백엔드 이동 API가 생기면 이 절대로 구현하고, 1장 "상위 메뉴 변경"을 고칩니다.
+> **상태: 구현 완료 (2026-11-13)** (백엔드 문서 4-7). 결정은 2026-11-12.
 
 - 중 · 소메뉴 상세에 "상위 메뉴" 드롭다운(일반 `<select>` + `Menu.module.css`, URL 선택과 같은 방식. 6-1)을 둡니다. 선택지는 한 단계 위의 메뉴 전체(소메뉴 → 모든 중메뉴, 중메뉴 → 모든 대메뉴)이고, 표시는 `대메뉴 > 중메뉴` 경로입니다. 대메뉴 상세에는 표시하지 않습니다.
 - **이동은 다른 수정과 따로 저장합니다.** 저장 한 번에 API 하나만 부르게 해서, 일부만 저장되거나 검사(같은 이름, 자기 잠금, `mdfyDt`)가 중간 상태로 이뤄지는 일을 막습니다. 기존 수정 API · 저장 흐름은 바꾸지 않고 이동 기능만 덧붙입니다.
 - 잠금 규칙:
   - 다른 칸(이름, 사용 여부, 펼침, URL, 역할)을 하나라도 바꾸면 상위 메뉴 드롭다운을 비활성화하고 "다른 변경을 저장하거나 취소한 뒤 옮길 수 있습니다."를 표시합니다.
-  - 상위 메뉴를 바꾸면 다른 칸을 모두 비활성화합니다. 이때 [저장]은 `moveMenu(menuId, parentId, mdfyDt)`(`PUT /menus/{menuId}/parent`)만 부릅니다.
+  - 상위 메뉴를 바꾸면 다른 칸을 모두 비활성화하고 "저장하면 메뉴를 옮깁니다. 다른 칸은 옮긴 뒤 수정할 수 있습니다."를 표시합니다. 이때 [저장]은 `moveMenu(menuId, parentId, mdfyDt)`(`PUT /menus/{menuId}/parent`)만 부릅니다.
   - [취소]는 두 경우 모두 마지막 저장 값으로 되돌립니다 (잠금도 풀림).
-- 옮기면서 이름도 바꿔야 하면 두 번 저장합니다. 새 그룹에 같은 이름이 있으면 이름을 먼저 바꿔 저장한 뒤 옮깁니다 (`MENU_TITLE_USED` 메시지로 안내됨).
-- 저장 전 `Confirm`: "메뉴를 옮기면 이 메뉴를 쓰는 접근 권한(ACTION)의 메뉴도 함께 바뀝니다. 옮길까요?"
-- 성공하면 목록을 응답으로 교체하고, 옮긴 메뉴가 보이도록 열 선택을 새 위치로 바꾼 뒤 내 메뉴를 다시 조회합니다.
-- 오류: `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK`은 서버 메시지 알림.
+- 옮기면서 이름도 바꿔야 하면 두 번 저장합니다. 새 그룹에 같은 이름이 있으면 저장 전에 드롭다운 아래에 "옮길 상위 메뉴에 같은 이름의 메뉴가 있습니다. 이름을 먼저 바꿔 저장한 뒤 옮기세요."를 표시합니다 (서버의 `MENU_TITLE_USED`도 같은 문구로 표시).
+- 저장 전 `Confirm`: "메뉴를 옮기면 이 메뉴를 쓰는 접근 권한(ACTION)의 메뉴도 함께 바뀝니다. 옮길까요?" 왼쪽 열에 저장하지 않은 변경이 있으면 "다른 열의 저장하지 않은 변경사항은 사라집니다."를 덧붙입니다 (옮긴 뒤 왼쪽 열 선택이 새 위치로 바뀌므로).
+- 성공하면 목록을 응답으로 교체하고, 옮긴 메뉴가 보이도록 열 선택을 새 위치로 바꾼 뒤 내 메뉴를 다시 조회하고 "메뉴를 옮겼습니다."를 알립니다.
+- 상위 메뉴를 바꾸는 중에는 역할 옆의 "(상위 메뉴에서 허용 안 됨)"을 옮길 위치 기준으로 보여 줍니다 (옮긴 뒤 누구에게 보일지 미리 확인).
+- 오류: `MENU_MOVE_INVALID`, `MENU_SELF_LOCK`은 서버 메시지 알림 후 선택 유지([취소]로 되돌림). `MENU_OUTDATED`는 알림 후 서버 값으로 바꿈, `MENU_NOT_EXISTS`는 알림 후 목록 다시 조회.
 - 권한: `MENU_UPDATE` (2026-11-12 결정). `MENU_UPDATE`가 없으면 드롭다운을 표시하지 않습니다.
 - 드래그로 다른 열 · 다른 그룹에 놓는 방식은 쓰지 않습니다 (실수로 옮기기 쉬움).
 
-확인 시나리오 (구현 시 10장에 추가):
-
-- 소메뉴를 다른 중메뉴로 옮긴 뒤 목록 · 사이드바 위치 변경, 권한별 접근 권한 관리 화면의 메뉴 필터에서 해당 ACTION이 새 메뉴로 걸리는지 확인.
-- 이름을 바꾼 상태에서 상위 메뉴 드롭다운이 비활성인지, 상위 메뉴를 바꾼 상태에서 다른 칸이 비활성인지, [취소]로 둘 다 풀리는지 확인.
+확인 시나리오는 10장 M32 ~ M38입니다.
 
 ---
 
@@ -424,3 +422,10 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 | M29 | STUDENT로 `/my` 입력 (라우트는 있지만 메뉴가 아님) | "권한이 없습니다" |
 | M30 | `/abc` 입력 | "404 Not Found" (가드와 무관) |
 | M31 | 숙제 팝업 주소를 과정 목록이 허용되지 않은 역할로 열기 | 팝업에 "권한이 없습니다" |
+| M32 | ACTION이 쓰는 소메뉴를 다른 중메뉴로 옮기기 | 확인 창 → "메뉴를 옮겼습니다.", 열 선택이 새 위치로 바뀜, 사이드바 위치 변경, 접근 관리 · 권한별 접근 권한 관리에서 그 ACTION의 메뉴가 새 위치로 표시 |
+| M33 | 중메뉴를 다른 대메뉴로 옮기기 | 하위 소메뉴가 함께 옮겨짐, 원래 대메뉴의 남은 중메뉴 순서가 1부터 |
+| M34 | 이름을 바꾼 상태 / 상위 메뉴를 바꾼 상태 | 상위 메뉴 드롭다운 비활성 + 안내 / 다른 칸 비활성 + 안내, [취소]로 둘 다 풀림 |
+| M35 | 옮길 그룹에 같은 이름이 있는 메뉴를 옮기기 | 드롭다운 아래 안내, 저장 안 됨 |
+| M36 | 상위 메뉴를 바꾼 상태에서 다른 메뉴 선택 · 다른 화면 이동 | 저장하지 않은 변경 확인 창 |
+| M37 | ADMIN이 메뉴 관리 소메뉴를 ADMIN이 허용되지 않은 중메뉴로 옮기기 | `MENU_SELF_LOCK` 알림, 옮겨지지 않음 |
+| M38 | `MENU_UPDATE`가 없는 역할 / 대메뉴 상세 | 상위 메뉴 드롭다운이 보이지 않음 |

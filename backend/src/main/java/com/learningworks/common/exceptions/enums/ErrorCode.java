@@ -33,6 +33,7 @@ public enum ErrorCode {
   CODE_PARENT_INVALID(HttpStatus.BAD_REQUEST, "상위 변수로 지정할 수 없는 값입니다."), //
   MENU_PARENT_INVALID(HttpStatus.BAD_REQUEST, "소메뉴 아래에는 메뉴를 추가할 수 없습니다."), //
   MENU_ORDER_INVALID(HttpStatus.BAD_REQUEST, "메뉴 순서 정보가 올바르지 않습니다."), //
+  MENU_MOVE_INVALID(HttpStatus.BAD_REQUEST, "같은 단계의 다른 상위 메뉴로만 옮길 수 있습니다."), //
   MENU_ROLE_INVALID(HttpStatus.BAD_REQUEST, "존재하지 않는 역할이 포함되어 있습니다."), //
 
   // 401 UNAUTHORIZED

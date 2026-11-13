@@ -23,7 +23,7 @@
 | D-07 | 접근 관리 메뉴 목록은 메뉴 모듈의 `GET /menus` 사용 | 적용 |
 | D-08 | `ROLE_ACTION_ID`는 팀 PK 규칙(시퀀스), 한 행씩 INSERT | 적용 |
 | D-09 | ACTION 저장 시 메뉴 경로 확인 + 메뉴 행 잠금 | 적용 |
-| D-10 | 메뉴 이동 시 ACTION 메뉴 갱신: ACCESS 모듈 메서드, 권한 `MENU_UPDATE` | 결정, 구현 예정 |
+| D-10 | 메뉴 이동 시 ACTION 메뉴 갱신: ACCESS 모듈 DAO 메서드, 권한 `MENU_UPDATE` | 적용 |
 | D-11 | ACTION 목록은 메뉴 순서로 정렬 | 적용 |
 | D-12 | 쓰이지 않는 권한 코드: 경고 로그만, 삭제는 사람이 | 적용 |
 
@@ -136,7 +136,7 @@ ACCESS 모듈도 MENU를 씁니다 (ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · 
 
 **이유**: MENU · ACTION 사이에 FK가 없어서(의도된 설계), 화면을 거치지 않은 요청이나 화면을 열어 둔 사이 메뉴가 바뀐 경우 없는 메뉴나 계층이 맞지 않는 조합이 저장될 수 있습니다. ACTION의 메뉴 컬럼은 화면 필터와 메뉴 삭제 검사에 쓰이므로 틀리면 안 됩니다.
 
-## D-10. 메뉴 이동 시 ACTION 메뉴 갱신 (결정, 구현 예정)
+## D-10. 메뉴 이동 시 ACTION 메뉴 갱신
 
 메뉴를 다른 상위 메뉴로 옮길 때(`PUT /menus/{menuId}/parent`, `menu-design.md` 4-7) 서버가 ACTION의 메뉴 컬럼도 함께 고칩니다.
 
@@ -146,6 +146,9 @@ ACCESS 모듈도 MENU를 씁니다 (ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · 
 | 중메뉴 | `MID_MENU_ID` = 옮긴 메뉴인 행의 `TOP_MENU_ID` |
 
 **결정 1: ACTION 수정은 ACCESS 모듈이 제공하는 메서드를 메뉴 모듈이 호출합니다.** 테이블을 고치는 SQL은 그 테이블의 담당 모듈에만 둡니다. 메뉴 모듈의 트랜잭션 안에서 호출되므로 이동과 ACTION 갱신이 함께 반영되거나 함께 취소됩니다.
+
+- 구현: `AccessDao.updateActionMenusByBtmMenuId` · `updateActionTopMenuByMidMenuId` (SQL은 `AccessDaoMapper.xml`)를 `MenuServiceImpl.moveMenu`가 호출합니다.
+- 서비스(`AccessService`)가 아니라 DAO를 쓰는 이유: `AccessServiceImpl`이 ACTION 저장 시 `MenuService.checkAndLockMenuPath`를 쓰므로, 메뉴 서비스가 ACCESS 서비스를 주입하면 순환 의존이 되어 서버가 시작되지 않습니다. SQL이 ACCESS 모듈에 있다는 결정의 목적은 그대로 지켜집니다.
 
 **결정 2: 메뉴 이동 권한은 `MENU_UPDATE`입니다.** 이동이 바꾸는 것은 ACTION의 메뉴 컬럼뿐이고, 권한 코드 · 권한 부여 · 권한 캐시는 바뀌지 않습니다. D-03의 SUPER_ADMIN 전용 원칙(권한 체계를 바꾸는 기능)에 해당하지 않습니다. 나중에 바꿔야 하면 이동 API에 `@RequireSuperAdmin`만 붙이면 됩니다.
 
@@ -178,7 +181,6 @@ ACCESS 모듈도 MENU를 씁니다 (ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · 
 | 일 | 내용 |
 | --- | --- |
 | 미사용 권한 코드 (보류) | `MENU_READ_DETAIL`(1개 역할에 부여), `MENU_READ_PERMISSION`(2개 역할에 부여)이 ACTION에 남아 있습니다. 어느 원격 브랜치에서도 쓰지 않는 것을 확인했지만 일부러 남겨 둡니다 (서버 시작 시 `UnusedActionCodeReporter` 경고만 나옴). 지울 때는 `access-control-guide.md` 6장의 SQL로 지우고 서버를 재시작합니다 |
-| 메뉴 이동 (D-10) | 메뉴 모듈 API · 화면과 ACCESS 모듈 메서드 구현 |
 | 오래된 원격 브랜치 | `dev`를 받지 않은 브랜치(2026-11-13 기준 원격 브랜치 19개)에는 `MENU.DEL_YN`을 조회하는 예전 `GET /access/menus`가 남아 있어, 그 브랜치로 띄우면 접근 관리 화면의 메뉴 조회가 실패합니다. 작업 중인 브랜치는 `dev`를 머지합니다 |
 
 ## 참고
