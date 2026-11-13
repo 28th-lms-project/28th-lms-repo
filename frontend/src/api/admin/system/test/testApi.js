@@ -20,3 +20,38 @@ export const updateTestQuestion = (questionId, body) =>
 /** 삭제된 문제 ID 반환. errorCode: EXAM_NOT_EXISTS */
 export const deleteTestQuestion = (questionId) =>
   api.delete(`/admin/system/test/${encodeURIComponent(questionId)}`);
+
+export const searchTestSets = (courseId) =>
+  api.get(`/admin/system/${courseId}/testSet`);
+
+/** 시험등록  */
+export const makeNewTestSet = (courseId, addTestSet) =>
+  api.post(`/admin/system/${courseId}/test/addTestSet`, addTestSet);
+
+/** 시험 세트 공개 여부 수정. showYn: "Y" | "N". 수정된 시험 세트 반환 */
+export const updateTestSetShowYn = (testSetId, showYn) =>
+  api.put(`/admin/system/testSet/${encodeURIComponent(testSetId)}/showYn`, {
+    showYn,
+  });
+
+/** 시험 삭제 API */
+export const deleteTestSet = (testSetId) =>
+  api.delete(`admin/system/testSet/${testSetId}`);
+
+/** 시험 세부 화면 출력 API */
+export const viewTestSetQuestions = (testSetId) =>
+  api.get(`admin/system/${testSetId}/questionlist`);
+
+/** 시험 제출 API */
+export const createTestAnswers = (testSetId, submitAnswers) =>
+  api.post(`my/test/${testSetId}`, { answersList: [...submitAnswers] });
+
+/** 시험 제출자 채점 API */
+export const correctStudentTest = (testSetId, userId) =>
+  api.get(`admin/${testSetId}/correct/${userId}`);
+
+/** 답안 1건 채점 결과 수정. isCorrect: "Y"(정답) | "N"(오답) | "H"(부분정답). 수정한 답안 ID 반환 */
+export const updateAnswerGrade = (answerId, isCorrect) =>
+  api.put(`/admin/test/answer/${encodeURIComponent(answerId)}/grade`, {
+    isCorrect,
+  });

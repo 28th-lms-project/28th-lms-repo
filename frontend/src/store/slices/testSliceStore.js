@@ -6,6 +6,14 @@ export const testSliceStore = createSlice({
     subjectId: "",
     questionCount: 0,
     questions: [],
+    selectSubjectId: "",
+    // 시험에 넣으려고 선택한 문제들 (ExamQuestionPicker 오른쪽 표)
+    selectedQuestions: [],
+    // 시험 응시 모달 (ExamTakeModal). null이면 닫힘
+    // { testSetId, title, questions }
+    takeExam: null,
+    // 채점 모달(ExamGradeModal)에서 채점 중인 시험 세트 ID. 모달이 닫혀 있으면 ""
+    gradeTestSetId: "",
   },
   reducers: {
     setTestList(state, action) {
@@ -66,6 +74,41 @@ export const testSliceStore = createSlice({
           .filter((answer) => answer.text),
       });
       state.questionCount++;
+    },
+    selectSubjectId(state, action) {
+      state.selectSubjectId = action.payload;
+    },
+    // 문제 하나를 선택 목록에 추가 (이미 있으면 무시)
+    addSelectedQuestion(state, action) {
+      const exists = state.selectedQuestions.some(
+        (question) => question.id === action.payload.id,
+      );
+      if (!exists) {
+        state.selectedQuestions.push(action.payload);
+      }
+    },
+    // payload: 문제 ID
+    removeSelectedQuestion(state, action) {
+      state.selectedQuestions = state.selectedQuestions.filter(
+        (question) => question.id !== action.payload,
+      );
+    },
+    clearSelectedQuestions(state) {
+      state.selectedQuestions = [];
+    },
+    // 시험 응시 모달 열기. payload: { testSetId, title, questions }
+    openTakeExam(state, action) {
+      state.takeExam = action.payload;
+    },
+    closeTakeExam(state) {
+      state.takeExam = null;
+    },
+    // 채점 모달을 열 때 시험 세트 ID 저장. payload: testSetId
+    setGradeTestSetId(state, action) {
+      state.gradeTestSetId = action.payload;
+    },
+    clearGradeTestSetId(state) {
+      state.gradeTestSetId = "";
     },
   },
 });

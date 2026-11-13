@@ -185,6 +185,37 @@
   transition: opacity 0.15s ease;
 }
 
+/* 미사용 메뉴 (SUPER_ADMIN에게만 보임) */
+.unused {
+  opacity: 0.45;
+}
+
+/* 내 메뉴 조회 실패 */
+.menuError {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.8rem;
+  color: #adb5bd;
+}
+
+.menuError p {
+  margin: 0 0 0.5rem;
+}
+
+.retryBtn {
+  background: none;
+  border: 1px solid #495057;
+  border-radius: 4px;
+  color: #ced4da;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+}
+
+.retryBtn:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
 /* 비로그인 게스트 영역 */
 .guestSection {
   display: flex;
