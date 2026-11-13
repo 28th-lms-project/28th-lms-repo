@@ -21,6 +21,7 @@ import com.learningworks.common.exceptions.handler.GlobalExceptionHandler;
 import com.learningworks.common.utils.ApiResponseStatusAdvice;
 import com.learningworks.menu.service.MenuService;
 import com.learningworks.menu.vo.request.ModifyMenuOrderVO;
+import com.learningworks.menu.vo.request.ModifyMenuParentVO;
 import com.learningworks.menu.vo.request.ModifyMenuVO;
 import com.learningworks.menu.vo.request.RegistMenuVO;
 import com.learningworks.menu.vo.response.MenuListVO;
@@ -52,6 +53,7 @@ class MenuControllerTest {
     Assertions.assertThat(action("createMenu")).isEqualTo("MENU_CREATE 메뉴 등록");
     Assertions.assertThat(action("modifyMenu")).isEqualTo("MENU_UPDATE 메뉴 수정");
     Assertions.assertThat(action("modifyMenuOrder")).isEqualTo("MENU_UPDATE 메뉴 수정");
+    Assertions.assertThat(action("moveMenu")).isEqualTo("MENU_UPDATE 메뉴 수정");
     Assertions.assertThat(action("deleteMenu")).isEqualTo("MENU_DELETE 메뉴 삭제");
   }
 
@@ -173,6 +175,27 @@ class MenuControllerTest {
     this.mockMvc.perform(MockMvcRequestBuilders.delete("/menus/MN-1").principal(LOGIN))
         .andExpect(MockMvcResultMatchers.status().isOk())
         .andExpect(MockMvcResultMatchers.jsonPath("$.body.id").value("MN-1"));
+  }
+
+  @Test
+  @DisplayName("PUT /menus/{menuId}/parent: 요청자 ID · 메뉴 ID · 새 상위 메뉴 · mdfyDt를 넘기고 전체 목록을 받는다")
+  void moveMenu() throws Exception {
+    Mockito.when(this.menuService.moveMenu(ArgumentMatchers.eq("admin"), ArgumentMatchers.eq("MN-1"),
+        ArgumentMatchers.any(ModifyMenuParentVO.class))).thenReturn(new MenuListVO(List.of(), List.of()));
+
+    this.mockMvc.perform(MockMvcRequestBuilders.put("/menus/MN-1/parent").principal(LOGIN)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("""
+            {"parentId": "MN-9", "mdfyDt": "2026-11-11 10:00:00"}
+            """))
+        .andExpect(MockMvcResultMatchers.status().isOk())
+        .andExpect(MockMvcResultMatchers.jsonPath("$.body.menus").isArray());
+
+    Mockito.verify(this.menuService).moveMenu(ArgumentMatchers.eq("admin"), ArgumentMatchers.eq("MN-1"),
+        ArgumentMatchers.argThat(vo -> "MN-9".equals(vo.getParentId())
+            && "2026-11-11 10:00:00".equals(vo.getMdfyDt())));
+    Mockito.verify(this.menuService, Mockito.never())
+        .updateMenu(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }
 
 }

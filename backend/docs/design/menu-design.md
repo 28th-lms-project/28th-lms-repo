@@ -3,7 +3,7 @@
 - 대상: `MENU`, `MENU_ROLE` 테이블과 `com.learningworks.menu` 패키지
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-10
-- 상태: 설계 확정. 백엔드 구현 완료 (4-7 제외)
+- 상태: 설계 확정. 백엔드 구현 완료 (4-7 상위 메뉴 변경 포함, 2026-11-13)
 
 이 문서는 메뉴 백엔드의 설계이자 현재 구현 기준입니다. 화면 설계는 `frontend/docs/design/menu-page-design.md`, 권한 체계는 `backend/docs/access-control-guide.md`, ACCESS 모듈과의 연동 결정은 `backend/docs/design/access-design.md`를 함께 보세요.
 
@@ -20,7 +20,7 @@
 | MENU_ROLE 삭제 | **물리 삭제.** `DEL_YN`, `MDFY_DT` 컬럼은 없앱니다. (`MENU_ID`, `ROLE_ID`)에 UNIQUE 제약을 겁니다 |
 | MENU_ROLE ID | 팀 공통 규칙을 따릅니다 (`MR-YYYYMMDD-000001`, 생성식은 2-4) |
 | 메뉴 단계 | 3단계 고정. 대메뉴(`PARENT_ID` null) → 중메뉴 → 소메뉴. 소메뉴 아래에는 메뉴를 만들 수 없습니다 |
-| 상위 메뉴 변경 | **현재**: 지원하지 않습니다. 순서는 같은 상위 메뉴 안에서만 바꿉니다. 다른 그룹으로 옮기려면 삭제 후 다시 만듭니다 (4-4 "메뉴 옮기기"). **최종 목표**: 4-7 "상위 메뉴 변경"(ACTION 메뉴 ID 함께 수정)으로 구현합니다. 방식 · 권한은 결정 완료 (2026-11-12), 구현 예정 |
+| 상위 메뉴 변경 | 소메뉴는 다른 중메뉴로, 중메뉴는 다른 대메뉴로 옮길 수 있습니다 (`PUT /menus/{menuId}/parent`, 4-7). 이 메뉴를 가리키는 ACTION의 메뉴 ID도 서버가 함께 고칩니다. 순서 변경(드래그)은 같은 상위 메뉴 안에서만 합니다 |
 | 동시 수정 | 화면을 열 때 받은 `mdfyDt`를 수정 요청에 함께 보내고, 서버 값과 다르면 거부합니다 (`MENU_OUTDATED`) |
 | 메뉴 이름 | 같은 상위 메뉴 안에서는 중복 불가 (`MENU_TITLE_USED`). 상위 메뉴가 다르면 허용 |
 | SUPER_ADMIN | `MENU_ROLE`과 관계없이 모든 메뉴를 봅니다. **미사용(`USE_YN = N`) 메뉴도** 사이드바에 받고 접근할 수 있습니다. SUPER_ADMIN의 `MENU_ROLE` 행은 저장하지 않습니다 |
@@ -131,9 +131,10 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 | `POST /menus` | `MENU_CREATE` "메뉴 등록" | `{ parentId, title, useYn, spread, menuUrl, roleIds }` | 만든 메뉴 1건 |
 | `PUT /menus/{menuId}` | `MENU_UPDATE` "메뉴 수정" | `{ title, useYn, spread, menuUrl, roleIds, mdfyDt }` | 수정한 메뉴 1건 |
 | `PUT /menus/order` | `MENU_UPDATE` "메뉴 수정" | `{ parentId, menuIds }` | `{ roles, menus }` (변경 후 전체) |
+| `PUT /menus/{menuId}/parent` | `MENU_UPDATE` "메뉴 수정" | `{ parentId, mdfyDt }` | `{ roles, menus }` (변경 후 전체, 4-7) |
 | `DELETE /menus/{menuId}` | `MENU_DELETE` "메뉴 삭제" | — | 삭제한 메뉴 1건 |
 
-- 같은 권한 코드는 `description`이 같아야 서버가 뜹니다 (`MENU_UPDATE` 두 곳 모두 "메뉴 수정").
+- 같은 권한 코드는 `description`이 같아야 서버가 뜹니다 (`MENU_UPDATE` 세 곳 모두 "메뉴 수정").
 - `PUT /menus/order`는 `PUT /menus/{menuId}`보다 먼저 매칭되도록 경로를 확인하세요 (Spring은 고정 경로를 우선합니다. `RoleController`와 같은 구조).
 
 ### 4-1. `GET /menus/me` 응답
@@ -205,8 +206,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
   - 검사 전에 메뉴 행을 `SELECT ... FOR UPDATE`로 잠급니다. ACTION 저장도 같은 소메뉴 행을 잠그므로(7장 "ACTION 저장 시 메뉴 검증"), 검사와 삭제 사이에 이 메뉴를 쓰는 ACTION이 저장되지 않습니다.
 - 역할 삭제 시 `MENU_ROLE` 물리 삭제는 이미 `RoleDaoMapper.deleteMenuRoleByRoleId`가 합니다 (변경 없음).
 - 수정 · 삭제는 4-6의 자기 잠금 검사를 먼저 통과해야 합니다.
-- **메뉴 옮기기** (지원하지 않음, 운영 절차): 소메뉴를 다른 그룹으로 옮기려면 새 위치에 메뉴를 만들고 기존 메뉴를 삭제합니다. 기존 메뉴를 ACTION이 참조하면 삭제가 `MENU_IN_USE`로 거부되므로, 먼저 접근 관리 화면에서 해당 ACTION의 메뉴를 새 메뉴로 바꿔야 합니다 (그 저장은 SUPER_ADMIN 전용). 운영 중 메뉴 구조 변경은 드물다는 전제입니다.
-  - 이 절차는 **4-7 구현 전까지의 임시 방안**입니다. 4-7을 구현하면 이 항목은 삭제합니다.
+- **메뉴 옮기기**: 4-7 "상위 메뉴 변경"을 씁니다. 삭제 후 다시 만들 필요가 없습니다.
 
 ### 4-5. ErrorCode (추가)
 
@@ -223,7 +223,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 | `MENU_TITLE_USED` | 409 | "같은 상위 메뉴에 이미 같은 이름의 메뉴가 있습니다." |
 | `MENU_OUTDATED` | 409 | "다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도해주세요." |
 | `MENU_SELF_LOCK` | 409 | "저장하면 본인이 메뉴 관리 화면에 들어올 수 없게 됩니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 다른 관리자나 최고 관리자에게 요청해주세요." |
-| `MENU_MOVE_INVALID` (**4-7 구현 시**) | 400 | "같은 단계의 다른 상위 메뉴로만 옮길 수 있습니다." |
+| `MENU_MOVE_INVALID` | 400 | "같은 단계의 다른 상위 메뉴로만 옮길 수 있습니다." |
 
 ### 4-6. 자기 잠금 방지 (`MENU_SELF_LOCK`)
 
@@ -245,18 +245,18 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 - 메뉴 관리 메뉴가 아직 없으면(초기 데이터 입력 전) 보호 대상도 없습니다. 이때 `/admin/system/menu`는 어느 메뉴에도 속하지 않아 SUPER_ADMIN만 들어갈 수 있으므로, 처음 등록은 SUPER_ADMIN이 합니다.
 - 권한 코드 쪽(`MENU_READ` 제거)은 따로 막을 필요가 없습니다. 권한 저장(`/access-role/save`)이 SUPER_ADMIN 전용이기 때문입니다.
 
-### 4-7. 상위 메뉴 변경 (결정 완료, 구현 예정)
+### 4-7. 상위 메뉴 변경
 
-> **상태: 결정 완료 (2026-11-12), 구현 전.** ACCESS 담당자가 모듈에서 손을 떼어 ROLE 담당자가 ACCESS 모듈까지 맡게 되면서, 아래 "결정"의 두 가지를 정했습니다. 구현하면 1장 "상위 메뉴 변경"과 4-4 "메뉴 옮기기"(임시 방안)를 이 절 기준으로 고칩니다.
+> **상태: 구현 완료 (2026-11-13).** 결정은 2026-11-12 (ACCESS 담당자가 모듈에서 손을 떼어 ROLE 담당자가 ACCESS 모듈까지 맡게 되면서 정함).
 
-**왜 필요한가**: 지금은 메뉴를 다른 그룹으로 옮기려면 삭제 후 다시 만들어야 하는데, ACTION이 참조하는 메뉴는 삭제가 거부되고(`MENU_IN_USE`), ACTION의 메뉴를 바꾸는 저장은 SUPER_ADMIN 전용입니다. 그래서 메뉴 구조를 바꾸는 일이 사실상 SUPER_ADMIN 작업이 되고 절차도 깁니다.
+**왜 필요한가**: 이 기능이 없을 때는 메뉴를 다른 그룹으로 옮기려면 삭제 후 다시 만들어야 하는데, ACTION이 참조하는 메뉴는 삭제가 거부되고(`MENU_IN_USE`), ACTION의 메뉴를 바꾸는 저장은 SUPER_ADMIN 전용입니다. 그래서 메뉴 구조를 바꾸는 일이 사실상 SUPER_ADMIN 작업이 되고 절차도 깁니다.
 
 **결정**: 메뉴를 옮길 때 서버가 **ACTION 테이블의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID`도 함께 고칩니다.** ACTION은 ACCESS 모듈의 테이블이므로 아래 두 가지를 정했습니다. 이유는 `access-design.md` D-10을 보세요.
 
-1. ACTION 수정은 **ACCESS 모듈이 제공하는 메서드**를 메뉴 모듈이 호출합니다. 테이블을 고치는 SQL은 그 테이블의 담당 모듈에만 둡니다.
+1. ACTION 수정은 **ACCESS 모듈이 제공하는 메서드**를 메뉴 모듈이 호출합니다. 테이블을 고치는 SQL은 그 테이블의 담당 모듈에만 둡니다. 구현은 ACCESS 모듈의 DAO 메서드(`AccessDao.updateActionMenusByBtmMenuId` · `updateActionTopMenuByMidMenuId`, SQL은 `AccessDaoMapper.xml`)입니다. `AccessServiceImpl`이 이미 `MenuService`를 쓰므로 서비스를 주입하면 순환 의존이 됩니다.
 2. 메뉴 이동 권한은 **`MENU_UPDATE`** 입니다. 이동이 바꾸는 것은 ACTION의 메뉴 컬럼뿐이고, 권한 코드 · 권한 부여 · 권한 캐시는 바뀌지 않습니다.
 
-#### API (안)
+#### API
 
 | 메서드 · 경로 | 권한 | 요청 | 응답 |
 | --- | --- | --- | --- |
@@ -269,6 +269,10 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 
 - 같은 단계 안에서만 옮깁니다: 소메뉴 → 다른 중메뉴, 중메뉴 → 다른 대메뉴. 대메뉴는 옮길 대상이 없습니다. 단계가 맞지 않거나 지금과 같은 상위 메뉴면 `MENU_MOVE_INVALID`(400).
 - 옮긴 메뉴는 새 상위 메뉴의 맨 뒤에 들어가고, 원래 상위 메뉴의 순서는 1부터 다시 매깁니다.
+- 옮긴 메뉴의 `MDFY_DT`는 바뀝니다 (위치가 바뀐 메뉴를 옛 화면에서 저장하면 `MENU_OUTDATED`로 다시 불러오게). 중메뉴를 옮길 때 하위 소메뉴의 `MDFY_DT`는 그대로입니다.
+- 검사 순서는 수정과 같습니다: 메뉴 행 잠금 → 단계 · 상위 메뉴 검사 → 자기 잠금 → `mdfyDt` → 같은 이름.
+- 옮길 메뉴 행을 `SELECT ... FOR UPDATE`로 잠급니다. 중메뉴면 하위 소메뉴 행도 잠급니다. ACTION 저장이 소메뉴 행을 잠그고 경로를 확인하므로(7장), 이동과 ACTION 저장이 동시에 일어나도 ACTION에 옛 대메뉴가 남지 않습니다.
+- 미사용 상위 메뉴로도 옮길 수 있습니다 (자기 잠금 대상이 아니면).
 - `MENU_ROLE`은 그대로 둡니다. 새 상위 메뉴의 역할 설정에 따라 실제로 보이는 범위는 달라질 수 있습니다 (화면에서 "(상위 메뉴에서 허용 안 됨)"으로 표시).
 - 같은 이름이 새 상위 메뉴에 있으면 `MENU_TITLE_USED`, `mdfyDt`가 다르면 `MENU_OUTDATED`.
 - 자기 잠금 검사(4-6): 메뉴 관리 소메뉴(또는 그 중메뉴)를 요청자의 역할이 허용되지 않은 · 미사용 상위 메뉴로 옮기면 `MENU_SELF_LOCK`.
@@ -282,14 +286,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 
 - 권한 코드 캐시(`AccessChecker`)는 비우지 않아도 됩니다. 캐시는 역할별 권한 코드만 담고, ACTION의 메뉴 컬럼은 화면 필터에만 쓰이기 때문입니다.
 
-#### 확인 시나리오 (구현 시 8장에 추가)
-
-| # | 시나리오 | 기대 결과 |
-| --- | --- | --- |
-| B20 | ACTION이 참조하는 소메뉴를 다른 중메뉴로 이동 | 성공, 해당 ACTION의 대 · 중 메뉴 ID가 새 위치로 바뀜 |
-| B21 | 중메뉴를 다른 대메뉴로 이동 | 성공, 그 아래 소메뉴를 참조하는 ACTION의 `TOP_MENU_ID`도 바뀜 |
-| B22 | 소메뉴를 대메뉴 아래로 / 같은 상위 메뉴로 이동 | `MENU_MOVE_INVALID` |
-| B23 | ADMIN이 메뉴 관리 소메뉴를 ADMIN이 허용되지 않은 중메뉴로 이동 | `MENU_SELF_LOCK` |
+확인 시나리오는 8장 B20 ~ B23입니다.
 
 ---
 
@@ -309,10 +306,11 @@ backend/src/main/java/com/learningworks/menu/
   web/MenuController.java
   service/MenuService.java, MenuServiceImpl.java, MenuTree.java   (MenuTree: 단계 · 상위 메뉴 · 정렬 계산)
   dao/MenuDao.java
-  vo/request/RegistMenuVO.java, ModifyMenuVO.java, ModifyMenuOrderVO.java
+  vo/request/RegistMenuVO.java, ModifyMenuVO.java, ModifyMenuOrderVO.java, ModifyMenuParentVO.java
   vo/response/MenuVO.java, MenuListVO.java, MyMenuVO.java, MyMenuListVO.java, MenuRoleVO.java   (MenuRoleVO: 내부 조회용)
 backend/src/main/resources/com/learningworks/menu/dao/mapper/MenuDaoMapper.xml
 common/exceptions/enums/ErrorCode.java   (4-5 추가)
+access/dao/AccessDao.java, AccessDaoMapper.xml   (메뉴 이동 시 ACTION 메뉴 갱신, 4-7)
 ```
 
 ---
@@ -356,3 +354,7 @@ ACTION의 메뉴 컬럼 3개는 구조를 바꾸지 않습니다. 지금은 메�
 | B17 | 순서 변경 후, 미리 열어 둔 화면에서 그 메뉴 저장 | 성공 (순서 변경은 `MDFY_DT`를 바꾸지 않음) |
 | B18 | 같은 상위 메뉴에 같은 이름 등록 / 다른 상위 메뉴에 같은 이름 등록 | `MENU_TITLE_USED` / 성공 |
 | B19 | 이름 앞뒤 공백만 다른 같은 이름 등록 | `MENU_TITLE_USED` |
+| B20 | ACTION이 참조하는 소메뉴를 다른 중메뉴로 이동 | 성공, 해당 ACTION의 대 · 중 메뉴 ID가 새 위치로 바뀜 |
+| B21 | 중메뉴를 다른 대메뉴로 이동 | 성공, 그 아래 소메뉴를 참조하는 ACTION의 `TOP_MENU_ID`도 바뀜 |
+| B22 | 소메뉴를 대메뉴 아래로 / 같은 상위 메뉴로 이동 | `MENU_MOVE_INVALID` |
+| B23 | ADMIN이 메뉴 관리 소메뉴를 ADMIN이 허용되지 않은 중메뉴로 이동 | `MENU_SELF_LOCK` |
