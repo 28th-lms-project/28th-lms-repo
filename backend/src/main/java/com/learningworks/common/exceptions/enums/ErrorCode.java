@@ -60,6 +60,8 @@ public enum ErrorCode {
   ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
   COURSE_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 교육 자료입니다."), //
   CODE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 환경 변수입니다."), //
+  COUNSEL_NOT_EXISTS(HttpStatus.NOT_FOUND, "상담 기본 정보가 없습니다. 성별과 연락처를 먼저 등록해주세요."), //
+  COUNSEL_STUDENT_NOT_IN_COURSE(HttpStatus.NOT_FOUND, "과정에 등록된 학생이 아닙니다."), //
   MENU_NOT_EXISTS(HttpStatus.NOT_FOUND, "메뉴가 존재하지 않습니다."), //
 
   // 405 METHOD NOT ALLOWED
@@ -110,6 +112,8 @@ public enum ErrorCode {
   COURSE_DATA_FAILURE_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 삭제에 실패했습니다."), //
   CODE_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "환경 변수 생성에 실패했습니다."), //
   CODE_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "환경 변수 수정에 실패했습니다."), //
+  COUNSEL_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "상담 정보 등록에 실패했습니다."), //
+  COUNSEL_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "상담 정보 수정에 실패했습니다."), //
 
   // 502 BAD GATEWAY
   LINK_PREVIEW_FAILURE(HttpStatus.BAD_GATEWAY, "링크 미리보기 정보를 가져올 수 없습니다."), //
