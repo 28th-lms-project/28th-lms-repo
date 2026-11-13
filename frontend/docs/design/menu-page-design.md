@@ -5,7 +5,7 @@
 - 작성일: 2026-11-10
 - 상태: 설계 확정. 메뉴 관리 화면 · 사이드바 · 가드 구현 완료 (상위 메뉴 변경 6-6 제외)
 
-이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
+이 문서는 메뉴 관리 화면 · 사이드바 · 가드의 설계이자 현재 구현 기준입니다. 새 화면을 메뉴에 등록하는 순서는 `frontend/docs/page-guide.md`에 있습니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
 
 ---
 
@@ -27,7 +27,7 @@
 | 자기 잠금 방지 | SUPER_ADMIN이 아닌 관리자가 메뉴 관리 메뉴(와 상위 메뉴)에서 본인 역할 해제 · 미사용 · URL 변경 · 삭제를 하면 서버가 거부 (`MENU_SELF_LOCK`). 화면은 안내 문구와 서버 메시지 알림 (6-4) |
 | 접근 거부 | 화면 전체에 "권한이 없습니다" (권한 관리 화면과 같은 방식) |
 | 순서 변경 | HTML5 Drag and Drop. **같은 상위 메뉴 안에서만** |
-| UI 부품 | `src/components/sample`의 컴포넌트를 씁니다 (6-1) |
+| UI 부품 | 공용 컴포넌트(`common/input`, `common/PageContainer`)와 `sample/Modal.jsx`의 `Confirm`을 씁니다 (6-1) |
 | 동시 수정 | 수정 요청에 화면이 받은 `mdfyDt`를 보내고, 다른 사람이 먼저 저장했으면 서버가 거부 (`MENU_OUTDATED`) |
 | 저장 안 한 변경 | 다른 메뉴 선택 · 다른 화면 이동 · 새로고침 모두 확인 창 (6-4) |
 | 메뉴 이름 | 같은 상위 메뉴 안에서 중복 불가 (`MENU_TITLE_USED`) |
@@ -63,13 +63,13 @@
 | `components/menu/SideMenu.jsx` | 내 메뉴(`menuSliceStore`)를 그림 (9장 4단계 완료). 조회는 `MainLayout`이 로그인 시 시작. `menuData.js` 삭제 |
 | `components/menu/MenuGuard.jsx` | 가드 구현 완료 (9장 5단계). `MainLayout`의 `<Outlet />`과 숙제 팝업을 감쌈 |
 | `router/MainRouterProvider.jsx` | `handle.menu` 표시 완료. `guardAs`: 숙제 팝업(`/admin/course/list`), `/my/course` index(`/my/course/list`) |
-| 라우트 · 메뉴 등록 | "메뉴 관리" 라우트와 메뉴 항목은 등록되어 있음 |
+| 라우트 · 메뉴 등록 | "메뉴 관리" 라우트 등록 완료. 메뉴 항목은 DB(메뉴 관리 화면)에 등록되어 있음 (백엔드 문서 2-5) |
 
 ---
 
 ## 4. API
 
-`src/api/admin/system/menu/menuApi.js`에 함수를 만듭니다. 성공하면 `body`, 실패하면 `ApiError`.
+`src/api/admin/system/menu/menuApi.js`의 함수입니다. 성공하면 `body`, 실패하면 `ApiError`.
 
 | 함수 | 요청 | 반환 (`body`) | 주요 errorCode |
 | --- | --- | --- | --- |
@@ -77,7 +77,7 @@
 | `getMenus(options)` | `GET /menus` | `{ roles, menus }` | — |
 | `createMenu(menu)` | `POST /menus` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_PARENT_INVALID`, `MENU_URL_USED`, `MENU_TITLE_USED`, `MENU_ROLE_INVALID` |
 | `modifyMenu(menuId, menu)` | `PUT /menus/{menuId}` (`menu`에 `mdfyDt` 포함) | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_URL_USED`, `MENU_TITLE_USED`, `MENU_ROLE_INVALID`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
-| `modifyMenuOrder(parentId, menuIds)` | `PUT /menus/order` | `{ roles, menus }` | `MENU_ORDER_INVALID`, `MENU_ORDER_OUTDATED` |
+| `modifyMenuOrder(parentId, menuIds)` | `PUT /menus/order` | `{ roles, menus }` | `MENU_ORDER_INVALID`, `MENU_ORDER_OUTDATED`, `MENU_NOT_EXISTS` |
 | `deleteMenu(menuId)` | `DELETE /menus/{menuId}` | 메뉴 1건 | `MENU_NOT_EXISTS`, `MENU_HAS_CHILDREN`, `MENU_IN_USE`, `MENU_SELF_LOCK` |
 | `moveMenu(menuId, parentId, mdfyDt)` (**구현 예정**, 6-6) | `PUT /menus/{menuId}/parent` | `{ roles, menus }` | `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
 
@@ -125,7 +125,7 @@
 
 1. 경로가 `/` 또는 `/login`이면 통과.
 2. 비로그인이면 `/login`으로 이동.
-3. 내 메뉴 상태가 `idle`/`loading`이면 아무것도 그리지 않음. `failed`면 "메뉴 정보를 불러오지 못했습니다." 안내.
+3. 내 메뉴 상태가 `idle`/`loading`이면 아무것도 그리지 않음. `failed`면 "메뉴 정보를 불러오지 못했습니다. 새로고침해 주세요." 안내.
 4. `superAdmin`이면 통과.
 5. 판정할 URL: 일치한 라우트 중 가장 안쪽의 `handle.guardAs`, 없으면 현재 `pathname`.
 6. `guardUrls`에서 그 URL과 **같거나, 그 URL이 `기준URL + "/"`로 시작하는** 것 중 가장 긴 것을 찾음.
@@ -153,7 +153,7 @@
 
 ## 6. 메뉴 관리 화면 (`/admin/system/menu`)
 
-### 6-1. 사용할 sample 컴포넌트
+### 6-1. 사용할 컴포넌트
 
 | 용도 | 컴포넌트 |
 | --- | --- |
@@ -162,7 +162,7 @@
 | 사용여부 · 펼침 · 역할 체크박스 | `common/input/Input.jsx`의 `Checkbox` (`disabled` 지원) |
 | 추가 · 삭제 · 저장 · 취소 | `common/input/IconButton.jsx`의 `IconButton` (`disabled` 지원) |
 | 삭제 확인, 저장 안 한 변경사항 확인 | `sample/Modal.jsx`의 `Confirm` |
-| 화면 틀 | `common/PageContainer`, `components/Section.jsx` |
+| 화면 틀 | `common/PageContainer` (열은 `<section>` + `Menu.module.css`) |
 
 - sample의 `TextField` · `NativeSelect` · `Button`은 쓰지 않습니다. `disabled` 속성이 없어 권한 · 저장 중 · 상위 메뉴 변경 잠금(6-5, 6-6)을 만들 수 없고, `NativeSelect`는 `value` 대신 `option`의 `selected`로 선택값을 정해서 [취소]로 되돌리기 어렵기 때문입니다.
 - 목록(드래그 순서 변경)은 권한 관리 화면처럼 직접 만든 목록을 씁니다. sample `Grid`에는 드래그 기능이 없습니다.
@@ -215,7 +215,7 @@
 | `listStatus`, `listError` | `getMenus` 결과 상태 |
 | `roles`, `menus` | `getMenus` 결과 (평평한 목록) |
 | `selectedIds` | `{ top, mid, btm }` 열별 선택 메뉴 ID |
-| `forms` | 열별 상세 입력값 `{ mode: "view" \| "new", id, title, useYn, spread, menuUrl, roleIds, mdfyDt }` |
+| `forms` | 열별 상세 입력값 `{ mode: "view" \| "new", id, title, useYn, spread, menuUrl, roleIds, crtDt, mdfyDt }` (`new` 모드는 [취소] 때 돌아갈 `prevId` 포함) |
 | `formErrors` | 열별 입력 오류 |
 | `saving` | 저장 · 삭제 · 순서 변경 진행 중 (버튼 비활성) |
 
@@ -259,7 +259,7 @@
 
 - 권한 관리 화면과 같은 HTML5 Drag and Drop. 같은 열(같은 상위 메뉴) 안에서만.
 - 놓으면 `modifyMenuOrder(parentId, 그 열의 전체 ID 목록)`. 성공하면 응답으로 목록 교체 + 내 메뉴 다시 조회.
-- `MENU_ORDER_OUTDATED`면 "메뉴 목록이 변경되었습니다…" 알림 후 목록 다시 조회.
+- `MENU_ORDER_OUTDATED`면 "메뉴 목록이 변경되었습니다…" 알림 후 목록 다시 조회. `MENU_NOT_EXISTS`(상위 메뉴가 삭제됨)도 서버 메시지 알림 후 목록 다시 조회.
 
 #### URL 선택 (소메뉴만)
 
@@ -291,7 +291,7 @@
 
 > **상태: 결정 완료 (2026-11-12), 구현 전** (백엔드 문서 4-7). 백엔드 이동 API가 생기면 이 절대로 구현하고, 1장 "상위 메뉴 변경"을 고칩니다.
 
-- 중 · 소메뉴 상세에 "상위 메뉴" 드롭다운(`NativeSelect`)을 둡니다. 선택지는 한 단계 위의 메뉴 전체(소메뉴 → 모든 중메뉴, 중메뉴 → 모든 대메뉴)이고, 표시는 `대메뉴 > 중메뉴` 경로입니다. 대메뉴 상세에는 표시하지 않습니다.
+- 중 · 소메뉴 상세에 "상위 메뉴" 드롭다운(일반 `<select>` + `Menu.module.css`, URL 선택과 같은 방식. 6-1)을 둡니다. 선택지는 한 단계 위의 메뉴 전체(소메뉴 → 모든 중메뉴, 중메뉴 → 모든 대메뉴)이고, 표시는 `대메뉴 > 중메뉴` 경로입니다. 대메뉴 상세에는 표시하지 않습니다.
 - **이동은 다른 수정과 따로 저장합니다.** 저장 한 번에 API 하나만 부르게 해서, 일부만 저장되거나 검사(같은 이름, 자기 잠금, `mdfyDt`)가 중간 상태로 이뤄지는 일을 막습니다. 기존 수정 API · 저장 흐름은 바꾸지 않고 이동 기능만 덧붙입니다.
 - 잠금 규칙:
   - 다른 칸(이름, 사용 여부, 펼침, URL, 역할)을 하나라도 바꾸면 상위 메뉴 드롭다운을 비활성화하고 "다른 변경을 저장하거나 취소한 뒤 옮길 수 있습니다."를 표시합니다.
@@ -347,7 +347,7 @@
 src/api/admin/system/menu/menuApi.js            (새 파일)
 src/store/slices/menuSliceStore.js              (새 파일)
 src/store/StoreProvider.jsx                     (reducer 등록)
-src/router/routeUtils.js                        (새 파일: getMenuUrlOptions, findGuardUrl)
+src/router/routeUtils.js                        (새 파일: getMenuUrlOptions, getGuardTarget, findGuardUrl)
 src/router/MainRouterProvider.jsx               (routes export, handle.menu, guardAs, 팝업 감싸기)
 src/components/menu/MenuGuard.jsx               (새 파일)
 src/components/menu/MenuGuard.module.css        (새 파일: 안내 문구)
@@ -373,6 +373,8 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 ---
 
 ## 9. 적용 순서
+
+> 1 ~ 5단계 완료 (2026-11-13). 6단계 공지 내용은 `frontend/docs/page-guide.md`로 정리했습니다.
 
 1. 백엔드 `/menus` API 구현.
 2. DB에 초기 메뉴 · `MENU_ROLE` 입력 (`backend/docs/design/menu-design.md` 2-5).

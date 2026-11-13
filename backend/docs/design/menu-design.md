@@ -5,7 +5,7 @@
 - 작성일: 2026-11-10
 - 상태: 설계 확정. 백엔드 구현 완료 (4-7 제외)
 
-이 문서는 백엔드 구현을 시작할 때 참고하는 설계입니다. 화면 설계는 `frontend/docs/design/menu-page-design.md`, 권한 체계는 `backend/docs/access-control-guide.md`, ACCESS 모듈과의 연동 결정은 `backend/docs/design/access-design.md`를 함께 보세요.
+이 문서는 메뉴 백엔드의 설계이자 현재 구현 기준입니다. 화면 설계는 `frontend/docs/design/menu-page-design.md`, 권한 체계는 `backend/docs/access-control-guide.md`, ACCESS 모듈과의 연동 결정은 `backend/docs/design/access-design.md`를 함께 보세요.
 
 ---
 
@@ -186,7 +186,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 | `menuUrl` | 소메뉴면 필수, `/`로 시작, 공백 없음, 100자 이하. 그 외에는 무시하고 null 저장 | "메뉴 URL을 입력해주세요." / "메뉴 URL은 '/'로 시작해야 합니다." / "메뉴 URL에는 공백을 넣을 수 없습니다." / "메뉴 URL은 100자 이하로 입력해주세요." |
 | `roleIds` | 배열(빈 배열 허용, null 불가). 없는 역할이 있으면 거부. SUPER_ADMIN과 중복은 저장하지 않고 건너뜀 | null이면 "역할 목록을 입력해주세요." / 없는 역할은 `MENU_ROLE_INVALID` |
 | `parentId` (등록) | null(대메뉴) 또는 존재하는 대 · 중메뉴 | 없으면 `MENU_NOT_EXISTS` / 소메뉴면 `MENU_PARENT_INVALID` |
-| `menuIds` (순서 변경) | 비어 있지 않고 중복 없음. `parentId`는 null(대메뉴) 또는 존재하는 메뉴 | 빈 목록 · 중복은 `MENU_ORDER_INVALID` / 없는 `parentId`는 `MENU_NOT_EXISTS` |
+| `menuIds` (순서 변경) | 비어 있지 않고 null · 중복 없음. `parentId`는 null(대메뉴) 또는 존재하는 메뉴 | 빈 목록 · null · 중복은 `MENU_ORDER_INVALID` / 없는 `parentId`는 `MENU_NOT_EXISTS` |
 | `mdfyDt` (수정) | 화면이 받은 값 그대로 (생성 후 수정된 적 없으면 null) | 서버 값과 다르면 `MENU_OUTDATED` |
 
 백엔드는 프론트 라우트를 알 수 없으므로 `menuUrl`은 **형식만** 검사합니다. 실제 화면이 있는 URL만 고르게 하는 것은 프론트가 합니다.
@@ -198,7 +198,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 ### 4-4. 동작
 
 - **등록**: 새 메뉴는 같은 상위 메뉴의 맨 뒤(`MAX(MENU_ORDER) + 1`)에 추가. `CRT_DT = SYSDATE`, `MDFY_DT = null`. `MENU_ROLE`을 함께 저장.
-- **수정**: 먼저 요청의 `mdfyDt`와 DB의 `MDFY_DT`를 비교합니다 (둘 다 null이면 같음). 다르면 `MENU_OUTDATED`. 같으면 `MDFY_DT = SYSDATE`로 저장하고, `MENU_ROLE`은 해당 메뉴 행을 모두 지우고 `roleIds`로 다시 넣습니다 (물리 삭제라 행이 쌓이지 않음). 한 트랜잭션. 비교와 저장 사이에 다른 요청이 끼지 않도록 `SELECT ... FOR UPDATE`로 메뉴 행을 잠근 뒤 비교합니다.
+- **수정**: 메뉴 행을 `SELECT ... FOR UPDATE`로 잠그고(비교와 저장 사이에 다른 요청이 끼지 않게), 입력값 · 자기 잠금(4-6) 검사 뒤 요청의 `mdfyDt`와 DB의 `MDFY_DT`를 비교합니다 (둘 다 null이면 같음). 다르면 `MENU_OUTDATED`. 같으면 `MDFY_DT = SYSDATE`로 저장하고, `MENU_ROLE`은 해당 메뉴 행을 모두 지우고 `roleIds`로 다시 넣습니다 (물리 삭제라 행이 쌓이지 않음). 한 트랜잭션.
   - 이 검사가 없으면 두 관리자가 같은 메뉴를 열어 두었을 때 나중에 저장한 쪽이 먼저 저장한 변경(특히 역할 체크)을 말없이 덮어씁니다.
 - **순서 변경**: `menuIds`는 해당 상위 메뉴의 **현재 하위 메뉴 전체**여야 합니다. 개수 · 구성이 다르면 `MENU_ORDER_OUTDATED`. 받은 순서대로 1부터 다시 매깁니다 (역할 순서 변경과 같은 방식). `MDFY_DT`는 바꾸지 않습니다 (열어 둔 다른 화면의 수정이 `MENU_OUTDATED`로 거부되지 않게).
 - **삭제**: 하위 메뉴가 있으면 `MENU_HAS_CHILDREN`, ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID` 중 하나라도 참조하면 `MENU_IN_USE`. 통과하면 `MENU_ROLE` 행 삭제 → `MENU` 삭제 → 같은 상위 메뉴의 순서를 1부터 다시 매김. 한 트랜잭션.
@@ -307,10 +307,10 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 backend/src/main/java/com/learningworks/menu/
   MenuConstants.java   (MENU_MANAGEMENT_URL)
   web/MenuController.java
-  service/MenuService.java, MenuServiceImpl.java
+  service/MenuService.java, MenuServiceImpl.java, MenuTree.java   (MenuTree: 단계 · 상위 메뉴 · 정렬 계산)
   dao/MenuDao.java
   vo/request/RegistMenuVO.java, ModifyMenuVO.java, ModifyMenuOrderVO.java
-  vo/response/MenuVO.java, MenuListVO.java, MyMenuVO.java, MyMenuListVO.java
+  vo/response/MenuVO.java, MenuListVO.java, MyMenuVO.java, MyMenuListVO.java, MenuRoleVO.java   (MenuRoleVO: 내부 조회용)
 backend/src/main/resources/com/learningworks/menu/dao/mapper/MenuDaoMapper.xml
 common/exceptions/enums/ErrorCode.java   (4-5 추가)
 ```

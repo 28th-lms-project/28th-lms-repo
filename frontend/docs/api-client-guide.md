@@ -86,7 +86,7 @@ VITE_API_BASE_URL=http://localhost:9090
 import { api } from "../../../common/apiClient";
 
 /** 역할 목록 조회 */
-export const getRoles = () => api.get("/roles");
+export const getRoles = (options) => api.get("/roles", undefined, options);
 
 /** 역할 생성 */
 export const createRole = (role) => api.post("/roles", role);
@@ -99,8 +99,8 @@ export const modifyRole = (roleId, roleDisplayName) =>
 export const deleteRole = (roleId) =>
   api.delete(`/roles/${encodeURIComponent(roleId)}`);
 
-/** 검색 + 페이징 목록 */
-export const getCourses = (search) => api.getPage("/courses", search);
+/** 검색 + 페이징 목록 (실제 예: member/memberApi.js) */
+export const getMembers = (params, options) => api.getPage("/members", params, options);
 ```
 
 ### 규칙
@@ -130,7 +130,7 @@ const loadRoles = async () => {
     const { roleList } = await getRoles(); // 응답의 body가 바로 반환됨
     setRoles(roleList);
   } catch (error) {
-    alert(error.message); // "서버에서 오류가 발생했습니다. ..."
+    alert(error.message); // 서버가 보낸 메시지. 예: "요청을 처리할 수 없습니다. 잠시 후 다시 시도해주세요."
   }
 };
 ```
@@ -221,7 +221,7 @@ useEffect(() => {
 }, []);
 ```
 
-> 모듈 API 함수에서 `options`를 받아 `api`에 넘겨줘야 사용할 수 있습니다. 예: `export const getRoles = (options) => api.get("/roles", undefined, options);`
+> 모듈 API 함수에서 `options`를 받아 `api`에 넘겨줘야 사용할 수 있습니다 (3장의 `getRoles` 참고).
 
 ---
 
@@ -243,7 +243,7 @@ useEffect(() => {
 
 ## 7. 체크리스트
 
-- [ ] 모듈 API 파일이 `api.get` / `api.post` / `api.put` / `api.delete` / `api.getPage`만 사용하는가?
+- [ ] 모듈 API 파일이 `api.get` / `api.post` / `api.put` / `api.delete` / `api.getPage` / `api.download`만 사용하는가?
 - [ ] `fetch`, `handleResponse`, `Content-Type` 헤더를 직접 작성하지 않았는가?
 - [ ] 요청 데이터의 필드명이 백엔드 요청 VO와 같은가?
 - [ ] 컴포넌트에서 `responseCode === "SUCCESS"`, `response.data` 같은 확인 없이 반환값을 바로 사용하는가?
@@ -292,4 +292,4 @@ Access Token은 `localStorage`의 `accessToken` 키에 저장되며, `src/utils/
 
 - **토큰 재발급(Refresh Token)은 도입하지 않습니다.** Access Token이 만료되면 401 처리에 따라 로그인 페이지로 이동하며, 다시 로그인해야 합니다. 작업 중 만료가 불편하면 백엔드의 Access Token 만료 시간을 조정합니다.
 - 쿠키로 토큰을 주고받는 방식으로 바꾼다면 `fetch` 옵션에 `credentials: "include"` 추가가 필요합니다.
-- **내 권한 조회**: 로그인 상태가 되면 `MainLayout`이 `GET /action-codes/me`를 한 번 호출해 권한을 Redux에 저장하고, 로그아웃하면 지웁니다. 화면에서 권한을 쓰는 방법은 `frontend/docs/permission-guide.md`를 참고하세요.
+- **내 권한 · 내 메뉴 조회**: 로그인 상태가 되면 `MainLayout`이 `GET /action-codes/me`(권한)와 `GET /menus/me`(사이드바 · 메뉴 가드용 메뉴)를 한 번씩 호출해 Redux(`permissionSliceStore`, `menuSliceStore`)에 저장하고, 로그아웃하면 지웁니다. 화면에서 권한을 쓰는 방법은 `frontend/docs/permission-guide.md`, 새 화면을 메뉴에 등록하는 방법은 `frontend/docs/page-guide.md`를 참고하세요.
