@@ -156,6 +156,10 @@ public class MemberServiceImpl implements MemberService {
   @Transactional(readOnly = true)
   @Override
   public List<MemberListVO> readMemberList(String actorId, MemberSearchVO searchVO) {
+    // 관리 대상(자기보다 아래 역할, 본인 제외)만 조회. 클라이언트가 보낸 값은 덮어쓴다.
+    searchVO.setActorRankBoundary(this.roleAssignPolicy.findManageableRankBoundary(actorId));
+    searchVO.setActorId(actorId);
+
     long count = this.memberDao.selectMemberCount(searchVO);
     searchVO.calculatePageCount(count);
 
@@ -169,6 +173,8 @@ public class MemberServiceImpl implements MemberService {
   @Transactional(readOnly = true)
   @Override
   public MemberDetailVO readMember(String actorId, String targetId) {
+    this.roleAssignPolicy.checkManageable(actorId, targetId);
+
     MemberDetailVO detail = this.memberDao.selectMemberDetail(targetId);
     if (detail == null) {
       throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);

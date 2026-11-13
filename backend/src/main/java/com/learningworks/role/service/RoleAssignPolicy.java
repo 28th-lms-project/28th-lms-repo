@@ -140,6 +140,25 @@ public class RoleAssignPolicy {
     }
   }
 
+  /**
+   * actorId가 관리할 수 있는 회원의 순위 경계. 대상 역할의 ROLE_RANK가 이 값보다 커야 관리 대상이다.
+   *
+   * - SUPER_ADMIN: 0 (모든 역할)
+   * - 그 외: 요청자 자신의 순위 (자기보다 아래 역할만)
+   *
+   * 자기 자신은 순위와 관계없이 관리 대상이 아니므로 호출하는 쪽에서 따로 제외한다.
+   *
+   * @param actorId 요청자(로그인 사용자) ID. 비로그인이면 null
+   * @return 관리 대상 순위 경계
+   */
+  public int findManageableRankBoundary(String actorId) {
+    RoleRankVO actor = this.findActor(actorId);
+    if (this.isSuperAdmin(actor)) {
+      return 0;
+    }
+    return actor.getRoleRank();
+  }
+
   /** 요청자의 현재 역할(DB 기준). 비로그인이면 401, 회원/역할이 없으면 403 */
   private RoleRankVO findActor(String actorId) {
     if (actorId == null) {

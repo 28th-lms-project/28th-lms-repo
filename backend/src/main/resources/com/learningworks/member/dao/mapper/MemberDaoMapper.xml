@@ -6,6 +6,11 @@
 
   <sql id="memberSearchCondition">
      WHERE U.DEL_YN = 'N'
+       AND U.ID <![CDATA[ <> ]]> #{actorId}
+       AND EXISTS (SELECT 1
+                     FROM "ROLE" MR
+                    WHERE MR.ROLE_ID = U.BASE_ROLE
+                      AND MR.ROLE_RANK <![CDATA[ > ]]> #{actorRankBoundary})
       <if test='roleId != null and roleId != ""'>
        AND U.BASE_ROLE = #{roleId}
       </if>
