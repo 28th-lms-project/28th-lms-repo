@@ -12,7 +12,7 @@
 | D-02 | MENU_ROLE과 ROLE_ACTION의 역할 분담 | 매우 높음 | MENU / MENU_ROLE 구현 (ROLE 담당자) | **결정** (B안, MENU_ROLE 유지). MENU 구현 전 |
 | D-03 | 권한 설정 · ACTION 관리 기능의 사용 범위 | 높음 | `/access/save`, `/access-role/save` | **결정 · 구현 완료** (R-10, R-11, 2026-11-10). SUPER_ADMIN 전용 범위 추가 합의 |
 | D-04 | 권한 설정 API의 URL 규칙 | 낮음 (선택) | ACCESS_ROLE API, 프론트 | **보류** (2026-11-10) |
-| D-05 | MENU 테이블 공동 사용 방식 | 중간 | ACCESS 모듈, MENU 구현 | 결정 대기 |
+| D-05 | MENU 테이블 공동 사용 방식 | 중간 | ACCESS 모듈, MENU 구현 | **종료** (2026-11-12, `remaining-issues.md` 5번) |
 | D-06 | 성공 메시지를 응답에 포함할지 | 낮음 | R-01, R-06 | **결정 · 반영 완료** |
 
 ---
@@ -326,9 +326,11 @@ MENU / MENU_ROLE 기능은 ROLE 담당자가 구현할 예정이지만, ACCESS �
 - [ ] MENU 테이블 스키마 변경 담당
 
 ### 결정 결과
-- 결정:
-- 결정일 · 참석자:
-- 후속 작업:
+- 결정: **종료.** 메뉴 모듈 설계 · 구현(`backend/docs/design/menu-design.md`)에서 모두 정해짐. 위 추천안과 달라진 것은 두 가지
+  - 삭제 방식: 논리 삭제 유지 → **물리 삭제** (하위 메뉴 · ACTION이 가리키면 삭제 거부, 숨기기는 `USE_YN`)
+  - ACTION 메뉴 컬럼: 최하위 하나만 저장 → **3개 유지** (메뉴 이동 시 서버가 함께 갱신, `menu-design.md` 4-7)
+- 결정일 · 참석자: 2026-11-12, ROLE 담당자 (ACCESS 담당자가 모듈에서 손을 떼어 ROLE 담당자가 이어받음)
+- 후속 작업: `remaining-issues.md` (항목별 이유 · 처리 기록), `feature/access-cleanup` 브랜치
 
 ---
 

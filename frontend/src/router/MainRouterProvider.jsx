@@ -31,7 +31,12 @@ import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 import { getCourses } from "../api/admin/course/courseApi";
 import HomeworkDetails from "../components/admin/course/CourseTableComponent/HomeworkDetails.jsx";
 
-const router = createBrowserRouter([
+/**
+ * 라우트 목록. 메뉴 관리 화면이 메뉴 URL 선택지를 만드는 데 사용한다 (routeUtils.getMenuUrlOptions).
+ * handle.menu: true → 메뉴 관리에서 메뉴 URL로 고를 수 있는 화면 (파라미터가 없고 화면이 있는 경로)
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export const routes = [
   {
     path: "/popup/homework/:courseId/:homeworkId",
     element: <HomeworkDetails />,
@@ -41,9 +46,9 @@ const router = createBrowserRouter([
     element: <MainLayout />,
     errorElement: <div>404 Not Found</div>,
     children: [
-      { index: true, element: <Main />, handle: { crumb: "Dashboard" } },
+      { index: true, element: <Main />, handle: { crumb: "Dashboard", menu: true } },
       { path: "login", element: <Login />, handle: { crumb: "로그인" } },
-      { path: "sample", element: <Sample />, handle: { crumb: "Sample" } },
+      { path: "sample", element: <Sample />, handle: { crumb: "Sample", menu: true } },
       {
         path: "my",
         handle: { crumb: "My Page" },
@@ -51,14 +56,14 @@ const router = createBrowserRouter([
           {
             path: "info",
             element: <MyInfo />,
-            handle: { crumb: "내 정보 수정" },
+            handle: { crumb: "내 정보 수정", menu: true },
           },
           {
             path: "course",
             handle: { crumb: "수강 과정" },
             children: [
               { index: true, element: <Navigate to="list" replace /> },
-              { path: "list", element: <MyCourseList /> },
+              { path: "list", element: <MyCourseList />, handle: { menu: true } },
               // ?tab=0~8 로 탭 전환 (MyCourse 의 TABS 참고)
               {
                 path: "list/:courseId",
@@ -91,7 +96,7 @@ const router = createBrowserRouter([
                     <Outlet />
                   </>
                 ),
-                handle: { crumb: "과정 목록" },
+                handle: { crumb: "과정 목록", menu: true },
                 children: [
                   {
                     index: true,
@@ -120,24 +125,24 @@ const router = createBrowserRouter([
                 path: "add",
                 element: <CourseAdd />,
 
-                handle: { crumb: "과정 등록" },
+                handle: { crumb: "과정 등록", menu: true },
               },
             ],
           },
           {
             path: "survey",
             element: <Survey />,
-            handle: { crumb: "설문 관리" },
+            handle: { crumb: "설문 관리", menu: true },
           },
           {
             path: "test",
             element: <Test />,
-            handle: { crumb: "시험 문제 관리" },
+            handle: { crumb: "시험 문제 관리", menu: true },
           },
           {
             path: "students",
             element: <Students />,
-            handle: { crumb: "수강생 관리" },
+            handle: { crumb: "수강생 관리", menu: true },
           },
           {
             path: "system",
@@ -151,37 +156,37 @@ const router = createBrowserRouter([
               {
                 path: "account",
                 element: <Account />,
-                handle: { crumb: "관리자 관리" },
+                handle: { crumb: "관리자 관리", menu: true },
               },
               {
                 path: "tutor",
                 element: <Tutor />,
-                handle: { crumb: "강사 관리" },
+                handle: { crumb: "강사 관리", menu: true },
               },
               {
                 path: "menu",
                 element: <Menu />,
-                handle: { crumb: "메뉴 관리" },
+                handle: { crumb: "메뉴 관리", menu: true },
               },
               {
                 path: "role",
                 element: <Role />,
-                handle: { crumb: "권한 관리" },
+                handle: { crumb: "권한 관리", menu: true },
               },
               {
                 path: "access",
                 element: <Access />,
-                handle: { crumb: "접근 관리" },
+                handle: { crumb: "접근 관리", menu: true },
               },
               {
                 path: "access-role",
                 element: <AccessRole />,
-                handle: { crumb: "권한별 접근 권한 관리" },
+                handle: { crumb: "권한별 접근 권한 관리", menu: true },
               },
               {
                 path: "code",
                 element: <Code />,
-                handle: { crumb: "환경 변수 관리" },
+                handle: { crumb: "환경 변수 관리", menu: true },
               },
             ],
           },
@@ -189,7 +194,9 @@ const router = createBrowserRouter([
       },
     ],
   },
-]);
+];
+
+const router = createBrowserRouter(routes);
 
 export default function MainRouterProvider() {
   return <RouterProvider router={router} />;

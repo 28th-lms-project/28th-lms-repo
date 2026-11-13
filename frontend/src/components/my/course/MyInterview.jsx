@@ -12,7 +12,7 @@ import {
   getCourseStudentList,
   getInterviewList,
   insertInterview,
-} from "../../../api/admin/course/interviewApi";
+} from "../../../api/my/course/interviewApi.js";
 
 const COMPANY_MAX_LENGTH = 200;
 
@@ -362,13 +362,12 @@ export default function MyInterview({ courseId: courseIdProp }) {
 
         {/* 면접 일정 그리드 */}
         {!isLoading && hasInterviews && (
-          <div className={styles.gridScroll}>
-            <Grid
-              header={GRID_HEADER}
-              content={gridContent}
-              columnStyle="1fr 2fr 1fr"
-            />
-          </div>
+          <Grid
+            title=""
+            header={GRID_HEADER}
+            content={gridContent}
+            columnStyle="1fr 2fr 1fr"
+          />
         )}
 
         {/* 면접 일정 없음 */}

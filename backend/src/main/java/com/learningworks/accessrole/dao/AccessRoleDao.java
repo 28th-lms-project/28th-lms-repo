@@ -35,9 +35,10 @@ public interface AccessRoleDao {
             @Param("roleId") String roleId
     );
 
-    // 역할 권한 등록
+    // 역할 권한 1건 등록. ROLE_ACTION_ID는 시퀀스로 생성 ('RA-YYYYMMDD-000001')
+    // INSERT ALL은 NEXTVAL이 원본 행마다 한 번만 증가해 여러 행에 같은 ID가 들어가므로, 한 행씩 등록한다
     int insertRolePermission(
             @Param("roleId") String roleId,
-            @Param("actionIds") List<String> actionIds
+            @Param("actionId") String actionId
     );
 }

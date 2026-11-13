@@ -2,6 +2,7 @@
 
 import {useEffect, useMemo, useState} from "react";
 import PageContainer from "../../../common/PageContainer";
+import {Grid} from "../../../common/Grid";
 import usePermission from "../../../../hooks/usePermission";
 
 import {
@@ -15,6 +16,10 @@ import {SUPER_ADMIN_ROLE_ID} from "../role/roleUtils";
 import styles from "./AccessRole.module.css";
 
 // 입력값 검증 실패면 필드별 메시지를, 아니면 서버 에러 메시지를 반환
+const ROLE_GRID_HEADER = [{id: "roleDisplayName", title: "Role Display Name"}];
+const ALLOWED_GRID_HEADER = [{id: "allowedActionName", title: "허용된 권한"}];
+const DENIED_GRID_HEADER = [{id: "deniedActionName", title: "접근 권한 명"}];
+
 const getErrorMessage = (error) =>
     error.validations
         ? Object.values(error.validations).flat().join("\n")
@@ -288,6 +293,29 @@ function AccessRoleManagement() {
         setSelectedPermissionIds([]);
     };
 
+    const roleGridContent = roleList.map((role) => [
+        {id: role.roleId, value: role.roleDisplayName},
+    ]);
+
+    // 선택 행 배경색 표시용 rowIndex
+    const activeRoleRows = roleList
+        .map((role, index) => (role.roleId === selectedRole ? index : -1))
+        .filter((index) => index >= 0);
+
+    const activeDeniedRows = deniedPermissions
+        .map((item, index) =>
+            selectedPermissionIds.includes(item.actionId) ? index : -1
+        )
+        .filter((index) => index >= 0);
+
+    const allowedGridContent = allowedPermissions.map((item) => [
+        {id: item.actionId, value: item.actionName},
+    ]);
+
+    const deniedGridContent = deniedPermissions.map((item) => [
+        {id: item.actionId, value: item.actionName},
+    ]);
+
     return (
         <PageContainer>
             <div style={{width: "100%"}}>
@@ -306,22 +334,18 @@ function AccessRoleManagement() {
                     <section className={styles.panel}>
                         <h3 className={styles.panelTitle}>권한 목록</h3>
 
-                        <div className={styles.listHeader}>
-                            Role Display Name
-                        </div>
-
                         <div className={styles.roleList}>
-                            {roleList.map((role) => (
-                                <div
-                                    key={role.roleId}
-                                    onClick={() => roleClickHandler(role.roleId)}
-                                    className={`${styles.listItem} ${
-                                        selectedRole === role.roleId ? styles.selected : ""
-                                    }`}
-                                >
-                                    {role.roleDisplayName}
-                                </div>
-                            ))}
+                            <Grid
+                                title=""
+                                header={ROLE_GRID_HEADER}
+                                content={roleGridContent}
+                                columnStyle="1fr"
+                                activeRows={activeRoleRows}
+                                clickableColumn={{
+                                    0: (_value, rowIndex) =>
+                                        roleClickHandler(roleList[rowIndex].roleId),
+                                }}
+                            />
                         </div>
                     </section>
 
@@ -394,23 +418,20 @@ function AccessRoleManagement() {
                                     </button>
                                 </div>
 
-                                <div className={styles.listHeader}>
-                                    허용된 권한
-                                </div>
-
                                 <div className={styles.permissionList}>
-                                    {allowedPermissions.length > 0 ? (
-                                        allowedPermissions.map((item) => (
-                                            <div
-                                                key={item.actionId}
-                                                onClick={() => revokePermissionHandler(item.actionId)}
-                                                className={styles.listItem}
-                                                title="클릭하면 권한이 해제됩니다."
-                                            >
-                                                {item.actionName}
-                                            </div>
-                                        ))
-                                    ) : (
+                                    <Grid
+                                        title=""
+                                        header={ALLOWED_GRID_HEADER}
+                                        content={allowedGridContent}
+                                        columnStyle="1fr"
+                                        clickableColumn={{
+                                            0: (_value, rowIndex) =>
+                                                revokePermissionHandler(
+                                                    allowedPermissions[rowIndex].actionId
+                                                ),
+                                        }}
+                                    />
+                                    {allowedPermissions.length === 0 && (
                                         <div className={styles.empty}>
                                             허용된 권한이 없습니다.
                                         </div>
@@ -491,27 +512,21 @@ function AccessRoleManagement() {
                                     </button>
                                 </div>
 
-                                <div className={styles.listHeader}>
-                                    접근 권한 명
-                                </div>
-
                                 <div className={styles.permissionList}>
-                                    {deniedPermissions.length > 0 ? (
-                                        deniedPermissions.map((item) => (
-                                            <div
-                                                key={item.actionId}
-                                                onClick={() => grantPermissionHandler(item.actionId)}
-                                                className={`${styles.listItem} ${
-                                                    selectedPermissionIds.includes(item.actionId)
-                                                        ? styles.selected
-                                                        : ""
-                                                }`}
-                                                title="클릭하면 권한이 부여됩니다."
-                                            >
-                                                {item.actionName}
-                                            </div>
-                                        ))
-                                    ) : (
+                                    <Grid
+                                        title=""
+                                        header={DENIED_GRID_HEADER}
+                                        content={deniedGridContent}
+                                        columnStyle="1fr"
+                                        activeRows={activeDeniedRows}
+                                        clickableColumn={{
+                                            0: (_value, rowIndex) =>
+                                                grantPermissionHandler(
+                                                    deniedPermissions[rowIndex].actionId
+                                                ),
+                                        }}
+                                    />
+                                    {deniedPermissions.length === 0 && (
                                         <div className={styles.empty}>
                                             미허용 권한이 없습니다.
                                         </div>

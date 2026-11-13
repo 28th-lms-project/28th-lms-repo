@@ -5,7 +5,7 @@ import MyTimetable from "./MyTimetable";
 import MyWorks from "./MyWorks";
 import MyTest from "./MyTest";
 import MyInterview from "./MyInterview";
-import MyStudyFiles from "./MyStudyFiles";
+import MyCourseData from "./MyCourseData.jsx";
 import MySurvey from "./MySurvey";
 import MyCounsel from "./MyCounsel";
 import PageContainer from "../../common/PageContainer";
@@ -18,7 +18,7 @@ const TABS = [
   { label: "과제", Component: MyWorks },
   { label: "시험", Component: MyTest },
   { label: "면접일정", Component: MyInterview },
-  { label: "교육자료", Component: MyStudyFiles },
+  { label: "교육자료", Component: MyCourseData },
   { label: "설문", Component: MySurvey },
   { label: "상담목록", Component: MyCounsel },
 ];

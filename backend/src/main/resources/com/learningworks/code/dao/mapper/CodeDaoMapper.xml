@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.code.dao.CodeDao">
+		<select id="searchCodeList"
+			resultType="com.learningworks.code.vo.response.CodeVO"
+			parameterType="string">
+			SELECT ID
+				 , NAME
+				 , CRT_DT
+				 , MDFY_DT
+				 , PARENT_ID
+				 , "ORDER"
+				 , USE_YN
+			 FROM CODE
+			 <choose>
+				<when test="parentId == null or parentId == ''">
+			 WHERE PARENT_ID IS NULL
+				</when>
+				<otherwise>
+			 WHERE PARENT_ID = #{parentId}
+				</otherwise>
+			</choose>
+			 ORDER BY "ORDER", ID
+		</select>
+		
+		<select id="searchOneCode"
+			resultType="com.learningworks.code.vo.response.CodeVO"
+			parameterType="string">
+			SELECT ID
+				 , NAME
+				 , CRT_DT
+				 , MDFY_DT
+				 , PARENT_ID
+				 , "ORDER"
+				 , USE_YN
+			 FROM CODE
+			WHERE ID = #{_parameter}
+		</select>
+		
+		<select id="countCodeById"
+		parameterType="string"
+		resultType="_int">
+		SELECT COUNT(ID)
+		  FROM CODE
+		 WHERE ID = #{_parameter}</select>
+		
+		<insert id="insertCode">
+		INSERT INTO CODE
+			 ( ID
+			 , NAME
+			 , CRT_DT
+			 , MDFY_DT
+			 , PARENT_ID
+			 , "ORDER"
+			 , USE_YN
+			 )
+		VALUES(#{registCode.id}
+			 , #{registCode.name}
+			 , SYSDATE
+			 , SYSDATE
+			 , #{registCode.parentId}
+			 , #{registCode.order}
+			 , NVL(#{registCode.useYn},'Y'))
+		</insert>
+		
+		<update id="updateCode">
+			UPDATE CODE
+			   SET NAME = #{modCode.name}
+			     , PARENT_ID = #{modCode.parentId}
+			     , "ORDER" = #{modCode.order}
+			     , USE_YN = #{modCode.useYn}
+			     , MDFY_DT = SYSDATE
+			 WHERE ID = #{codeId}
+		</update>
+		
+		<select id="searchMaxOrder" resultType="_int">
+			SELECT NVL(MAX("ORDER"), -1) AS MAX_ORDER
+			  FROM CODE
+			<choose>
+				<when test="parentId == null or parentId == ''">
+			 WHERE PARENT_ID IS NULL
+				</when>
+				<otherwise>
+			 WHERE PARENT_ID = #{parentId}
+				</otherwise>
+			</choose>
+		</select>
+		
+		<!-- [신규] 같은 부모 아래에서 특정 순서를 쓰는 코드 (codeId는 제외할 자기 자신) -->
+		<select id="searchCodeByParentAndOrder"
+			resultType="com.learningworks.code.vo.response.CodeVO">
+			SELECT ID
+				 , NAME
+				 , CRT_DT
+				 , MDFY_DT
+				 , PARENT_ID
+				 , "ORDER"
+				 , USE_YN
+			  FROM CODE
+			 WHERE "ORDER" = #{order}
+			<choose>
+				<when test="parentId == null or parentId == ''">
+			   AND PARENT_ID IS NULL
+				</when>
+				<otherwise>
+			   AND PARENT_ID = #{parentId}
+				</otherwise>
+			</choose>
+			<if test="codeId != null">
+			   AND ID != #{codeId}
+			</if>
+			   AND ROWNUM = 1
+		</select>
+		
+		<!-- [신규] 순서만 변경 (맞바꾸기, 맨 뒤로 보내기) -->
+		<update id="updateCodeOrder">
+			UPDATE CODE
+			   SET "ORDER" = #{lastOrder}
+				 , MDFY_DT = SYSDATE
+			 WHERE ID = #{id}
+		</update>
+		
+		<select id="searchCodeByParentId"
+			parameterType="string"
+			resultType="com.learningworks.code.vo.response.CodeOptionVO">
+			SELECT ID
+				 , NAME
+			  FROM CODE
+			 WHERE PARENT_ID = #{_parameter}
+			   AND USE_YN = 'Y'
+			 ORDER BY "ORDER", ID
+		</select>
+		
+</mapper>
