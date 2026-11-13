@@ -21,6 +21,7 @@ import com.learningworks.exam.vo.request.ModifyTestSetShowYnVO;
 import com.learningworks.exam.vo.request.RegistExamQuestionVO;
 import com.learningworks.exam.vo.request.RegistTestAnswersListVO;
 import com.learningworks.exam.vo.request.RegistTestAnswersVO;
+import com.learningworks.exam.vo.response.ExamQuestionAnswerVO;
 import com.learningworks.exam.vo.response.ExamQuestionListVO;
 import com.learningworks.exam.vo.response.ExamQuestionVO;
 import com.learningworks.exam.vo.response.ExamSetVO;
@@ -125,5 +126,10 @@ public class ExamController {
 		return ApiResponse.OK("제출완료");
 	}
 	
+	@GetMapping("admin/{testSetId}/correct")
+	public ApiResponse<List<ExamQuestionAnswerVO>> isCorrectSetByUserId(@PathVariable String testSetId){
+		List<ExamQuestionAnswerVO> answerList = this.examService.isCorrectSetByUserId(testSetId);
+		return ApiResponse.OK(answerList);
+	}
 	
 }
