@@ -72,7 +72,7 @@ export default function MemberFormModal({ member, onClose, onCompleted }) {
             )}
           </label>
           <label className={styles.field}>
-            <span>Github 주소</span>
+            <span>GitHub 주소</span>
             <input
               name="githubUrl"
               defaultValue={member.githubUrl ?? ""}
