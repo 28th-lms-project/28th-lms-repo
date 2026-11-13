@@ -392,7 +392,7 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 | --- | --- | --- |
 | M1 | STUDENT로 `/admin/course/add` 직접 입력 | 알림 없이 "권한이 없습니다" |
 | M2 | STUDENT로 `/my/course/list/123` (수강 과정 허용) | 화면 표시 (접두어 매칭) |
-| M3 | ADMIN으로 `/admin/system/access-role` (접근 관리만 허용) | "권한이 없습니다" (경계 검사) |
+| M3 | 메뉴 관리에서 ADMIN을 "접근 관리"(`/admin/system/access`) 소메뉴에만 체크하고 "권한별 접근 권한 관리"(`/admin/system/access-role`)는 해제한 뒤, ADMIN으로 `/admin/system/access-role` 입력 | "권한이 없습니다" (`/admin/system/access`로 시작하는 문자열이어도 다른 메뉴로 판정하는지 확인하는 경계 검사). `/admin/system/access`는 열림 |
 | M4 | 메뉴에 없는 URL을 SUPER_ADMIN / 그 외로 입력 | 열림 / "권한이 없습니다" |
 | M5 | 비로그인으로 `/admin/course/add` | `/login`으로 이동 |
 | M6 | 과정 목록이 허용된 TUTOR로 숙제 팝업 열기 | 팝업 표시 (`guardAs`) |
