@@ -47,9 +47,9 @@
 | 메뉴는 허용됐는데 API 권한이 없음 | 막지 못합니다. 메뉴와 권한 코드는 따로 설정하므로, 관리자가 두 설정을 맞춰야 합니다 |
 | 화면 안의 특정 버튼 | 막지 못합니다. 각 담당자가 `can()`으로 숨겨야 합니다 |
 
-### 알려진 차이: 브레드크럼
+### 브레드크럼 · 화면 제목
 
-`common/Breadcrumb.jsx`는 라우트의 `handle.crumb`을 씁니다. 메뉴 관리에서 메뉴 이름을 바꾸면 **사이드바는 바뀌지만 브레드크럼은 예전 이름**이 남습니다. 이번 구현에서는 그대로 둡니다 (공용 컴포넌트 수정, 메뉴에 없는 상세 화면 처리가 필요해서). 이름을 맞추려면 `crumb`도 함께 고치세요.
+메뉴 화면의 브레드크럼과 화면 제목은 DB 메뉴 이름을 따릅니다 (7-3, 2026-11-13). 메뉴 관리에서 이름을 바꾸거나 옮기면 사이드바와 함께 바로 바뀝니다. 라우트의 `crumb`은 메뉴에 없는 화면 · 상세 화면 표시와 메뉴 URL 선택지 이름에 씁니다.
 
 ---
 
@@ -350,6 +350,21 @@
 
 ---
 
+### 7-3. 브레드크럼 · 화면 제목 (`PageContainer`)
+
+`hooks/useBreadcrumbs.js` → `router/breadcrumbUtils.js`의 `buildBreadcrumbs`가 항목을 만들고, `common/Breadcrumb.jsx`가 "⌂ > 항목 > …"으로 그립니다. 화면 제목(`h2`)은 마지막 항목입니다 (`PageContainer`에 `title`을 넘기면 그 값).
+
+| 화면 | 항목 | 예 |
+| --- | --- | --- |
+| 메뉴 화면 | 소속 메뉴의 DB 경로 (대 > 중 > 소 이름). 소속 메뉴는 가드와 같은 방법(`findGuardUrl`)으로 찾음 | ⌂ > System Management > 시스템 관리 > 메뉴 관리 |
+| 메뉴 아래 상세 화면 | 메뉴 경로 + 그보다 깊은 라우트의 `crumb` | ⌂ > My Page > 수강 과정 > 과정 상세 |
+| 메뉴에 없는 화면 (로그인 · 404 · 등록 전 화면) | 라우트 `crumb` | ⌂ > 페이지 없음 |
+
+- 이어지는 같은 이름은 하나로 합칩니다 (중메뉴 "설문 관리" > 소메뉴 "설문 관리" → "설문 관리").
+- 대시보드(`/`)도 메뉴 경로를 씁니다 (예: MAIN > Home > Dashboard).
+- 항목은 링크가 아닙니다 (⌂만 대시보드 링크). 대 · 중메뉴는 주소가 없기 때문입니다.
+- 메뉴 화면은 가드가 내 메뉴를 받을 때까지 본문을 그리지 않으므로, 라우트 이름이 잠깐 보였다가 바뀌는 일은 없습니다.
+
 ## 8. 파일 구성
 
 ```text
@@ -361,6 +376,10 @@ src/router/MainRouterProvider.jsx               (routes export, handle.menu, gua
 src/components/menu/MenuGuard.jsx               (새 파일)
 src/components/menu/MenuGuard.module.css        (새 파일: 안내 문구)
 src/components/common/error/NotFound.jsx        (새 파일: 404, 5-6)
+src/router/breadcrumbUtils.js                   (새 파일: 브레드크럼 항목 계산, 7-3)
+src/hooks/useBreadcrumbs.js                     (새 파일, 7-3)
+src/components/common/Breadcrumb.jsx            (항목을 받아 그리기만, 7-3)
+src/components/common/PageContainer.jsx         (제목 = 브레드크럼 마지막 항목, 7-3)
 src/components/common/error/RouteError.jsx      (새 파일: 라우트 오류 화면, 5-6)
 src/layout/MainLayout.jsx                       (Outlet 감싸기)
 src/components/menu/SideMenu.jsx                (store 사용)
@@ -395,7 +414,7 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 6. 팀에 공지:
    - 새 화면을 만들면 라우트에 `handle.menu`를 붙이고, 메뉴 관리에서 메뉴와 역할을 등록해야 다른 역할이 들어갈 수 있습니다.
    - 새 팝업 등 접두어로 메뉴를 찾을 수 없는 라우트에는 `handle.guardAs`로 소속 메뉴 URL을 적어야 합니다. 빠뜨리면 SUPER_ADMIN만 열 수 있습니다.
-   - 라우트 경로를 바꾸면 메뉴 관리에서 해당 메뉴의 URL도 다시 선택해야 합니다 (목록에 ⚠ 표시). 브레드크럼 이름(`crumb`)은 메뉴 이름과 따로 관리됩니다.
+   - 라우트 경로를 바꾸면 메뉴 관리에서 해당 메뉴의 URL도 다시 선택해야 합니다 (목록에 ⚠ 표시).
 
 ---
 
@@ -444,3 +463,7 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 | M38 | `MENU_UPDATE`가 없는 역할 / 대메뉴 상세 | 상위 메뉴 드롭다운이 보이지 않음 |
 | M39 | 백엔드를 끈 상태에서 `/admin/course/list` 진입 (loader의 API 실패) | 사이드바는 그대로, 본문에 "화면을 불러오는 중 문제가 생겼습니다." + 서버 · 네트워크 메시지 + [다시 시도] (404가 아님) |
 | M40 | 화면 컴포넌트에서 오류가 나는 경우 (개발 환경) | 사이드바는 그대로, 오류 화면에 오류 내용 표시. 사이드바로 다른 화면 이동 가능 |
+| M41 | 메뉴 관리에서 소메뉴 이름을 바꾼 뒤 그 화면 열기 | 사이드바 · 브레드크럼 · 화면 제목이 모두 새 이름 |
+| M42 | 소메뉴를 다른 그룹으로 옮긴 뒤 그 화면 열기 | 브레드크럼이 새 그룹 경로 |
+| M43 | 중메뉴 · 소메뉴 이름이 같은 화면 (예: 설문 관리) | 이름이 한 번만 표시 |
+| M44 | `/my/course/list/(과정 ID)` · `/login` · `/abc` | 메뉴 경로 + "과정 상세" / "로그인" / "페이지 없음" |
