@@ -63,11 +63,13 @@
 	</select>
 
 	<select id="selectAllExamInExamSet"
+	   parameterType="string"
 		resultMap="ExamSetVOMap">
 		SELECT TS.ID AS SET_ID
 			 , TS.COURSE_ID
 			 , TS.TEST_TYPE
 			 , TS.SET_NAME
+			 , TS.SHOW_YN
 			 , T.ID AS TEST_ID
 			 , T.SUBJECT_ID
 			 , T.QUESTION
@@ -86,16 +88,18 @@
 			 , T.CORRECT_ANSWER
 			 , T.SUB_QUESTION
 		FROM TEST_SET TS
-		LEFT JOIN TEST_SET_TESTS TST
+		INNER JOIN TEST_SET_TESTS TST
 		ON TS.ID = TST.TEST_SET_ID
-		LEFT JOIN TESTS T
+		INNER JOIN TESTS T
 		ON TST.TEST_ID = T.ID
 		WHERE T.DEL_YN = 'N'
+		  AND TS.COURSE_ID = #{courseId}
+		ORDER BY TS.ID DESC
 	</select>
 
 	<resultMap type="com.learningworks.exam.vo.response.ExamSetVO"
 		id="ExamSetVOMap"
-		autoMapping="false">
+		autoMapping="true">
 		<id column="SET_ID" property="id" />
 		<!--  <result property="courseId" column="COURSE_ID"/>
 	 <result property="testType" column="TEST_TYPE"/>
@@ -137,14 +141,45 @@
 		LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
 			FROM DUAL
 		</selectKey>
-		INSERT INTO TESTS (ID , SUBJECT_ID , QUESTION , ANSWER_TYPE ,
-		ANSWER_SHEET_1 , ANSWER_SHEET_2 , ANSWER_SHEET_3 , ANSWER_SHEET_4 ,
-		ANSWER_SHEET_5 , ANSWER_COUNT , POINT_ALLOC , CRT_DT , MDFY_DT , CRTR_ID
-		, MDFYR_ID , DEL_YN , CORRECT_ANSWER , SUB_QUESTION) VALUES ( #{id} ,
-		#{subjectId} , #{question} , #{answerType} , #{answerSheet1} ,
-		#{answerSheet2} , #{answerSheet3} , #{answerSheet4} , #{answerSheet5} ,
-		#{answerCount} , #{pointAlloc} , SYSDATE , SYSDATE , 'admin' , 'admin' ,
-		'N' , #{correctAnswer} , #{subQuestion} ) </insert>
+		INSERT INTO TESTS 
+		(ID 
+		, SUBJECT_ID 
+		, QUESTION 
+		, ANSWER_TYPE 
+		, ANSWER_SHEET_1 
+		, ANSWER_SHEET_2 
+		, ANSWER_SHEET_3 
+		, ANSWER_SHEET_4 
+		, ANSWER_SHEET_5 
+		, ANSWER_COUNT 
+		, POINT_ALLOC 
+		, CRT_DT 
+		, MDFY_DT 
+		, CRTR_ID
+		, MDFYR_ID 
+		, DEL_YN 
+		, CORRECT_ANSWER 
+		, SUB_QUESTION) 
+		VALUES 
+		( #{id} 
+		, #{subjectId} 
+		, #{question} 
+		, #{answerType} 
+		, #{answerSheet1} 
+		, #{answerSheet2} 
+		, #{answerSheet3} 
+		, #{answerSheet4} 
+		, #{answerSheet5} 
+		, #{answerCount} 
+		, #{pointAlloc} 
+		, SYSDATE 
+		, SYSDATE 
+		, 'admin' 
+		, 'admin' 
+		, 'N' 
+		, #{correctAnswer} 
+		, #{subQuestion} ) 
+		</insert>
 
 	<delete id="deleteExamQuestion"
 		parameterType="string">
@@ -173,5 +208,163 @@
 		WHERE ID = #{examId}
 		AND DEL_YN = 'N'
 	</update>
+    
+    
+    <insert id="makeNewTestSet" parameterType="com.learningworks.exam.vo.request.RegistTestSetVO">
+        <selectKey keyProperty="RegistTestSetVO.id" order="BEFORE" resultType="string">
+        SELECT ('TS-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+          FROM DUAL
+        </selectKey>
+        INSERT INTO TEST_SET
+             (ID
+            , COURSE_ID
+            , TEST_TYPE
+            , SET_NAME
+            , SHOW_YN)
+        VALUES
+            ( #{RegistTestSetVO.id}
+            , #{courseId}
+            , #{RegistTestSetVO.testType}
+            , #{RegistTestSetVO.setName}
+            , #{RegistTestSetVO.showYn})
+    </insert>
+    
+   
+    
+    <insert id="makeNewTestSetTest" parameterType="string">
+        <selectKey keyProperty="id" order="BEFORE" resultType="string">
+        SELECT ('TE-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+          FROM DUAL
+        </selectKey>
+        INSERT INTO TEST_SET_TESTS
+            ( ID
+            , TEST_SET_ID
+            , TEST_ID)
+        VALUES
+            (#{id}
+            ,#{testSetId}
+            ,#{questionId})
+    </insert>
+   
+    <select id="selectExamsetById"
+     parameterType="string"
+      resultType="com.learningworks.exam.vo.request.RegistTestSetVO">
+       SELECT ID
+            , COURSE_ID
+            , TEST_TYPE
+            , SET_NAME
+            , SHOW_YN
+         FROM TEST_SET
+        WHERE ID = #{parameter}
+      </select>
 
+    <update id="updateTestSetShowYn">
+        UPDATE TEST_SET
+           SET SHOW_YN = #{showYn}
+         WHERE ID = #{testSetId}
+    </update>
+    
+    <delete id="deleteTestSet" parameterType="string">
+       DELETE TEST_SET
+       WHERE ID = #{parameter}
+    </delete>
+    
+    
+    
+    <select id="viewTestSetQuestions"
+            parameterType="string"
+             resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
+        SELECT T.ID
+             , T.SUBJECT_ID
+             , T.QUESTION
+             , T.ANSWER_TYPE
+             , T.ANSWER_SHEET_1
+             , T.ANSWER_SHEET_2
+             , T.ANSWER_SHEET_3
+             , T.ANSWER_SHEET_4
+             , T.ANSWER_SHEET_5
+             , T.ANSWER_COUNT
+             , T.POINT_ALLOC
+             , T.CRT_DT
+             , T.MDFY_DT
+             , T.CRTR_ID
+             , T.MDFYR_ID
+             , T.DEL_YN
+             , T.CORRECT_ANSWER
+             , T.SUB_QUESTION
+          FROM TESTS T
+         WHERE DEL_YN = 'N'
+           AND T.ID IN (SELECT TST.TEST_ID
+                          FROM TEST_SET_TESTS TST
+                         WHERE TST.TEST_SET_ID = #{parameter})
+         ORDER BY T.ID
+     </select>
+
+    <!-- 채점용 정답 조회: 답안 저장 반복문 안에서 문제마다 SELECT 하지 않도록 한 번에 가져온다 -->
+    <select id="selectAnswerKeysByTestSetId"
+            parameterType="string"
+            resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
+        SELECT T.ID
+             , T.ANSWER_TYPE
+             , T.CORRECT_ANSWER
+          FROM TEST_SET_TESTS TST
+         INNER JOIN TESTS T
+            ON T.ID = TST.TEST_ID
+         WHERE TST.TEST_SET_ID = #{_parameter}
+           AND T.DEL_YN = 'N'
+    </select>
+
+    <!-- TODO: 답안 테이블 이름(TEST_ANSWERS)이 실제와 다르면 아래 두 쿼리 수정 -->
+    <select id="countSubmittedAnswers" resultType="int">
+        SELECT COUNT(*)
+          FROM TEST_ANSWERS
+         WHERE TEST_SET_ID = #{testSetId}
+           AND COURSE_STUDENT_ID = #{courseStudentId}
+    </select>
+
+    <insert id="insertTestAnswer"
+            parameterType="com.learningworks.exam.vo.request.RegistTestAnswersVO">
+        <selectKey keyProperty="id" order="BEFORE" resultType="string">
+        SELECT ('TN-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+          FROM DUAL
+        </selectKey>
+        INSERT INTO TEST_ANSWERS
+             ( ID
+             , TEST_SET_ID
+             , TEST_ID
+             , COURSE_STUDENT_ID
+             , ANSWER
+             , IS_CORRECT
+             , CRT_DT )
+        VALUES
+             ( #{id}
+             , #{testSetId}
+             , #{testId}
+             , #{courseStudentId}
+             , #{answer}
+             , #{isCorrect}
+             , SYSDATE )
+    </insert>
+    
+    
+    <select id="correctStudentAnswer" parameterType="string" resultType="com.learningworks.exam.vo.response.ExamQuestionAnswerVO">
+    SELECT COURSE_STUDENT_ID
+         , TEST_SET_ID
+         , ANSWER
+         , CRT_DT
+         , IS_CORRECT
+         , ETC
+         , TEST_ID
+         , ID
+      FROM TEST_ANSWERS  
+     WHERE TEST_SET_ID = #{testSetId}
+       AND COURSE_STUDENT_ID = #{userId}
+    </select>
+
+    <!-- 강사 수동 채점: 답안 1건의 채점 결과 수정 -->
+    <update id="updateAnswerGrade">
+        UPDATE TEST_ANSWERS
+           SET IS_CORRECT = #{isCorrect}
+         WHERE ID = #{answerId}
+    </update>
 </mapper>
