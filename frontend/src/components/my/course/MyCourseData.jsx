@@ -31,7 +31,7 @@ const TOAST_DURATION_MS = 2500;
 const DELETE_CONFIRM_MESSAGE = "해당 교육 자료를 삭제하시겠습니까?";
 
 const BASE_GRID_HEADER = [
-  { id: "rowNumber", title: "번호" },
+  { id: "rowNumber", title: "No." },
   { id: "dataName", title: "자료 명" },
   { id: "crtDt", title: "생성일" },
   { id: "mdfyDt", title: "수정일" },

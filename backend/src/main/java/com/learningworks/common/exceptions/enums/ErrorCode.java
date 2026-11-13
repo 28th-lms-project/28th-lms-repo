@@ -24,6 +24,7 @@ public enum ErrorCode {
   ROLE_MOVE_SAME(HttpStatus.BAD_REQUEST, "같은 역할로는 이동할 수 없습니다."), //
   ROLE_MOVE_TO_SUPER_ADMIN(HttpStatus.BAD_REQUEST, "최고 관리자 역할로는 회원을 이동할 수 없습니다."), //
   ACTION_CODE_NOT_EXISTS(HttpStatus.BAD_REQUEST, "등록되지 않은 권한 코드입니다."), //
+  ACTION_MENU_INVALID(HttpStatus.BAD_REQUEST, "메뉴 정보가 올바르지 않습니다. 새로고침 후 다시 선택해주세요."), //
   INTERVIEW_STUDENT_NOT_IN_COURSE(HttpStatus.BAD_REQUEST, "해당 과정에 참여 중인 수강생이 아닙니다."), //
   FILES_NOT_ALLOWED_EXTENSION(HttpStatus.BAD_REQUEST, "업로드할 수 없는 파일 형식입니다."), //
   FILES_INVALID_CONTENT(HttpStatus.BAD_REQUEST, "파일 확장자와 실제 파일 형식이 일치하지 않습니다."), //
@@ -60,6 +61,8 @@ public enum ErrorCode {
   ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
   COURSE_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 교육 자료입니다."), //
   CODE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 환경 변수입니다."), //
+  COUNSEL_NOT_EXISTS(HttpStatus.NOT_FOUND, "상담 기본 정보가 없습니다. 성별과 연락처를 먼저 등록해주세요."), //
+  COUNSEL_STUDENT_NOT_IN_COURSE(HttpStatus.NOT_FOUND, "과정에 등록된 학생이 아닙니다."), //
   MENU_NOT_EXISTS(HttpStatus.NOT_FOUND, "메뉴가 존재하지 않습니다."), //
 
   // 405 METHOD NOT ALLOWED
@@ -110,6 +113,8 @@ public enum ErrorCode {
   COURSE_DATA_FAILURE_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 삭제에 실패했습니다."), //
   CODE_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "환경 변수 생성에 실패했습니다."), //
   CODE_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "환경 변수 수정에 실패했습니다."), //
+  COUNSEL_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "상담 정보 등록에 실패했습니다."), //
+  COUNSEL_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "상담 정보 수정에 실패했습니다."), //
 
   // 502 BAD GATEWAY
   LINK_PREVIEW_FAILURE(HttpStatus.BAD_GATEWAY, "링크 미리보기 정보를 가져올 수 없습니다."), //
