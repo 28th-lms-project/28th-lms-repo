@@ -5,7 +5,7 @@
 - 작성일: 2026-11-10
 - 상태: 설계 확정. 백엔드 구현 완료 (4-7 제외)
 
-이 문서는 백엔드 구현을 시작할 때 참고하는 설계입니다. 화면 설계는 `frontend/docs/design/menu-page-design.md`, 권한 체계는 `backend/docs/access-control-guide.md`, ACCESS 모듈과의 연동 정리는 `backend/docs/access-role-collab/remaining-issues.md`를 함께 보세요.
+이 문서는 백엔드 구현을 시작할 때 참고하는 설계입니다. 화면 설계는 `frontend/docs/design/menu-page-design.md`, 권한 체계는 `backend/docs/access-control-guide.md`, ACCESS 모듈과의 연동 결정은 `backend/docs/design/access-design.md`를 함께 보세요.
 
 ---
 
@@ -63,7 +63,7 @@ UNIQUE (`MENU_ID`, `ROLE_ID`)
 
 ### 2-3. 변경 스크립트 (DB 담당: 프로젝트 담당자가 직접 실행)
 
-1단계는 **적용 완료**되었습니다. 남은 것은 2단계(`MENU.DEL_YN` 삭제)뿐입니다. 이 컬럼을 쓰던 ACCESS 모듈의 `selectMenuList`(`/access/menus`)는 `feature/access-cleanup`에서 삭제했으므로, **그 브랜치가 배포된 뒤에** 실행하세요. 확인 쿼리를 포함한 실행용 SQL은 `access-role-collab/access-cleanup.sql`의 1번입니다.
+1 · 2단계 모두 **적용 완료**되었습니다 (2단계 2026-11-13). 2단계는 이 컬럼을 쓰던 ACCESS 모듈의 `GET /access/menus`를 삭제한 뒤(`access-design.md` D-07) 실행했습니다.
 
 ```sql
 -- 1단계: 적용 완료
@@ -80,7 +80,7 @@ ALTER TABLE MENU_ROLE DROP COLUMN DEL_YN;
 ALTER TABLE MENU_ROLE DROP COLUMN MDFY_DT;
 ALTER TABLE MENU_ROLE ADD CONSTRAINT UK_MENU_ROLE UNIQUE (MENU_ID, ROLE_ID);
 
--- 2단계: feature/access-cleanup(/access/menus 삭제) 배포 후 실행 (미적용)
+-- 2단계: 적용 완료 (2026-11-13, GET /access/menus 삭제 후)
 DELETE FROM MENU WHERE DEL_YN = 'Y';   -- 참조하는 ACTION · MENU_ROLE · 하위 메뉴가 없는지 먼저 확인
 ALTER TABLE MENU DROP COLUMN DEL_YN;
 ```
@@ -195,7 +195,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 
 `spread` · `menuUrl`처럼 메뉴 단계에 따라 규칙이 달라지는 필드는 `@Valid`로 검사할 수 없어 서비스가 검사합니다. 이때는 `ValidationFailedException`(common)을 던지고, `@Valid` 실패와 같은 형식(`GLOBAL_INVALID_PARAMETER` + `validations`)으로 응답합니다.
 
-`MENU`의 `DEL_YN` 컬럼(2-3의 2단계 전까지 남아 있음)은 이 모듈의 쿼리에서 쓰지 않습니다.
+`MENU`의 `DEL_YN` 컬럼은 삭제되었습니다 (2-3의 2단계).
 
 ### 4-4. 동작
 
@@ -253,7 +253,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 
 **왜 필요한가**: 지금은 메뉴를 다른 그룹으로 옮기려면 삭제 후 다시 만들어야 하는데, ACTION이 참조하는 메뉴는 삭제가 거부되고(`MENU_IN_USE`), ACTION의 메뉴를 바꾸는 저장은 SUPER_ADMIN 전용입니다. 그래서 메뉴 구조를 바꾸는 일이 사실상 SUPER_ADMIN 작업이 되고 절차도 깁니다.
 
-**결정**: 메뉴를 옮길 때 서버가 **ACTION 테이블의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID`도 함께 고칩니다.** ACTION은 ACCESS 모듈의 테이블이므로 아래 두 가지를 정했습니다. 이유는 `access-role-collab/remaining-issues.md` 4번을 보세요.
+**결정**: 메뉴를 옮길 때 서버가 **ACTION 테이블의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID`도 함께 고칩니다.** ACTION은 ACCESS 모듈의 테이블이므로 아래 두 가지를 정했습니다. 이유는 `access-design.md` D-10을 보세요.
 
 1. ACTION 수정은 **ACCESS 모듈이 제공하는 메서드**를 메뉴 모듈이 호출합니다. 테이블을 고치는 SQL은 그 테이블의 담당 모듈에만 둡니다.
 2. 메뉴 이동 권한은 **`MENU_UPDATE`** 입니다. 이동이 바꾸는 것은 ACTION의 메뉴 컬럼뿐이고, 권한 코드 · 권한 부여 · 권한 캐시는 바뀌지 않습니다.
@@ -321,11 +321,11 @@ common/exceptions/enums/ErrorCode.java   (4-5 추가)
 
 ## 7. ACCESS 모듈 연동 (D-05)
 
-ACCESS 담당자가 모듈에서 손을 떼어, ROLE 담당자가 `feature/access-cleanup`에서 직접 처리했습니다. 항목별 상세는 `access-role-collab/remaining-issues.md`를 보세요.
+ACCESS 담당자가 모듈에서 손을 떼어, ROLE 담당자가 `feature/access-cleanup`(PR #51)에서 직접 처리했습니다. 항목별 결정 이유는 `access-design.md`의 D-05 · D-07 ~ D-11을 보세요.
 
 | # | 내용 | 상태 |
 | --- | --- | --- |
-| 1 | 메뉴 목록을 `/access/menus` 대신 `GET /menus`로 받고, `/access/menus`와 `selectMenuList` 삭제 | **완료.** 배포 후 `MENU.DEL_YN` 삭제 (2-3) |
+| 1 | 메뉴 목록을 `/access/menus` 대신 `GET /menus`로 받고, `/access/menus`와 `selectMenuList` 삭제 | **완료.** `MENU.DEL_YN` 삭제 완료 (2-3) |
 | 2 | 접근 관리 · 권한별 접근 권한 관리 화면을 쓰는 역할에 `MENU_READ`도 허용 | **불필요.** 접근 관리 화면은 SUPER_ADMIN 전용이고, 권한별 접근 권한 관리 화면은 `GET /menus`를 부르지 않음 |
 | 3 | 메뉴 이름순 · ID순 정렬을 `MENU_ORDER` 순으로 | **완료.** 메뉴 드롭다운(`GET /menus`), 접근 관리 목록, 권한별 접근 권한 관리 목록 모두 메뉴 순서 |
 | 4 | 메뉴 상위 변경 시 ACTION의 메뉴 ID를 함께 고치는 방식과 권한 | **결정 완료**, 구현 예정 (4-7) |
