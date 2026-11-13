@@ -42,8 +42,8 @@ API마다 "어떤 역할이 호출할 수 있는지"는 **컨트롤러 메서드
 | 어노테이션            | 호출할 수 있는 사람                         | 사용하는 곳                                                             |
 | --------------------- | ------------------------------------------- | ----------------------------------------------------------------------- |
 | `@RequireAction(...)` | 관리자가 화면에서 허용한 역할 + SUPER_ADMIN | 대부분의 기능 (조회, 등록, 수정, 삭제 등)                               |
-| `@LoginRequired`      | 로그인한 사용자 누구나 (비로그인 401)       | 내 정보 · 내 권한 · 내 수강 목록처럼 본인 데이터를 다루는 기능          |
-| `@PublicApi`          | 누구나 (비로그인 포함)                      | 공개 공지 조회, 오류 응답(`/error`) 등                                  |
+| `@LoginRequired`      | 로그인한 사용자 누구나 (비로그인 401)       | 내 정보 · 내 권한 · 내 메뉴처럼 본인 데이터를 다루는 기능               |
+| `@PublicApi`          | 누구나 (비로그인 포함)                      | 비로그인 공개가 필요한 기능만. 현재는 오류 응답(`/error`) 하나뿐        |
 | `@RequireSuperAdmin`  | SUPER_ADMIN만 (다른 역할에 부여할 수 없음)  | 권한 체계 자체를 바꾸는 기능 (역할 생성 · 순서 변경, 권한 설정 저장 등) |
 | **없음**              | **SUPER_ADMIN만**                           | 사용하지 마세요. 붙이는 것을 잊은 API가 열리지 않도록 막아 두는 기본값  |
 
@@ -66,10 +66,10 @@ import com.learningworks.common.action.RequireSuperAdmin;
 | --- | --- |
 | 역할 생성 · 이름 변경 · 순서 변경 · 삭제 | `POST /roles`, `PUT /roles/{roleId}`, `PUT /roles/order`, `DELETE /roles/{roleId}` |
 | 권한 코드 목록 | `GET /action-codes` |
-| 접근 관리: 메뉴 목록 · ACTION 등록 · 수정 | `GET /access/menus`, `POST /access/save` |
+| 접근 관리: ACTION 등록 · 수정 | `POST /access/save` |
 | 권한별 접근 권한 관리: 권한 저장 | `POST /access-role/save` |
 
-참고로 권한 설정 화면의 **조회 API는 `@RequireAction`** 이라 다른 역할에도 부여할 수 있습니다: `GET /access/actions`(`ACCESS_READ`), `GET /access-role/allowed`(`ACCESS_ROLE_READ_ALLOWED`), `GET /access-role/denied`(`ACCESS_ROLE_READ_DENIED`). 단, 두 화면은 현재 프론트에서 SUPER_ADMIN에게만 표시됩니다.
+참고로 권한 설정 화면의 **조회 API는 `@RequireAction`** 이라 다른 역할에도 부여할 수 있습니다: `GET /access/actions`(`ACCESS_READ`), `GET /access-role/allowed`(`ACCESS_ROLE_READ_ALLOWED`), `GET /access-role/denied`(`ACCESS_ROLE_READ_DENIED`). 단, 두 화면은 현재 프론트에서 SUPER_ADMIN에게만 표시됩니다. 접근 관리 화면의 메뉴 목록은 메뉴 API `GET /menus`(`MENU_READ`)를 씁니다.
 
 ---
 
@@ -112,13 +112,19 @@ public class AssignmentController {
 - **기능(화면) 단위**로 정합니다. 테이블 이름이 아닙니다.
 - 같은 모듈 담당자끼리 같은 이름을 쓰세요. 이미 쓰이는 이름은 `GET /action-codes`(7장)로 확인할 수 있습니다.
 
-| 기능      | domain          |
-| --------- | --------------- |
-| 역할 관리 | `ROLE`          |
-| 과정 관리 | `COURSE`        |
-| 과정 공지 | `COURSE_NOTICE` |
-| 과제      | `ASSIGNMENT`    |
-| 설문      | `SURVEY`        |
+현재 쓰이는 domain 예시:
+
+| 기능      | domain            |
+| --------- | ----------------- |
+| 역할 관리 | `ROLE`            |
+| 회원 관리 | `MEMBER`          |
+| 메뉴 관리 | `MENU`            |
+| 과정 관리 | `COURSE`          |
+| 과제      | `COURSE_HOMEWORK` |
+| 교육 자료 | `COURSE_DATA`     |
+| 설문      | `SURVEY`          |
+
+이 문서의 `ASSIGNMENT` 예시(3장)는 설명용입니다.
 
 ### action 정하는 법
 
@@ -283,7 +289,7 @@ public List<NoticeVO> readNotices(String userId) {
 - **서버 시작 로그**: 수집된 권한 코드와, **권한 어노테이션이 없어 SUPER_ADMIN만 호출할 수 있는 API**가 표시됩니다. 내 API가 두 번째 목록에 있으면 어노테이션을 붙이세요.
 
 ```text
-INFO  c.l.common.action.ActionCodeRegistry -- 권한 코드 6개 등록: [ACCESS_READ, ..., ROLE_USER_READ]
+INFO  c.l.common.action.ActionCodeRegistry -- 권한 코드 48개 등록: [ACCESS_READ, ..., SURVEY_UPDATE]
 INFO  c.l.common.action.ActionCodeRegistry -- 권한 어노테이션이 없는 API 14개 (app.access-check.default-super-admin: true이면 SUPER_ADMIN만 호출 가능): [com.learningworks.course.web.CourseController#addCourse(RegistCourseVO), ...]
 WARN  c.l.common.action.UnusedActionCodeReporter -- 코드에서 쓰이지 않는 권한 코드 2개가 ACTION에 등록되어 있습니다 (...): [MENU_READ_DETAIL, MENU_READ_PERMISSION]
 ```
@@ -372,4 +378,5 @@ WARN  c.l.common.action.UnusedActionCodeReporter -- 코드에서 쓰이지 않�
 ### 관련 문서
 
 - 프론트 화면 권한 적용: `frontend/docs/permission-guide.md`
+- 새 화면 추가 순서 (API 권한 · 라우트 · 메뉴 등록): `frontend/docs/page-guide.md`
 - 권한 체계를 이렇게 정한 이유와 검토한 다른 방식: `backend/docs/design/access-design.md`의 D-01 · D-02 · D-03

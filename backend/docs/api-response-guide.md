@@ -1,6 +1,6 @@
 # API 공통 응답 · 예외 처리 가이드
 
-모든 API는 같은 형식으로 응답합니다. 기능을 개발할 때는 **Controller · Service · Mapper**만 작성하면 됩니다. 새로운 에러 상황이 생기면 **`ErrorCode.java`에 한 줄**만 추가하세요.
+모든 API는 같은 형식으로 응답합니다. 기능을 개발할 때는 **Controller · Service · Mapper**만 작성하면 됩니다. 새로운 에러 상황이 생기면 **`ErrorCode.java`에 한 줄**만 추가하세요. API마다 권한 어노테이션(`@RequireAction` 등)도 붙여야 합니다 (`backend/docs/access-control-guide.md`).
 
 - 성공 응답: 컨트롤러에서 `ApiResponse.OK()` / `ApiResponse.CREATED()`를 반환합니다.
 - 실패 응답: 서비스에서 `throw new LearningworksException(ErrorCode.XXX)`를 던집니다.
@@ -82,25 +82,30 @@ public class RoleController {
   private RoleService roleService;
 
   // 단건 조회 → 200
+  @RequireAction(domain = "ROLE", action = "READ_DETAIL", description = "역할 상세 조회")
   @GetMapping("/{roleId}")
   public ApiResponse<RoleVO> getRole(@PathVariable String roleId) {
     return ApiResponse.OK(this.roleService.readRole(roleId));
   }
 
-  // 검색 + 페이징 목록 → 200
+  // 검색 + 페이징 목록 → 200 (검색 VO가 PaginationVO를 상속)
+  @RequireAction(domain = "ROLE", action = "READ", description = "역할 목록 조회")
   @GetMapping
   public ApiResponse<List<RoleVO>> getRoles(@ModelAttribute SearchRoleVO searchRoleVO) {
     List<RoleVO> list = this.roleService.readRoleList(searchRoleVO);
-    return ApiResponse.OK(list, searchRoleVO.getPaginate(), searchRoleVO);
+    return ApiResponse.OK(list, searchRoleVO);
   }
 
   // 생성 → 201
+  @RequireAction(domain = "ROLE", action = "CREATE", description = "역할 생성")
   @PostMapping
   public ApiResponse<RoleVO> createRole(@Valid @RequestBody RegistRoleVO registRoleVO) {
     return ApiResponse.CREATED(this.roleService.createRole(registRoleVO));
   }
 }
 ```
+
+> 설명용 예시입니다. 실제 코드는 `RoleController.java`(단건 · 생성), `MemberController.java`의 `readMemberList`(검색 + 페이징)를 참고하세요.
 
 ### 규칙
 
@@ -117,6 +122,7 @@ public class RoleController {
    | 경로 값                      | `@PathVariable`                                               |
 
 5. 컨트롤러에서 **try-catch로 예외를 잡지 마세요.** 그대로 던지면 공통 핸들러가 처리합니다.
+6. 모든 API에 권한 어노테이션(`@RequireAction` · `@LoginRequired` · `@PublicApi`)을 붙입니다. 없으면 SUPER_ADMIN만 호출할 수 있습니다 (`backend/docs/access-control-guide.md`).
 
 ### 하지 말 것
 
@@ -160,11 +166,13 @@ public class RegistRoleVO {
    | 형식 규칙 (코드값, 이메일 등) | `@Pattern`, `@Email` |
 
 3. `@Pattern` 정규식 앞의 `^$|`는 빈 값일 때 `@NotBlank` 메시지만 나오도록 하기 위한 장치입니다. 함께 쓸 때 붙여주세요.
-4. 숫자·날짜 필드에 잘못된 형식의 값이 들어오면 `"올바른 형식의 값이 아닙니다."`가 자동으로 응답됩니다.
+4. query string · multipart(`@ModelAttribute`)의 숫자·날짜 필드에 잘못된 형식의 값이 들어오면 `"올바른 형식의 값이 아닙니다."`가 `validations`로 자동 응답됩니다. JSON 본문의 타입 불일치는 `GLOBAL_INVALID_JSON`입니다 (7장).
 
 ---
 
 ## 4. Service
+
+설명용으로 단순화한 예시입니다 (실제 코드: `RoleServiceImpl.java`).
 
 ```java
 @Override
@@ -195,7 +203,7 @@ public RoleVO createRole(RegistRoleVO registRoleVO) {
 
 1. 의도한 실패는 **모두 `LearningworksException(ErrorCode)`** 로 던집니다. `IllegalArgumentException` 등을 그대로 던지면 500이 됩니다.
 2. 다른 예외를 감싸서 던질 때는 `new LearningworksException(ErrorCode, e)`를 사용합니다. 원인 예외가 로그에 남습니다.
-3. 조회 결과가 없으면 `null`을 반환하지 말고 `XXX_NOT_EXISTS`(404)를 던집니다. `ApiResponse.OK(null)`은 `body`가 없는 응답이 되어 프론트에서 오류가 납니다.
+3. 조회 결과가 없으면 `null`을 반환하지 말고 `XXX_NOT_EXISTS`(404)를 던집니다. `ApiResponse.OK(null)`은 `body`가 없는 응답이 되어 프론트가 `null`을 받고, 화면 코드에서 오류가 납니다.
 4. DB 예외는 아래처럼 처리됩니다.
 
 | DB 예외                        | 처리하지 않았을 때                                    | 도메인 메시지가 필요할 때                                               |
@@ -296,6 +304,7 @@ ROLE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 역할입니다."), /
 새 API를 만든 뒤 아래 항목을 확인하세요.
 
 - [ ] 컨트롤러 반환 타입이 `ApiResponse<T>`인가?
+- [ ] 권한 어노테이션(`@RequireAction` · `@LoginRequired` · `@PublicApi`)을 붙였는가? (없으면 SUPER_ADMIN 전용)
 - [ ] 생성 API는 `CREATED`(201)를 반환하는가?
 - [ ] JSON 요청은 `@Valid @RequestBody`로 받는가?
 - [ ] 요청 VO에 DB 컬럼 제약(`@NotBlank`, `@Size` 등)이 반영되어 있는가?
