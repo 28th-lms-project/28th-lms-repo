@@ -38,14 +38,16 @@ export default function SideMenu() {
   // 계정이 바뀌거나 로그아웃하면 MainLayout이 key로 사이드바를 새로 만들어 함께 초기화된다.
   const [overrides, setOverrides] = useState({});
 
-  // 페이지를 옮기면 새 현재 그룹의 조작 기록을 지워, 지금 보고 있는 페이지의 링크가 보이게 한다.
+  // 페이지를 옮겼을 때 새 현재 그룹을 사용자가 접어 둔 상태면 그 기록만 지워, 지금 보고 있는 페이지의 링크가 보이게 한다.
+  // 펼쳐 둔 기록은 남겨, 여러 그룹의 페이지를 오가도 다시 클릭하지 않게 한다.
   // (렌더 중 이전 값과 비교해 갱신: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
   const [lastPathname, setLastPathname] = useState(pathname);
   if (lastPathname !== pathname) {
     setLastPathname(pathname);
-    if (currentGroupIds.some((id) => id in overrides)) {
+    const closedCurrentIds = currentGroupIds.filter((id) => overrides[id] === false);
+    if (closedCurrentIds.length > 0) {
       const next = { ...overrides };
-      currentGroupIds.forEach((id) => delete next[id]);
+      closedCurrentIds.forEach((id) => delete next[id]);
       setOverrides(next);
     }
   }

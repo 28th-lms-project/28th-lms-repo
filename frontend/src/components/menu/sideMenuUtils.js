@@ -52,7 +52,7 @@ export const getCurrentGroupIds = (tree, pathname) =>
  * - 사용자가 직접 펼치거나 접은 그룹: 마지막으로 조작한 상태
  * - 그 외: DB의 spread = 'Y'이거나 현재 주소가 든 그룹이면 펼침
  *
- * 페이지를 옮기면 새 현재 그룹의 조작 기록을 지우므로(SideMenu), 지금 보고 있는 페이지의 링크는 이동 직후 항상 보인다.
+ * 페이지를 옮기면 새 현재 그룹의 "접음" 기록을 지우므로(SideMenu), 지금 보고 있는 페이지의 링크는 이동 직후 항상 보인다.
  *
  * @param {object} group 중메뉴
  * @param {boolean} isCurrent 현재 주소가 든 그룹인지
