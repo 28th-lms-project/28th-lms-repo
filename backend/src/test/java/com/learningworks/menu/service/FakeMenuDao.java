@@ -164,6 +164,18 @@ class FakeMenuDao implements MenuDao {
   }
 
   @Override
+  public int updateMenuParent(String menuId, String parentId, int menuOrder) {
+    MenuVO stored = this.menus.get(menuId);
+    if (stored == null) {
+      return 0;
+    }
+    stored.setParentId(parentId);
+    stored.setMenuOrder(menuOrder);
+    stored.setMdfyDt(this.now);
+    return 1;
+  }
+
+  @Override
   public int deleteMenu(String menuId) {
     return this.menus.remove(menuId) == null ? 0 : 1;
   }

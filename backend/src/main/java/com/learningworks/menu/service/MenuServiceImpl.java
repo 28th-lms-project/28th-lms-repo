@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.learningworks.access.dao.AccessDao;
 import com.learningworks.common.action.dao.ActionCodeDao;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.ValidationFailedException;
@@ -19,6 +20,7 @@ import com.learningworks.menu.vo.response.MenuRoleVO;
 import com.learningworks.menu.vo.response.MyMenuVO;
 import com.learningworks.role.RoleConstants;
 import com.learningworks.menu.vo.request.ModifyMenuOrderVO;
+import com.learningworks.menu.vo.request.ModifyMenuParentVO;
 import com.learningworks.menu.vo.request.ModifyMenuVO;
 import com.learningworks.menu.vo.request.RegistMenuVO;
 import com.learningworks.menu.vo.response.MenuListVO;
@@ -40,6 +42,12 @@ public class MenuServiceImpl implements MenuService {
 
   /** 요청자의 현재 역할 조회. AccessChecker와 같은 기준 */
   private ActionCodeDao actionCodeDao;
+
+  /**
+   * 메뉴 이동 시 ACTION의 메뉴 컬럼 갱신 (access-design.md D-10). ACTION은 ACCESS 모듈의 테이블이므로 SQL은 AccessDaoMapper에 둔다.
+   * AccessService가 아닌 AccessDao를 쓰는 이유: AccessServiceImpl이 MenuService를 쓰므로 서비스끼리 순환 의존이 된다.
+   */
+  private AccessDao accessDao;
 
   /**
    * 내 메뉴.
@@ -328,6 +336,78 @@ public class MenuServiceImpl implements MenuService {
     this.menuDao.updateMenuOrders(menuIds);
 
     return this.readMenuList();
+  }
+
+  /**
+   * 상위 메뉴 변경 (메뉴 옮기기, 설계 4-7). 검사 순서는 수정과 같다: 잠금 → 입력값 → 자기 잠금 → mdfyDt → 이름 중복.
+   * - 소메뉴는 다른 중메뉴로, 중메뉴는 다른 대메뉴로만 옮긴다. 대메뉴 · 단계가 다른 상위 메뉴 · 지금과 같은 상위 메뉴는 MENU_MOVE_INVALID
+   * - 옮긴 메뉴는 새 상위 메뉴의 맨 뒤에 붙고 MDFY_DT가 바뀐다. 원래 상위 메뉴의 순서는 1부터 다시 매긴다. MENU_ROLE은 그대로
+   * - 이 메뉴를 가리키는 ACTION의 메뉴 컬럼을 같은 트랜잭션에서 고친다 (D-10)
+   * - 옮길 메뉴 행을 잠근다. 중메뉴면 하위 소메뉴 행도 잠근다: ACTION 저장(checkAndLockMenuPath)이 소메뉴 행을 잠그고 경로를 확인하므로,
+   *   동시에 일어나도 ACTION에 옛 대메뉴가 남지 않는다
+   */
+  @Transactional(rollbackFor = Exception.class)
+  @Override
+  public MenuListVO moveMenu(String actorId, String menuId, ModifyMenuParentVO modifyMenuParentVO) {
+    String actorRoleId = this.findRoleId(actorId);
+
+    MenuVO current = this.menuDao.selectMenuByIdForUpdate(menuId);
+    if (current == null) {
+      throw new LearningworksException(ErrorCode.MENU_NOT_EXISTS);
+    }
+    MenuTree tree = new MenuTree(this.menuDao.selectAllMenus());
+    int level = tree.levelOf(menuId);
+
+    String parentId = modifyMenuParentVO.getParentId();
+    if (level == MenuConstants.TOP_LEVEL || parentId == null
+        || parentId.equals(current.getParentId())) {
+      throw new LearningworksException(ErrorCode.MENU_MOVE_INVALID);
+    }
+    if (tree.get(parentId) == null) {
+      throw new LearningworksException(ErrorCode.MENU_NOT_EXISTS);
+    }
+    if (tree.levelOf(parentId) != level - 1) {
+      throw new LearningworksException(ErrorCode.MENU_MOVE_INVALID);
+    }
+
+    List<String> childIds = this.menuDao.selectChildMenuIds(menuId);
+    childIds.forEach(this.menuDao::selectMenuByIdForUpdate);
+
+    if (MenuServiceImpl.isSelfLockTarget(actorRoleId, tree, menuId)
+        && !this.isAccessible(actorRoleId, tree, parentId)) {
+      throw new LearningworksException(ErrorCode.MENU_SELF_LOCK);
+    }
+
+    if (!Objects.equals(modifyMenuParentVO.getMdfyDt(), current.getMdfyDt())) {
+      throw new LearningworksException(ErrorCode.MENU_OUTDATED);
+    }
+
+    this.checkTitleUnused(parentId, current.getTitle(), menuId);
+
+    this.menuDao.updateMenuParent(menuId, parentId, this.menuDao.selectMaxMenuOrder(parentId) + 1);
+    List<String> oldSiblingIds = this.menuDao.selectChildMenuIds(current.getParentId());
+    if (!oldSiblingIds.isEmpty()) {
+      this.menuDao.updateMenuOrders(oldSiblingIds);
+    }
+
+    if (level == MenuConstants.BOTTOM_LEVEL) {
+      this.accessDao.updateActionMenusByBtmMenuId(menuId, parentId, tree.get(parentId).getParentId());
+    } else {
+      this.accessDao.updateActionTopMenuByMidMenuId(menuId, parentId);
+    }
+
+    return this.readMenuList();
+  }
+
+  /** 요청자의 역할로 이 메뉴(와 모든 상위 메뉴)에 들어갈 수 있는지: 모두 사용(Y)이고 MENU_ROLE에 역할이 있음 (내 메뉴와 같은 기준) */
+  private boolean isAccessible(String roleId, MenuTree tree, String menuId) {
+    Set<String> allowedMenuIds = this.menuDao.selectAllMenuRoles().stream()
+        .filter(menuRole -> roleId.equals(menuRole.getRoleId()))
+        .map(MenuRoleVO::getMenuId)
+        .collect(Collectors.toSet());
+    return tree.selfAndAncestors(menuId).stream()
+        .allMatch(menu -> MenuConstants.YES.equals(menu.getUseYn())
+            && allowedMenuIds.contains(menu.getId()));
   }
 
   /**

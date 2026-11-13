@@ -15,7 +15,7 @@
 | -------------- | ---------------------------------------------------------------------------------------------------------------- |
 | 드래그&드롭    | **브라우저 기본 Drag and Drop API**(HTML5 `draggable`)로 구현. 라이브러리 추가 없음                              |
 | 회원 이동 대상 | **ROLE_SUPER_ADMIN은 이동 대상에서 제외.** 화면 선택지에서 빼고, 백엔드도 거부 (`ROLE_MOVE_TO_SUPER_ADMIN`)      |
-| 작업 순서      | **화면 먼저, 내 권한(버튼 표시) 연동은 나중에** (8장). 서버 권한 검사가 꺼져 있어 화면만으로 모든 기능 확인 가능 |
+| 작업 순서      | **화면 먼저, 내 권한(버튼 표시) 연동은 나중에** (8장). 당시 서버 권한 검사가 꺼져 있어 화면만으로 확인 (2026-11-10부터 켬) |
 
 ---
 
@@ -26,7 +26,7 @@
 | 백엔드 `RoleController` (`/roles`)     | 완료. API 7개                                                     |
 | `src/api/admin/system/role/roleApi.js` | 완료. 함수 7개. errorCode 주석 보완 완료 (3장 끝)                 |
 | `src/components/admin/system/role/`    | 1단계 구현 완료 (7장 파일). 9장 수동 테스트 완료                  |
-| 라우트 · 메뉴                          | 등록 완료 (`MainRouterProvider.jsx`, `menuData.js`의 "권한 관리") |
+| 라우트 · 메뉴                          | 등록 완료 (`MainRouterProvider.jsx`, 메뉴 관리의 "권한 관리")     |
 | 내 권한 연동 (8장)                     | 구현 완료. P1~P6 수동 테스트 완료 (P4 재확인 완료)                |
 
 ---
@@ -45,7 +45,7 @@
 | `getRoleUsers(roleId, options)`           | `GET /roles/{roleId}/users` | `[{ id, name }]` 활성 회원                                             | `ROLE_NOT_EXISTS`                                                                                                                                             |
 | `moveRoleUsers(roleId, replaceRoleId)`    | `PUT /roles/{roleId}/users` | `{ fromRoleId, toRoleId, movedCount }`                                 | `ROLE_MOVE_SAME`(400), `ROLE_MOVE_TO_SUPER_ADMIN`(400), `ROLE_NOT_EXISTS`, `ROLE_TARGET_FORBIDDEN` · `ROLE_ASSIGN_FORBIDDEN`(403), `GLOBAL_UNAUTHORIZED`(401) |
 
-공통: 서버 권한 검사가 켜지면 모든 함수에서 `GLOBAL_UNAUTHORIZED`(401) · `GLOBAL_FORBIDDEN`(403)이 날 수 있습니다. 401은 공통 함수가 로그인 페이지로 이동시킵니다.
+공통: 서버 권한 검사가 켜져 있으므로 모든 함수에서 `GLOBAL_UNAUTHORIZED`(401) · `GLOBAL_FORBIDDEN`(403)이 날 수 있습니다. 401은 공통 함수가 로그인 페이지로 이동시킵니다.
 
 ### 입력값 규칙 (백엔드 검증과 동일)
 
@@ -260,7 +260,7 @@ const getErrorMessage = (error) =>
 | 파일                                       | 내용                                                                                                                                                                                                                                                                                                                                                                              |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/api/permission/permissionApi.js`      | `getMyActionCodes = (options) => api.get("/action-codes/me", undefined, options)`                                                                                                                                                                                                                                                                                                 |
-| `src/store/slices/permissionSliceStore.js` | 상태 `{ status: "idle" \| "loading" \| "loaded" \| "failed", requestId, roleId, roleDisplayName, superAdmin, actionCodes }`. 조회는 thunk `fetchMyPermission` (`status === "idle"`일 때만 요청). 셀렉터 `selectCan(state, code)`, `selectIsSuperAdmin`, `selectPermissionStatus` — `loaded` 전에는 모두 `false`. `logout` 액션(`loginSliceStore`)을 `extraReducers`로 받아 초기화 |
+| `src/store/slices/permissionSliceStore.js` | 상태 `{ status: "idle" \| "loading" \| "loaded" \| "failed", requestId, roleId, roleDisplayName, superAdmin, actionCodes }`. 조회는 thunk `fetchMyPermission` (`status === "idle"`일 때만 요청). 셀렉터 `selectCan(state, code)`, `selectIsSuperAdmin`, `selectPermissionStatus` — `loaded` 전에는 `selectCan` · `selectIsSuperAdmin`이 `false`. `logout` 액션(`loginSliceStore`)을 `extraReducers`로 받아 초기화 |
 | `src/hooks/usePermission.js`               | `const { can, isSuperAdmin, status } = usePermission();` — 대부분의 화면은 `const { can } = usePermission(); can("ROLE_READ")`만 사용                                                                                                                                                                                                                                                                                                                                   |
 | `src/store/StoreProvider.jsx`              | `permission` 리듀서 등록                                                                                                                                                                                                                                                                                                                                                          |
 | `src/layout/MainLayout.jsx`                | 로그인 상태이고 `status === "idle"`이면 `fetchMyPermission()` dispatch. 로그인 직후(`navigate("/")`)와 새로고침 모두 여기서 처리                                                                                                                                                                                                                                                  |
@@ -274,7 +274,7 @@ const getErrorMessage = (error) =>
 
 - **조회 중에는 이 화면에만 "권한 확인 중..."을 표시합니다.** 관리자 전용 페이지라서 표시하며, "권한이 없습니다"가 잠깐 보였다 사라지는 것도 막습니다. 문구는 페이지 단위로 각 화면이 정하므로, 일반 사용자 화면이나 다른 화면의 권한 버튼에는 표시되지 않습니다.
 - **조회 실패 시에만** "권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요."를 표시합니다. 다시 조회는 새로고침(또는 재로그인) 시 합니다.
-- 비로그인 상태에서는 조회하지 않으므로 화면 본문이 비어 있습니다 (로그인 화면 이동은 이 문서 범위 밖).
+- 비로그인 상태에서는 권한을 조회하지 않고, `MainLayout`(과 메뉴 가드)이 로그인 화면으로 이동시킵니다.
 
 ### 이 화면의 표시 규칙
 
@@ -296,6 +296,8 @@ const getErrorMessage = (error) =>
 | P4  | 새로고침                                                                                       | 잠깐 "권한 확인 중..." 후 권한에 맞게 표시                                                    |
 | P5  | SUPER_ADMIN → ADMIN → STUDENT → SUPER_ADMIN 순으로 로그아웃 · 로그인하며 권한 관리 페이지 진입 | 매번 로그인한 계정의 권한으로 다시 조회 · 표시 (이전 계정 권한이 남지 않음)                   |
 | P6  | 백엔드를 끈 상태에서 새로고침                                                                  | "권한 정보를 불러오지 못했습니다..."                                                          |
+
+이 시나리오는 메뉴 가드를 추가하기 전에 확인했습니다. 지금은 메뉴 관리에서 "권한 관리" 메뉴에 역할이 체크되어 있지 않으면, `ROLE_READ`가 있어도 메뉴 가드가 먼저 "권한이 없습니다."를 표시합니다. P2를 다시 확인하려면 그 역할에 "권한 관리" 메뉴를 허용하세요.
 
 ---
 

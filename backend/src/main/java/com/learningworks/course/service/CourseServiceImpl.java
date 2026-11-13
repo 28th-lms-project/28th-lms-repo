@@ -331,4 +331,19 @@ public class CourseServiceImpl implements CourseService{
 		return replyId;
 	}
 
+	@Transactional
+	@Override
+	public List<CourseMemberVO> addCourseMember(String courseId, List<String> studentId) {
+		RegistCourseStudentVO registCourseStudentVO = new RegistCourseStudentVO();
+		registCourseStudentVO.setCourseId(courseId);
+		for (String userId : studentId) {
+			 registCourseStudentVO.setStudentId(userId);
+			 int result = this.courseDao.addStudent(registCourseStudentVO);
+			 if (result == 0) {
+				 throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
+			 }
+		}
+		return this.courseDao.readCourseMembers(courseId);
+	}
+
 }
