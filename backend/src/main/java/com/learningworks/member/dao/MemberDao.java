@@ -11,6 +11,7 @@ import com.learningworks.member.vo.request.ModifyMemberVO;
 import com.learningworks.member.vo.response.MemberDetailVO;
 import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
+import com.learningworks.role.vo.response.RoleVO;
 
 @Mapper
 public interface MemberDao {
@@ -48,6 +49,10 @@ public interface MemberDao {
   List<MemberListVO> selectMemberList(MemberSearchVO searchVO);
 
   MemberDetailVO selectMemberDetail(String id);
+
+  /** ROLE_RANK가 rankBoundary보다 큰 역할 목록 (excludeRoleId 제외, 순위순) */
+  List<RoleVO> selectAssignableRoles(@Param("rankBoundary") int rankBoundary,
+      @Param("excludeRoleId") String excludeRoleId);
 
   int updateMember(@Param("id") String id, @Param("modifyVO") ModifyMemberVO modifyVO);
 

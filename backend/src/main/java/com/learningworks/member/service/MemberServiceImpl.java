@@ -17,7 +17,9 @@ import com.learningworks.member.vo.request.ResetPasswordVO;
 import com.learningworks.member.vo.response.MemberDetailVO;
 import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
+import com.learningworks.role.RoleConstants;
 import com.learningworks.role.service.RoleAssignPolicy;
+import com.learningworks.role.vo.response.RoleVO;
 import com.learningworks.security.auth.LoginPasswordValidator;
 import com.learningworks.security.auth.LoginUser;
 import lombok.RequiredArgsConstructor;
@@ -180,6 +182,17 @@ public class MemberServiceImpl implements MemberService {
       throw new LearningworksException(ErrorCode.USER_NOT_EXISTS);
     }
     return detail;
+  }
+
+  /**
+   * 요청자가 회원에게 지정할 수 있는 역할 목록 (등록 · 역할 변경 · 검색 필터 선택지).
+   * 자기보다 아래 순위의 역할만 반환하며, SUPER_ADMIN 역할은 누구에게도 지정할 수 없으므로 항상 제외한다.
+   */
+  @Transactional(readOnly = true)
+  @Override
+  public List<RoleVO> readAssignableRoles(String actorId) {
+    int rankBoundary = this.roleAssignPolicy.findManageableRankBoundary(actorId);
+    return this.memberDao.selectAssignableRoles(rankBoundary, RoleConstants.SUPER_ADMIN_ROLE);
   }
 
   @Transactional

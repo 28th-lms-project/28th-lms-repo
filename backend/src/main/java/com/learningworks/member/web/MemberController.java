@@ -25,6 +25,7 @@ import com.learningworks.member.vo.request.VerifyRequestVO;
 import com.learningworks.member.vo.response.MemberDetailVO;
 import com.learningworks.member.vo.response.MemberListVO;
 import com.learningworks.member.vo.response.MemberVO;
+import com.learningworks.role.vo.response.RoleVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -47,6 +48,14 @@ public class MemberController {
   public ApiResponse<List<MemberListVO>> readMemberList(MemberSearchVO searchVO) {
     List<MemberListVO> list = this.memberService.readMemberList(AuthUtil.getLoginId(), searchVO);
     return ApiResponse.OK(list, searchVO);
+  }
+
+  /** 내가 회원에게 지정할 수 있는 역할 목록. 회원 관리 화면 전체가 목록 조회 권한에 묶여 있으므로 같은 권한을 사용한다. */
+  @RequireAction(domain = "MEMBER", action = "READ_LIST", description = "회원 목록 조회")
+  @GetMapping("/assignable-roles")
+  public ApiResponse<List<RoleVO>> readAssignableRoles() {
+    List<RoleVO> result = this.memberService.readAssignableRoles(AuthUtil.getLoginId());
+    return ApiResponse.OK(result);
   }
 
   @RequireAction(domain = "MEMBER", action = "READ_DETAIL", description = "회원 상세 조회")

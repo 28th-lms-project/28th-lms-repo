@@ -72,7 +72,18 @@
         WHERE U.ID = #{id}
           AND U.DEL_YN = 'N'
 	</select>
-	
+
+	<select id="selectAssignableRoles"
+            resultType="com.learningworks.role.vo.response.RoleVO">
+       SELECT ROLE_ID
+            , ROLE_DISPLAY_NAME
+         FROM "ROLE"
+        WHERE ROLE_RANK <![CDATA[ > ]]> #{rankBoundary}
+          AND ROLE_ID <![CDATA[ <> ]]> #{excludeRoleId}
+        ORDER BY ROLE_RANK
+            , ROLE_ID
+	</select>
+
 	<select id="selectMyInfo" parameterType="string"
         resultType="com.learningworks.member.vo.response.MemberVO">
        SELECT ID
