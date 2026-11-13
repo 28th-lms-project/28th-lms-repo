@@ -6,10 +6,10 @@ import {Grid} from "../../../common/Grid";
 
 import {
     getAccessList as fetchAccessApi,
-    getAccessMenuList,
     getActionCodes,
     saveAccessList,
 } from "../../../../api/admin/system/access/accessApi";
+import {getMenus} from "../../../../api/admin/system/menu/menuApi";
 
 import styles from "./Access.module.css";
 
@@ -69,12 +69,12 @@ function AccessManagement() {
     const [isEditing, setIsEditing] = useState(false);
     const [editingOriginalData, setEditingOriginalData] = useState(null);
 
-    // 메뉴 전체 조회
+    // 메뉴 전체 조회 (메뉴 모듈의 GET /menus. 단계 → 상위 메뉴 → 메뉴 순서로 정렬되어 옴)
     const getMenuList = useCallback(async () => {
         try {
-            const body = await getAccessMenuList();
+            const body = await getMenus();
 
-            setMenuList(body ?? []);
+            setMenuList(body?.menus ?? []);
         } catch (error) {
             console.error("메뉴 조회 실패:", error);
             alert(getErrorMessage(error));
@@ -154,13 +154,11 @@ function AccessManagement() {
         setIsActionNameEdited(false);
     };
 
-    // 메뉴 계층별 데이터
+    // 메뉴 계층별 데이터 (대메뉴는 parentId가 null)
     const topMenuList = useMemo(() => {
 
         return menuList.filter(
-            (item) => !menuList.some(
-                (parent) => parent.id === item.parentId
-            )
+            (item) => item.parentId === null
         );
 
     }, [menuList]);

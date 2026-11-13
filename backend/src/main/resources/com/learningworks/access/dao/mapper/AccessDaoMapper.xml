@@ -39,21 +39,16 @@
         <if test="actionName != null and actionName != ''">
             AND A.ACTION_NAME LIKE '%' || #{actionName} || '%'
         </if>
-         ORDER BY A.ACTION_ID DESC
-
-    </select>
-
-
-    <!-- 전체 메뉴 조회 -->
-    <select id="selectMenuList"
-            resultType="com.learningworks.access.vo.response.AccessMenuVO">
-
-        SELECT ID AS id
-             , TITLE AS title
-             , PARENT_ID AS parentId
-          FROM MENU
-         WHERE NVL(DEL_YN, 'N') = 'N'
-         ORDER BY ID DESC
+         <!-- 메뉴 관리 화면 · 사이드바와 같은 순서 (대 → 중 → 소 메뉴 순서), 같은 메뉴 안에서는 권한명 순 -->
+         <!-- 순서가 같거나 비어 있는 메뉴(예전 개발용 데이터)도 같은 메뉴끼리 모이도록 각 단계에 메뉴 ID를 붙인다 -->
+         ORDER BY TOP_MENU.MENU_ORDER NULLS LAST
+                , A.TOP_MENU_ID
+                , MID_MENU.MENU_ORDER NULLS LAST
+                , A.MID_MENU_ID
+                , BTM_MENU.MENU_ORDER NULLS LAST
+                , A.BTM_MENU_ID
+                , A.ACTION_NAME
+                , A.ACTION_ID
 
     </select>
 

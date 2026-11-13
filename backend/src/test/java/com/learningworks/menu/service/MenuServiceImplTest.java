@@ -687,6 +687,52 @@ class MenuServiceImplTest {
       Assertions.assertThat(this.delete("admin", "B5").getId()).isEqualTo("B5");
       Assertions.assertThat(this.delete("super", "B4").getId()).isEqualTo("B4");
     }
+
+    @Test
+    @DisplayName("삭제할 메뉴 행을 잠근다 (ACTION 저장과 동시에 일어나도 참조 검사가 어긋나지 않게)")
+    void locksMenuRow() {
+      this.delete("super", "B2");
+
+      Assertions.assertThat(this.dao().lockedMenuIds).containsExactly("B2");
+    }
+  }
+
+  @Nested
+  @DisplayName("ACTION 저장용 메뉴 경로 확인 (checkAndLockMenuPath)")
+  class CheckAndLockMenuPath {
+
+    boolean check(String topMenuId, String midMenuId, String btmMenuId) {
+      return MenuServiceImplTest.this.menuService.checkAndLockMenuPath(topMenuId, midMenuId,
+          btmMenuId);
+    }
+
+    @Test
+    @DisplayName("대메뉴 > 중메뉴 > 소메뉴로 이어지면 true, 소메뉴 행을 잠근다")
+    void validPath() {
+      Assertions.assertThat(this.check("T2", "M2", "B2")).isTrue();
+      Assertions.assertThat(MenuServiceImplTest.this.menuDao.lockedMenuIds).containsExactly("B2");
+    }
+
+    @Test
+    @DisplayName("계층이 맞지 않으면 false")
+    void invalidHierarchy() {
+      // 소메뉴의 상위가 다른 중메뉴
+      Assertions.assertThat(this.check("T2", "M3", "B2")).isFalse();
+      // 중메뉴의 상위가 다른 대메뉴
+      Assertions.assertThat(this.check("T1", "M2", "B2")).isFalse();
+      // 대메뉴 자리에 상위가 있는 메뉴 (4단계 이상인 잘못된 데이터)
+      MenuServiceImplTest.this.menuDao.put("X", "B2", 1, "잘못된 메뉴", "/x");
+      Assertions.assertThat(this.check("M2", "B2", "X")).isFalse();
+    }
+
+    @Test
+    @DisplayName("없는 메뉴이거나 값이 비어 있으면 false")
+    void missingMenu() {
+      Assertions.assertThat(this.check("T2", "M2", "NOPE")).isFalse();
+      Assertions.assertThat(this.check("T2", "NOPE", "B2")).isFalse();
+      Assertions.assertThat(this.check(null, "M2", "B2")).isFalse();
+      Assertions.assertThat(this.check("T2", "M2", null)).isFalse();
+    }
   }
 
 }
