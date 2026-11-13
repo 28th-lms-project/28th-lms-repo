@@ -83,7 +83,8 @@
             , u.PWD_CHANGE_DT 
             , u.PWD_FAIL_CNT 
          FROM "USER" u 
-        WHERE U.BASE_ROLE =(SELECT R.ROLE_ID 
+        WHERE DEL_YN = 'N'
+          AND U.BASE_ROLE =(SELECT R.ROLE_ID 
                               FROM "ROLE" r 
                              WHERE R.ROLE_ID = 'ROLE_STUDENT')
 	</select>
@@ -103,7 +104,8 @@
             , u.PWD_CHANGE_DT 
             , u.PWD_FAIL_CNT 
          FROM "USER" u 
-        WHERE U.BASE_ROLE =(SELECT R.ROLE_ID 
+        WHERE DEL_YN = 'N'
+          AND U.BASE_ROLE =(SELECT R.ROLE_ID 
                               FROM "ROLE" r 
                              WHERE R.ROLE_ID = 'ROLE_TUTOR')
 	       
