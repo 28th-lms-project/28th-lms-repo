@@ -59,7 +59,7 @@ public interface ExamDao {
 	/** 답안 1건의 채점 결과(IS_CORRECT) 수정 */
 	int updateAnswerGrade(@Param("answerId") String answerId, @Param("isCorrect") String isCorrect);
 
-
+	
 //	String getTestSetIdByCourseName(String courseName);
 
 }

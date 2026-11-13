@@ -228,4 +228,12 @@ public class CourseController {
 	public ApiResponse<CourseVO> addCourse(@Valid @ModelAttribute RegistCourseVO registCourseVO) {
 		return ApiResponse.CREATED(this.courseService.addCourse(registCourseVO));
 	}
+	
+	@PostMapping("admin/course/list/{courseId}")
+	public ApiResponse<List<CourseMemberVO>> addCourseMember (@PathVariable String courseId 
+							,@RequestBody  List<String> studentId){
+		List<CourseMemberVO> memberList = this.courseService.addCourseMember(courseId,studentId);
+		return ApiResponse.OK(null);
+	}
+	
 }
