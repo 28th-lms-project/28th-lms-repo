@@ -45,3 +45,13 @@ export const viewTestSetQuestions = (testSetId) =>
 /** 시험 제출 API */
 export const createTestAnswers = (testSetId, submitAnswers) =>
   api.post(`my/test/${testSetId}`, { answersList: [...submitAnswers] });
+
+/** 시험 제출자 채점 API */
+export const correctStudentTest = (testSetId, userId) =>
+  api.get(`admin/${testSetId}/correct/${userId}`);
+
+/** 답안 1건 채점 결과 수정. isCorrect: "Y"(정답) | "N"(오답) | "H"(부분정답). 수정한 답안 ID 반환 */
+export const updateAnswerGrade = (answerId, isCorrect) =>
+  api.put(`/admin/test/answer/${encodeURIComponent(answerId)}/grade`, {
+    isCorrect,
+  });

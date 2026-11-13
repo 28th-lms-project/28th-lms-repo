@@ -12,6 +12,8 @@ export const testSliceStore = createSlice({
     // 시험 응시 모달 (ExamTakeModal). null이면 닫힘
     // { testSetId, title, questions }
     takeExam: null,
+    // 채점 모달(ExamGradeModal)에서 채점 중인 시험 세트 ID. 모달이 닫혀 있으면 ""
+    gradeTestSetId: "",
   },
   reducers: {
     setTestList(state, action) {
@@ -100,6 +102,13 @@ export const testSliceStore = createSlice({
     },
     closeTakeExam(state) {
       state.takeExam = null;
+    },
+    // 채점 모달을 열 때 시험 세트 ID 저장. payload: testSetId
+    setGradeTestSetId(state, action) {
+      state.gradeTestSetId = action.payload;
+    },
+    clearGradeTestSetId(state) {
+      state.gradeTestSetId = "";
     },
   },
 });

@@ -345,4 +345,26 @@
              , #{isCorrect}
              , SYSDATE )
     </insert>
+    
+    
+    <select id="correctStudentAnswer" parameterType="string" resultType="com.learningworks.exam.vo.response.ExamQuestionAnswerVO">
+    SELECT COURSE_STUDENT_ID
+         , TEST_SET_ID
+         , ANSWER
+         , CRT_DT
+         , IS_CORRECT
+         , ETC
+         , TEST_ID
+         , ID
+      FROM TEST_ANSWERS  
+     WHERE TEST_SET_ID = #{testSetId}
+       AND COURSE_STUDENT_ID = #{userId}
+    </select>
+
+    <!-- 강사 수동 채점: 답안 1건의 채점 결과 수정 -->
+    <update id="updateAnswerGrade">
+        UPDATE TEST_ANSWERS
+           SET IS_CORRECT = #{isCorrect}
+         WHERE ID = #{answerId}
+    </update>
 </mapper>

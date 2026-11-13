@@ -9,6 +9,7 @@ import com.learningworks.exam.vo.request.ModifyExamQuestionVO;
 import com.learningworks.exam.vo.request.RegistExamQuestionVO;
 import com.learningworks.exam.vo.request.RegistTestAnswersVO;
 import com.learningworks.exam.vo.request.RegistTestSetVO;
+import com.learningworks.exam.vo.response.ExamQuestionAnswerVO;
 import com.learningworks.exam.vo.response.ExamQuestionListVO;
 import com.learningworks.exam.vo.response.ExamQuestionVO;
 import com.learningworks.exam.vo.response.ExamSetVO;
@@ -52,6 +53,11 @@ public interface ExamDao {
 
 	/** 답안 1건 저장. 파라미터가 VO 하나라 selectKey 로 만든 id 가 VO 에 채워진다 */
 	int insertTestAnswer(RegistTestAnswersVO registTestAnswersVO);
+
+	List<ExamQuestionAnswerVO> correctStudentAnswer(@Param("testSetId")String testSetId,@Param("userId") String userId);
+
+	/** 답안 1건의 채점 결과(IS_CORRECT) 수정 */
+	int updateAnswerGrade(@Param("answerId") String answerId, @Param("isCorrect") String isCorrect);
 
 
 //	String getTestSetIdByCourseName(String courseName);

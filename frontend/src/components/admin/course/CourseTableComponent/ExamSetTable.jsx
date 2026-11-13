@@ -9,6 +9,7 @@ import {
 import ConfirmModal from "./ConfirmModal";
 import ExamQuestionViewModal from "./ExamQuestionViewModal";
 import ExamTakeModal from "./ExamTakeModal";
+import ExamGradeModal from "./ExamGradeModal";
 
 /**
  * 시험 응시(시험 명 클릭)가 가능한 역할.
@@ -83,6 +84,10 @@ export default function ExamSetTable({
   const [showYnTarget, setShowYnTarget] = useState(null);
   // 문제 보기 모달에 띄울 내용 { title, questions } (null이면 닫힘)
   const [questionView, setQuestionView] = useState(null);
+  // 채점 모달에 띄울 내용 { title, questions } (null이면 닫힘)
+  const [gradeView, setGradeView] = useState(null);
+  // 이 강의를 듣는 수강생 (CourseItem에서 강좌를 열 때 불러와 둔 목록)
+  const { showStudents } = useSelector((store) => store.courses);
   // 시험 응시 모달 열림 여부 (내용은 testSlice.takeExam)
   const isTakeExamOpen = useSelector((store) => store.test.takeExam !== null);
   const dispatch = useDispatch();
@@ -149,9 +154,25 @@ export default function ExamSetTable({
     }
   };
 
-  // TODO: 채점 기능
-  const onClickGrade = (testSet) => {
-    console.log("채점", testSet.id);
+  // 문제 목록을 불러와 채점 모달을 연다 (수강생 탭 + 문제 · 정답)
+  // TODO: 수강생 답안 조회 API가 완성되면 ExamGradeModal 의 studentAnswers 로 연결
+  const onClickGrade = async (testSet) => {
+    if (!canViewQuestions) {
+      alert("권한이 없습니다.");
+      return;
+    }
+    try {
+      const result = await viewTestSetQuestions(testSet.id);
+      // 채점 모달은 testSetId 를 slice(testSlice.gradeTestSetId)에서 꺼내 쓴다
+      dispatch(testActions.setGradeTestSetId(testSet.id));
+      setGradeView({
+        title: testSet.setName,
+        questions: result?.examList ?? [],
+      });
+    } catch (e) {
+      console.log(e);
+      alert("문제를 불러오지 못했습니다.");
+    }
   };
 
   // TODO: 삭제 API가 생기면 확인 후 호출
@@ -183,6 +204,17 @@ export default function ExamSetTable({
           title={questionView.title}
           questions={questionView.questions}
           onClose={() => setQuestionView(null)}
+        />
+      )}
+      {gradeView && (
+        <ExamGradeModal
+          title={gradeView.title}
+          questions={gradeView.questions}
+          students={showStudents ?? []}
+          onClose={() => {
+            dispatch(testActions.clearGradeTestSetId());
+            setGradeView(null);
+          }}
         />
       )}
       {isTakeExamOpen && <ExamTakeModal />}

@@ -19,6 +19,7 @@ import com.learningworks.exam.vo.request.RegistExamQuestionVO;
 import com.learningworks.exam.vo.request.RegistTestAnswersListVO;
 import com.learningworks.exam.vo.request.RegistTestAnswersVO;
 import com.learningworks.exam.vo.request.RegistTestSetVO;
+import com.learningworks.exam.vo.response.ExamQuestionAnswerVO;
 import com.learningworks.exam.vo.response.ExamQuestionListVO;
 import com.learningworks.exam.vo.response.ExamQuestionVO;
 import com.learningworks.exam.vo.response.ExamSetVO;
@@ -364,6 +365,27 @@ public class ExamServiceImpl implements ExamService {
 				.filter(number -> !number.isEmpty())
 				.sorted()
 				.collect(Collectors.joining(","));
+	}
+
+	@Override
+	public List<ExamQuestionAnswerVO> isCorrectSetByUserId(String testSetId, String userId) {
+		List<ExamQuestionAnswerVO> answerLsit = this.examDao.correctStudentAnswer(testSetId, userId);
+		System.out.println(answerLsit);
+		return answerLsit;
+	}
+
+	@Transactional
+	@Override
+	public String updateAnswerGrade(String answerId, String isCorrect) {
+		if (answerId == null || answerId.isBlank()) {
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
+		int updatedRows = this.examDao.updateAnswerGrade(answerId, isCorrect);
+		if (updatedRows != 1) {
+			// 해당 ID의 답안이 없음
+			throw new LearningworksException(ErrorCode.GLOBAL_BAD_REQUEST);
+		}
+		return answerId;
 	}
 
 //	@Override

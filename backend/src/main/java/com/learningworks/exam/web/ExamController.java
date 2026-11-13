@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import com.learningworks.common.action.RequireAction;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.exam.service.ExamService;
+import com.learningworks.exam.vo.request.ModifyAnswerGradeVO;
 import com.learningworks.exam.vo.request.ModifyExamQuestionVO;
 import com.learningworks.exam.vo.request.ModifyTestSetShowYnVO;
 import com.learningworks.exam.vo.request.RegistExamQuestionVO;
@@ -126,10 +127,23 @@ public class ExamController {
 		return ApiResponse.OK("제출완료");
 	}
 	
-	@GetMapping("admin/{testSetId}/correct")
-	public ApiResponse<List<ExamQuestionAnswerVO>> isCorrectSetByUserId(@PathVariable String testSetId){
-		List<ExamQuestionAnswerVO> answerList = this.examService.isCorrectSetByUserId(testSetId);
+	@GetMapping("admin/{testSetId}/correct/{userId}")
+	public ApiResponse<List<ExamQuestionAnswerVO>> isCorrectSetByUserId(@PathVariable String testSetId , @PathVariable String userId){
+		List<ExamQuestionAnswerVO> answerList = this.examService.isCorrectSetByUserId(testSetId,userId);
 		return ApiResponse.OK(answerList);
+	}
+
+	/**
+	 * 답안 1건의 채점 결과 수정 (강사 수동 채점).
+	 * body: { "isCorrect": "Y" | "N" | "H" }
+	 * 권한 코드 EXAM_GRADE: SUPER_ADMIN은 항상 허용, 강사 · 관리자는 권한 관리 화면에서 부여해야 한다.
+	 */
+	@RequireAction(domain = "EXAM", action = "GRADE", description = "시험 답안 채점")
+	@PutMapping("admin/test/answer/{answerId}/grade")
+	public ApiResponse<String> updateAnswerGrade(@PathVariable String answerId,
+			@Valid @RequestBody ModifyAnswerGradeVO modifyAnswerGradeVO) {
+		return ApiResponse.OK(
+				this.examService.updateAnswerGrade(answerId, modifyAnswerGradeVO.getIsCorrect()));
 	}
 	
 }

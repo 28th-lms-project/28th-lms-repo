@@ -6,6 +6,7 @@ import com.learningworks.exam.vo.request.ModifyExamQuestionVO;
 import com.learningworks.exam.vo.request.RegistExamQuestionVO;
 import com.learningworks.exam.vo.request.RegistTestAnswersListVO;
 import com.learningworks.exam.vo.request.RegistTestSetVO;
+import com.learningworks.exam.vo.response.ExamQuestionAnswerVO;
 import com.learningworks.exam.vo.response.ExamQuestionListVO;
 import com.learningworks.exam.vo.response.ExamQuestionVO;
 import com.learningworks.exam.vo.response.ExamSetVO;
@@ -38,6 +39,16 @@ public interface ExamService {
 	 * @param answersVO 제출 답안 목록
 	 */
 	void createTestAnswerByTestSetId(String testSetId, String userId, RegistTestAnswersListVO answersVO);
+
+	List<ExamQuestionAnswerVO> isCorrectSetByUserId(String testSetId, String userId);
+
+	/**
+	 * 답안 1건의 채점 결과 수정.
+	 * @param answerId 답안 ID (TN-...)
+	 * @param isCorrect Y: 정답, N: 오답, H: 부분정답
+	 * @return 수정한 답안 ID
+	 */
+	String updateAnswerGrade(String answerId, String isCorrect);
 
 //	ExamSetVO readExamSetByCourseName(String courseName);
 
