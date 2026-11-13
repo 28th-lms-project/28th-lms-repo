@@ -11,16 +11,7 @@ import { testActions } from "../../../../store/slices/testSliceStore";
 import style from "./Update.module.css";
 import { questActions } from "../../../../store/slices/questionSliceStore";
 
-// 라디오 버튼 목록. value는 DB에 저장된 ANSWER_TYPE 값과 똑같이 맞춰야 합니다.
-const answerTypes = [
-  { value: "객관식-단항", label: "객관식 - 단항" },
-  { value: "객관식-다항", label: "객관식 - 다항" },
-  { value: "주관식", label: "주관식" },
-  { value: "O/X", label: "O/X" },
-  { value: "코드작성", label: "코드작성" },
-];
-
-export default function UpdateTest({ questionId }) {
+export default function UpdateTest({ questionId, answerTypes }) {
   const [modifying, setModifying] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -33,10 +24,7 @@ export default function UpdateTest({ questionId }) {
   const [oxAnswer, setOxAnswer] = useState("");
   const [multiAnswers, setMultiAnswers] = useState([]);
   const answerTypeGroup = useId();
-  const isManualGraded = ["주관식", "코드작성"].includes(selectedAnswerType);
-  const isOx = selectedAnswerType === "O/X";
-  const isMulti = selectedAnswerType === "객관식-다항";
-  const usesChoices = !isManualGraded && !isOx;
+
   const questionRef = useRef();
 
   const pointRef = useRef();
@@ -44,12 +32,25 @@ export default function UpdateTest({ questionId }) {
   const correctRef = useRef(); // 정답 번호
   const answerRefs = useRef([]); // 보기 입력창 5개
 
-  const renderFieldErrors = (field) =>
-    fieldErrors[field]?.map((message, index) => (
+  const renderFieldErrors = (field) => {
+    const messages = fieldErrors[field];
+    if (!messages) {
+      return null;
+    }
+    return messages.map((message, index) => (
       <p key={`${field}-${index}`} className={style.fieldError} role="alert">
         {message}
       </p>
     ));
+  };
+
+  const hasFieldError = (field) => {
+    const messages = fieldErrors[field];
+    if (!messages) {
+      return false;
+    }
+    return messages.length > 0;
+  };
 
   useEffect(() => {
     if (!modifying) {
@@ -66,19 +67,28 @@ export default function UpdateTest({ questionId }) {
           dispatch(questActions.setViewQuestion(response));
           setAnswerCnt(Number(response.answerCount));
           setSelectedAnswerType(response.answerType);
-          setOxAnswer(
-            ["O", "X"].includes(response.correctAnswer)
-              ? response.correctAnswer
-              : "",
-          );
-          setMultiAnswers(
-            response.answerType === "객관식-다항"
-              ? String(response.correctAnswer ?? "")
-                  .split(",")
-                  .map((answer) => answer.trim())
-                  .filter(Boolean)
-              : [],
-          );
+          if (
+            response.correctAnswer === "O" ||
+            response.correctAnswer === "X"
+          ) {
+            setOxAnswer(response.correctAnswer);
+          } else {
+            setOxAnswer("");
+          }
+
+          if (
+            response.answerType === "ANSWER_MULTIPLE" &&
+            response.correctAnswer
+          ) {
+            setMultiAnswers(
+              String(response.correctAnswer)
+                .split(",")
+                .map((answer) => answer.trim())
+                .filter(Boolean),
+            );
+          } else {
+            setMultiAnswers([]);
+          }
         }
       } catch (e) {
         if (!ignoreUpdateState) {
@@ -113,30 +123,59 @@ export default function UpdateTest({ questionId }) {
 
   const onClickUpdateHandler = () => {
     setFieldErrors({});
-    if (isMulti && multiAnswers.length < 2) {
+    if (selectedAnswerType === "ANSWER_MULTIPLE" && multiAnswers.length < 2) {
       setFieldErrors({ correctAnswer: ["정답을 2개 이상 선택해주세요."] });
       return;
     }
-    const count = usesChoices ? Number(answerCnt) : null;
-    const getAnswer = (index) =>
-      !usesChoices
-        ? null
-        : index < count
-          ? (answerRefs.current[index]?.value ?? "")
-          : "";
+    const noChoices =
+      selectedAnswerType === "ANSWER_WRITE" ||
+      selectedAnswerType === "ANSWER_CODE" ||
+      selectedAnswerType === "ANSWER_CHECK";
+
+    let count = null;
+    if (!noChoices) {
+      count = Number(answerCnt);
+    }
+
+    const getAnswer = (index) => {
+      if (noChoices) {
+        return null;
+      }
+      if (index >= count) {
+        return "";
+      }
+      const input = answerRefs.current[index];
+      if (!input) {
+        return "";
+      }
+      return input.value;
+    };
+
+    const getCorrectAnswer = () => {
+      // 주관식 · 코드작성은 강사가 채점하므로 정답 없음
+      if (
+        selectedAnswerType === "ANSWER_WRITE" ||
+        selectedAnswerType === "ANSWER_CODE"
+      ) {
+        return null;
+      }
+      if (selectedAnswerType === "ANSWER_CHECK") {
+        return oxAnswer;
+      }
+      if (selectedAnswerType === "ANSWER_MULTIPLE") {
+        return [...multiAnswers]
+          .sort((a, b) => Number(a) - Number(b))
+          .join(",");
+      }
+      return correctRef.current.value;
+    };
 
     // 백엔드 ModifyExamQuestionVO 필드 이름과 똑같이 맞춤
     const modQuestion = {
       question: questionRef.current.value,
       subQuestion: subQuestRef.current.value,
       answerType: selectedAnswerType,
-      correctAnswer: isManualGraded
-        ? null
-        : isOx
-          ? oxAnswer
-          : isMulti
-            ? [...multiAnswers].sort((a, b) => Number(a) - Number(b)).join(",")
-            : correctRef.current.value,
+      correctAnswer: getCorrectAnswer(),
       pointAlloc: Number(pointRef.current.value),
       answerSheet1: getAnswer(0),
       answerSheet2: getAnswer(1),
@@ -202,7 +241,10 @@ export default function UpdateTest({ questionId }) {
       }
     })();
   };
-
+  let minAnswerCnt = "1";
+  if (selectedAnswerType === "ANSWER_MULTIPLE") {
+    minAnswerCnt = "2";
+  }
   return (
     <>
       {!modifying && (
@@ -244,19 +286,20 @@ export default function UpdateTest({ questionId }) {
             {renderFieldErrors("global")}
             <div className={style.testTypes}>
               {answerTypes.map((type) => (
-                <div key={type.value} className={style.type}>
+                <div key={type.id} className={style.type}>
                   <input
                     type="radio"
                     className={style.Type}
                     name={answerTypeGroup}
-                    value={type.value}
-                    checked={selectedAnswerType === type.value}
+                    value={type.id}
+                    checked={selectedAnswerType === type.id}
                     onChange={() => {
-                      setSelectedAnswerType(type.value);
+                      setSelectedAnswerType(type.id);
                       setOxAnswer("");
                       setMultiAnswers([]);
                       if (
-                        ["객관식-단항", "객관식-다항"].includes(type.value) &&
+                        (type.id === "ANSWER_SELECT" ||
+                          type.id === "ANSWER_MULTIPLE") &&
                         Number(answerCnt) < 2
                       ) {
                         setAnswerCnt(4);
@@ -264,7 +307,7 @@ export default function UpdateTest({ questionId }) {
                       setFieldErrors({});
                     }}
                   />
-                  <label>{type.label}</label>
+                  <label>{type.name}</label>
                 </div>
               ))}
             </div>
@@ -284,10 +327,11 @@ export default function UpdateTest({ questionId }) {
             ></textarea>
             {renderFieldErrors("subQuestion")}
 
-            {isManualGraded && (
+            {(selectedAnswerType === "ANSWER_WRITE" ||
+              selectedAnswerType === "ANSWER_CODE") && (
               <p>수강생이 작성한 답변은 제출 후 강사가 채점합니다.</p>
             )}
-            {isOx && (
+            {selectedAnswerType === "ANSWER_CHECK" && (
               <fieldset>
                 <legend>정답</legend>
                 {["O", "X"].map((option) => (
@@ -305,7 +349,7 @@ export default function UpdateTest({ questionId }) {
                 {renderFieldErrors("correctAnswer")}
               </fieldset>
             )}
-            {isMulti && (
+            {selectedAnswerType === "ANSWER_MULTIPLE" && (
               <fieldset>
                 <legend>정답 (2개 이상 선택)</legend>
                 {[1, 2, 3, 4, 5]
@@ -317,13 +361,16 @@ export default function UpdateTest({ questionId }) {
                         value={String(num)}
                         checked={multiAnswers.includes(String(num))}
                         onChange={(event) => {
-                          setMultiAnswers((previous) =>
-                            event.target.checked
-                              ? [...previous, String(num)]
-                              : previous.filter(
-                                  (answer) => answer !== String(num),
-                                ),
-                          );
+                          const checked = event.target.checked;
+                          const value = String(num);
+                          setMultiAnswers((previous) => {
+                            if (checked) {
+                              return [...previous, value];
+                            }
+                            return previous.filter(
+                              (answer) => answer !== value,
+                            );
+                          });
                           setFieldErrors({});
                         }}
                       />
@@ -333,7 +380,14 @@ export default function UpdateTest({ questionId }) {
                 {renderFieldErrors("correctAnswer")}
               </fieldset>
             )}
-            <div hidden={!usesChoices || isMulti}>
+            <div
+              hidden={
+                selectedAnswerType === "ANSWER_WRITE" ||
+                selectedAnswerType === "ANSWER_CODE" ||
+                selectedAnswerType === "ANSWER_CHECK" ||
+                selectedAnswerType === "ANSWER_MULTIPLE"
+              }
+            >
               <input
                 type="number"
                 min="1"
@@ -356,11 +410,17 @@ export default function UpdateTest({ questionId }) {
               />
               {renderFieldErrors("pointAlloc")}
             </div>
-            <div hidden={!usesChoices}>
+            <div
+              hidden={
+                selectedAnswerType === "ANSWER_WRITE" ||
+                selectedAnswerType === "ANSWER_CODE" ||
+                selectedAnswerType === "ANSWER_CHECK"
+              }
+            >
               <label>보기</label>
               <input
                 type="number"
-                min={isMulti ? "2" : "1"}
+                min={minAnswerCnt}
                 max="5"
                 value={answerCnt}
                 onChange={(e) => {
@@ -379,9 +439,11 @@ export default function UpdateTest({ questionId }) {
               <div
                 key={index}
                 hidden={
-                  !usesChoices ||
+                  selectedAnswerType === "ANSWER_WRITE" ||
+                  selectedAnswerType === "ANSWER_CODE" ||
+                  selectedAnswerType === "ANSWER_CHECK" ||
                   (index >= Number(answerCnt) &&
-                    !fieldErrors[`answerSheet${index + 1}`]?.length)
+                    !hasFieldError(`answerSheet${index + 1}`))
                 }
               >
                 <input

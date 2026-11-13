@@ -29,6 +29,7 @@ public enum ErrorCode {
   FILES_INVALID_CONTENT(HttpStatus.BAD_REQUEST, "파일 확장자와 실제 파일 형식이 일치하지 않습니다."), //
   COURSE_DATA_EMPTY_CONTENT(HttpStatus.BAD_REQUEST, "교육 자료 내용을 입력해주세요."), //
   LINK_PREVIEW_INVALID_URL(HttpStatus.BAD_REQUEST, "미리보기를 만들 수 없는 URL입니다. http:// 또는 https:// 로 시작하는 공개 주소만 사용할 수 있습니다."), //
+  CODE_PARENT_INVALID(HttpStatus.BAD_REQUEST, "상위 변수로 지정할 수 없는 값입니다."), //
   MENU_PARENT_INVALID(HttpStatus.BAD_REQUEST, "소메뉴 아래에는 메뉴를 추가할 수 없습니다."), //
   MENU_ORDER_INVALID(HttpStatus.BAD_REQUEST, "메뉴 순서 정보가 올바르지 않습니다."), //
   MENU_ROLE_INVALID(HttpStatus.BAD_REQUEST, "존재하지 않는 역할이 포함되어 있습니다."), //
@@ -58,6 +59,7 @@ public enum ErrorCode {
   EXAM_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."), //
   ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
   COURSE_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 교육 자료입니다."), //
+  CODE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 환경 변수입니다."), //
   MENU_NOT_EXISTS(HttpStatus.NOT_FOUND, "메뉴가 존재하지 않습니다."), //
 
   // 405 METHOD NOT ALLOWED
@@ -73,6 +75,7 @@ public enum ErrorCode {
   ACTION_CODE_USED(HttpStatus.CONFLICT, "이미 등록된 권한 코드입니다."), //
   ACTION_ROLE_PROTECTED(HttpStatus.CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다."), //
   FILES_IN_USE(HttpStatus.CONFLICT, "등록된 교육 자료에서 사용 중인 파일은 삭제할 수 없습니다."), //
+  CODE_ID_USED(HttpStatus.CONFLICT, "이미 사용 중인 환경 변수 ID입니다."), //
   MENU_URL_USED(HttpStatus.CONFLICT, "이미 다른 메뉴에서 사용 중인 URL입니다."), //
   MENU_HAS_CHILDREN(HttpStatus.CONFLICT, "하위 메뉴가 있어 삭제할 수 없습니다. 하위 메뉴를 먼저 삭제해주세요."), //
   MENU_IN_USE(HttpStatus.CONFLICT, "이 메뉴를 사용하는 접근 권한(ACTION)이 있어 삭제할 수 없습니다. 접근 관리에서 먼저 변경해주세요."), //
@@ -105,6 +108,8 @@ public enum ErrorCode {
   COURSE_DATA_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 등록에 실패했습니다."), //
   COURSE_DATA_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 수정에 실패했습니다."), //
   COURSE_DATA_FAILURE_DELETE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 삭제에 실패했습니다."), //
+  CODE_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "환경 변수 생성에 실패했습니다."), //
+  CODE_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "환경 변수 수정에 실패했습니다."), //
 
   // 502 BAD GATEWAY
   LINK_PREVIEW_FAILURE(HttpStatus.BAD_GATEWAY, "링크 미리보기 정보를 가져올 수 없습니다."), //
