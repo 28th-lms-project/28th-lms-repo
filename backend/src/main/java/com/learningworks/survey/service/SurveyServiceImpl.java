@@ -10,6 +10,7 @@ import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.survey.dao.SurveyDao;
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
 import com.learningworks.survey.vo.request.ModifySurveyVO;
+import com.learningworks.survey.vo.request.RegistCourseSurveyAnswerListVO;
 import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
@@ -196,6 +197,16 @@ public class SurveyServiceImpl implements SurveyService {
 		return courseSurveyId;
 	}
 
+	@Override
+	@Transactional
+	public void createCourseSurveyAnswers(String courseId, String courseSurveyId, String userId,
+			@Valid RegistCourseSurveyAnswerListVO answer) {
+		
+		//TODO 설문 답변 등록 구현 필요
+		
+	}
+
+	
 	
 	
 }

@@ -2,6 +2,7 @@ package com.learningworks.survey.web;
 
 import java.util.List;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.survey.service.SurveyService;
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
 import com.learningworks.survey.vo.request.ModifySurveyVO;
+import com.learningworks.survey.vo.request.RegistCourseSurveyAnswerListVO;
 import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
@@ -102,5 +104,14 @@ public class SurveyController {
 	public ApiResponse<String> deleteCourseSurvey(@PathVariable String courseId,
 			@PathVariable String courseSurveyId) {
 		return ApiResponse.OK(this.surveyService.deleteCourseSurvey(courseId, courseSurveyId));
+	}
+	
+	@PostMapping("/survey/{courseId}/{courseSurveyId}/response")
+	public ApiResponse<String> createCourseSurveyAnswers(@PathVariable String courseId,
+			@PathVariable String courseSurveyId, @Valid @RequestBody RegistCourseSurveyAnswerListVO answer,
+			Authentication authentication){
+		this.surveyService.createCourseSurveyAnswers(courseId, courseSurveyId, authentication.getName() ,answer);
+		
+		return ApiResponse.OK("답변 제출");
 	}
 }

@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
 import com.learningworks.survey.vo.request.ModifySurveyVO;
+import com.learningworks.survey.vo.request.RegistCourseSurveyAnswerListVO;
 import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
@@ -35,5 +36,7 @@ public interface SurveyService {
 	CourseSurveyVO createCourseSurvey(@Valid RegistCourseSurveyVO registCourseSurvey, String courseId);
 
 	String deleteCourseSurvey(String courseId, String courseSurveyId);
+
+	void createCourseSurveyAnswers(String courseId, String courseSurveyId, String userId,  @Valid RegistCourseSurveyAnswerListVO answer);
 
 }

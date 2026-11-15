@@ -5,11 +5,14 @@ import {
   getCourseSurvey,
   getSurvey,
 } from "../../../../api/admin/system/survey/surveyApi";
+import { IconButton } from "../../../common/input/IconButton";
 
 export default function CourseSurveyAns() {
   const { courseId, courseSurveyId } = useParams();
   const [surveys, setSurveys] = useState();
   const [questions, setQuestions] = useState();
+  const [answers, setAnswers] = useState({});
+
   useEffect(() => {
     let ignore = false;
     (async () => {
@@ -49,9 +52,41 @@ export default function CourseSurveyAns() {
     };
   }, [courseId, courseSurveyId]);
 
+  const onChangeAnswerHandler = (questionId, type, value, checked) => {
+    setAnswers((prev) => {
+      if (type === "text") {
+        return { ...prev, [questionId]: { textAnswer: value } };
+      }
+      if (type !== "checkBox") {
+        return { ...prev, [questionId]: { optionIds: [value] } };
+      }
+
+      const prevAnswer = prev[questionId];
+      let optionIds = [];
+
+      if (prevAnswer) {
+        optionIds = prevAnswer.optionIds;
+      }
+
+      if (checked) {
+        if (optionIds.includes(value)) {
+          return prev;
+        }
+        optionIds = [...optionIds, value];
+      } else {
+        optionIds = optionIds.filter((optionId) => optionId !== value);
+      }
+      return { ...prev, [questionId]: { optionIds } };
+    });
+  };
+
   if (!surveys) {
     return <div>불러오는 중...</div>;
   }
+
+  const onClickSaveButtonHandler = () => {
+    console.log(answers);
+  };
 
   // 분해
   const { title, surveySubject, surveyType } = surveys;
@@ -66,20 +101,33 @@ export default function CourseSurveyAns() {
         {questions.map((question) => (
           <li key={question.id}>
             <div>{question.subject}</div>
-            <SurveyAnswer question={question} />
+            <SurveyAnswer
+              question={question}
+              onChangeAnswerHandler={onChangeAnswerHandler}
+              onClickSaveButtonHandler={onClickSaveButtonHandler}
+            />
           </li>
         ))}
       </ol>
+      <div>
+        <IconButton onClick={onClickSaveButtonHandler}>저장</IconButton>
+      </div>
     </div>
   );
 }
 
 // 문항 유형별 입력 렌더링
-function SurveyAnswer({ question }) {
+const SurveyAnswer = ({ question, onChangeAnswerHandler }) => {
   const { id, type, surveyDataList } = question;
 
   if (type === "text") {
-    return <input type="text" name={id} />;
+    return (
+      <input
+        type="text"
+        name={id}
+        onChange={(e) => onChangeAnswerHandler(id, type, e.currentTarget.value)}
+      />
+    );
   }
 
   let inputType = "radio";
@@ -88,13 +136,27 @@ function SurveyAnswer({ question }) {
   }
 
   return (
-    <div>
-      {surveyDataList.map((data) => (
-        <label key={data.id}>
-          <input type={inputType} name={id} value={data.id} />
-          {data.data}
-        </label>
-      ))}
-    </div>
+    <>
+      <div>
+        {surveyDataList.map((data) => (
+          <label key={data.id}>
+            <input
+              type={inputType}
+              name={id}
+              value={data.id}
+              onChange={(e) =>
+                onChangeAnswerHandler(
+                  id,
+                  type,
+                  data.id,
+                  e.currentTarget.checked,
+                )
+              }
+            />
+            {data.data}
+          </label>
+        ))}
+      </div>
+    </>
   );
-}
+};
