@@ -47,6 +47,8 @@ public interface CourseService {
 
 	String deleteHomeworkReply(String courseId, String homeworkId, String replyId);
 
+	List<CourseMemberVO> addCourseMember(String courseId, List<String> studentId);
+
 	
 
 }

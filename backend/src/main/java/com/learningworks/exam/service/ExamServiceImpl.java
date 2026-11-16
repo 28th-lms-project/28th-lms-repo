@@ -1,6 +1,5 @@
 package com.learningworks.exam.service;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -294,6 +293,14 @@ public class ExamServiceImpl implements ExamService {
 	private static final String GRADE_WRONG = "N";
 	// 부분정답(H)은 강사가 수동 채점할 때 사용
 
+	/**
+	 * 제출 시 자동 채점(Y/N)하는 문제 유형 (코드 / 한글 이름).
+	 * 여기에 없는 유형(주관식 · 코드작성 · 객관식-다항 등)은 모범 답안이 있어도 R(채점 중)로 저장한다.
+	 */
+	private static final List<String> AUTO_GRADED_ANSWER_TYPES = List.of(
+			"ANSWER_SELECT", "객관식-단항",
+			"ANSWER_CHECK", "O/X");
+
 	@Transactional
 	@Override
 	public void createTestAnswerByTestSetId(String testSetId, String userId, RegistTestAnswersListVO answersVO) {
@@ -342,29 +349,20 @@ public class ExamServiceImpl implements ExamService {
 
 	/**
 	 * 답안 자동 채점.
-	 * 주관식 · 코드작성은 항상 R(채점 중), 객관식 · O/X는 Y(정답) / N(오답).
+	 * 객관식-단항 · O/X만 Y(정답) / N(오답)으로 자동 채점하고,
+	 * 그 외(주관식 · 코드작성 · 객관식-다항)는 모범 답안이 있어도 항상 R(채점 중) → 강사가 수동 채점.
 	 */
 	private String gradeAnswer(ExamQuestionVO question, String answer) {
-		if (this.isManuallyGraded(question.getAnswerType())) {
+		// TESTS.ANSWER_TYPE 에 코드(ANSWER_SELECT)와 한글 이름(객관식-단항)이 섞여 있어 둘 다 확인한다
+		String answerType = question.getAnswerType() == null ? "" : question.getAnswerType().trim();
+		if (!AUTO_GRADED_ANSWER_TYPES.contains(answerType)) {
 			return GRADE_PENDING;
 		}
 		if (answer == null || answer.isBlank() || question.getCorrectAnswer() == null) {
 			return GRADE_WRONG;
 		}
-		// 다항은 "3,1" 과 "1,3" 을 같은 답으로 보도록 정렬해서 비교
-		boolean correct = "객관식-다항".equals(question.getAnswerType())
-				? this.normalizeMultipleAnswer(answer).equals(this.normalizeMultipleAnswer(question.getCorrectAnswer()))
-				: answer.trim().equals(question.getCorrectAnswer().trim());
+		boolean correct = answer.trim().equals(question.getCorrectAnswer().trim());
 		return correct ? GRADE_CORRECT : GRADE_WRONG;
-	}
-
-	/** "3, 1" → "1,3" */
-	private String normalizeMultipleAnswer(String value) {
-		return Arrays.stream(value.split(","))
-				.map(String::trim)
-				.filter(number -> !number.isEmpty())
-				.sorted()
-				.collect(Collectors.joining(","));
 	}
 
 	@Override

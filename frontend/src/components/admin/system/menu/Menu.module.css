@@ -242,6 +242,12 @@
     color: #999;
 }
 
+.fieldHint {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #888;
+}
+
 .errorMessage {
     margin: 0;
     font-size: 12px;

@@ -1,0 +1,10 @@
+/* 가드 안내 (권한 없음 · 메뉴 조회 실패) */
+.notice {
+  margin: 0;
+  padding: 40px 20px;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  text-align: center;
+  color: #868e96;
+}

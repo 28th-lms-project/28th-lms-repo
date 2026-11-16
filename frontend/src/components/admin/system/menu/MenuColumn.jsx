@@ -10,7 +10,7 @@ import styles from "./Menu.module.css";
 const isEnterKey = (event) => event.key === "Enter" && !event.nativeEvent.isComposing;
 
 const SELF_LOCK_NOTICE =
-  "메뉴 관리 화면이 속한 메뉴입니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 저장되지 않습니다.";
+  "메뉴 관리 화면이 속한 메뉴입니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제, 본인 역할이 허용되지 않은 곳으로 옮기기는 저장되지 않습니다.";
 
 /**
  * 메뉴 관리 화면의 열 하나 (대 · 중 · 소메뉴). 위: 목록, 아래: 선택한 메뉴의 상세.
@@ -24,6 +24,9 @@ const SELF_LOCK_NOTICE =
  * @param {object|null} props.form 상세 입력값. null이면 상세 없음
  * @param {{ title: string[], menuUrl: string[], etc: string[] }} props.errors
  * @param {boolean} props.dirty 저장하지 않은 변경이 있는지
+ * @param {boolean} props.fieldsDirty 상위 메뉴 외의 칸을 바꿨는지 (바꿨으면 상위 메뉴 선택 잠금)
+ * @param {boolean} props.parentChanged 상위 메뉴를 바꿨는지 (바꿨으면 다른 칸 잠금, 저장 = 옮기기)
+ * @param {{ value: string, text: string }[]} props.parentOptions 상위 메뉴 선택지. 비어 있으면 표시하지 않음
  * @param {object[]} props.roles 역할 순위 순서의 전체 역할
  * @param {Set<string>} props.blockedRoleIds 상위 메뉴 때문에 실제로는 안 보이는 역할
  * @param {boolean} props.showSelfLockNotice
@@ -45,6 +48,9 @@ export default function MenuColumn({
   form,
   errors,
   dirty,
+  fieldsDirty,
+  parentChanged,
+  parentOptions,
   roles,
   blockedRoleIds,
   showSelfLockNotice,
@@ -68,7 +74,9 @@ export default function MenuColumn({
   onDrop,
   onDragEnd,
 }) {
-  const inputDisabled = !editable || saving;
+  // 상위 메뉴를 바꾸면 다른 칸은 잠근다 (옮기기는 다른 수정과 따로 저장, 설계 6-6)
+  const inputDisabled = !editable || saving || parentChanged;
+  const showParentSelect = form?.mode === "view" && editable && parentOptions.length > 0;
   const isDraggingHere = dragging?.level === level;
 
   // 놓을 위치 표시: 아래로 끌면 대상 아래, 위로 끌면 대상 위
@@ -163,6 +171,44 @@ export default function MenuColumn({
             <dl className={styles.fields}>
               <dt>ID</dt>
               <dd className={styles.menuId}>{form.mode === "new" ? "(저장 시 생성)" : form.id}</dd>
+
+              {showParentSelect && (
+                <>
+                  <dt>
+                    <label htmlFor={`menu-${level}-parentId`}>상위 메뉴</label>
+                  </dt>
+                  <dd>
+                    <select
+                      id={`menu-${level}-parentId`}
+                      className={styles.select}
+                      value={form.parentId ?? ""}
+                      disabled={saving || fieldsDirty}
+                      onChange={(e) => onChange(level, { parentId: e.target.value })}
+                    >
+                      {parentOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.text}
+                        </option>
+                      ))}
+                    </select>
+                    {fieldsDirty && (
+                      <p className={styles.fieldHint}>
+                        다른 변경을 저장하거나 취소한 뒤 옮길 수 있습니다.
+                      </p>
+                    )}
+                    {parentChanged && (
+                      <p className={styles.fieldHint}>
+                        저장하면 메뉴를 옮깁니다. 다른 칸은 옮긴 뒤 수정할 수 있습니다.
+                      </p>
+                    )}
+                    {errors.parentId.map((message) => (
+                      <p key={message} className={styles.errorMessage}>
+                        {message}
+                      </p>
+                    ))}
+                  </dd>
+                </>
+              )}
 
               <dt>
                 <label htmlFor={`menu-${level}-title`}>이름</label>

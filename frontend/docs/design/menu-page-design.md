@@ -3,9 +3,9 @@
 - 대상 화면: `시스템 관리 > 메뉴 관리` (`/admin/system/menu`), 사이드바(`SideMenu.jsx`), 모든 화면의 URL 접근
 - 담당: ROLE 모듈 담당자
 - 작성일: 2026-11-10
-- 상태: 설계 확정. 메뉴 관리 화면 · 사이드바 구현 완료, 가드 구현 전
+- 상태: 설계 확정. 메뉴 관리 화면(상위 메뉴 변경 포함) · 사이드바 · 가드 구현 완료
 
-이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
+이 문서는 메뉴 관리 화면 · 사이드바 · 가드의 설계이자 현재 구현 기준입니다. 새 화면을 메뉴에 등록하는 순서는 `frontend/docs/page-guide.md`에 있습니다. API · 테이블은 `backend/docs/design/menu-design.md`, API 호출 규칙은 `frontend/docs/api-client-guide.md`, 버튼 권한은 `frontend/docs/permission-guide.md`를 함께 보세요.
 
 ---
 
@@ -27,11 +27,11 @@
 | 자기 잠금 방지 | SUPER_ADMIN이 아닌 관리자가 메뉴 관리 메뉴(와 상위 메뉴)에서 본인 역할 해제 · 미사용 · URL 변경 · 삭제를 하면 서버가 거부 (`MENU_SELF_LOCK`). 화면은 안내 문구와 서버 메시지 알림 (6-4) |
 | 접근 거부 | 화면 전체에 "권한이 없습니다" (권한 관리 화면과 같은 방식) |
 | 순서 변경 | HTML5 Drag and Drop. **같은 상위 메뉴 안에서만** |
-| UI 부품 | `src/components/sample`의 컴포넌트를 씁니다 (6-1) |
+| UI 부품 | 공용 컴포넌트(`common/input`, `common/PageContainer`)와 `sample/Modal.jsx`의 `Confirm`을 씁니다 (6-1) |
 | 동시 수정 | 수정 요청에 화면이 받은 `mdfyDt`를 보내고, 다른 사람이 먼저 저장했으면 서버가 거부 (`MENU_OUTDATED`) |
 | 저장 안 한 변경 | 다른 메뉴 선택 · 다른 화면 이동 · 새로고침 모두 확인 창 (6-4) |
 | 메뉴 이름 | 같은 상위 메뉴 안에서 중복 불가 (`MENU_TITLE_USED`) |
-| 상위 메뉴 변경 | **현재**: 지원하지 않음. 옮기려면 삭제 후 다시 만들기 (백엔드 문서 4-4 "메뉴 옮기기"). **최종 목표**: 6-6 "상위 메뉴 변경"으로 구현 (방식 · 권한 결정 완료, 구현 예정) |
+| 상위 메뉴 변경 | 중 · 소메뉴 상세의 "상위 메뉴" 드롭다운으로 옮깁니다 (6-6). 다른 수정과 따로 저장 |
 
 ---
 
@@ -47,9 +47,9 @@
 | 메뉴는 허용됐는데 API 권한이 없음 | 막지 못합니다. 메뉴와 권한 코드는 따로 설정하므로, 관리자가 두 설정을 맞춰야 합니다 |
 | 화면 안의 특정 버튼 | 막지 못합니다. 각 담당자가 `can()`으로 숨겨야 합니다 |
 
-### 알려진 차이: 브레드크럼
+### 브레드크럼 · 화면 제목
 
-`common/Breadcrumb.jsx`는 라우트의 `handle.crumb`을 씁니다. 메뉴 관리에서 메뉴 이름을 바꾸면 **사이드바는 바뀌지만 브레드크럼은 예전 이름**이 남습니다. 이번 구현에서는 그대로 둡니다 (공용 컴포넌트 수정, 메뉴에 없는 상세 화면 처리가 필요해서). 이름을 맞추려면 `crumb`도 함께 고치세요.
+메뉴 화면의 브레드크럼과 화면 제목은 DB 메뉴 이름을 따릅니다 (7-3, 2026-11-13). 메뉴 관리에서 이름을 바꾸거나 옮기면 사이드바와 함께 바로 바뀝니다. 라우트의 `crumb`은 메뉴에 없는 화면 · 상세 화면 표시와 메뉴 URL 선택지 이름에 씁니다.
 
 ---
 
@@ -61,14 +61,15 @@
 | `components/admin/system/menu/Menu.jsx` | 메뉴 관리 화면 구현 완료 (9장 3단계) |
 | 라우트 `handle.menu` | 메뉴 관리 URL 선택지용으로 표시 완료. `routes` export 완료 |
 | `components/menu/SideMenu.jsx` | 내 메뉴(`menuSliceStore`)를 그림 (9장 4단계 완료). 조회는 `MainLayout`이 로그인 시 시작. `menuData.js` 삭제 |
-| `router/MainRouterProvider.jsx` | `handle.menu` 표시 완료. 가드 · `guardAs` 없음 |
-| 라우트 · 메뉴 등록 | "메뉴 관리" 라우트와 메뉴 항목은 등록되어 있음 |
+| `components/menu/MenuGuard.jsx` | 가드 구현 완료 (9장 5단계). `MainLayout`의 `<Outlet />`과 숙제 팝업을 감쌈 |
+| `router/MainRouterProvider.jsx` | `handle.menu` 표시 완료. `guardAs`: 숙제 팝업(`/admin/course/list`), `/my/course` index(`/my/course/list`) |
+| 라우트 · 메뉴 등록 | "메뉴 관리" 라우트 등록 완료. 메뉴 항목은 DB(메뉴 관리 화면)에 등록되어 있음 (백엔드 문서 2-5) |
 
 ---
 
 ## 4. API
 
-`src/api/admin/system/menu/menuApi.js`에 함수를 만듭니다. 성공하면 `body`, 실패하면 `ApiError`.
+`src/api/admin/system/menu/menuApi.js`의 함수입니다. 성공하면 `body`, 실패하면 `ApiError`.
 
 | 함수 | 요청 | 반환 (`body`) | 주요 errorCode |
 | --- | --- | --- | --- |
@@ -76,9 +77,9 @@
 | `getMenus(options)` | `GET /menus` | `{ roles, menus }` | — |
 | `createMenu(menu)` | `POST /menus` | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_PARENT_INVALID`, `MENU_URL_USED`, `MENU_TITLE_USED`, `MENU_ROLE_INVALID` |
 | `modifyMenu(menuId, menu)` | `PUT /menus/{menuId}` (`menu`에 `mdfyDt` 포함) | 메뉴 1건 | `GLOBAL_INVALID_PARAMETER`, `MENU_NOT_EXISTS`, `MENU_URL_USED`, `MENU_TITLE_USED`, `MENU_ROLE_INVALID`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
-| `modifyMenuOrder(parentId, menuIds)` | `PUT /menus/order` | `{ roles, menus }` | `MENU_ORDER_INVALID`, `MENU_ORDER_OUTDATED` |
+| `modifyMenuOrder(parentId, menuIds)` | `PUT /menus/order` | `{ roles, menus }` | `MENU_ORDER_INVALID`, `MENU_ORDER_OUTDATED`, `MENU_NOT_EXISTS` |
 | `deleteMenu(menuId)` | `DELETE /menus/{menuId}` | 메뉴 1건 | `MENU_NOT_EXISTS`, `MENU_HAS_CHILDREN`, `MENU_IN_USE`, `MENU_SELF_LOCK` |
-| `moveMenu(menuId, parentId, mdfyDt)` (**구현 예정**, 6-6) | `PUT /menus/{menuId}/parent` | `{ roles, menus }` | `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
+| `moveMenu(menuId, parentId, mdfyDt)` (6-6) | `PUT /menus/{menuId}/parent` | `{ roles, menus }` | `MENU_MOVE_INVALID`, `MENU_NOT_EXISTS`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK` |
 
 메뉴 객체 필드: `id`, `title`, `parentId`, `menuOrder`, `useYn`, `spread`, `menuUrl`, `roleIds`, `crtDt`, `mdfyDt`. `getMyMenus`의 메뉴에는 `roleIds` · 날짜가 없습니다. `getMyMenus`의 `useYn`은 SUPER_ADMIN만 `N`을 받을 수 있습니다.
 
@@ -111,17 +112,20 @@
 
 ```jsx
 {
-  path: "/popup/homework/:courseid/:homeworkId",
+  path: "/popup/homework/:courseId/:homeworkId",
   element: <MenuGuard><HomeworkDetails /></MenuGuard>,
   handle: { guardAs: "/admin/course/list" },   // 과정 목록 화면에서 여는 팝업
 },
 ```
 
+- 다른 주소로 보내기만 하는 중간 경로도 같습니다. `/my/course`는 메뉴가 아니어서 가드에 걸리므로, `list`로 보내는 index 라우트에 `guardAs: "/my/course/list"`를 붙였습니다.
+- 가장 안쪽 라우트의 `guardAs`가 우선합니다.
+
 ### 5-3. 가드 판정 순서 (`MenuGuard`)
 
-1. 경로가 `/` 또는 `/login`이면 통과.
+1. 경로가 `/` 또는 `/login`이면 통과. 없는 주소(404 라우트, `handle.notFound`)도 통과 (5-6).
 2. 비로그인이면 `/login`으로 이동.
-3. 내 메뉴 상태가 `idle`/`loading`이면 아무것도 그리지 않음. `failed`면 "메뉴 정보를 불러오지 못했습니다." 안내.
+3. 내 메뉴 상태가 `idle`/`loading`이면 아무것도 그리지 않음. `failed`면 "메뉴 정보를 불러오지 못했습니다. 새로고침해 주세요." 안내.
 4. `superAdmin`이면 통과.
 5. 판정할 URL: 일치한 라우트 중 가장 안쪽의 `handle.guardAs`, 없으면 현재 `pathname`.
 6. `guardUrls`에서 그 URL과 **같거나, 그 URL이 `기준URL + "/"`로 시작하는** 것 중 가장 긴 것을 찾음.
@@ -138,11 +142,29 @@
 - 팝업 라우트: 5-2처럼 화면을 직접 감쌉니다 (`MainLayout` 밖이라서).
 - 내 메뉴 조회(`fetchMyMenus`)는 `MainLayout`이 로그인 시 시작하고(4단계), `MenuGuard`도 시작합니다. 팝업은 `MainLayout` 밖이라 가드가 시작해야 합니다. `idle`일 때만 실행되므로 두 곳에서 불러도 한 번만 조회합니다. 사이드바는 같은 store 값을 읽기만 합니다.
 
+### 5-5. 가드가 막지 않는 것
+
+- **API 호출, 화면 안의 버튼:** 가드는 화면을 여는 것만 막습니다. 데이터는 API 권한(`@RequireAction`)이 막고, 버튼은 화면에서 `can()`으로 확인합니다 (`permission-guide.md`).
+- **라우트 loader:** react-router는 loader를 화면보다 먼저 실행하므로 가드보다 먼저 돕니다 (예: `/admin/course/list`의 `getCourses`). loader가 부르는 API는 API 권한으로 막힙니다.
+- **없는 경로** (예: `/abc`): 404 라우트가 받아 권한 검사 없이 "페이지를 찾을 수 없습니다"를 표시합니다 (5-6).
+- **다른 사람이 바꾼 메뉴 역할:** 내 메뉴는 로그인 · 새로고침 · 내가 메뉴 관리에서 저장할 때만 다시 받습니다. 역할이 빠진 사용자도 새로고침 전까지는 그 화면에 들어갈 수 있습니다.
+
+### 5-6. 없는 주소 · 화면 오류 (2026-11-13)
+
+| 경우 | 처리 | 표시 |
+| --- | --- | --- |
+| 없는 주소 (`/abc`) | `MainLayout` children 맨 끝의 `path: "*"` 라우트 → `common/error/NotFound.jsx`. `handle.notFound`가 있어 가드가 통과시킴 | 사이드바 유지, "요청한 페이지를 찾을 수 없습니다." + [대시보드로] |
+| 화면 코드 오류 · 라우트 loader 오류 | `MainLayout` 아래의 경로 없는 라우트에 둔 `errorElement` → `common/error/RouteError.jsx` | 사이드바 유지, "화면을 불러오는 중 문제가 생겼습니다." + [다시 시도]. API 오류는 서버 메시지, 그 외 오류 내용은 개발 환경에서만 |
+| 레이아웃 자체 오류 · 팝업 오류 | `/` 라우트와 팝업 라우트의 `errorElement` (같은 `RouteError`) | 사이드바 없이 오류 화면 |
+
+- 이전에는 `/` 라우트의 `errorElement`(`404 Not Found` 글자) 하나가 모든 오류를 받아, loader · 화면 오류도 404로 보이고 사이드바가 사라졌습니다.
+- 새 라우트는 경로 없는 라우트의 `children`에 추가합니다 (그래야 화면 오류가 나도 사이드바가 남습니다). `path: "*"` 라우트는 항상 맨 끝에 둡니다.
+
 ---
 
 ## 6. 메뉴 관리 화면 (`/admin/system/menu`)
 
-### 6-1. 사용할 sample 컴포넌트
+### 6-1. 사용할 컴포넌트
 
 | 용도 | 컴포넌트 |
 | --- | --- |
@@ -151,7 +173,7 @@
 | 사용여부 · 펼침 · 역할 체크박스 | `common/input/Input.jsx`의 `Checkbox` (`disabled` 지원) |
 | 추가 · 삭제 · 저장 · 취소 | `common/input/IconButton.jsx`의 `IconButton` (`disabled` 지원) |
 | 삭제 확인, 저장 안 한 변경사항 확인 | `sample/Modal.jsx`의 `Confirm` |
-| 화면 틀 | `common/PageContainer`, `components/Section.jsx` |
+| 화면 틀 | `common/PageContainer` (열은 `<section>` + `Menu.module.css`) |
 
 - sample의 `TextField` · `NativeSelect` · `Button`은 쓰지 않습니다. `disabled` 속성이 없어 권한 · 저장 중 · 상위 메뉴 변경 잠금(6-5, 6-6)을 만들 수 없고, `NativeSelect`는 `value` 대신 `option`의 `selected`로 선택값을 정해서 [취소]로 되돌리기 어렵기 때문입니다.
 - 목록(드래그 순서 변경)은 권한 관리 화면처럼 직접 만든 목록을 씁니다. sample `Grid`에는 드래그 기능이 없습니다.
@@ -204,7 +226,7 @@
 | `listStatus`, `listError` | `getMenus` 결과 상태 |
 | `roles`, `menus` | `getMenus` 결과 (평평한 목록) |
 | `selectedIds` | `{ top, mid, btm }` 열별 선택 메뉴 ID |
-| `forms` | 열별 상세 입력값 `{ mode: "view" \| "new", id, title, useYn, spread, menuUrl, roleIds, mdfyDt }` |
+| `forms` | 열별 상세 입력값 `{ mode: "view" \| "new", id, parentId, title, useYn, spread, menuUrl, roleIds, crtDt, mdfyDt }` (`new` 모드는 [취소] 때 돌아갈 `prevId` 포함) |
 | `formErrors` | 열별 입력 오류 |
 | `saving` | 저장 · 삭제 · 순서 변경 진행 중 (버튼 비활성) |
 
@@ -248,7 +270,7 @@
 
 - 권한 관리 화면과 같은 HTML5 Drag and Drop. 같은 열(같은 상위 메뉴) 안에서만.
 - 놓으면 `modifyMenuOrder(parentId, 그 열의 전체 ID 목록)`. 성공하면 응답으로 목록 교체 + 내 메뉴 다시 조회.
-- `MENU_ORDER_OUTDATED`면 "메뉴 목록이 변경되었습니다…" 알림 후 목록 다시 조회.
+- `MENU_ORDER_OUTDATED`면 "메뉴 목록이 변경되었습니다…" 알림 후 목록 다시 조회. `MENU_NOT_EXISTS`(상위 메뉴가 삭제됨)도 서버 메시지 알림 후 목록 다시 조회.
 
 #### URL 선택 (소메뉴만)
 
@@ -276,27 +298,25 @@
 | `MENU_UPDATE` | 드래그 손잡이 숨김. 기존 메뉴의 입력칸 비활성 (입력을 바꿀 수 없으므로 [저장] · [취소]도 나타나지 않음) |
 | `MENU_DELETE` | [삭제] 숨김 |
 
-### 6-6. 상위 메뉴 변경 (결정 완료, 구현 예정)
+### 6-6. 상위 메뉴 변경
 
-> **상태: 결정 완료 (2026-11-12), 구현 전** (백엔드 문서 4-7). 백엔드 이동 API가 생기면 이 절대로 구현하고, 1장 "상위 메뉴 변경"을 고칩니다.
+> **상태: 구현 완료 (2026-11-13)** (백엔드 문서 4-7). 결정은 2026-11-12.
 
-- 중 · 소메뉴 상세에 "상위 메뉴" 드롭다운(`NativeSelect`)을 둡니다. 선택지는 한 단계 위의 메뉴 전체(소메뉴 → 모든 중메뉴, 중메뉴 → 모든 대메뉴)이고, 표시는 `대메뉴 > 중메뉴` 경로입니다. 대메뉴 상세에는 표시하지 않습니다.
+- 중 · 소메뉴 상세에 "상위 메뉴" 드롭다운(일반 `<select>` + `Menu.module.css`, URL 선택과 같은 방식. 6-1)을 둡니다. 선택지는 한 단계 위의 메뉴 전체(소메뉴 → 모든 중메뉴, 중메뉴 → 모든 대메뉴)이고, 표시는 `대메뉴 > 중메뉴` 경로입니다. 대메뉴 상세에는 표시하지 않습니다.
 - **이동은 다른 수정과 따로 저장합니다.** 저장 한 번에 API 하나만 부르게 해서, 일부만 저장되거나 검사(같은 이름, 자기 잠금, `mdfyDt`)가 중간 상태로 이뤄지는 일을 막습니다. 기존 수정 API · 저장 흐름은 바꾸지 않고 이동 기능만 덧붙입니다.
 - 잠금 규칙:
   - 다른 칸(이름, 사용 여부, 펼침, URL, 역할)을 하나라도 바꾸면 상위 메뉴 드롭다운을 비활성화하고 "다른 변경을 저장하거나 취소한 뒤 옮길 수 있습니다."를 표시합니다.
-  - 상위 메뉴를 바꾸면 다른 칸을 모두 비활성화합니다. 이때 [저장]은 `moveMenu(menuId, parentId, mdfyDt)`(`PUT /menus/{menuId}/parent`)만 부릅니다.
+  - 상위 메뉴를 바꾸면 다른 칸을 모두 비활성화하고 "저장하면 메뉴를 옮깁니다. 다른 칸은 옮긴 뒤 수정할 수 있습니다."를 표시합니다. 이때 [저장]은 `moveMenu(menuId, parentId, mdfyDt)`(`PUT /menus/{menuId}/parent`)만 부릅니다.
   - [취소]는 두 경우 모두 마지막 저장 값으로 되돌립니다 (잠금도 풀림).
-- 옮기면서 이름도 바꿔야 하면 두 번 저장합니다. 새 그룹에 같은 이름이 있으면 이름을 먼저 바꿔 저장한 뒤 옮깁니다 (`MENU_TITLE_USED` 메시지로 안내됨).
-- 저장 전 `Confirm`: "메뉴를 옮기면 이 메뉴를 쓰는 접근 권한(ACTION)의 메뉴도 함께 바뀝니다. 옮길까요?"
-- 성공하면 목록을 응답으로 교체하고, 옮긴 메뉴가 보이도록 열 선택을 새 위치로 바꾼 뒤 내 메뉴를 다시 조회합니다.
-- 오류: `MENU_MOVE_INVALID`, `MENU_TITLE_USED`, `MENU_OUTDATED`, `MENU_SELF_LOCK`은 서버 메시지 알림.
+- 옮기면서 이름도 바꿔야 하면 두 번 저장합니다. 새 그룹에 같은 이름이 있으면 저장 전에 드롭다운 아래에 "옮길 상위 메뉴에 같은 이름의 메뉴가 있습니다. 이름을 먼저 바꿔 저장한 뒤 옮기세요."를 표시합니다 (서버의 `MENU_TITLE_USED`도 같은 문구로 표시).
+- 저장 전 `Confirm`: "메뉴를 옮기면 이 메뉴를 쓰는 접근 권한(ACTION)의 메뉴도 함께 바뀝니다. 옮길까요?" 왼쪽 열에 저장하지 않은 변경이 있으면 "다른 열의 저장하지 않은 변경사항은 사라집니다."를 덧붙입니다 (옮긴 뒤 왼쪽 열 선택이 새 위치로 바뀌므로).
+- 성공하면 목록을 응답으로 교체하고, 옮긴 메뉴가 보이도록 열 선택을 새 위치로 바꾼 뒤 내 메뉴를 다시 조회하고 "메뉴를 옮겼습니다."를 알립니다.
+- 상위 메뉴를 바꾸는 중에는 역할 옆의 "(상위 메뉴에서 허용 안 됨)"을 옮길 위치 기준으로 보여 줍니다 (옮긴 뒤 누구에게 보일지 미리 확인).
+- 오류: `MENU_MOVE_INVALID`, `MENU_SELF_LOCK`은 서버 메시지 알림 후 선택 유지([취소]로 되돌림). `MENU_OUTDATED`는 알림 후 서버 값으로 바꿈, `MENU_NOT_EXISTS`는 알림 후 목록 다시 조회.
 - 권한: `MENU_UPDATE` (2026-11-12 결정). `MENU_UPDATE`가 없으면 드롭다운을 표시하지 않습니다.
 - 드래그로 다른 열 · 다른 그룹에 놓는 방식은 쓰지 않습니다 (실수로 옮기기 쉬움).
 
-확인 시나리오 (구현 시 10장에 추가):
-
-- 소메뉴를 다른 중메뉴로 옮긴 뒤 목록 · 사이드바 위치 변경, 권한별 접근 권한 관리 화면의 메뉴 필터에서 해당 ACTION이 새 메뉴로 걸리는지 확인.
-- 이름을 바꾼 상태에서 상위 메뉴 드롭다운이 비활성인지, 상위 메뉴를 바꾼 상태에서 다른 칸이 비활성인지, [취소]로 둘 다 풀리는지 확인.
+확인 시나리오는 10장 M32 ~ M38입니다.
 
 ---
 
@@ -330,15 +350,37 @@
 
 ---
 
+### 7-3. 브레드크럼 · 화면 제목 (`PageContainer`)
+
+`hooks/useBreadcrumbs.js` → `router/breadcrumbUtils.js`의 `buildBreadcrumbs`가 항목을 만들고, `common/Breadcrumb.jsx`가 "⌂ > 항목 > …"으로 그립니다. 화면 제목(`h2`)은 마지막 항목입니다 (`PageContainer`에 `title`을 넘기면 그 값).
+
+| 화면 | 항목 | 예 |
+| --- | --- | --- |
+| 메뉴 화면 | 소속 메뉴의 DB 경로 (대 > 중 > 소 이름). 소속 메뉴는 가드와 같은 방법(`findGuardUrl`)으로 찾음 | ⌂ > System Management > 시스템 관리 > 메뉴 관리 |
+| 메뉴 아래 상세 화면 | 메뉴 경로 + 그보다 깊은 라우트의 `crumb` | ⌂ > My Page > 수강 과정 > 과정 상세 |
+| 메뉴에 없는 화면 (로그인 · 404 · 등록 전 화면) | 라우트 `crumb` | ⌂ > 페이지 없음 |
+
+- 이어지는 같은 이름은 하나로 합칩니다 (중메뉴 "설문 관리" > 소메뉴 "설문 관리" → "설문 관리").
+- 대시보드(`/`)도 메뉴 경로를 씁니다 (예: MAIN > Home > Dashboard).
+- 항목은 링크가 아닙니다 (⌂만 대시보드 링크). 대 · 중메뉴는 주소가 없기 때문입니다.
+- 메뉴 화면은 가드가 내 메뉴를 받을 때까지 본문을 그리지 않으므로, 라우트 이름이 잠깐 보였다가 바뀌는 일은 없습니다.
+
 ## 8. 파일 구성
 
 ```text
 src/api/admin/system/menu/menuApi.js            (새 파일)
 src/store/slices/menuSliceStore.js              (새 파일)
 src/store/StoreProvider.jsx                     (reducer 등록)
-src/router/routeUtils.js                        (새 파일: getMenuUrlOptions, findGuardUrl)
+src/router/routeUtils.js                        (새 파일: getMenuUrlOptions, getGuardTarget, findGuardUrl)
 src/router/MainRouterProvider.jsx               (routes export, handle.menu, guardAs, 팝업 감싸기)
 src/components/menu/MenuGuard.jsx               (새 파일)
+src/components/menu/MenuGuard.module.css        (새 파일: 안내 문구)
+src/components/common/error/NotFound.jsx        (새 파일: 404, 5-6)
+src/router/breadcrumbUtils.js                   (새 파일: 브레드크럼 항목 계산, 7-3)
+src/hooks/useBreadcrumbs.js                     (새 파일, 7-3)
+src/components/common/Breadcrumb.jsx            (항목을 받아 그리기만, 7-3)
+src/components/common/PageContainer.jsx         (제목 = 브레드크럼 마지막 항목, 7-3)
+src/components/common/error/RouteError.jsx      (새 파일: 라우트 오류 화면, 5-6)
 src/layout/MainLayout.jsx                       (Outlet 감싸기)
 src/components/menu/SideMenu.jsx                (store 사용)
 src/components/menu/sideMenuUtils.js            (새 파일: 트리 변환, 그룹 펼침 규칙)
@@ -362,6 +404,8 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 
 ## 9. 적용 순서
 
+> 1 ~ 5단계 완료 (2026-11-13). 6단계 공지 내용은 `frontend/docs/page-guide.md`로 정리했습니다.
+
 1. 백엔드 `/menus` API 구현.
 2. DB에 초기 메뉴 · `MENU_ROLE` 입력 (`backend/docs/design/menu-design.md` 2-5).
 3. 메뉴 관리 화면 구현.
@@ -370,7 +414,7 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 6. 팀에 공지:
    - 새 화면을 만들면 라우트에 `handle.menu`를 붙이고, 메뉴 관리에서 메뉴와 역할을 등록해야 다른 역할이 들어갈 수 있습니다.
    - 새 팝업 등 접두어로 메뉴를 찾을 수 없는 라우트에는 `handle.guardAs`로 소속 메뉴 URL을 적어야 합니다. 빠뜨리면 SUPER_ADMIN만 열 수 있습니다.
-   - 라우트 경로를 바꾸면 메뉴 관리에서 해당 메뉴의 URL도 다시 선택해야 합니다 (목록에 ⚠ 표시). 브레드크럼 이름(`crumb`)은 메뉴 이름과 따로 관리됩니다.
+   - 라우트 경로를 바꾸면 메뉴 관리에서 해당 메뉴의 URL도 다시 선택해야 합니다 (목록에 ⚠ 표시).
 
 ---
 
@@ -380,7 +424,7 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 | --- | --- | --- |
 | M1 | STUDENT로 `/admin/course/add` 직접 입력 | 알림 없이 "권한이 없습니다" |
 | M2 | STUDENT로 `/my/course/list/123` (수강 과정 허용) | 화면 표시 (접두어 매칭) |
-| M3 | ADMIN으로 `/admin/system/access-role` (접근 관리만 허용) | "권한이 없습니다" (경계 검사) |
+| M3 | 메뉴 관리에서 ADMIN을 "접근 관리"(`/admin/system/access`) 소메뉴에만 체크하고 "권한별 접근 권한 관리"(`/admin/system/access-role`)는 해제한 뒤, ADMIN으로 `/admin/system/access-role` 입력 | "권한이 없습니다" (`/admin/system/access`로 시작하는 문자열이어도 다른 메뉴로 판정하는지 확인하는 경계 검사). `/admin/system/access`는 열림 |
 | M4 | 메뉴에 없는 URL을 SUPER_ADMIN / 그 외로 입력 | 열림 / "권한이 없습니다" |
 | M5 | 비로그인으로 `/admin/course/add` | `/login`으로 이동 |
 | M6 | 과정 목록이 허용된 TUTOR로 숙제 팝업 열기 | 팝업 표시 (`guardAs`) |
@@ -406,3 +450,20 @@ src/components/admin/system/role/Role.jsx       (역할 생성 성공 안내 문
 | M25 | URL 드롭다운에서 `Dashboard (/)` 선택 가능 / Dashboard 메뉴에서 STUDENT 해제 후 STUDENT로 `/` 접속 | 선택 가능 / 사이드바에 Dashboard 링크가 없고 화면은 열림 |
 | M26 | 메뉴 선택 → 이름 수정 → [취소] | 선택 시 [삭제]만, 수정하면 [저장] · [취소]로 바뀜, [취소] 후 다시 [삭제]만 |
 | M27 | 이름 수정 중 목록 머리 [추가] | 저장하지 않은 변경 확인 창 |
+| M28 | STUDENT로 `/my/course` 입력 (수강 과정 허용) | `/my/course/list`로 이동 (`guardAs`) |
+| M29 | STUDENT로 `/my` 입력 (라우트는 있지만 메뉴가 아님) | "권한이 없습니다" |
+| M30 | SUPER_ADMIN이 아닌 계정으로 `/abc` 입력 | 사이드바는 그대로, 본문에 "요청한 페이지를 찾을 수 없습니다." + [대시보드로] (권한이 없습니다가 아님) |
+| M31 | 숙제 팝업 주소를 과정 목록이 허용되지 않은 역할로 열기 | 팝업에 "권한이 없습니다" |
+| M32 | ACTION이 쓰는 소메뉴를 다른 중메뉴로 옮기기 | 확인 창 → "메뉴를 옮겼습니다.", 열 선택이 새 위치로 바뀜, 사이드바 위치 변경, 접근 관리 · 권한별 접근 권한 관리에서 그 ACTION의 메뉴가 새 위치로 표시 |
+| M33 | 중메뉴를 다른 대메뉴로 옮기기 | 하위 소메뉴가 함께 옮겨짐, 원래 대메뉴의 남은 중메뉴 순서가 1부터 |
+| M34 | 이름을 바꾼 상태 / 상위 메뉴를 바꾼 상태 | 상위 메뉴 드롭다운 비활성 + 안내 / 다른 칸 비활성 + 안내, [취소]로 둘 다 풀림 |
+| M35 | 옮길 그룹에 같은 이름이 있는 메뉴를 옮기기 | 드롭다운 아래 안내, 저장 안 됨 |
+| M36 | 상위 메뉴를 바꾼 상태에서 다른 메뉴 선택 · 다른 화면 이동 | 저장하지 않은 변경 확인 창 |
+| M37 | ADMIN이 메뉴 관리 소메뉴를 ADMIN이 허용되지 않은 중메뉴로 옮기기 | `MENU_SELF_LOCK` 알림, 옮겨지지 않음 |
+| M38 | `MENU_UPDATE`가 없는 역할 / 대메뉴 상세 | 상위 메뉴 드롭다운이 보이지 않음 |
+| M39 | 백엔드를 끈 상태에서 `/admin/course/list` 진입 (loader의 API 실패) | 사이드바는 그대로, 본문에 "화면을 불러오는 중 문제가 생겼습니다." + 서버 · 네트워크 메시지 + [다시 시도] (404가 아님) |
+| M40 | 화면 컴포넌트에서 오류가 나는 경우 (개발 환경) | 사이드바는 그대로, 오류 화면에 오류 내용 표시. 사이드바로 다른 화면 이동 가능 |
+| M41 | 메뉴 관리에서 소메뉴 이름을 바꾼 뒤 그 화면 열기 | 사이드바 · 브레드크럼 · 화면 제목이 모두 새 이름 |
+| M42 | 소메뉴를 다른 그룹으로 옮긴 뒤 그 화면 열기 | 브레드크럼이 새 그룹 경로 |
+| M43 | 중메뉴 · 소메뉴 이름이 같은 화면 (예: 설문 관리) | 이름이 한 번만 표시 |
+| M44 | `/my/course/list/(과정 ID)` · `/login` · `/abc` | 메뉴 경로 + "과정 상세" / "로그인" / "페이지 없음" |

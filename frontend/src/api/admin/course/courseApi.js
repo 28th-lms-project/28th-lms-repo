@@ -157,3 +157,9 @@ export const createHomeworkReply = (courseId, homeworkId, data) =>
     `/${encode(courseId)}/homeworklist/${encode(homeworkId)}/replies`,
     data,
   );
+
+/**
+ * 과정 진행중 수강생 추가 api
+ */
+export const addCourseStudent = (courseId, studentIds) =>
+  api.post(`admin/course/list/${courseId}`, studentIds);

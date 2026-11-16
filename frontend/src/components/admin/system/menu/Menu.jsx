@@ -17,6 +17,7 @@ import {
   getMenus,
   modifyMenu,
   modifyMenuOrder,
+  moveMenu,
 } from "../../../../api/admin/system/menu/menuApi";
 
 import MenuColumn from "./MenuColumn";
@@ -27,17 +28,23 @@ import {
   getChildMenus,
   getErrorMessage,
   getMenuUrlSelectOptions,
+  getParentOptions,
   getProtectedMenuIds,
+  getSelfAndAncestors,
   hasBottomMenu,
   hasErrors,
   isAbortError,
   isBlockedByAncestors,
+  isFieldsDirty,
   isFormDirty,
+  isParentChanged,
   LEVELS,
   menuToForm,
+  MOVE_TITLE_USED_MESSAGE,
   toFormErrors,
   toMenuRequest,
   validateMenuForm,
+  validateMove,
 } from "./menuUtils";
 
 import styles from "./Menu.module.css";
@@ -47,6 +54,8 @@ const EMPTY_FORMS = { top: null, mid: null, btm: null };
 const EMPTY_ERRORS = { top: EMPTY_FORM_ERRORS, mid: EMPTY_FORM_ERRORS, btm: EMPTY_FORM_ERRORS };
 
 const UNSAVED_CHANGES_MESSAGE = "저장하지 않은 변경사항이 있습니다. 이동할까요?";
+const MOVE_CONFIRM_MESSAGE =
+  "메뉴를 옮기면 이 메뉴를 쓰는 접근 권한(ACTION)의 메뉴도 함께 바뀝니다. 옮길까요?";
 
 /**
  * 메뉴 관리 화면. 설계: frontend/docs/design/menu-page-design.md 6장
@@ -158,9 +167,9 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
    * 새 목록을 반영하고, 열 선택 · 상세를 새 목록에 맞춘다.
    * - 없어진 메뉴의 선택은 풀고, 상위 선택이 없으면 오른쪽 열도 비운다
    * - 변경이 없는 상세는 서버 값으로 바꾸고, 변경 중인 상세는 그대로 둔다
-   * - select가 있으면 그 열에서 그 메뉴를 선택하고 상세를 서버 값으로 바꾼다
+   * - select가 있으면 그 열에서 그 메뉴를 선택하고 상세를 서버 값으로 바꾼다 (배열이면 여러 열)
    * @param {{ roles?: object[], menus?: object[] }} data
-   * @param {{ level: string, id: string }} [select]
+   * @param {{ level: string, id: string } | { level: string, id: string }[]} [select]
    */
   const applyMenuList = useCallback((data, select) => {
     const nextMenus = data?.menus ?? [];
@@ -171,9 +180,8 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
     const nextForms = { ...prevForms };
     const nextErrors = { ...prevErrors };
 
-    if (select) {
-      nextSelected[select.level] = select.id;
-    }
+    const selects = select ? [].concat(select) : [];
+    selects.forEach((item) => (nextSelected[item.level] = item.id));
 
     LEVELS.forEach((level, index) => {
       const parentLevel = LEVELS[index - 1];
@@ -192,7 +200,7 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       }
 
       const form = nextForms[level];
-      if (select?.level === level && selectedMenu) {
+      if (selects.some((item) => item.level === level) && selectedMenu) {
         nextForms[level] = menuToForm(selectedMenu);
         nextErrors[level] = EMPTY_FORM_ERRORS;
       } else if (form?.mode === "view") {
@@ -334,6 +342,7 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       const errors = { ...prev[level] };
       if ("title" in patch) errors.title = [];
       if ("menuUrl" in patch) errors.menuUrl = [];
+      if ("parentId" in patch) errors.parentId = [];
       errors.etc = [];
       return { ...prev, [level]: errors };
     });
@@ -360,6 +369,12 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
   const handleSave = async (level) => {
     const form = forms[level];
     if (!form || saving) return;
+
+    // 상위 메뉴를 바꿨으면 저장 = 옮기기 (다른 칸은 잠겨 있음, 설계 6-6)
+    if (isParentChanged(form, menus)) {
+      handleMove(level, form);
+      return;
+    }
 
     const parentId = parentIdOf(level);
     const errors = validateMenuForm(form, level, getChildMenus(menus, parentId));
@@ -416,6 +431,60 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       await reloadMenus();
     }
     // MENU_SELF_LOCK 등: 입력값은 그대로 둔다 (사용자가 [취소]로 되돌림)
+  };
+
+  // ───────── 옮기기 (상위 메뉴 변경) ─────────
+
+  const handleMove = (level, form) => {
+    const errors = validateMove(form, menus);
+    setFormErrors((prev) => ({ ...prev, [level]: errors }));
+    if (hasErrors(errors)) return;
+
+    // 옮긴 뒤 왼쪽 열 선택이 새 위치로 바뀌므로, 왼쪽 열의 저장하지 않은 변경은 사라진다
+    const leftDirty = LEVELS.slice(0, LEVELS.indexOf(level)).some((item) =>
+      isFormDirty(forms[item], menus),
+    );
+    const message = leftDirty
+      ? `${MOVE_CONFIRM_MESSAGE} 다른 열의 저장하지 않은 변경사항은 사라집니다.`
+      : MOVE_CONFIRM_MESSAGE;
+
+    askConfirm(message, async () => {
+      setSaving(true);
+      try {
+        const data = await moveMenu(form.id, form.parentId, form.mdfyDt);
+        // 옮긴 메뉴가 보이도록 대메뉴부터 옮긴 메뉴까지 새 경로로 선택
+        const path = getSelfAndAncestors(data?.menus ?? [], form.id).reverse();
+        applyMenuList(
+          data,
+          path.map((menu, index) => ({ level: LEVELS[index], id: menu.id })),
+        );
+        dispatch(refreshMyMenus());
+        alert("메뉴를 옮겼습니다.");
+      } catch (error) {
+        await handleMoveError(level, form, error);
+      } finally {
+        setSaving(false);
+      }
+    });
+  };
+
+  const handleMoveError = async (level, form, error) => {
+    if (error.errorCode === "MENU_TITLE_USED") {
+      setFormErrors((prev) => ({
+        ...prev,
+        [level]: { ...EMPTY_FORM_ERRORS, parentId: [MOVE_TITLE_USED_MESSAGE] },
+      }));
+      return;
+    }
+
+    alert(getErrorMessage(error));
+
+    if (error.errorCode === "MENU_OUTDATED") {
+      await reloadMenus({ level, id: form.id });
+    } else if (error.errorCode === "MENU_NOT_EXISTS") {
+      await reloadMenus();
+    }
+    // MENU_SELF_LOCK · MENU_MOVE_INVALID: 선택은 그대로 둔다 (사용자가 [취소]로 되돌림)
   };
 
   // ───────── 삭제 ─────────
@@ -527,11 +596,13 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
           const form = forms[level];
           const editable = form?.mode === "new" ? canCreate : canUpdate;
 
+          // 상위 메뉴를 바꾸는 중이면 옮길 위치 기준으로 미리 보여 준다
+          const effectiveParentId = form?.mode === "view" ? form.parentId : parentId;
           const blockedRoleIds = new Set(
             form
               ? roles
                   .map((role) => role.roleId)
-                  .filter((roleId) => isBlockedByAncestors(menus, parentId, roleId))
+                  .filter((roleId) => isBlockedByAncestors(menus, effectiveParentId, roleId))
               : [],
           );
 
@@ -545,6 +616,9 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
               form={form}
               errors={formErrors[level]}
               dirty={isDirty(level)}
+              fieldsDirty={isFieldsDirty(form, menus)}
+              parentChanged={isParentChanged(form, menus)}
+              parentOptions={canUpdate ? getParentOptions(menus, level) : []}
               roles={roles}
               blockedRoleIds={blockedRoleIds}
               showSelfLockNotice={

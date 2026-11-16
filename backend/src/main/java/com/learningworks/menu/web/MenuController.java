@@ -14,6 +14,7 @@ import com.learningworks.common.action.RequireAction;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.menu.service.MenuService;
 import com.learningworks.menu.vo.request.ModifyMenuOrderVO;
+import com.learningworks.menu.vo.request.ModifyMenuParentVO;
 import com.learningworks.menu.vo.request.ModifyMenuVO;
 import com.learningworks.menu.vo.request.RegistMenuVO;
 import com.learningworks.menu.vo.response.MenuListVO;
@@ -77,6 +78,17 @@ public class MenuController {
       @PathVariable String menuId, @Valid @RequestBody ModifyMenuVO modifyMenuVO) {
     MenuVO result = this.menuService.updateMenu(MenuController.userIdOf(authentication), menuId,
         modifyMenuVO);
+
+    return ApiResponse.OK(result);
+  }
+
+  // 상위 메뉴 변경 (메뉴 옮기기). 수정 API와 따로 둔다 (menu-design.md 4-7). 권한은 수정과 같은 MENU_UPDATE (D-10)
+  @RequireAction(domain = "MENU", action = "UPDATE", description = "메뉴 수정")
+  @PutMapping("/{menuId}/parent")
+  public ApiResponse<MenuListVO> moveMenu(Authentication authentication,
+      @PathVariable String menuId, @RequestBody ModifyMenuParentVO modifyMenuParentVO) {
+    MenuListVO result = this.menuService.moveMenu(MenuController.userIdOf(authentication), menuId,
+        modifyMenuParentVO);
 
     return ApiResponse.OK(result);
   }

@@ -4,7 +4,11 @@ import Select from "react-select";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
 import { getStudents } from "../../../../api/admin/course/courseApi";
 
-export default function CourseStudentSelect() {
+/**
+ * 수강생 선택 (여러 명). 선택값은 courseSlice.selectStudents 에 저장된다.
+ * @param excludeIds 목록에서 뺄 학생 ID 배열 (예: 이미 수강 중인 학생). 안 넘기면 전체 표시
+ */
+export default function CourseStudentSelect({ excludeIds = [] }) {
   const [options, setOptions] = useState([]);
   const dispatch = useDispatch();
   useEffect(() => {
@@ -41,7 +45,7 @@ export default function CourseStudentSelect() {
       }}
     >
       <Select
-        options={options}
+        options={options.filter((option) => !excludeIds.includes(option.value))}
         onChange={handleChange}
         placeholder="수강생 선택"
         isMulti

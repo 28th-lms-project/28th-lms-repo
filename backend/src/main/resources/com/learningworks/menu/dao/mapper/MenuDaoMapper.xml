@@ -166,6 +166,15 @@
            </foreach>
   </update>
 
+  <!-- int updateMenuParent(String menuId, String parentId, int menuOrder); -->
+  <update id="updateMenuParent">
+    UPDATE MENU
+       SET PARENT_ID = #{parentId}
+         , MENU_ORDER = #{menuOrder}
+         , MDFY_DT = SYSDATE
+     WHERE ID = #{menuId}
+  </update>
+
   <!-- int deleteMenu(String menuId); -->
   <delete id="deleteMenu"
           parameterType="string">
