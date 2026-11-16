@@ -58,6 +58,18 @@ export const modifyMenu = (menuId, menu) => api.put(menuPath(menuId), menu);
 export const modifyMenuOrder = (parentId, menuIds) => api.put("/menus/order", { parentId, menuIds });
 
 /**
+ * 상위 메뉴 변경 = 메뉴 옮기기 (MENU_UPDATE). 소메뉴는 다른 중메뉴로, 중메뉴는 다른 대메뉴로.
+ * 이 메뉴를 쓰는 접근 권한(ACTION)의 메뉴도 서버가 함께 바꾼다. 이름 · 역할 등은 바꾸지 않는다 (수정과 따로 저장).
+ * @param {string} menuId
+ * @param {string} parentId 새 상위 메뉴 ID
+ * @param {string|null} mdfyDt 화면이 받은 값 그대로
+ * @returns {Promise<{ roles: object[], menus: object[] }>} 변경 후 전체
+ * errorCode: MENU_MOVE_INVALID, MENU_NOT_EXISTS, MENU_TITLE_USED, MENU_OUTDATED, MENU_SELF_LOCK
+ */
+export const moveMenu = (menuId, parentId, mdfyDt) =>
+  api.put(`${menuPath(menuId)}/parent`, { parentId, mdfyDt });
+
+/**
  * 메뉴 삭제 (MENU_DELETE)
  * @param {string} menuId
  * @returns {Promise<object>} 삭제한 메뉴

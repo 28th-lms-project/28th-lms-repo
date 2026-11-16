@@ -9,11 +9,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.dao.DuplicateKeyException;
+import com.learningworks.access.dao.AccessDao;
 import com.learningworks.common.action.dao.ActionCodeDao;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.ValidationFailedException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.menu.vo.request.ModifyMenuOrderVO;
+import com.learningworks.menu.vo.request.ModifyMenuParentVO;
 import com.learningworks.menu.vo.request.ModifyMenuVO;
 import com.learningworks.menu.vo.request.RegistMenuVO;
 import com.learningworks.menu.vo.response.MenuListVO;
@@ -50,6 +52,7 @@ class MenuServiceImplTest {
   FakeMenuDao menuDao;
   RoleDao roleDao;
   ActionCodeDao actionCodeDao;
+  AccessDao accessDao;
   MenuServiceImpl menuService;
 
   static RoleVO role(String roleId) {
@@ -99,7 +102,10 @@ class MenuServiceImplTest {
     Mockito.when(this.actionCodeDao.selectBaseRoleByUserId("tutor")).thenReturn(TUTOR);
     Mockito.when(this.actionCodeDao.selectBaseRoleByUserId("student")).thenReturn(STUDENT);
 
-    this.menuService = new MenuServiceImpl(this.menuDao, this.roleDao, this.actionCodeDao);
+    this.accessDao = Mockito.mock(AccessDao.class);
+
+    this.menuService =
+        new MenuServiceImpl(this.menuDao, this.roleDao, this.actionCodeDao, this.accessDao);
   }
 
   @Nested
@@ -312,7 +318,7 @@ class MenuServiceImplTest {
       racingDao.put("M9", "T9", 1, "그룹", null);
       racingDao.put("T9", null, 1, "섹션", null);
       MenuServiceImpl service = new MenuServiceImpl(racingDao, MenuServiceImplTest.this.roleDao,
-          MenuServiceImplTest.this.actionCodeDao);
+          MenuServiceImplTest.this.actionCodeDao, MenuServiceImplTest.this.accessDao);
 
       Assertions.assertThat(errorCodeOf(() -> service.createMenu(regist("M9", "A", null, "/a"))))
           .isEqualTo(ErrorCode.MENU_URL_USED);
@@ -694,6 +700,186 @@ class MenuServiceImplTest {
       this.delete("super", "B2");
 
       Assertions.assertThat(this.dao().lockedMenuIds).containsExactly("B2");
+    }
+  }
+
+  @Nested
+  @DisplayName("PUT /menus/{menuId}/parent 상위 메뉴 변경 (설계 4-7)")
+  class MoveMenu {
+
+    FakeMenuDao dao() {
+      return MenuServiceImplTest.this.menuDao;
+    }
+
+    AccessDao accessDao() {
+      return MenuServiceImplTest.this.accessDao;
+    }
+
+    MenuListVO move(String actorId, String menuId, String parentId) {
+      return this.move(actorId, menuId, parentId, this.dao().menus.containsKey(menuId)
+          ? this.dao().menus.get(menuId).getMdfyDt()
+          : null);
+    }
+
+    MenuListVO move(String actorId, String menuId, String parentId, String mdfyDt) {
+      ModifyMenuParentVO vo = new ModifyMenuParentVO();
+      vo.setParentId(parentId);
+      vo.setMdfyDt(mdfyDt);
+      return MenuServiceImplTest.this.menuService.moveMenu(actorId, menuId, vo);
+    }
+
+    @Test
+    @DisplayName("B20. 소메뉴를 다른 중메뉴로 옮기면 맨 뒤에 붙고, 원래 그룹 순서를 다시 매기고, ACTION의 대 · 중 메뉴를 고친다")
+    void movesBottomMenu() {
+      MenuListVO result = this.move("super", "B2", "M1");
+
+      MenuVO moved = this.dao().menus.get("B2");
+      Assertions.assertThat(moved.getParentId()).isEqualTo("M1");
+      Assertions.assertThat(moved.getMenuOrder()).isEqualTo(2);
+      Assertions.assertThat(moved.getMdfyDt()).isEqualTo(this.dao().now);
+      Assertions.assertThat(this.dao().menus.get("B3").getMenuOrder()).isEqualTo(1);
+      Assertions.assertThat(this.dao().lockedMenuIds).containsExactly("B2");
+
+      Mockito.verify(this.accessDao()).updateActionMenusByBtmMenuId("B2", "M1", "T1");
+      Mockito.verifyNoMoreInteractions(this.accessDao());
+
+      // 응답은 변경 후 전체 목록
+      Assertions.assertThat(result.getMenus()).extracting(MenuVO::getId).contains("B2");
+      Assertions.assertThat(result.getMenus().stream()
+          .filter(menu -> menu.getId().equals("B2")).findFirst().orElseThrow().getParentId())
+          .isEqualTo("M1");
+    }
+
+    @Test
+    @DisplayName("B21. 중메뉴를 다른 대메뉴로 옮기면 하위 소메뉴 행도 잠그고, ACTION의 대메뉴를 고친다")
+    void movesMidMenu() {
+      this.move("super", "M2", "T1");
+
+      MenuVO moved = this.dao().menus.get("M2");
+      Assertions.assertThat(moved.getParentId()).isEqualTo("T1");
+      Assertions.assertThat(moved.getMenuOrder()).isEqualTo(2);
+      Assertions.assertThat(this.dao().menus.get("M3").getMenuOrder()).isEqualTo(1);
+      // 하위 소메뉴는 따라가고, 수정일은 바뀌지 않는다
+      Assertions.assertThat(this.dao().menus.get("B2").getParentId()).isEqualTo("M2");
+      Assertions.assertThat(this.dao().menus.get("B2").getMdfyDt()).isNull();
+      Assertions.assertThat(this.dao().lockedMenuIds).containsExactly("M2", "B2", "B3");
+
+      Mockito.verify(this.accessDao()).updateActionTopMenuByMidMenuId("M2", "T1");
+      Mockito.verifyNoMoreInteractions(this.accessDao());
+    }
+
+    @Test
+    @DisplayName("MENU_ROLE은 그대로 둔다")
+    void keepsMenuRoles() {
+      this.move("super", "B2", "M1");
+
+      Assertions.assertThat(this.dao().roleIdsOf("B2")).containsExactly(ADMIN, TUTOR, STUDENT);
+    }
+
+    @Test
+    @DisplayName("B22. 대메뉴 · 단계가 맞지 않는 상위 메뉴 · 지금과 같은 상위 메뉴 · 빈 값은 MENU_MOVE_INVALID")
+    void rejectsInvalidMove() {
+      // 소메뉴 → 대메뉴 아래
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "B2", "T1")))
+          .isEqualTo(ErrorCode.MENU_MOVE_INVALID);
+      // 소메뉴 → 소메뉴 아래
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "B2", "B5")))
+          .isEqualTo(ErrorCode.MENU_MOVE_INVALID);
+      // 중메뉴 → 중메뉴 아래
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "M2", "M1")))
+          .isEqualTo(ErrorCode.MENU_MOVE_INVALID);
+      // 같은 상위 메뉴
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "B2", "M2")))
+          .isEqualTo(ErrorCode.MENU_MOVE_INVALID);
+      // 대메뉴는 옮길 수 없음
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "T1", "T2")))
+          .isEqualTo(ErrorCode.MENU_MOVE_INVALID);
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "T1", null)))
+          .isEqualTo(ErrorCode.MENU_MOVE_INVALID);
+      // 상위 메뉴를 비움
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "B2", null)))
+          .isEqualTo(ErrorCode.MENU_MOVE_INVALID);
+
+      Assertions.assertThat(this.dao().menus.get("B2").getParentId()).isEqualTo("M2");
+      Mockito.verifyNoInteractions(this.accessDao());
+    }
+
+    @Test
+    @DisplayName("없는 메뉴 · 없는 상위 메뉴는 MENU_NOT_EXISTS")
+    void notExists() {
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "NOPE", "M1")))
+          .isEqualTo(ErrorCode.MENU_NOT_EXISTS);
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "B2", "NOPE")))
+          .isEqualTo(ErrorCode.MENU_NOT_EXISTS);
+    }
+
+    @Test
+    @DisplayName("새 상위 메뉴에 같은 이름이 있으면 MENU_TITLE_USED")
+    void rejectsSameTitle() {
+      this.dao().put("B6", "M1", 2, "과정 목록", "/x");
+
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "B2", "M1")))
+          .isEqualTo(ErrorCode.MENU_TITLE_USED);
+      Assertions.assertThat(this.dao().menus.get("B2").getParentId()).isEqualTo("M2");
+      Mockito.verifyNoInteractions(this.accessDao());
+    }
+
+    @Test
+    @DisplayName("mdfyDt가 서버 값과 다르면 MENU_OUTDATED")
+    void rejectsOutdated() {
+      this.dao().menus.get("B2").setMdfyDt("2026-11-11 09:00:00");
+
+      Assertions.assertThat(errorCodeOf(() -> this.move("super", "B2", "M1", null)))
+          .isEqualTo(ErrorCode.MENU_OUTDATED);
+      Assertions.assertThat(this.dao().menus.get("B2").getParentId()).isEqualTo("M2");
+
+      Assertions.assertThat(this.move("super", "B2", "M1", "2026-11-11 09:00:00")).isNotNull();
+      Assertions.assertThat(this.dao().menus.get("B2").getParentId()).isEqualTo("M1");
+    }
+
+    @Test
+    @DisplayName("B23. ADMIN이 메뉴 관리 메뉴를 ADMIN이 허용되지 않은 · 미사용 상위 메뉴로 옮기면 MENU_SELF_LOCK")
+    void selfLock() {
+      this.dao().put("M4", "T1", 2, "강사 전용", null, TUTOR);
+      this.dao().put("M5", "T1", 3, "미사용 그룹", null, ADMIN, TUTOR).setUseYn("N");
+      this.dao().put("T3", null, 3, "강사 섹션", null, TUTOR);
+
+      Assertions.assertThat(errorCodeOf(() -> this.move("admin", "B4", "M4")))
+          .isEqualTo(ErrorCode.MENU_SELF_LOCK);
+      Assertions.assertThat(errorCodeOf(() -> this.move("admin", "B4", "M5")))
+          .isEqualTo(ErrorCode.MENU_SELF_LOCK);
+      // 메뉴 관리가 든 중메뉴를 ADMIN이 허용되지 않은 대메뉴로
+      Assertions.assertThat(errorCodeOf(() -> this.move("admin", "M3", "T3")))
+          .isEqualTo(ErrorCode.MENU_SELF_LOCK);
+      Assertions.assertThat(this.dao().menus.get("B4").getParentId()).isEqualTo("M3");
+      Assertions.assertThat(this.dao().menus.get("M3").getParentId()).isEqualTo("T2");
+      Mockito.verifyNoInteractions(this.accessDao());
+    }
+
+    @Test
+    @DisplayName("ADMIN이 허용된 상위 메뉴로 옮기기 · 보호 대상이 아닌 메뉴 · SUPER_ADMIN은 자기 잠금에 걸리지 않는다")
+    void selfLockOnlyWhenLosingAccess() {
+      this.dao().put("M4", "T1", 2, "강사 전용", null, TUTOR);
+
+      // 메뉴 관리를 ADMIN이 허용된 다른 그룹으로
+      this.move("admin", "B4", "M2");
+      Assertions.assertThat(this.dao().menus.get("B4").getParentId()).isEqualTo("M2");
+      // 보호 대상이 아닌 메뉴는 어디로든
+      this.move("admin", "B5", "M4");
+      Assertions.assertThat(this.dao().menus.get("B5").getParentId()).isEqualTo("M4");
+      // SUPER_ADMIN은 검사하지 않음
+      this.move("super", "B4", "M4");
+      Assertions.assertThat(this.dao().menus.get("B4").getParentId()).isEqualTo("M4");
+    }
+
+    @Test
+    @DisplayName("미사용 상위 메뉴로도 옮길 수 있다 (자기 잠금 대상이 아니면)")
+    void movesIntoUnusedParent() {
+      this.dao().put("M5", "T1", 2, "미사용 그룹", null, ADMIN).setUseYn("N");
+
+      this.move("admin", "B5", "M5");
+
+      Assertions.assertThat(this.dao().menus.get("B5").getParentId()).isEqualTo("M5");
     }
   }
 

@@ -100,4 +100,24 @@
 
     </update>
 
+    <!-- 메뉴 이동: 소메뉴를 다른 중메뉴로 옮겼을 때 (MenuServiceImpl.moveMenu, D-10) -->
+    <update id="updateActionMenusByBtmMenuId">
+
+        UPDATE ACTION
+           SET
+                TOP_MENU_ID = #{topMenuId}
+              , MID_MENU_ID = #{midMenuId}
+          WHERE BTM_MENU_ID = #{btmMenuId}
+
+    </update>
+
+    <!-- 메뉴 이동: 중메뉴를 다른 대메뉴로 옮겼을 때 (MenuServiceImpl.moveMenu, D-10) -->
+    <update id="updateActionTopMenuByMidMenuId">
+
+        UPDATE ACTION
+           SET TOP_MENU_ID = #{topMenuId}
+          WHERE MID_MENU_ID = #{midMenuId}
+
+    </update>
+
 </mapper>
