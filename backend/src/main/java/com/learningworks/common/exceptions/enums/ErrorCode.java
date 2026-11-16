@@ -5,9 +5,8 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * API 에러 응답에 사용하는 에러 코드.
- * 응답 body의 errorCode 필드에는 enum 이름(예: "USER_NOT_EXISTS")이 그대로 내려간다.
- * 클라이언트는 메시지 문자열이 아니라 errorCode로 에러 종류를 분기할 것.
+ * API 에러 응답에 사용하는 에러 코드. 응답 body의 errorCode 필드에는 enum 이름(예: "USER_NOT_EXISTS")이 그대로 내려간다. 클라이언트는
+ * 메시지 문자열이 아니라 errorCode로 에러 종류를 분기할 것.
  */
 @Getter
 @RequiredArgsConstructor
@@ -29,12 +28,14 @@ public enum ErrorCode {
   FILES_NOT_ALLOWED_EXTENSION(HttpStatus.BAD_REQUEST, "업로드할 수 없는 파일 형식입니다."), //
   FILES_INVALID_CONTENT(HttpStatus.BAD_REQUEST, "파일 확장자와 실제 파일 형식이 일치하지 않습니다."), //
   COURSE_DATA_EMPTY_CONTENT(HttpStatus.BAD_REQUEST, "교육 자료 내용을 입력해주세요."), //
-  LINK_PREVIEW_INVALID_URL(HttpStatus.BAD_REQUEST, "미리보기를 만들 수 없는 URL입니다. http:// 또는 https:// 로 시작하는 공개 주소만 사용할 수 있습니다."), //
+  LINK_PREVIEW_INVALID_URL(HttpStatus.BAD_REQUEST,
+      "미리보기를 만들 수 없는 URL입니다. http:// 또는 https:// 로 시작하는 공개 주소만 사용할 수 있습니다."), //
   CODE_PARENT_INVALID(HttpStatus.BAD_REQUEST, "상위 변수로 지정할 수 없는 값입니다."), //
   MENU_PARENT_INVALID(HttpStatus.BAD_REQUEST, "소메뉴 아래에는 메뉴를 추가할 수 없습니다."), //
   MENU_ORDER_INVALID(HttpStatus.BAD_REQUEST, "메뉴 순서 정보가 올바르지 않습니다."), //
   MENU_MOVE_INVALID(HttpStatus.BAD_REQUEST, "같은 단계의 다른 상위 메뉴로만 옮길 수 있습니다."), //
   MENU_ROLE_INVALID(HttpStatus.BAD_REQUEST, "존재하지 않는 역할이 포함되어 있습니다."), //
+  ATTENDANCE_NOT_CLASS_DAY(HttpStatus.BAD_REQUEST, "오늘은 수업일이 아닙니다."), //
 
   // 401 UNAUTHORIZED
   GLOBAL_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."), //
@@ -86,7 +87,9 @@ public enum ErrorCode {
   MENU_ORDER_OUTDATED(HttpStatus.CONFLICT, "메뉴 목록이 변경되었습니다. 새로고침 후 다시 시도해주세요."), //
   MENU_TITLE_USED(HttpStatus.CONFLICT, "같은 상위 메뉴에 이미 같은 이름의 메뉴가 있습니다."), //
   MENU_OUTDATED(HttpStatus.CONFLICT, "다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도해주세요."), //
-  MENU_SELF_LOCK(HttpStatus.CONFLICT, "저장하면 본인이 메뉴 관리 화면에 들어올 수 없게 됩니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 다른 관리자나 최고 관리자에게 요청해주세요."), //
+  MENU_SELF_LOCK(HttpStatus.CONFLICT,
+      "저장하면 본인이 메뉴 관리 화면에 들어올 수 없게 됩니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 다른 관리자나 최고 관리자에게 요청해주세요."), //
+  ATTENDANCE_ALREADY_CHECKED(HttpStatus.CONFLICT, "오늘은 이미 출석했습니다."), //
 
   // 413 CONTENT TOO LARGE
   FILES_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다."), //
