@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
 import { IconButton } from "../../../sample/input/IconButton";
 import { icons } from "../../../sample/input/icons";
-import { FileField } from "../../../sample/input/Input";
 
 import CourseTutorSelect from "../selector/CourseTutorSelect";
 import CourseStudentSelect from "../selector/CourseStudentSelect";
@@ -13,7 +12,6 @@ export default function CourseAdd() {
   const countRef = useRef();
   const startDateRef = useRef();
   const endDateRef = useRef();
-  const uploadFileRef = useRef();
 
   const [group, setGroup] = useState(true);
   const navigate = useNavigate();
@@ -25,7 +23,6 @@ export default function CourseAdd() {
     const count = countRef.current.value;
     const startDate = startDateRef.current.value;
     const endDate = endDateRef.current.value;
-    const file = uploadFileRef.current.files;
 
     const formData = new FormData();
     formData.append("courseName", title);
@@ -33,7 +30,6 @@ export default function CourseAdd() {
     formData.append("startDate", startDate);
     formData.append("endDated", endDate);
     formData.append("tutorId", addSelectTutor.value);
-    formData.append("file", file);
     for (const studentId of selectStudents) {
       formData.append("studentId", studentId.value);
     }
@@ -67,17 +63,6 @@ export default function CourseAdd() {
           <input type="date" ref={endDateRef} />
           <h3>수강생</h3>
           <CourseStudentSelect />
-          <h3>시간표</h3>
-          <div>
-            <FileField
-              preview={true}
-              ref={uploadFileRef}
-              id="fileField"
-              multiple={true}
-              name="file"
-              labelText="시간표 파일을 업로드 하세요"
-            />
-          </div>
           <div>
             <IconButton
               color="#666"

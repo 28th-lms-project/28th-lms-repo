@@ -410,4 +410,13 @@
            AND CT.TUTOR_ID  = #{userId}
        </select>
 
+       <update id="updateCourse">
+       UPDATE COURSE
+          SET COURSE_NAME = #{modifyCourseVO.courseName}
+            , NO = #{modifyCourseVO.no}
+            , START_DATE = #{modifyCourseVO.startDate}
+            , END_DATED = #{modifyCourseVO.endDated}
+        WHERE DEL_YN = 'N'
+            , ID = #{courseId}
+       </update>
 </mapper>

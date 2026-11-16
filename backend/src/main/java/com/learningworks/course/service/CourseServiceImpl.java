@@ -9,6 +9,7 @@ import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.AuthUtil;
 import com.learningworks.course.dao.CourseDao;
+import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseStudentVO;
@@ -345,5 +346,15 @@ public class CourseServiceImpl implements CourseService{
 		}
 		return this.courseDao.readCourseMembers(courseId);
 	}
+
+	@Override
+	public CourseVO updateCourse(String courseId, ModifyCourseVO modifyCourseVO) {
+		int result = this.courseDao.updateCourse(courseId, modifyCourseVO);
+		
+		CourseVO course = this.courseDao.readOneCourse(courseId);
+		return course;
+	}
+
+	
 
 }

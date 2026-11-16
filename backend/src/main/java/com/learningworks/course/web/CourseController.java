@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.learningworks.common.action.RequireAction;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.course.service.CourseService;
+import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
@@ -236,4 +237,9 @@ public class CourseController {
 		return ApiResponse.OK(null);
 	}
 	
+	@PutMapping("admin/course/{courseId}/updatecourse")
+	public ApiResponse<CourseVO> updateCourse(@PathVariable String courseId , @RequestBody ModifyCourseVO modifyCourseVO){
+		CourseVO result = this.courseService.updateCourse(courseId, modifyCourseVO);
+		return ApiResponse.OK(result);
+	}
 }

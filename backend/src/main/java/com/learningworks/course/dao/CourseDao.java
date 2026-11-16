@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseStudentVO;
@@ -64,5 +65,7 @@ public interface CourseDao {
 	int deleteHomeworkReply(@Param("homeworkId") String homeworkId, @Param("replyId") String replyId);
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
+
+	int updateCourse(String courseId, ModifyCourseVO modifyCourseVO);
 
 }
