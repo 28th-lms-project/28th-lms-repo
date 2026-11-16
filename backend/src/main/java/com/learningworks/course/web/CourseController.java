@@ -21,12 +21,14 @@ import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+import com.learningworks.course.vo.response.AttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
 import com.learningworks.course.vo.response.HomeworkVO;
 
 import jakarta.validation.Valid;
+
 
 @RestController
 public class CourseController {
@@ -241,5 +243,17 @@ public class CourseController {
 	public ApiResponse<CourseVO> updateCourse(@PathVariable String courseId , @RequestBody ModifyCourseVO modifyCourseVO){
 		CourseVO result = this.courseService.updateCourse(courseId, modifyCourseVO);
 		return ApiResponse.OK(result);
+	}
+	
+	/**
+	 * 강의 진행률 · 출석률 요약 (어제까지 기준)
+	 * 관리자 · 강사는 강의 전체 수강생, 수강생은 본인만 조회된다.
+	 * @param courseId
+	 * @return AttendanceSummaryVO
+	 */
+	@RequireAction(domain = "COURSE", action = "ATTENDANCE_READ", description = "강의 출석률 조회")
+	@GetMapping("/{courseId}/attendance/summary")
+	public ApiResponse<AttendanceSummaryVO> readAttendanceSummary(@PathVariable String courseId) {
+		return ApiResponse.OK(this.courseService.readAttendanceSummary(courseId));
 	}
 }

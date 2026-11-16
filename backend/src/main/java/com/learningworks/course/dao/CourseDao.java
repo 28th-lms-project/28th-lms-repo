@@ -13,10 +13,12 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+import com.learningworks.course.vo.response.AttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
 import com.learningworks.course.vo.response.HomeworkVO;
+import com.learningworks.course.vo.response.StudentAttendanceVO;
 
 @Mapper
 public interface CourseDao {
@@ -66,6 +68,13 @@ public interface CourseDao {
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
 
-	int updateCourse(String courseId, ModifyCourseVO modifyCourseVO);
+	int updateCourse(@Param("courseId")String courseId, @Param("modifyCourseVO")ModifyCourseVO modifyCourseVO);
+
+	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐) */
+	AttendanceSummaryVO readCourseClassDays(@Param("courseId") String courseId);
+
+	/** 수강생별 Y / L / N 횟수 (어제까지). userId 가 null 이면 강의 전체 수강생 */
+	List<StudentAttendanceVO> readStudentAttendanceCounts(@Param("courseId") String courseId,
+			@Param("userId") String userId);
 
 }

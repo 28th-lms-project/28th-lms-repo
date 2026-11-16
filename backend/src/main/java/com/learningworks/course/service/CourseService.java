@@ -8,6 +8,7 @@ import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+import com.learningworks.course.vo.response.AttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
@@ -51,6 +52,9 @@ public interface CourseService {
 	List<CourseMemberVO> addCourseMember(String courseId, List<String> studentId);
 
 	CourseVO updateCourse(String courseId, ModifyCourseVO modifyCourseVO);
+
+	/** 강의 진행률 · 출석률 요약 (어제까지 기준). 수강생은 본인만 */
+	AttendanceSummaryVO readAttendanceSummary(String courseId);
 
 	
 
