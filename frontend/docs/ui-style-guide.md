@@ -272,8 +272,19 @@
 | 버튼 | variant primary · secondary(기본) · danger · text × size sm · md. IconButton은 같은 스타일에 아이콘 옵션 | 초록 "등록"은 primary로 합침 (강조색은 화면당 하나). IconButton이 가장 많이 쓰여 API는 유지하고 스타일만 교체. `buttonface` → 토큰, hover 굵기 변화(폭 흔들림) → 배경 변화, `className` · 나머지 props 전달 |
 | 모달 | `common/Modal` 하나, 크기 sm 400 · md 460 · lg 800, `open` prop. Esc · 닫기 버튼은 항상, 바깥 클릭은 확인 · 읽기 모달만 | RoleUserMoveModal(portal · Esc · 바깥 클릭 · `role="dialog"`)을 기반으로 MemberModal 스타일. `sample/Modal`의 ref 명령형 API · 항상 렌더링 · z-index 999999는 버림 |
 | 피드백 | 성공 · 요청 실패는 토스트, 입력 오류는 필드 아래 문구, `confirm()`은 확인 모달, 권한 없음 · 로딩 · 오류 · 빈 목록은 상태 상자 하나 | `alert()`는 화면을 막고 모양을 못 바꿈. 토스트는 MyCourseData 구현을 common으로. 상태 상자는 5곳에 복사된 `.notice` 기준 |
+| 글꼴 | 본문 **Pretendard** (npm `pretendard`, 가변 글꼴 · 동적 서브셋), 코드 · ID는 `--font-mono` (Consolas 등) | 아래 참고 |
 
-남은 결정: **글꼴**. 지금은 `"Roboto Mono"`가 첫 글꼴이라 영문 · 숫자가 고정폭이고, 글꼴 파일을 불러오지 않아 PC마다 다르게 보입니다. 본문은 Pretendard 또는 Noto Sans KR(웹폰트)로, 고정폭은 코드 · ID에만 쓰는 것을 추천합니다. 정해지면 `--font-sans`만 바꿉니다.
+#### 글꼴을 Pretendard로 정한 이유
+
+- 전에는 `"Roboto Mono"`가 첫 글꼴이라 영문 · 숫자가 고정폭으로 보였고, 글꼴 파일을 불러오지 않아 PC마다 다른 글꼴(대부분 맑은 고딕)로 보였습니다.
+- 한글(본고딕 기반)과 영문 · 숫자(Inter 기반)를 한 글꼴 안에서 맞춰 디자인해서, 한글과 영문이 섞인 관리 화면(아이디 · 코드 · 날짜)에서 높이와 굵기가 어긋나지 않습니다.
+- 가변 글꼴이라 파일 하나로 400 · 600 · 700 굵기를 모두 씁니다.
+- 동적 서브셋이라 화면에 나온 글자가 속한 묶음만 내려받습니다 (한글 글꼴 전체를 받지 않음).
+- npm 패키지로 넣어 Vite가 함께 빌드하므로 외부 CDN에 의존하지 않습니다 (사내망 · 오프라인에서도 동작).
+- SIL Open Font License라 무료로 쓸 수 있습니다.
+- Noto Sans KR도 괜찮지만, 영문 · 숫자 모양이 한글보다 가늘어 보이고 줄 간격이 넓어서 표 · 폼처럼 촘촘한 화면에는 Pretendard가 더 맞습니다.
+
+적용: `main.jsx`에서 글꼴 CSS를 불러오고, `body`와 입력 · 버튼(`button` · `input` · `select` · `textarea`는 원래 글꼴을 물려받지 않음)이 `--font-sans`를 따릅니다. 옛 글꼴 조합을 직접 적었던 6곳(`IconButton.css` 2곳, my/course 화면 4곳)도 `var(--font-sans)`로 바꿨습니다.
 
 ### 다음 단계
 

@@ -330,7 +330,7 @@ export const TokenCatalog = () => (
         <GroupTitle>참고: 통일 전 현재 값 — 글자 크기</GroupTitle>
         <p className={styles.hint12} style={{ marginBottom: "8px" }}>
             px 계열(admin/system, my/course)과 rem 계열(member, login, my/info, 사이드바)이 섞여 있습니다.
-            기본 글꼴: &quot;Roboto Mono&quot;, &quot;Noto Sans KR&quot; (index.css, 글꼴 파일은 불러오지 않음)
+            통일 전 기본 글꼴: &quot;Roboto Mono&quot;, &quot;Noto Sans KR&quot; (글꼴 파일을 불러오지 않았음) → 지금은 Pretendard (--font-sans)
         </p>
         <table className={styles.tokenTable}>
             <thead>
