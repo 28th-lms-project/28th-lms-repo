@@ -1,0 +1,206 @@
+/*
+ * 입력 · 폼 (frontend/docs/ui-style-guide.md 8장)
+ *
+ *   <div class="field">
+ *     <label class="field-label field-required" for="name">이름</label>
+ *     <input id="name" class="form-control" aria-invalid="true" aria-describedby="name-msg" />
+ *     <p id="name-msg" class="field-error">이름을 입력하세요.</p>   (또는 field-hint)
+ *   </div>
+ *
+ *   form-control       input · select · textarea 공통 (36px)
+ *   form-control-sm    30px
+ *   input-group        접두어 + 입력  (<span class="input-group-text">ROLE_</span>)
+ *   form-check         체크박스 · 라디오 + 글자
+ *   form-row           필드 여러 개를 한 줄에 (좁으면 줄바꿈)
+ *
+ * React: common/ui/Field.jsx (라벨 · 힌트 · 오류 · 글자 수)
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field-label {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.field-required::after {
+  content: " *";
+  color: var(--color-danger);
+}
+
+.field-hint,
+.field-error {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+  white-space: pre-line;
+}
+
+.field-hint {
+  color: var(--color-text-muted);
+}
+
+.field-error {
+  color: var(--color-danger);
+}
+
+.field-counter {
+  align-self: flex-end;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+/* ───── 입력 칸 ───── */
+.form-control {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: var(--control-height-md);
+  padding: 0 var(--control-padding-x-md);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  outline: 0;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.form-control::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.form-control:not(:disabled):hover {
+  border-color: var(--color-border-strong);
+}
+
+.form-control:focus,
+.form-control:focus:hover {
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.form-control:disabled,
+.form-control[readonly] {
+  color: var(--color-text-disabled);
+  background-color: var(--color-bg-disabled);
+  cursor: not-allowed;
+}
+
+.form-control[readonly] {
+  color: var(--color-text-secondary);
+  cursor: default;
+}
+
+.form-control[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.form-control[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px var(--color-danger-bg);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 96px;
+  padding: 8px var(--control-padding-x-md);
+  line-height: var(--line-height-base);
+  resize: vertical;
+}
+
+select.form-control {
+  padding-right: 8px;
+  cursor: pointer;
+}
+
+.form-control-sm {
+  height: var(--control-height-sm);
+  padding: 0 var(--control-padding-x-sm);
+  font-size: var(--font-size-sm);
+}
+
+/* 코드 · ID 입력 */
+.form-control-mono {
+  font-family: var(--font-mono);
+}
+
+/* ───── 접두어 + 입력 ───── */
+.input-group {
+  display: flex;
+  min-width: 0;
+}
+
+.input-group-text {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-right: 0;
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.input-group > .form-control {
+  flex: 1;
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+/* ───── 체크박스 · 라디오 ───── */
+.form-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.form-check > input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--color-primary);
+  cursor: inherit;
+}
+
+.form-check:has(> input:disabled) {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.form-check-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+/* ───── 배치 ───── */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.form-row > .field {
+  flex: 1 1 180px;
+}
+
+.form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

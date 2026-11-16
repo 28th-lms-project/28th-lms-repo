@@ -102,6 +102,30 @@
   display: block;
 }
 
+.codeSample {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-subtle);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.standardIntro {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-line;
+  color: var(--color-info);
+  background-color: var(--color-info-bg);
+  border: 1px solid var(--color-info-border);
+  border-radius: var(--radius);
+}
+
 .groupTitle {
   margin: 24px 0 10px;
   font-size: 14px;

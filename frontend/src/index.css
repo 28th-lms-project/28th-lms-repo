@@ -4,6 +4,13 @@
  * - 의미 토큰(--color-* 등): 화면 코드는 이것만 쓴다.
  * - 테마: 강조색(--color-primary*)만 :root[data-theme="..."]에서 덮어쓴다. 회색 · 상태색은 고정.
  */
+
+/* 공통 UI 클래스 (가이드 8장). @import는 파일 맨 앞에 있어야 함 */
+@import "./styles/button.css";
+@import "./styles/form.css";
+@import "./styles/badge.css";
+@import "./styles/status.css";
+
 :root {
   /* ───── 팔레트 (Open Color) ───── */
   --white: #fff;

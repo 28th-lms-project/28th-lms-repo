@@ -14,6 +14,7 @@
 
 | 목차 | 내용 | 파일 |
 | --- | --- | --- |
+| **표준 UI** | 버튼 · 입력 · 배지 · 상태 상자의 표준 모양과 사용 코드 (8장). 새 화면은 이것을 씀 | `StandardCatalog.jsx` |
 | 토큰 | 표준 토큰(index.css, 7장) + 통일 전 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
@@ -41,6 +42,8 @@
 
 ## 2. 공통 컴포넌트
 
+표준 UI 컴포넌트(`common/ui/` — `Button` · `Field` · `Badge` · `StatusBox`)는 8장에 따로 정리했습니다. 아래는 그 전부터 있던 컴포넌트입니다.
+
 | 컴포넌트 | 위치 | 주요 props · 메모 |
 | --- | --- | --- |
 | `PageContainer` | `common/PageContainer.jsx` | 브레드크럼 + 22px 제목 + 본문. `title`을 안 넘기면 브레드크럼 마지막 항목 |
@@ -48,7 +51,7 @@
 | `Section` | `components/Section.jsx` | 흰 카드 + 1.2rem 제목. `title`, `nopadding`, `nomargin`, `direction`, `itemGap` |
 | `Grid` | `common/Grid.jsx` | CSS grid 표. `header`, `content`, `columnStyle`, `checkable`, `editable`, `clickableColumn`, `activeRows`, `footer` |
 | `Paginator` | `common/Paginator.jsx` | `start`, `countPerPageGroup`, `activePage`, `setActivePage`, `totalPageCount` |
-| `IconButton` | `common/input/IconButton.jsx` | `icon`, `iconSize`(기본 20, 화면에서는 주로 16), `backgroundColor`, `disabled`, `hoverIconRotate`, `alwaysIconRotate`, `style`. **`className`은 받지 않음** |
+| `IconButton` | `common/input/IconButton.jsx` | `icon`, `iconSize`(기본 20, 화면에서는 주로 16), `backgroundColor`, `disabled`, `hoverIconRotate`, `alwaysIconRotate`, `style`. `className` · 그 밖의 props(`aria-label` 등)는 `<button>`에 전달 (2026-11-16 수정, sample 복사본도 같음). 모양은 아직 그대로 — 표준 `Button`으로 바꾸는 것은 다음 단계 3번 |
 | `icons` | `common/input/icons.js` | edit, close, add, setting, fullStar, star, login, logout, download, downloadDone, progress, delete, refresh, sort, unchecked, checked, radioUnChecked, radioChecked, home, arrowRight, error, ok, full, exitFull |
 | `Id` · `Password` · `TextField` · `NativeSelect` · `Textarea` · `Checkbox` · `Radio` · `FileField` · `Button` | `common/input/Input.jsx` | `NativeSelect` · `Textarea`는 스타일 클래스가 정의되어 있지 않아 브라우저 기본 모양 |
 | `Editor` | `common/Editor.jsx` | 리치 텍스트 에디터 (MyCourseData에서 사용). 카탈로그에는 넣지 않음 |
@@ -246,7 +249,7 @@
 ### 바로 고칠 문제 (모양이 의도와 다름)
 
 - **정의되지 않은 클래스**: `tab-list`(MyCourse), `codeButtons` · `inputForm` · `codeInput` · `fieldError`(Code), `gridContainer`, `surveyPreview`, `repliesFooter`, `access-role-layout`, `pageList`(CourseItem, Paginator 모듈 안에만 있음), MyTimetable의 `loading` · `dateHeader` · `dateSelect`, Survey의 `surveyQuestion`
-- **IconButton에 넘긴 `className`이 무시됨**: `admin/course/list/CourseItem.jsx`(탭 선택 표시가 안 보임), `admin/survey/survey/Survey.jsx`
+- ~~IconButton에 넘긴 `className`이 무시됨~~ → IconButton은 수정됨. 하지만 넘기던 클래스 자체가 없어서 아직 모양 변화는 없습니다: `admin/course/list/CourseItem.jsx`의 `"active"`(전역 `.active` 없음 → 탭 선택 표시가 여전히 안 보임), `admin/survey/survey/Survey.jsx`의 `style.addData`(Survey.module.css에 없음)
 - **`.section` 전역 클래스**는 `Section.jsx`를 import한 화면에서만 로드됩니다. `CourseItem` · `CourseAdd` · `HomeworkItem`은 `className="section"`만 쓰고 있어서, 샘플 페이지를 먼저 열었는지에 따라 모양이 달라집니다.
 - `CourseMain.jsx`의 `borederBotton` 오타 (스타일이 적용되지 않음)
 
@@ -289,7 +292,10 @@
 ### 다음 단계
 
 1. ~~결정 사항을 `index.css`에 CSS 변수로 선언~~ → 완료 (7장)
-2. 버튼 · 입력 · 배지 · 안내 상자 · 모달처럼 많이 겹치는 것부터 공통 클래스(또는 common 컴포넌트)를 만들고, 샘플 페이지에 "표준" 섹션을 추가합니다.
+2. 많이 겹치는 것부터 공통 클래스 + common 컴포넌트를 만들고 샘플 페이지 "표준" 섹션에 추가합니다.
+   - ~~1차: 버튼 · 입력 · 배지 · 상태 상자~~ → 완료 (8장)
+   - 2차: 토스트(provider) · 모달(`common/Modal`) — 동작까지 만들어야 해서 따로
+   - 3차: 표(Grid · native table) · 탭 · 패널 · 카드
 3. 화면들을 표준으로 옮기면서 카탈로그의 해당 `Variant`를 지웁니다. 카탈로그가 비면 샘플 페이지가 곧 디자인 시스템 페이지가 됩니다.
 4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`으로 옮기고, `Modal`은 `common/`으로 이동합니다.
 
@@ -379,3 +385,121 @@
   --color-primary-border: #96f2d7;
 }
 ```
+
+---
+
+## 8. 표준 UI (버튼 · 입력 · 배지 · 상태 상자)
+
+샘플 페이지 맨 위 **"표준 UI"** 섹션에서 모양과 사용 코드를 같이 볼 수 있습니다.
+
+### 구조
+
+| 층 | 위치 | 역할 |
+| --- | --- | --- |
+| 토큰 | `src/index.css` `:root` | 색 · 크기 값 (7장) |
+| 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` (`index.css`가 `@import`) | **스타일의 원본.** 토큰만 사용 |
+| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구) |
+
+- raw HTML에도 클래스만 붙이면 같은 모양이 됩니다 (`<button className="btn btn-primary">`). 동작이 필요하면 컴포넌트를 씁니다.
+- 클래스 이름은 짧은 접두어 + 하이픈(`btn-*`, `form-*`, `field-*`, `badge-*`, `status-box-*`)으로, `.input` · `.section` 같은 일반 단어는 쓰지 않습니다 (전역이라 다른 CSS와 부딪힘).
+- 전역 클래스는 `main.jsx`에서 CSS module보다 먼저 불러옵니다. 그래서 화면의 CSS module이 같은 요소에 스타일을 주면 module 쪽이 이깁니다 (화면별로 살짝 조정할 수 있음, 남용은 금지).
+- **기존 화면 모양은 바뀌지 않았습니다.** 새 클래스를 쓰는 곳은 샘플 페이지뿐이고, 기존 화면은 다음 단계 3번에서 옮깁니다.
+
+### 버튼
+
+| 클래스 | `Button` props | 쓰는 곳 |
+| --- | --- | --- |
+| `btn` | (기본) `variant="secondary"` | 대부분의 버튼: 취소 · 수정 · 추가 · 닫기 |
+| `btn btn-primary` | `variant="primary"` | 화면의 주 동작 **하나**: 검색 · 저장 · 등록 · 로그인 |
+| `btn btn-danger` | `variant="danger"` | 삭제 · 잠금 (테두리만 빨강) |
+| `btn btn-danger-solid` | `variant="danger-solid"` | 삭제를 **확정**하는 모달 버튼만 |
+| `btn btn-text` | `variant="text"` | 링크처럼 보이는 버튼: 자세히 · [접기] |
+| `btn-sm` | `size="sm"` | 30px. 표 행 안 · 툴바처럼 좁은 곳 |
+| `btn-block` | `block` | 전체 폭 (로그인 · 폼 제출) |
+| `btn-icon` | 글자 없이 `icon`만 | 정사각형. **`aria-label` 필수** |
+| — | `loading` | 돌아가는 아이콘 + 비활성. 문구는 "저장 중..."으로 직접 바꿈 |
+| `btn-group` · `btn-group-end` | — | 버튼 묶음 (간격 8px), 오른쪽 정렬 |
+
+```jsx
+import Button from "../common/ui/Button";
+import { icons } from "../common/input/icons";
+
+<div className="btn-group btn-group-end">
+  <Button onClick={close}>취소</Button>
+  <Button variant="primary" icon={icons.ok} loading={saving} onClick={save}>
+    {saving ? "저장 중..." : "저장"}
+  </Button>
+</div>
+```
+
+- 아이콘은 기존 `icons.js`를 그대로 씁니다. 크기는 md 16px · sm 14px로 정해져 있습니다.
+- 나머지 props(`onClick`, `type`, `title`, `aria-*` …)는 `<button>`에 그대로 전달됩니다. `type` 기본값은 `"button"` (폼 제출 버튼만 `type="submit"`).
+
+### 입력 · 폼
+
+| 클래스 | 쓰는 곳 |
+| --- | --- |
+| `form-control` | `input` · `select` · `textarea` 공통 (36px, textarea는 최소 96px) |
+| `form-control-sm` | 30px |
+| `form-control-mono` | 코드 · ID 입력 (고정폭) |
+| `field` · `field-label` · `field-required` · `field-hint` · `field-error` · `field-counter` | 필드 틀 (`Field` 컴포넌트가 붙여 줌) |
+| `input-group` + `input-group-text` | 접두어 + 입력 (`ROLE_`) |
+| `form-check` · `form-check-group` | 체크박스 · 라디오 + 글자 (네이티브 input, 강조색) |
+| `form-row` | 필드 여러 개를 한 줄에 (좁으면 줄바꿈, 버튼은 아래쪽 정렬) |
+| `form-stack` | 필드를 세로로 16px 간격 |
+
+```jsx
+import Field from "../common/ui/Field";
+
+<Field label="아이디" htmlFor="userId" required hint="영문 · 숫자 4 ~ 20자" error={errors.userId}>
+  <input
+    id="userId"
+    className="form-control"
+    value={userId}
+    onChange={(e) => setUserId(e.target.value)}
+    aria-invalid={!!errors.userId}
+    aria-describedby="userId-msg"
+  />
+</Field>
+```
+
+- 오류가 있으면 힌트 대신 오류만 보입니다 (`role="alert"`). 입력 칸은 `aria-invalid="true"`일 때 빨간 테두리가 됩니다.
+- 오류 · 힌트 문구의 id는 `${htmlFor}-msg`입니다. 입력의 `aria-describedby`에 넣어 스크린 리더가 함께 읽게 합니다.
+- 글자 수: `count={{ current: memo.length, max: 200 }}`
+- 상태: `disabled`(회색 배경), `readOnly`(회색 배경 · 글자는 보통), 포커스는 강조색 테두리 + 연한 그림자.
+- 기존 `common/input/Input.jsx`의 컴포넌트(`Id` · `Password` · `TextField` · `Checkbox` · `Radio` …)는 그대로 두었습니다. 새 화면은 네이티브 입력 + `form-control`을 씁니다.
+
+### 배지 · 태그
+
+| 클래스 | `Badge` props | 쓰는 곳 |
+| --- | --- | --- |
+| `badge` | `tone="neutral"` (기본) | 미진단 · 해당 없음 |
+| `badge badge-primary` | `tone="primary"` | 진행 중 |
+| `badge badge-success` | `tone="success"` | 정상 · 정답 · 상 |
+| `badge badge-danger` | `tone="danger"` | 잠김 · 오답 · 하 |
+| `badge badge-warning` | `tone="warning"` | 채점 중 · 중 · 주의 |
+| `badge badge-info` | `tone="info"` | 부분 정답 · 안내 |
+| `tag` | — | 분류 칩 (학습 · 진로), 테두리 없이 작게 |
+
+같은 의미에는 같은 tone을 씁니다. 화면마다 새 배지 색을 만들지 않습니다.
+
+### 상태 상자
+
+| `type` | 기본 문구 | 아이콘 | 스크린 리더 |
+| --- | --- | --- | --- |
+| `loading` | 불러오는 중... | 돌아가는 아이콘 | `role="status"` |
+| `empty` | 데이터가 없습니다. | — | — |
+| `error` | 불러오지 못했습니다. (상세는 빨강) | 오류 | `role="alert"` |
+| `denied` | 권한이 없습니다. | — | — |
+
+```jsx
+import StatusBox from "../common/ui/StatusBox";
+
+if (loading) return <StatusBox type="loading" />;
+if (error) return <StatusBox type="error" detail={error.message} onRetry={reload} />;
+if (list.length === 0) return <StatusBox type="empty" title="검색 결과가 없습니다." />;
+```
+
+- `title`로 기본 문구를 바꾸고, `detail`로 둘째 줄(줄바꿈 유지)을 넣습니다. `onRetry`가 있으면 [다시 시도] 버튼이 나옵니다.
+- `size="sm"`: 테두리 없이 작게. 목록 · 표 안의 빈 상태에 씁니다.
+- 지금 5곳에 복사된 `.notice`(권한 확인 중 · 권한 없음), 빈 상태 5가지, 로딩 문구들을 옮길 대상입니다.

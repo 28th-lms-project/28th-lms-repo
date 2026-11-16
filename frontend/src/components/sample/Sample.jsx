@@ -22,11 +22,18 @@ import { NavigationCatalog } from "./catalog/NavigationCatalog.jsx";
 import { FeedbackCatalog } from "./catalog/FeedbackCatalog.jsx";
 import { LayoutCatalog } from "./catalog/LayoutCatalog.jsx";
 import { OverlayCatalog } from "./catalog/OverlayCatalog.jsx";
+import { StandardCatalog } from "./catalog/StandardCatalog.jsx";
 
 /*
  * UI 카탈로그: 프론트엔드 전체 화면에서 쓰는 UI를 현재 모양 그대로 모은 것.
  * 공통 스타일(index.css) · 디자인 시스템을 정하기 위한 비교용. 가이드: frontend/docs/ui-style-guide.md
  */
+/** 표준 UI (디자인 시스템): 새 화면은 이것을 쓴다 */
+const STANDARD = [
+    { id: "standard-ui", title: "표준 UI (버튼 · 입력 · 배지 · 상태 상자)", Component: StandardCatalog },
+];
+
+/** 통일 전 현재 UI (비교용) */
 const CATALOG = [
     { id: "catalog-tokens", title: "토큰 (색 · 글자 · 모서리 · 높이)", Component: TokenCatalog },
     { id: "catalog-buttons", title: "버튼", Component: ButtonCatalog },
@@ -80,7 +87,13 @@ const SampleDashboard = () => {
     return (
         <PageContainer>
             <nav className={catalogStyles.toc} aria-label="샘플 목차">
-                <span className={catalogStyles.tocGroup}>UI 카탈로그</span>
+                <span className={catalogStyles.tocGroup}>표준</span>
+                {STANDARD.map(({ id, title }) => (
+                    <button key={id} type="button" onClick={() => scrollTo(id)}>
+                        {title.split(" (")[0]}
+                    </button>
+                ))}
+                <span className={catalogStyles.tocGroup}>통일 전 (현재)</span>
                 {CATALOG.map(({ id, title }) => (
                     <button key={id} type="button" onClick={() => scrollTo(id)}>
                         {title.split(" (")[0]}
@@ -94,7 +107,7 @@ const SampleDashboard = () => {
                 ))}
             </nav>
 
-            {CATALOG.map(({ id, title, Component }) => (
+            {[...STANDARD, ...CATALOG].map(({ id, title, Component }) => (
                 <div key={id} id={id} className={catalogStyles.anchor}>
                     <Section title={title}>
                         <Component />

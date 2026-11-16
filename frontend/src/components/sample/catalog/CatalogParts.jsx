@@ -5,8 +5,9 @@ import styles from "./Catalog.module.css";
  * @param {{ name: string, source?: string, note?: string, block?: boolean, children: React.ReactNode }} props
  *  - source: 이 모양을 쓰는 원본 파일 (src/components 기준). 여러 곳이면 " · "로 구분
  *  - block: 본문을 flex 대신 block으로 (표 · 넓은 레이아웃)
+ *  - code: 사용 예 코드 (표준 섹션)
  */
-export const Variant = ({ name, source, note, block = false, children }) => (
+export const Variant = ({ name, source, note, block = false, code, children }) => (
     <div className={styles.variant}>
         <div className={styles.variantHead}>
             <strong>{name}</strong>
@@ -16,6 +17,7 @@ export const Variant = ({ name, source, note, block = false, children }) => (
         <div className={`${styles.variantBody} ${block ? styles.variantBodyBlock : ""}`}>
             {children}
         </div>
+        {code && <pre className={styles.codeSample}>{code.trim()}</pre>}
     </div>
 );
 
