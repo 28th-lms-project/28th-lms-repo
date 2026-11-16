@@ -25,6 +25,7 @@
 | **표준 UI** | 버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 확인 창 · 모달의 표준 모양과 사용 코드 (8장). 새 화면은 이것을 씀 | `StandardCatalog.jsx` |
 | **표준 UI 2** | 표 · 페이지 이동 · 탭 · 패널 · 카드 · 안내 상자 · 키-값 목록 · 타임라인 · 선택 목록 · 배치, 화면 조합 예시 (8장) | `StandardLayoutCatalog.jsx` |
 | **표준 UI 3** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · pill 선택 · 세그먼트 · 켜고 끄는 버튼 · 스위치 · 날짜 · 기간 · 파일 · 진행 막대 (8장) | `StandardNavCatalog.jsx` |
+| **표준 UI 4** | 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · 검색 셀렉트 · 시험 문제 · 댓글 · 인용 · 세로 키-값 · 상자 목록, 화면 예시(상세 · 대시보드 · 오류 화면) (8장) | `StandardDataCatalog.jsx` |
 | 토큰 | 표준 토큰(index.css, 7장). 실제 값을 index.css에서 읽어 표시 | `TokenCatalog.jsx` (`TokenCatalog`) |
 | 토큰 (통일 전 값) | **통일 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
@@ -308,7 +309,8 @@
    - ~~2차: 토스트 · 확인 창 · 모달~~ → 완료 (8장)
    - ~~3차: 표 · 탭 · 패널 · 카드 (+ 페이지 이동 · 안내 상자 · 목록 · 배치)~~ → 완료 (8장)
    - ~~4차: 화면 머리 · 브레드크럼 · 사이드 메뉴 · 선택(pill · 세그먼트 · 스위치 · 켜고 끄는 버튼) · 날짜 · 파일 · 진행 막대~~ → 완료 (8장)
-   - 남은 것 (표준 없음): react-select 테마, 시간표, 댓글, 시험 문제 블록, 404 화면. 화면을 옮기면서 필요할 때 만듭니다.
+   - ~~5차: 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · react-select 테마 · 시험 문제 · 댓글 · 인용 · 세로 키-값 · 상자 목록 · 오류 화면 + 화면 예시(상세 · 대시보드)~~ → 완료 (8장)
+   - 표준을 만들지 않기로 한 것: TextField 떠 있는 라벨(라벨은 위), IconButton hover 아이콘 회전(로딩 `.spin`만), 팝업 창(`window.open`, UI 아님), 기존 샘플 Chart · Poll(샘플 밖에서 안 씀. 차트를 쓰게 되면 그때 색을 토큰으로), 리치 텍스트 `Editor`(외부 에디터, 옮길 때 테두리 · 높이만 맞춤)
    - 다크 모드: 토큰 · 표준 UI는 대응 완료, 샘플 페이지에서만 켬 (9장)
 3. 화면들을 표준으로 옮기면서 카탈로그의 해당 `Variant`를 지웁니다. 카탈로그가 비면 샘플 페이지가 곧 디자인 시스템 페이지가 됩니다.
 4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`으로 옮기고, `Modal`은 `common/`으로 이동합니다.
@@ -411,8 +413,8 @@
 | 층 | 위치 | 역할 |
 | --- | --- | --- |
 | 토큰 | `src/index.css` `:root` | 색 · 크기 값 (7장) |
-| 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` · `table.css` · `tabs.css` · `panel.css` · `nav.css` · `choice.css` (`index.css`가 `@import`) | **스타일의 원본.** 토큰만 사용 |
-| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `SideNav` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
+| 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` · `table.css` · `tabs.css` · `panel.css` · `nav.css` · `choice.css` · `content.css` (`index.css`가 `@import`). react-select만 `common/ui/selectStyles.js` (라이브러리가 CSS 대신 styles 객체를 받음) | **스타일의 원본.** 토큰만 사용 |
+| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `SideNav` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` · `SelectBox` · `QuestionBlock` · `Comment` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
 | 훅 | `src/components/common/ui/feedbackContext.js` `useToast` · `useConfirm` | `alert()` · `confirm()` 대신. `main.jsx`의 `FeedbackProvider`가 앱 전체를 감쌈 |
 
 - raw HTML에도 클래스만 붙이면 같은 모양이 됩니다 (`<button className="btn btn-primary">`). 동작이 필요하면 컴포넌트를 씁니다.
@@ -506,6 +508,7 @@ import Field from "../common/ui/Field";
 | `empty` | 데이터가 없습니다. | — | — |
 | `error` | 불러오지 못했습니다. (상세는 빨강) | 오류 | `role="alert"` |
 | `denied` | 권한이 없습니다. | — | — |
+| `notFound` | 페이지를 찾을 수 없습니다. | 큰 "404" | — |
 
 ```jsx
 import StatusBox from "../common/ui/StatusBox";
@@ -517,6 +520,7 @@ if (list.length === 0) return <StatusBox type="empty" title="검색 결과가 �
 
 - `title`로 기본 문구를 바꾸고, `detail`로 둘째 줄(줄바꿈 유지)을 넣습니다. `onRetry`가 있으면 [다시 시도] 버튼이 나옵니다.
 - `size="sm"`: 테두리 없이 작게. 목록 · 표 안의 빈 상태에 씁니다.
+- `size="lg"`: 화면 전체 (404 · 라우트 오류, `common/error/*` 대신). `code`로 큰 숫자("500" 등), `actions`로 아래 버튼(뒤로 · 홈으로).
 - 지금 5곳에 복사된 `.notice`(권한 확인 중 · 권한 없음), 빈 상태 5가지, 로딩 문구들을 옮길 대상입니다.
 
 ### 토스트 (`alert()` 대신)
@@ -663,9 +667,15 @@ import Pagination from "../common/ui/Pagination";
 | 흐린 행 | `isRowMuted={(row) => row.locked}` (미사용 · 보호 행) |
 | 정렬 | 열에 `sortable`, `sort` · `onSortChange`. **데이터 정렬은 호출한 쪽**(API 정렬이면 요청만 다시) |
 | 빈 · 로딩 | `loading`, `rows=[]` → 표 안에 작은 상태 상자 |
-| 모양 | `size="sm"`(행 38px) · `striped` · `maxHeight`(표 안 스크롤 + 머리글 고정) |
+| 모양 | `size="sm"`(행 38px) · `striped` · `bordered`(세로 칸선) · `maxHeight`(표 안 스크롤 + 머리글 고정) |
+| 열 · 행 클래스 | 열에 `className`(머리글 · 칸 모두, 예: `col-highlight` 오늘 열), `rowClassName={(row) => ...}`(예: `is-break` 쉬는 시간 행) |
+| 체크 선택 | `checkedKeys` · `onCheckedChange` → 맨 앞 체크박스 칸 + 머리글 전체 선택(이 페이지만, 일부면 `-`). 못 고르는 행은 `isRowCheckable` |
+| 편집 표 | 칸을 `render`로 `<input className="cell-input">`, `rowStatus={(row) => row.status}`(`"added"` · `"modified"` · `"deleted"`) → 왼쪽 선 + 배경 (삭제 예정은 취소선) |
+| 순서 바꾸기 | `onReorder(from, to)` → 맨 앞 손잡이 칸. 끌어 놓기 또는 손잡이에서 ↑ ↓ 키. 못 옮기는 행은 `isRowLocked` ("고정" 표시, 그 자리로 놓기도 막음) |
 
 - 컴포넌트 없이: `<div className="table-wrap"><table className="table table-hover">…`, 행에 `is-selected` · `is-clickable` · `is-muted`, 칸에 `col-num` · `col-center` · `col-actions` · `cell-mono`.
+- 공통 `Grid`와 대응: `checkable` → `checkedKeys`, 편집 모드(`type: add · modify · del`) → `rowStatus` + `cell-input`, `activeRows` → `selectedKey`. `Grid`처럼 표가 데이터를 들고 있지 않고, **바뀐 목록은 화면이 state로 들고 있다가 저장할 때 보냅니다** (샘플 "표준 UI 4"의 편집 표 예시).
+- 시간표: `bordered` + 오늘 열 `className: "col-highlight"` + 쉬는 시간 `rowClassName` → `is-break`. 머리글 파랑 · 오늘 초록 같은 직접 색은 쓰지 않습니다.
 - `Pagination`의 `page`는 **0부터** (API와 같음). 번호는 10개씩, 처음 · 이전 · 다음 · 끝 버튼, 페이지가 1개면 아무것도 그리지 않습니다.
 
 ### 탭
@@ -833,6 +843,73 @@ const idBase = useId();
 
 - `tone`: 기본(강조색) · `success`(완료) · `warning` · `danger`(마감 임박). `size="sm"`은 4px.
 - `label`은 화면에 안 보이는 이름입니다 (`role="progressbar"`). 과정 카드 안에서 쓰는 예시는 샘플 "표준 UI 3"에 있습니다.
+
+### 검색 셀렉트 (react-select)
+
+```jsx
+import SelectBox from "../common/ui/SelectBox";
+
+<Field label="담당 강사" htmlFor="tutor" required error={error}>
+  <SelectBox inputId="tutor" options={tutors} value={tutor} onChange={setTutor} isClearable aria-invalid={!!error} />
+</Field>
+<SelectBox isMulti options={students} value={picked} onChange={setPicked} />
+```
+
+- `SelectBox`는 react-select에 `selectStyles`(`common/ui/selectStyles.js`)를 넣어 둔 것입니다. 높이 36px · 테두리 · 포커스 · 다중 선택 칩이 표준 입력과 같고, 값이 모두 토큰이라 다크 모드를 따릅니다.
+- props는 react-select 그대로입니다. 추가로 `size="sm"`(30px), `aria-invalid`(오류 테두리), `inModal`(메뉴를 `body`로 띄워 모달 밖으로 잘리지 않게).
+- 이미 `Select`를 직접 쓰는 화면(`admin/course/selector/*` · `Survey`)은 `import Select` → `SelectBox`로 바꾸거나, `styles={selectStyles}`만 넣어도 됩니다. 폭을 정하던 감싸는 div는 `Field` · `form-row`로.
+- 짧은 고정 목록은 `<select className="form-control">`을 씁니다.
+
+### 시험 문제 · 보기
+
+```jsx
+import QuestionBlock from "../common/ui/QuestionBlock";
+
+<QuestionBlock no={1} title="기본형이 아닌 것은?" score={5} options={options} value={answer} onChange={setAnswer} />
+<QuestionBlock no={2} title="..." multiple options={options} value={answers} onChange={setAnswers} />
+<QuestionBlock no={1} title="..." options={options} value={submitted} answer={correct} showResult />
+<QuestionBlock no={3} title="출력 결과는?" code={source}>
+  <textarea className="form-control form-control-mono" aria-label="3번 답안" />
+</QuestionBlock>
+```
+
+- `Exam*Modal`(인라인 문제 블록) · `admin/test`(보기 선택 `#bbfdbb`) · 잠긴 정답 표시를 대신합니다.
+- 보기 전체가 눌리는 칸이고 진짜 `radio` · `checkbox`입니다 (방향키 · 스페이스). 고른 보기는 강조색, `showResult`면 정답 초록 · 고른 오답 빨강이고 고칠 수 없습니다.
+- `onChange`가 없으면 읽기 전용 (문제 미리 보기). 주관식 · 코드 답안은 `children`.
+- 컴포넌트 없이: `question` · `question-head` · `question-no` · `question-title` · `question-score` · `question-body` · `question-code`, 보기는 `option-list > li > label.option`(`is-answer` · `is-wrong`).
+
+### 댓글
+
+```jsx
+import Comment from "../common/ui/Comment";
+
+<ul className="comment-list">
+  <Comment author="홍길동" time="2026-11-16 14:20" body={text} actions={<Button variant="text">답글</Button>}>
+    <Comment author="김강사" badge={<Badge tone="primary">강사</Badge>} time="..." body="..." />
+  </Comment>
+</ul>
+```
+
+- `HomeworkReply` · `ReplyForm`의 인라인 댓글을 대신합니다. 120자를 넘는 글은 3줄로 접고 [더 보기]가 붙습니다.
+- 답글은 `children`으로 넣으면 왼쪽 선으로 들여 씁니다. 입력 칸은 `textarea.form-control` + 오른쪽 [등록] 버튼.
+
+### 인용 · 세로 키-값 · 상자 목록
+
+| 클래스 | 대신하는 것 | 메모 |
+| --- | --- | --- |
+| `quote` | `MyCounsel` 의견 인용 상자 | `<blockquote className="quote"><p>…</p><footer>이름</footer></blockquote>` |
+| `desc-list-stacked` | `MyCounsel` 3열 정보 | 라벨 위 · 값 아래. 항목마다 `<div><dt/><dd/></div>`, 열 수 `--desc-columns`(기본 3, 768px 이하 2) |
+| `list-boxed` | `RoleUserMoveModal` 회색 상자 목록 | `<ul>`. 길면 `--list-max-height`로 높이 제한 + 스크롤 |
+
+### 화면 예시 (상세 · 대시보드 · 오류 화면)
+
+샘플 "표준 UI 4" 맨 아래에 표준 부품만으로 만든 화면 세 가지가 있습니다. 화면을 옮길 때 그대로 따라 만들면 됩니다.
+
+| 예시 | 부품 | 대신하는 것 |
+| --- | --- | --- |
+| 상세 화면 | `PageHeader`(브레드크럼 + 수정 · 삭제) + `Panel`(제목 · 태그) + `card-meta` + `card-body` + `FileList` | `MyCourseData` 상세 머리 · 메타 · 첨부 칩 |
+| 대시보드 | `card-grid` + `StatCard` → 과정 `card` + `Progress` → `Panel flush` + `list-group` | `main/Main` 대시보드 카드 |
+| 오류 화면 | `StatusBox type="notFound" size="lg"` · `StatusBox type="error" size="lg" code="500"` | `common/error/*` 404 · 라우트 오류 상자 |
 
 ---
 

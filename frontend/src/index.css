@@ -20,6 +20,7 @@
 @import "./styles/panel.css";
 @import "./styles/nav.css";
 @import "./styles/choice.css";
+@import "./styles/content.css";
 
 :root {
   /* ───── 팔레트 (Open Color) ───── */

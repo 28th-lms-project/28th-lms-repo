@@ -26,6 +26,7 @@ import { OverlayCatalog } from "./catalog/OverlayCatalog.jsx";
 import { StandardCatalog } from "./catalog/StandardCatalog.jsx";
 import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
 import { StandardNavCatalog } from "./catalog/StandardNavCatalog.jsx";
+import { StandardDataCatalog } from "./catalog/StandardDataCatalog.jsx";
 import { PartHeader } from "./catalog/CatalogParts.jsx";
 import UiButton from "../common/ui/Button.jsx";
 import { Tabs, TabPanel } from "../common/ui/Tabs.jsx";
@@ -41,6 +42,7 @@ const STANDARD = [
     { id: "standard-ui", title: "표준 UI (버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 모달)", Component: StandardCatalog },
     { id: "standard-layout", title: "표준 UI (표 · 탭 · 패널 · 카드 · 안내 · 목록 · 배치)", Component: StandardLayoutCatalog },
     { id: "standard-nav", title: "표준 UI (화면 머리 · 메뉴 · 선택 · 날짜 · 파일 · 진행 막대)", Component: StandardNavCatalog },
+    { id: "standard-data", title: "표준 UI (표 확장 · 검색 셀렉트 · 시험 문제 · 댓글 · 내용 블록 · 화면 예시)", Component: StandardDataCatalog },
     { id: "catalog-tokens", title: "토큰 (index.css)", Component: TokenCatalog },
 ];
 
@@ -78,7 +80,7 @@ const PART_TABS = [
 const TOC = {
     standard: STANDARD.map(({ id, title }) => ({
         id,
-        label: title.includes("표 · 탭") ? "표준 UI 2" : title.includes("화면 머리") ? "표준 UI 3" : title.split(" (")[0],
+        label: title.includes("표 · 탭") ? "표준 UI 2" : title.includes("화면 머리") ? "표준 UI 3" : title.includes("표 확장") ? "표준 UI 4" : title.split(" (")[0],
     })),
     legacy: CATALOG.map(({ id, title }) => ({ id, label: title.split(" (")[0] })),
     old: LEGACY.map(({ id, title }) => ({ id, label: title })),

@@ -6,6 +6,7 @@
  *     <p class="status-box-detail">관리자에게 문의하세요.</p>
  *   </div>
  *   + status-box-error (상세 문구 빨강) · status-box-sm (목록 · 표 안: 테두리 없이 작게)
+ *   + status-box-lg (화면 전체: 404 · 라우트 오류) + status-box-code (큰 숫자) · status-box-actions
  *
  * React: common/ui/StatusBox.jsx (type별 기본 문구 · 아이콘 · 다시 시도 버튼)
  */
@@ -66,6 +67,36 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-regular);
   color: var(--color-text-muted);
+}
+
+/* 화면 전체 (404 · 라우트 오류): 큰 코드 + 문구 + 버튼 */
+.status-box-lg {
+  justify-content: center;
+  gap: 10px;
+  min-height: 360px;
+  padding: 56px 24px;
+}
+
+.status-box-lg .status-box-title {
+  font-size: var(--font-size-xl);
+}
+
+.status-box-code {
+  margin: 0;
+  font-size: 56px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-border-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-box-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
 }
 
 /* ───── 진행 막대 ─────

@@ -11,12 +11,16 @@
  *   table-hover · table-striped · table-sm
  *   col-num(오른쪽 · 고정폭 숫자) · col-center · col-actions(오른쪽 버튼 칸) · cell-mono
  *   tr.is-clickable · tr.is-selected · tr.is-muted
+ *   table-bordered: 세로 칸선 (시간표) · col-highlight: 강조 열 (오늘) · tr.is-break: 쉬는 시간 행
+ *   col-check: 체크박스 칸 · col-handle + table-handle: 순서 손잡이 (tr.is-dragging · is-drop-before · is-drop-after)
+ *   tr.is-added · is-modified · is-deleted: 편집 표 변경 상태 · cell-input: 칸 안 입력
  *   table-wrap-scroll: 높이 제한 + 머리글 고정
  *
  * React: common/ui/Table.jsx, common/ui/Pagination.jsx
  */
 
 .table-wrap {
+  position: relative; /* 칸 안 visually-hidden 기준 (choice.css 주석) */
   width: 100%;
   overflow-x: auto;
   background-color: var(--color-bg-surface);
@@ -232,4 +236,160 @@ th[aria-sort] .table-sort-icon {
   font-weight: var(--font-weight-bold);
   color: var(--color-on-primary);
   background-color: var(--color-primary);
+}
+
+/* ───── 세로 칸선 · 강조 열 · 쉬는 시간 행 (시간표) ───── */
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid var(--color-border-light);
+}
+
+.table-bordered tbody tr:last-child td {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.table .col-highlight {
+  background-color: var(--color-success-bg);
+}
+
+.table th.col-highlight {
+  color: var(--color-success);
+}
+
+.table tr.is-break td {
+  height: 30px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+  background-color: var(--color-bg-subtle);
+}
+
+/* ───── 체크박스 칸 ───── */
+.table .col-check {
+  width: 44px;
+  padding: 0;
+  text-align: center;
+}
+
+.table .col-check > input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  vertical-align: middle;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.table .col-check > input:disabled {
+  cursor: not-allowed;
+}
+
+/* ───── 순서 바꾸기 ───── */
+.table .col-handle {
+  width: 40px;
+  padding: 0;
+  text-align: center;
+}
+
+.table-handle {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  color: var(--color-text-placeholder);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: grab;
+}
+
+.table-handle:hover {
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-hover);
+}
+
+.table-handle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.table-lock {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-disabled);
+}
+
+.table tr.is-dragging {
+  opacity: 0.45;
+}
+
+.table tr.is-drop-before td {
+  box-shadow: inset 0 2px 0 var(--color-primary);
+}
+
+.table tr.is-drop-after td {
+  box-shadow: inset 0 -2px 0 var(--color-primary);
+}
+
+/* ───── 편집 표: 변경 상태 · 칸 안 입력 ───── */
+.table tr.is-added td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-success);
+}
+
+.table tr.is-added {
+  background-color: var(--color-success-bg);
+}
+
+.table tr.is-modified td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-warning);
+}
+
+.table tr.is-modified {
+  background-color: var(--color-warning-bg);
+}
+
+.table tr.is-deleted td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-danger);
+}
+
+.table tr.is-deleted {
+  color: var(--color-text-disabled);
+  background-color: var(--color-danger-bg);
+}
+
+.table tr.is-deleted td:not(.col-check):not(.col-handle):not(.col-actions) {
+  text-decoration: line-through;
+}
+
+/* 평소에는 글자처럼, 올리거나 누르면 입력 칸 */
+.cell-input {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-height-sm);
+  padding: 0 8px;
+  margin: 0 -8px;
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  outline: 0;
+}
+
+.cell-input:hover:not(:disabled) {
+  border-color: var(--color-border);
+}
+
+.cell-input:focus {
+  background-color: var(--color-bg-surface);
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.cell-input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.cell-input:disabled {
+  cursor: not-allowed;
 }
