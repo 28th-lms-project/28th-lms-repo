@@ -16,6 +16,7 @@ const Overlay = ({ onClose, children }) => {
     return createPortal(
         <div
             className={styles.modalOverlay}
+            data-color-scheme="light"
             onClick={(e) => e.target === e.currentTarget && onClose()}
         >
             {children}
@@ -57,7 +58,7 @@ export const OverlayCatalog = () => {
                     source="sample/Modal.jsx · admin/system/menu/Menu.jsx"
                     note="ref.current.open()으로 엶. 아래 'Sample Modals' 섹션에 예시가 있음"
                 >
-                    <span className={styles.hint12}>common에는 아직 모달 컴포넌트가 없음</span>
+                    <span className={styles.hint12}>표준: common/ui/Modal · useConfirm (표준 UI 섹션)</span>
                 </Variant>
                 <Variant
                     name="팝업 창"

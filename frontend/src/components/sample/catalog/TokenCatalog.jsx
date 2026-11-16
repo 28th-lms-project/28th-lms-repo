@@ -196,12 +196,12 @@ const readToken = (name) =>
 
 const StandardTokens = () => (
     <div>
-        <p className={styles.hint12} style={{ marginBottom: "12px" }}>
+        <p className={styles.note} style={{ marginBottom: "12px" }}>
             index.css의 :root에 선언된 토큰입니다. 새 코드는 hex 대신 var(--토큰)을 씁니다. 팔레트(--gray-*, --indigo-* 등)는 화면 코드에서 직접 쓰지 않습니다.
         </p>
         {STANDARD_COLORS.map((group) => (
             <div key={group.title} style={{ marginBottom: "16px" }}>
-                <p className={styles.hint12} style={{ marginBottom: "8px" }}>
+                <p className={styles.note} style={{ marginBottom: "8px" }}>
                     {group.title}
                 </p>
                 <div className={styles.swatches}>
@@ -310,7 +310,7 @@ export const TokenCatalog = () => (
         <GroupTitle>참고: 통일 전 현재 값 — 색상</GroupTitle>
         {colorGroups.map((group) => (
             <div key={group.title} style={{ marginBottom: "16px" }}>
-                <p className={styles.hint12} style={{ marginBottom: "8px" }}>
+                <p className={styles.note} style={{ marginBottom: "8px" }}>
                     {group.title}
                 </p>
                 <div className={styles.swatches}>
@@ -328,7 +328,7 @@ export const TokenCatalog = () => (
         ))}
 
         <GroupTitle>참고: 통일 전 현재 값 — 글자 크기</GroupTitle>
-        <p className={styles.hint12} style={{ marginBottom: "8px" }}>
+        <p className={styles.note} style={{ marginBottom: "8px" }}>
             px 계열(admin/system, my/course)과 rem 계열(member, login, my/info, 사이드바)이 섞여 있습니다.
             통일 전 기본 글꼴: &quot;Roboto Mono&quot;, &quot;Noto Sans KR&quot; (글꼴 파일을 불러오지 않았음) → 지금은 Pretendard (--font-sans)
         </p>

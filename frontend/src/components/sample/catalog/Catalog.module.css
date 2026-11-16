@@ -5,32 +5,39 @@
  * 가이드: frontend/docs/ui-style-guide.md
  */
 
-/* ───────── 카탈로그 틀 ───────── */
+/* ───────── 카탈로그 틀 (토큰 사용 → 다크 모드를 따름) ───────── */
 .toc {
   position: sticky;
   top: -24px;
-  z-index: 10;
+  z-index: var(--z-sticky);
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   padding: 10px 12px;
-  background-color: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
 }
 
-.toc button {
+.toc button.tocLink {
   padding: 4px 10px;
-  border: 1px solid #ccc;
-  border-radius: 14px;
-  background-color: #fff;
-  font-size: 13px;
-  color: #333;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-bg-surface);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
   cursor: pointer;
 }
 
-.toc button:hover {
-  background-color: #f2f2f2;
+.toc button.tocLink:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.tocEnd {
+  margin-left: auto;
 }
 
 /* 목차 버튼으로 이동할 때 sticky 목차에 가리지 않도록 */
@@ -39,10 +46,28 @@
 }
 
 .tocGroup {
-  font-size: 12px;
-  color: #888;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
   align-self: center;
   margin-left: 6px;
+}
+
+/* 다크 모드를 따르는 영역: 공통 Section(흰 배경 고정)도 토큰 색으로 */
+.themed :global(.section),
+.themed :global(.section-title) {
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+}
+
+/* 통일 전 영역: 다크 모드에서도 밝게 (data-color-scheme="light"와 함께 씀) */
+.legacyNotice {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-subtle);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
 }
 
 .variants {
@@ -59,8 +84,8 @@
 
 .variant {
   min-width: 0;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
 }
 
 .variantHead {
@@ -70,22 +95,22 @@
   justify-content: space-between;
   gap: 4px 12px;
   padding: 8px 12px;
-  background-color: #f7f7f7;
-  border-bottom: 1px solid #e5e5e5;
-  font-size: 13px;
+  background-color: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--font-size-md);
 }
 
 .variantHead code {
-  font-size: 11px;
-  color: #888;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
   word-break: break-all;
 }
 
 .variantNote {
   margin: 0;
   padding: 6px 12px 0;
-  font-size: 12px;
-  color: #777;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
   white-space: pre-line;
 }
 
@@ -128,12 +153,19 @@
 
 .groupTitle {
   margin: 24px 0 10px;
-  font-size: 14px;
-  color: #555;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
 }
 
 .groupTitle:first-child {
   margin-top: 0;
+}
+
+/* 카탈로그 설명 문구 */
+.note {
+  margin: 0 0 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
 }
 
 /* ───────── 토큰 ───────── */
@@ -154,7 +186,7 @@
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 4px;
 }
 
@@ -166,11 +198,11 @@
 
 .swatchText code {
   font-size: 12px;
-  color: #333;
+  color: var(--color-text);
 }
 
 .swatchText span {
-  color: #888;
+  color: var(--color-text-muted);
   font-size: 11px;
 }
 
@@ -183,29 +215,29 @@
 .tokenTable th,
 .tokenTable td {
   padding: 8px 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border-light);
   text-align: left;
   vertical-align: middle;
 }
 
 .tokenTable th {
-  background-color: #f7f7f7;
-  color: #555;
+  background-color: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
   font-weight: 600;
 }
 
 .radiusBox {
   width: 80px;
   height: 40px;
-  background-color: #eef3fd;
-  border: 1px solid #4a7fd8;
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
 }
 
 .heightBox {
   display: inline-block;
   width: 120px;
-  background-color: #eef3fd;
-  border: 1px solid #4a7fd8;
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
 }
 
 /* ───────── 버튼 ───────── */

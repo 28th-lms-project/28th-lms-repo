@@ -5,7 +5,7 @@ import { chartData } from "../../assets/mocks/chart.json.js";
 import { pollData } from "../../assets/mocks/poll.json.js";
 import { Grid } from "./Grid.jsx";
 import { gridData } from "../../assets/mocks/grid.json.js";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, Confirm } from "./Modal.jsx";
 import { Button, FileField } from "./input/Input.jsx";
 import { Paginator } from "./Paginator.jsx";
@@ -23,19 +23,24 @@ import { FeedbackCatalog } from "./catalog/FeedbackCatalog.jsx";
 import { LayoutCatalog } from "./catalog/LayoutCatalog.jsx";
 import { OverlayCatalog } from "./catalog/OverlayCatalog.jsx";
 import { StandardCatalog } from "./catalog/StandardCatalog.jsx";
+import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
+import UiButton from "../common/ui/Button.jsx";
 
 /*
- * UI 카탈로그: 프론트엔드 전체 화면에서 쓰는 UI를 현재 모양 그대로 모은 것.
- * 공통 스타일(index.css) · 디자인 시스템을 정하기 위한 비교용. 가이드: frontend/docs/ui-style-guide.md
+ * 디자인 시스템 페이지
+ * - 표준: 새 화면이 쓰는 UI (토큰 · 공통 클래스 · common/ui). 다크 모드를 따른다.
+ * - 통일 전: 프론트엔드 화면들의 현재 모양 그대로 (비교용). 다크 모드에서도 밝게 고정.
+ * 가이드: frontend/docs/ui-style-guide.md
  */
 /** 표준 UI (디자인 시스템): 새 화면은 이것을 쓴다 */
 const STANDARD = [
     { id: "standard-ui", title: "표준 UI (버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 모달)", Component: StandardCatalog },
+    { id: "standard-layout", title: "표준 UI (표 · 탭 · 패널 · 카드 · 안내 · 목록 · 배치)", Component: StandardLayoutCatalog },
+    { id: "catalog-tokens", title: "토큰 (표준 토큰 · 통일 전 값)", Component: TokenCatalog },
 ];
 
 /** 통일 전 현재 UI (비교용) */
 const CATALOG = [
-    { id: "catalog-tokens", title: "토큰 (색 · 글자 · 모서리 · 높이)", Component: TokenCatalog },
     { id: "catalog-buttons", title: "버튼", Component: ButtonCatalog },
     { id: "catalog-forms", title: "입력 · 폼", Component: FormCatalog },
     { id: "catalog-lists", title: "리스트 · 표", Component: ListCatalog },
@@ -60,8 +65,50 @@ const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
+/*
+ * 다크 모드 (샘플 페이지에서만): <html data-color-scheme="dark">를 이 페이지에 있는 동안만 붙인다.
+ * 페이지를 떠나면 지워서 다른 화면은 항상 밝은 모드. 선택은 이 브라우저에만 기억.
+ */
+const SCHEME_KEY = "sample-color-scheme";
+
+const readScheme = () => {
+    try {
+        return localStorage.getItem(SCHEME_KEY) === "dark" ? "dark" : "light";
+    } catch {
+        return "light";
+    }
+};
+
+const applyScheme = (scheme) => {
+    if (scheme === "dark") document.documentElement.dataset.colorScheme = "dark";
+    else delete document.documentElement.dataset.colorScheme;
+};
+
 const SampleDashboard = () => {
     title("DashBoard!");
+
+    // 첫 렌더 전에 속성을 붙여야 토큰 값 표시(TokenCatalog)가 맞음
+    const [scheme, setScheme] = useState(() => {
+        const saved = readScheme();
+        applyScheme(saved);
+        return saved;
+    });
+
+    useEffect(() => {
+        applyScheme(scheme);
+        return () => applyScheme("light");
+    }, [scheme]);
+
+    const toggleScheme = () => {
+        const next = scheme === "dark" ? "light" : "dark";
+        applyScheme(next); // 다시 그리기 전에 적용 (토큰 값 표시)
+        try {
+            localStorage.setItem(SCHEME_KEY, next);
+        } catch {
+            /* 저장 못 해도 지금 화면에는 적용됨 */
+        }
+        setScheme(next);
+    };
 
     const [activePage, setActivePage] = useState(0);
 
@@ -89,25 +136,48 @@ const SampleDashboard = () => {
             <nav className={catalogStyles.toc} aria-label="샘플 목차">
                 <span className={catalogStyles.tocGroup}>표준</span>
                 {STANDARD.map(({ id, title }) => (
-                    <button key={id} type="button" onClick={() => scrollTo(id)}>
-                        {title.split(" (")[0]}
+                    <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
+                        {title.includes("표 · 탭") ? "표준 UI 2" : title.split(" (")[0]}
                     </button>
                 ))}
                 <span className={catalogStyles.tocGroup}>통일 전 (현재)</span>
                 {CATALOG.map(({ id, title }) => (
-                    <button key={id} type="button" onClick={() => scrollTo(id)}>
+                    <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
                         {title.split(" (")[0]}
                     </button>
                 ))}
                 <span className={catalogStyles.tocGroup}>기존 샘플</span>
                 {LEGACY.map(({ id, title }) => (
-                    <button key={id} type="button" onClick={() => scrollTo(id)}>
+                    <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
                         {title}
                     </button>
                 ))}
+                <span className={catalogStyles.tocEnd}>
+                    <UiButton size="sm" aria-pressed={scheme === "dark"} onClick={toggleScheme}>
+                        {scheme === "dark" ? "☀ 밝은 모드" : "☾ 다크 모드"}
+                    </UiButton>
+                </span>
             </nav>
 
-            {[...STANDARD, ...CATALOG].map(({ id, title, Component }) => (
+            {/* 표준: 토큰을 쓰므로 다크 모드를 따름 */}
+            <div className={catalogStyles.themed}>
+                {STANDARD.map(({ id, title, Component }) => (
+                    <div key={id} id={id} className={catalogStyles.anchor}>
+                        <Section title={title}>
+                            <Component />
+                        </Section>
+                    </div>
+                ))}
+            </div>
+
+            {/* 통일 전 · 기존 샘플: hex를 직접 써서 다크 모드에서도 밝게 고정 */}
+            <div data-color-scheme="light">
+            {scheme === "dark" && (
+                <p className={catalogStyles.legacyNotice}>
+                    아래 &quot;통일 전&quot; · &quot;기존 샘플&quot;은 색을 직접 적어서(토큰 미사용) 다크 모드에서도 밝게 보입니다.
+                </p>
+            )}
+            {CATALOG.map(({ id, title, Component }) => (
                 <div key={id} id={id} className={catalogStyles.anchor}>
                     <Section title={title}>
                         <Component />
@@ -384,6 +454,7 @@ const SampleDashboard = () => {
                         pollItemList={pollData.pollItemList}
                     />
                 </Section>
+            </div>
             </div>
         </PageContainer>
     );

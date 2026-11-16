@@ -27,7 +27,7 @@
 }
 
 .badge-primary {
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   background-color: var(--color-primary-light);
   border-color: var(--color-primary-border);
 }
@@ -64,7 +64,7 @@
   line-height: var(--line-height-base);
   white-space: nowrap;
   vertical-align: middle;
-  color: var(--color-primary);
+  color: var(--color-primary-text);
   background-color: var(--color-primary-light);
   border-radius: var(--radius-pill);
 }

@@ -15,6 +15,7 @@
 | 목차 | 내용 | 파일 |
 | --- | --- | --- |
 | **표준 UI** | 버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 확인 창 · 모달의 표준 모양과 사용 코드 (8장). 새 화면은 이것을 씀 | `StandardCatalog.jsx` |
+| **표준 UI 2** | 표 · 페이지 이동 · 탭 · 패널 · 카드 · 안내 상자 · 키-값 목록 · 타임라인 · 선택 목록 · 배치, 화면 조합 예시 (8장) | `StandardLayoutCatalog.jsx` |
 | 토큰 | 표준 토큰(index.css, 7장) + 통일 전 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
@@ -42,7 +43,7 @@
 
 ## 2. 공통 컴포넌트
 
-표준 UI 컴포넌트(`common/ui/` — `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `useToast` · `useConfirm`)는 8장에 따로 정리했습니다. 아래는 그 전부터 있던 컴포넌트입니다.
+표준 UI 컴포넌트(`common/ui/` — `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `useToast` · `useConfirm` · `Table` · `Pagination` · `Tabs` · `Panel` · `StatCard` · `Callout`)는 8장에 따로 정리했습니다. 아래는 그 전부터 있던 컴포넌트입니다.
 
 | 컴포넌트 | 위치 | 주요 props · 메모 |
 | --- | --- | --- |
@@ -295,7 +296,8 @@
 2. 많이 겹치는 것부터 공통 클래스 + common 컴포넌트를 만들고 샘플 페이지 "표준" 섹션에 추가합니다.
    - ~~1차: 버튼 · 입력 · 배지 · 상태 상자~~ → 완료 (8장)
    - ~~2차: 토스트 · 확인 창 · 모달~~ → 완료 (8장)
-   - 3차: 표(Grid · native table) · 탭 · 패널 · 카드
+   - ~~3차: 표 · 탭 · 패널 · 카드 (+ 페이지 이동 · 안내 상자 · 목록 · 배치)~~ → 완료 (8장)
+   - 다크 모드: 토큰 · 표준 UI는 대응 완료, 샘플 페이지에서만 켬 (9장)
 3. 화면들을 표준으로 옮기면서 카탈로그의 해당 `Variant`를 지웁니다. 카탈로그가 비면 샘플 페이지가 곧 디자인 시스템 페이지가 됩니다.
 4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`으로 옮기고, `Modal`은 `common/`으로 이동합니다.
 
@@ -334,12 +336,12 @@
 | 글자색 | `--color-text` · `-text-secondary` · `-text-muted` · `-text-placeholder` · `-text-disabled` · `-text-inverse` |
 | 배경 | `--color-bg-page` · `-bg-surface` · `-bg-subtle`(표 머리글 · 패널 머리 · 줄무늬) · `-bg-hover` · `-bg-disabled` |
 | 테두리 | `--color-border`(입력 · 버튼 · 카드) · `-border-light`(표 행 · 구분선) · `-border-strong`(hover) |
-| 강조 | `--color-primary` · `-primary-hover` · `-primary-light`(선택 행) · `-primary-border` · `--color-on-primary` · `--color-link` · `--color-focus` |
-| 상태 | `--color-{success · danger · warning · info}` + `-bg` · `-border`, `--color-danger-hover` · `-danger-border-hover` |
+| 강조 | `--color-primary`(채움) · `-primary-hover` · `-primary-light`(선택 행) · `-primary-border` · `-primary-text`(연한 배경 위 글자) · `--color-on-primary` · `--color-link` · `--color-focus` |
+| 상태 | `--color-{success · danger · warning · info}` + `-bg` · `-border`, `--color-danger-fill` · `-danger-fill-hover`(채운 버튼) · `-danger-border-hover` |
 | 사이드바 | `--color-sidebar-bg` · `-sidebar-text` · `-sidebar-muted` · `-sidebar-active` · `-sidebar-active-bg` |
-| 오버레이 | `--color-overlay` · `--color-toast-bg` |
-| 글꼴 | `--font-sans` · `--font-mono`, `--font-size-{xs · sm · md · base · lg · xl · 2xl}`, `--font-weight-{regular · semibold · bold}`, `--line-height-{tight · base}` |
-| 크기 | `--control-height-{sm · md}` · `--control-padding-x-{sm · md}` · `--table-header-height` · `--table-row-height` |
+| 오버레이 | `--color-overlay` · `--color-toast-bg` · `--color-toast-error-bg` |
+| 글꼴 | `--font-sans` · `--font-mono`, `--font-size-{xs · sm · md · base · lg · xl · 2xl · 3xl}`, `--font-weight-{regular · semibold · bold}`, `--line-height-{tight · base}` |
+| 크기 | `--control-height-{sm · md}` · `--control-padding-x-{sm · md}` · `--table-header-height` · `--table-row-height` · `--modal-width-{sm · md · lg}` |
 | 모서리 | `--radius` · `--radius-lg` · `--radius-pill` |
 | 그림자 | `--shadow-sm`(패널) · `--shadow-md`(토스트) · `--shadow-lg`(모달) |
 | 쌓임 순서 | `--z-sticky` · `--z-modal` · `--z-toast` |
@@ -388,7 +390,7 @@
 
 ---
 
-## 8. 표준 UI (버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 모달)
+## 8. 표준 UI
 
 샘플 페이지 맨 위 **"표준 UI"** 섹션에서 모양과 사용 코드를 같이 볼 수 있습니다.
 
@@ -397,8 +399,8 @@
 | 층 | 위치 | 역할 |
 | --- | --- | --- |
 | 토큰 | `src/index.css` `:root` | 색 · 크기 값 (7장) |
-| 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` (`index.css`가 `@import`) | **스타일의 원본.** 토큰만 사용 |
-| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
+| 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` · `table.css` · `tabs.css` · `panel.css` (`index.css`가 `@import`) | **스타일의 원본.** 토큰만 사용 |
+| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
 | 훅 | `src/components/common/ui/feedbackContext.js` `useToast` · `useConfirm` | `alert()` · `confirm()` 대신. `main.jsx`의 `FeedbackProvider`가 앱 전체를 감쌈 |
 
 - raw HTML에도 클래스만 붙이면 같은 모양이 됩니다 (`<button className="btn btn-primary">`). 동작이 필요하면 컴포넌트를 씁니다.
@@ -606,3 +608,174 @@ import Modal from "../common/ui/Modal";
 - 모달 안에서 또 모달(확인 창)을 띄우면 Esc · Tab은 맨 위 것만 처리합니다.
 - 본문만 스크롤되고 머리 · 바닥은 고정입니다 (높이는 화면 높이 - 32px까지).
 - 옮길 대상: `Member*Modal`(폼, md), `RoleUserMoveModal`(md), `ConfirmModal`(→ `useConfirm`), `Exam*Modal`(lg), `sample/Modal`의 `Alert` · `Confirm`.
+
+### 표 · 페이지 이동
+
+`Table`은 공통 `Grid`를 대신할 표준 표입니다. 칸 내용은 `render`로 자유롭게 넣습니다 (배지 · 버튼).
+
+```jsx
+import Table from "../common/ui/Table";
+import Pagination from "../common/ui/Pagination";
+
+<Table
+  ariaLabel="회원 목록"
+  columns={[
+    { key: "id", title: "아이디", width: "18%", mono: true, sortable: true },
+    { key: "name", title: "이름", sortable: true },
+    { key: "score", title: "평균", align: "num", render: (r) => `${r.score}점` },
+    { key: "status", title: "상태", align: "center",
+      render: (r) => <Badge tone={r.locked ? "danger" : "success"}>{r.locked ? "잠김" : "정상"}</Badge> },
+    { key: "actions", title: "작업", align: "actions", width: 170,
+      render: (r) => <Button size="sm" icon={icons.edit} onClick={() => edit(r)}>수정</Button> },
+  ]}
+  rows={members}
+  rowKey="id"
+  selectedKey={selectedId}
+  onRowClick={(row) => setSelectedId(row.id)}
+  sort={sort}
+  onSortChange={setSort}
+  loading={loading}
+  emptyText="검색 결과가 없습니다."
+/>
+<div className="table-footer">
+  <span>전체 {total}건</span>
+  <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+</div>
+```
+
+| 기능 | 방법 |
+| --- | --- |
+| 칸 정렬 | `align`: `num`(오른쪽 · 고정폭 숫자) · `center` · `actions`(오른쪽 버튼 칸) |
+| 코드 · 긴 글 | `mono` · `ellipsis`(한 줄 말줄임 + 마우스를 올리면 전체) |
+| 선택 행 | `selectedKey` + `onRowClick` → 강조 배경 + 왼쪽 선, 행에 Tab · Enter 가능 |
+| 흐린 행 | `isRowMuted={(row) => row.locked}` (미사용 · 보호 행) |
+| 정렬 | 열에 `sortable`, `sort` · `onSortChange`. **데이터 정렬은 호출한 쪽**(API 정렬이면 요청만 다시) |
+| 빈 · 로딩 | `loading`, `rows=[]` → 표 안에 작은 상태 상자 |
+| 모양 | `size="sm"`(행 38px) · `striped` · `maxHeight`(표 안 스크롤 + 머리글 고정) |
+
+- 컴포넌트 없이: `<div className="table-wrap"><table className="table table-hover">…`, 행에 `is-selected` · `is-clickable` · `is-muted`, 칸에 `col-num` · `col-center` · `col-actions` · `cell-mono`.
+- `Pagination`의 `page`는 **0부터** (API와 같음). 번호는 10개씩, 처음 · 이전 · 다음 · 끝 버튼, 페이지가 1개면 아무것도 그리지 않습니다.
+
+### 탭
+
+```jsx
+import { useId } from "react";
+import { Tabs, TabPanel } from "../common/ui/Tabs";
+
+const idBase = useId();
+
+<Tabs
+  idBase={idBase}
+  ariaLabel="강의실 메뉴"
+  items={[
+    { id: "timetable", label: "시간표" },
+    { id: "data", label: "자료실", count: 12 },
+    { id: "survey", label: "설문", disabled: true },
+  ]}
+  value={tab}
+  onChange={setTab}
+/>
+<TabPanel idBase={idBase} tabId={tab}>{/* 선택된 탭 내용 */}</TabPanel>
+```
+
+- `variant="line"`(기본): 화면 · 패널 안의 구역 전환. `variant="pills"`: 같은 목록의 보기 방식 전환 (객관식 / 주관식).
+- 키보드: ← → 로 이동하며 바로 선택, Home · End.
+- 선택 상태는 부모가 가집니다. 쿼리 파라미터 탭은 `value={searchParams.get("tab")}` · `onChange={(id) => setSearchParams({ tab: id })}`처럼 연결합니다.
+
+### 패널 · 카드
+
+| 무엇 | 쓰는 곳 | 사용 |
+| --- | --- | --- |
+| `Panel` | 화면의 주요 구역 (상세 · 목록 · 설정) | `title` · `subtitle`(건수) · `badge` · `actions`(머리 버튼) · `footer`(바닥 버튼) · `flush`(표 · 목록을 가장자리까지) |
+| `card` | 같은 종류 여러 개를 나열 (과정 · 문제) | `card-header` · `card-title` · `card-meta` · `card-body`, 나열은 `card-grid` |
+| `card card-clickable` | 누르는 카드 | `<button>`에 붙이고 `aria-pressed`, 선택이면 `is-selected` |
+| `card card-accent` | 화면 맨 위 요약 정보 | 왼쪽 강조선 |
+| `StatCard` | 수치 (평균 점수 · 출석률) | `label` · `value` · `unit` · `hint` · `trend`(`"up"` · `"down"`) |
+
+패널과 카드의 차이: 패널은 **화면을 나누는 틀**(보통 한 화면에 1 ~ 3개, 머리 · 바닥 있음), 카드는 **같은 모양의 항목을 여러 개** 늘어놓을 때 씁니다.
+
+### 안내 상자 · 키-값 목록 · 선택 목록 · 타임라인
+
+```jsx
+<Callout tone="warning" title="주의">이 역할을 빼면 메뉴 관리에 들어올 수 없습니다.</Callout>
+<Callout tone="info" actions={<Button size="sm" variant="primary">저장</Button>}>순서가 변경되었습니다.</Callout>
+
+<dl className="desc-list" style={{ "--desc-label-width": "80px" }}>
+  <dt>아이디</dt><dd>user01</dd>
+</dl>
+
+<ul className="list-group">
+  <li><button type="button" className="list-item" aria-current={selected || undefined}>회원 관리</button></li>
+</ul>
+
+<ol className="timeline">
+  <li className="timeline-item">
+    <div className="timeline-meta">2026-11-10 <span className="tag">학습</span></div>
+    <p className="timeline-body">진도 확인</p>
+  </li>
+</ol>
+```
+
+| 무엇 | 메모 |
+| --- | --- |
+| `Callout` | tone `info` · `success` · `warning` · `danger` · `neutral`. 화면에 **머무는** 안내. 결과 알림은 토스트, 화면을 못 쓰는 상태는 `StatusBox` |
+| `desc-list` | 키-값. 라벨 폭은 `--desc-label-width`(기본 120px), 회색 상자는 `desc-list-boxed` |
+| `list-group` · `list-item` | 선택 목록 (메뉴 관리 3단 등). 선택은 `aria-current="true"`, 미사용은 `is-muted`, 오른쪽 내용은 `list-item-end` |
+| `timeline` | 상담 기록처럼 날짜순 기록 |
+
+### 배치
+
+| 클래스 | 쓰는 곳 |
+| --- | --- |
+| `toolbar` | 화면 위 검색 · 필터 줄 (왼쪽 `form-row`, 오른쪽 주 동작 버튼) |
+| `layout-split` | 목록 \| 상세 (오른쪽 폭 `--layout-aside-width`, 기본 380px) |
+| `layout-3col` | 3단 (대 > 중 > 소, 역할 · 허용 · 전체) |
+| `form-stack` | 세로로 16px 간격 쌓기 (폼 밖에서도 씀) |
+
+1024px보다 좁으면 `layout-split` · `layout-3col`은 한 줄에 하나씩 쌓입니다. 샘플 "표준 UI 2"의 마지막 예시(회원 관리 화면)가 이 부품들만으로 만든 화면입니다.
+
+---
+
+## 9. 다크 모드
+
+### 지금 상태
+
+- 토큰 · 표준 UI(8장)는 다크 모드를 지원합니다.
+- **샘플 페이지에서만 켤 수 있습니다** (목차 오른쪽 [☾ 다크 모드] 버튼, 이 브라우저에 기억). 페이지를 떠나면 꺼져서 다른 화면은 항상 밝은 모드입니다.
+- 샘플의 "통일 전" · "기존 샘플" 영역과 그 모달은 색을 직접 적어서 다크 모드에서도 **밝게 고정**됩니다 (아래 "밝은 섬").
+
+### 구조
+
+```html
+<html data-color-scheme="dark">              <!-- 전체 다크 -->
+  ...
+  <div data-color-scheme="light">...</div>   <!-- 이 안만 밝게 (밝은 섬) -->
+```
+
+- `index.css`에서 **색 토큰만** 두 벌입니다: `:root, [data-color-scheme="light"]`(기본)와 `[data-color-scheme="dark"]`. 크기 · 글꼴 · 모서리 토큰은 하나입니다.
+- 속성을 붙인 요소 안에서 토큰 값이 바뀌므로, 토큰만 쓴 코드는 **아무것도 고치지 않아도** 다크 모드가 됩니다. hex를 직접 적은 코드는 바뀌지 않습니다.
+- `color-scheme`도 함께 바뀌어 네이티브 입력 · 셀렉트 목록 · 날짜 선택기 · 스크롤바가 모드를 따릅니다.
+- 모달 · 토스트는 `<body>`에 portal로 그려지므로, 밝은 섬 안에서 연 모달이 밝아야 하면 모달 최상위 요소에도 `data-color-scheme="light"`를 붙입니다 (`sample/Modal.jsx` · 샘플 오버레이 예시가 그렇게 함).
+
+### 다크 모드 색
+
+| 토큰 | 밝은 모드 | 다크 모드 |
+| --- | --- | --- |
+| `--color-bg-page` · `-bg-surface` · `-bg-subtle` | gray-2 · 흰색 · gray-0 | `#141619` · gray-9 · `#2a2f34` |
+| `--color-text` · `-text-secondary` · `-text-muted` | gray-9 · gray-7 · gray-6 | gray-1 · gray-4 · gray-5 |
+| `--color-border` · `-border-light` | gray-4 · gray-3 | gray-7 · gray-8 |
+| `--color-primary`(채움) | indigo-7 | indigo-7 (흰 글자 명암비를 지키려고 그대로) |
+| `--color-primary-text` · `--color-link` | indigo-7 | indigo-3 (어두운 배경 위 글자) |
+| `--color-primary-light` | indigo-0 | 반투명 인디고 |
+| 상태 글자 (`success` · `danger` · `warning` · `info`) | green-9 · red-8 · `#8a6100` · indigo-7 | green-4 · red-4 · yellow-4 · indigo-3 |
+| 상태 배경 · 테두리 | 0단계 · 2단계 | 반투명 (배경 0.14 ~ 0.2, 테두리 0.35) |
+| `--color-danger-fill` (채운 위험 버튼) | red-8 | red-8 (그대로) |
+
+"채움"(버튼 배경)과 "글자"(연한 배경 · 어두운 배경 위 글씨)를 다른 토큰으로 나눈 이유가 이것입니다. 어두운 배경 위 글자는 밝은 색이어야 읽히지만, 흰 글자를 올리는 버튼 배경은 진해야 합니다. 새 코드에서 강조색 **글자**는 `--color-primary-text`, 위험 **채운 배경**은 `--color-danger-fill`을 씁니다.
+
+### 앱 전체로 넓히려면
+
+1. 화면들이 토큰을 쓰도록 옮깁니다 (다음 단계 3번). 옮기지 않은 화면은 다크 모드에서 깨지므로, 그 전에는 켜지 않습니다.
+2. 사이드바(`menu/SideMenu`)와 `PageContainer` · `Breadcrumb` · `Section`의 색을 토큰으로 바꿉니다.
+3. 설정 위치(사이드바 프로필 · 내 정보)에 스위치를 두고, `<html>`에 속성을 붙이는 코드를 `main.jsx` 쪽으로 옮깁니다. "시스템 설정 따르기"(`prefers-color-scheme`)를 기본값으로 둘지도 이때 정합니다.
+4. 새로고침 때 밝은 화면이 잠깐 보이지 않게 `index.html`에서 속성을 먼저 붙입니다 (테마와 같은 방법).

@@ -3,6 +3,9 @@
  * - 팔레트: Open Color 값 그대로. 화면 코드에서는 직접 쓰지 않는다.
  * - 의미 토큰(--color-* 등): 화면 코드는 이것만 쓴다.
  * - 테마: 강조색(--color-primary*)만 :root[data-theme="..."]에서 덮어쓴다. 회색 · 상태색은 고정.
+ * - 다크 모드: 색 토큰만 [data-color-scheme="dark"]에서 바뀐다 (파일 끝).
+ *   <html>에 붙이면 전체, 요소에 붙이면 그 안만. [data-color-scheme="light"]는 다크 안의 "밝은 섬".
+ *   지금은 샘플 페이지에서만 켠다 (가이드 9장).
  */
 
 /* 공통 UI 클래스 (가이드 8장). @import는 파일 맨 앞에 있어야 함 */
@@ -12,6 +15,9 @@
 @import "./styles/status.css";
 @import "./styles/modal.css";
 @import "./styles/toast.css";
+@import "./styles/table.css";
+@import "./styles/tabs.css";
+@import "./styles/panel.css";
 
 :root {
   /* ───── 팔레트 (Open Color) ───── */
@@ -29,24 +35,38 @@
 
   --indigo-0: #edf2ff;
   --indigo-2: #bac8ff;
+  --indigo-3: #91a7ff;
+  --indigo-4: #748ffc;
+  --indigo-6: #4c6ef5;
   --indigo-7: #3b5bdb;
   --indigo-8: #364fc7;
 
   --green-0: #ebfbee;
   --green-2: #b2f2bb;
+  --green-4: #69db7c;
   --green-9: #2b8a3e;
 
   --red-0: #fff5f5;
   --red-2: #ffc9c9;
   --red-3: #ffa8a8;
+  --red-4: #ff8787;
   --red-8: #e03131;
   --red-9: #c92a2a;
 
   --yellow-0: #fff9db;
   --yellow-3: #ffe066;
+  --yellow-4: #ffd43b;
   /* Open Color 노랑 · 주황은 흰 배경에서 명암비 4.5:1 미만이라 경고 글자만 별도 값 */
   --brown-8: #8a6100;
 
+  /* 다크 모드 배경 (gray-9보다 어두운 단계가 없어서 별도 값) */
+  --dark-page: #141619;
+  --dark-subtle: #2a2f34;
+}
+
+/* ───── 색 토큰: 밝은 모드 (기본) ───── */
+:root,
+[data-color-scheme="light"] {
   /* ───── 글자색 ───── */
   --color-text: var(--gray-9);
   --color-text-secondary: var(--gray-7);
@@ -72,8 +92,9 @@
   --color-primary-hover: var(--indigo-8);
   --color-primary-light: var(--indigo-0); /* 선택 행 · 연한 강조 배경 */
   --color-primary-border: var(--indigo-2);
+  --color-primary-text: var(--indigo-7); /* 연한 배경 위 강조 글자 (배지 · 태그 · 선택 탭) */
   --color-on-primary: var(--white);
-  --color-link: var(--color-primary);
+  --color-link: var(--color-primary-text);
   --color-focus: var(--color-primary);
 
   /* ───── 상태 (글자 · 배경 · 테두리) ───── */
@@ -81,8 +102,9 @@
   --color-success-bg: var(--green-0);
   --color-success-border: var(--green-2);
 
-  --color-danger: var(--red-8);
-  --color-danger-hover: var(--red-9);
+  --color-danger: var(--red-8); /* 글자 · 테두리 */
+  --color-danger-fill: var(--red-8); /* 채운 버튼 배경 (흰 글자) */
+  --color-danger-fill-hover: var(--red-9);
   --color-danger-bg: var(--red-0);
   --color-danger-border: var(--red-2);
   --color-danger-border-hover: var(--red-3);
@@ -108,6 +130,14 @@
   --color-toast-bg: rgba(33, 37, 41, 0.92);
   --color-toast-error-bg: rgba(201, 42, 42, 0.95);
 
+  /* ───── 그림자 ───── */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05); /* 패널 */
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.2); /* 토스트 */
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2); /* 모달 */
+}
+
+/* ───── 색 이외의 토큰 ───── */
+:root {
   /* ───── 글꼴 ───── */
   /* Pretendard는 main.jsx에서 불러옴 (npm pretendard). 뒤는 불러오기 전 · 실패 시 대체 글꼴 */
   --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
@@ -121,6 +151,7 @@
   --font-size-lg: 16px; /* 카드 · 섹션 제목 */
   --font-size-xl: 18px; /* 모달 제목 */
   --font-size-2xl: 22px; /* 화면 제목 */
+  --font-size-3xl: 28px; /* 수치 카드 값 */
 
   --font-weight-regular: 400;
   --font-weight-semibold: 600;
@@ -146,11 +177,6 @@
   --radius: 4px; /* 기본: 입력 · 버튼 · 표 · 작은 상자 */
   --radius-lg: 6px; /* 큰 상자: 패널 · 툴바 · 모달 · 토스트 */
   --radius-pill: 999px; /* 배지 · 칩 · pill 라디오 */
-
-  /* ───── 그림자 ───── */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05); /* 패널 */
-  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.2); /* 토스트 */
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2); /* 모달 */
 
   /* ───── 쌓임 순서 ───── */
   --z-sticky: 10;
@@ -229,4 +255,73 @@ ul {
     min-width: 0;
     flex: 1;
   }
+}
+
+/*
+ * ───── 다크 모드 색 토큰 ─────
+ * 글자 명암비(어림): 본문 gray-1 · 보조 gray-5도 surface(gray-9) 위에서 4.5:1 이상.
+ * primary 버튼은 흰 글자 명암비를 지키려고 밝은 모드와 같은 indigo-7을 쓰고, 글자용 강조는 indigo-3.
+ */
+[data-color-scheme="dark"] {
+  --color-text: var(--gray-1);
+  --color-text-secondary: var(--gray-4);
+  --color-text-muted: var(--gray-5);
+  --color-text-placeholder: var(--gray-6);
+  --color-text-disabled: var(--gray-6);
+
+  --color-bg-page: var(--dark-page);
+  --color-bg-surface: var(--gray-9);
+  --color-bg-subtle: var(--dark-subtle);
+  --color-bg-hover: var(--gray-8);
+  --color-bg-disabled: var(--dark-subtle);
+
+  --color-border: var(--gray-7);
+  --color-border-light: var(--gray-8);
+  --color-border-strong: var(--gray-6);
+
+  --color-primary-hover: var(--indigo-6);
+  --color-primary-light: rgba(76, 110, 245, 0.18);
+  --color-primary-border: rgba(116, 143, 252, 0.45);
+  --color-primary-text: var(--indigo-3);
+  --color-focus: var(--indigo-4);
+
+  --color-success: var(--green-4);
+  --color-success-bg: rgba(43, 138, 62, 0.2);
+  --color-success-border: rgba(105, 219, 124, 0.35);
+
+  --color-danger: var(--red-4);
+  --color-danger-bg: rgba(224, 49, 49, 0.18);
+  --color-danger-border: rgba(255, 135, 135, 0.35);
+  --color-danger-border-hover: rgba(255, 135, 135, 0.6);
+
+  --color-warning: var(--yellow-4);
+  --color-warning-bg: rgba(250, 176, 5, 0.14);
+  --color-warning-border: rgba(255, 212, 59, 0.35);
+
+  --color-info: var(--indigo-3);
+  --color-info-bg: rgba(76, 110, 245, 0.18);
+  --color-info-border: rgba(116, 143, 252, 0.45);
+
+  --color-overlay: rgba(0, 0, 0, 0.6);
+  --color-toast-bg: rgba(52, 58, 64, 0.96);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+/* 네이티브 입력 · 스크롤바 · 날짜 선택기도 모드에 맞추고, 섬 안의 글자색을 다시 정함 */
+[data-color-scheme="light"] {
+  color-scheme: light;
+  color: var(--color-text);
+}
+
+[data-color-scheme="dark"] {
+  color-scheme: dark;
+  color: var(--color-text);
+}
+
+:root[data-color-scheme="dark"] body {
+  background-color: var(--color-bg-page);
+  color: var(--color-text);
 }

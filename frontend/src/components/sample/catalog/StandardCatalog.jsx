@@ -543,13 +543,13 @@ const ok = await confirm({
             >
                 <div className="form-stack">
                     {QUESTIONS.map((q) => (
-                        <div key={q.no} className={styles.question} style={{ padding: "0 0 16px" }}>
-                            <div className={styles.questionTitle}>
-                                <span>{q.title}</span>
+                        <div key={q.no} className="card">
+                            <div className="card-header">
+                                <h3 className="card-title">{q.title}</h3>
                                 <Badge>객관식 · 10점</Badge>
                             </div>
-                            <div className={styles.subQuestion}>{q.body}</div>
-                            <div className="form-check-group" style={{ marginTop: "10px" }}>
+                            <p className="card-body">{q.body}</p>
+                            <div className="form-check-group">
                                 {[1, 2, 3, 4].map((n) => (
                                     <label key={n} className="form-check">
                                         <input type="radio" name={`std-exam-${q.no}`} /> 보기 {n}
