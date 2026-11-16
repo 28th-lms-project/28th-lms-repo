@@ -16,8 +16,9 @@ import { newListItem } from "./listEditorItem";
  * @param {number} [props.max]              이보다 많이는 못 더함
  * @param {string} [props.addLabel="추가"]
  * @param {boolean} [props.numbered=true]   왼쪽 번호
+ * @param {(item, index) => React.ReactNode} [props.renderMarker]  입력 칸 앞에 넣을 것 (시험 보기의 정답 표시 등)
  */
-export default function ListEditor({ items, onChange, label, placeholder, min = 1, max, addLabel = "추가", numbered = true }) {
+export default function ListEditor({ items, onChange, label, placeholder, min = 1, max, addLabel = "추가", numbered = true, renderMarker }) {
   const [focusId, setFocusId] = useState(null);
   const canAdd = max === undefined || items.length < max;
   const canRemove = items.length > min;
@@ -56,6 +57,7 @@ export default function ListEditor({ items, onChange, label, placeholder, min = 
                 {index + 1}
               </span>
             )}
+            {renderMarker?.(item, index)}
             <input
               className="form-control form-control-sm"
               aria-label={`${label} ${index + 1}`}

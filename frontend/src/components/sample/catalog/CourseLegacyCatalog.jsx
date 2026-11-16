@@ -8,7 +8,7 @@ import { FileField } from "../input/Input.jsx";
 import { icons } from "../input/icons.js";
 
 /*
- * admin/course · survey 화면의 현재 모양 (비교용). 원본의 인라인 스타일 · 클래스를 그대로 옮김.
+ * admin/course · test · survey 화면의 현재 모양 (비교용). 원본의 인라인 스타일 · 클래스를 그대로 옮김.
  * 표준으로 만든 모양은 표준 탭 "화면 예시"에 있다.
  */
 
@@ -27,6 +27,15 @@ const QUESTIONS = [
 const toContent = (rows, prefix) =>
     rows.map((row, r) => [r + 1, ...row].map((value, c) => ({ id: `${prefix}-${r}-${QUESTION_HEADER[c].id}`, value })));
 
+const TEST_ANSWER_TYPES = [
+    { id: "ANSWER_SELECT", name: "객관식-단항" },
+    { id: "ANSWER_MULTIPLE", name: "객관식-다항" },
+    { id: "ANSWER_CHECK", name: "O/X" },
+    { id: "ANSWER_WRITE", name: "주관식" },
+    { id: "ANSWER_CODE", name: "코드작성" },
+];
+const NO_CHOICE_TYPES = ["ANSWER_WRITE", "ANSWER_CODE", "ANSWER_CHECK"];
+
 const COURSE_TABS = ["수강생", "접속시간", "시간표", "과제", "시험", "면접일정", "교육자료", "설문", "상담목록"];
 const SURVEY_SUBJECTS = ["수강", "Java", "Spring", "React", "SQL"];
 const SURVEY_TYPES = [
@@ -41,6 +50,9 @@ export const CourseLegacyCatalog = () => {
     const [right, setRight] = useState(QUESTIONS.slice(0, 1));
     const [subject, setSubject] = useState("수강");
     const [group, setGroup] = useState("pre");
+    const [answerType, setAnswerType] = useState("");
+    const [answerCnt, setAnswerCnt] = useState(4);
+    const noChoices = NO_CHOICE_TYPES.includes(answerType);
 
     const clickRow = (event, from, setFrom, setTo) => {
         const cell = event.target.closest("li[data-row-index]");
@@ -55,7 +67,7 @@ export const CourseLegacyCatalog = () => {
     return (
         <div>
             <p className={styles.note}>
-                admin/course · survey 화면의 지금 모양입니다. 표준으로 바꾼 모양은 표준 탭 &quot;화면 예시&quot;에 있습니다.
+                admin/course · test · survey 화면의 지금 모양입니다. 표준으로 바꾼 모양은 표준 탭 &quot;화면 예시&quot;에 있습니다.
             </p>
             <Variants wide>
                 <Variant
@@ -135,6 +147,75 @@ export const CourseLegacyCatalog = () => {
                             <h4>선택된 문제 ({right.length})</h4>
                             <Grid header={QUESTION_HEADER} content={toContent(right, "r")} columnStyle="60px 1fr 100px 70px" />
                         </div>
+                    </div>
+                </Variant>
+
+                <Variant
+                    name="문제 은행: 문제 추가 폼 (AddTest · UpdateTest)"
+                    source="admin/test/test/AddTest.jsx · UpdateTest.jsx · AddTest.module.css"
+                    note={"[문제 추가]를 누르면 취소 · 등록 버튼 아래에 폼이 열림. 수정(UpdateTest)도 같은 모양에 값만 채워짐.\n유형 라디오의 label이 입력과 연결되지 않아 글자를 눌러도 안 골라짐. 문제 · 부연 문제는 라벨 없이 placeholder만.\n정답 번호 · 보기 개수를 숫자 칸으로 따로 넣고, 보기 칸은 개수만큼 보임. 오류는 서버 응답(#b42318 글자)으로만 표시"}
+                    block
+                >
+                    <IconButton icon={icons.close}>취소</IconButton>
+                    <IconButton icon={icons.edit}>등록</IconButton>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "80%" }}>
+                        <div style={{ display: "flex", flexDirection: "row", flexWrap: "nowrap", gap: "1rem", width: "100%" }}>
+                            {TEST_ANSWER_TYPES.map((type) => (
+                                <div key={type.id}>
+                                    <input
+                                        type="radio"
+                                        name="legacy-answer-type"
+                                        value={type.id}
+                                        checked={answerType === type.id}
+                                        onChange={() => setAnswerType(type.id)}
+                                    />
+                                    <label>{type.name}</label>
+                                </div>
+                            ))}
+                        </div>
+                        <textarea style={{ width: "80%" }} placeholder="문제 내용"></textarea>
+                        <textarea placeholder="부연 문제"></textarea>
+                        {(answerType === "ANSWER_WRITE" || answerType === "ANSWER_CODE") && <p>수강생이 작성한 답변은 제출 후 강사가 채점합니다.</p>}
+                        {answerType === "ANSWER_CHECK" && (
+                            <fieldset>
+                                <legend>정답</legend>
+                                {["O", "X"].map((option) => (
+                                    <label key={option}>
+                                        <input type="radio" name="legacy-ox" value={option} />
+                                        {option}
+                                    </label>
+                                ))}
+                            </fieldset>
+                        )}
+                        {answerType === "ANSWER_MULTIPLE" && (
+                            <fieldset>
+                                <legend>정답 (2개 이상 선택)</legend>
+                                {[1, 2, 3, 4, 5]
+                                    .filter((num) => num <= Number(answerCnt))
+                                    .map((num) => (
+                                        <label key={num}>
+                                            <input type="checkbox" value={String(num)} />
+                                            {num}번 보기
+                                        </label>
+                                    ))}
+                            </fieldset>
+                        )}
+                        <div hidden={noChoices || answerType === "ANSWER_MULTIPLE"}>
+                            <input type="number" min="1" max={answerCnt} placeholder={`정답은 1~${answerCnt}사이의 값을 입력하세요`} />
+                        </div>
+                        <div>
+                            <label>배점</label>
+                            <input type="number" min="1" max="4" placeholder="배점 (1~4)" defaultValue={4} />
+                        </div>
+                        <div hidden={noChoices}>
+                            <label>보기</label>
+                            <input type="number" min={answerType === "ANSWER_MULTIPLE" ? "2" : "1"} max="5" value={answerCnt} onChange={(e) => setAnswerCnt(e.target.value)} />개
+                        </div>
+                        {[1, 2, 3, 4, 5].map((num, index) => (
+                            <div key={num} hidden={noChoices || index >= Number(answerCnt)}>
+                                <input type="text" placeholder={`보기 ${num}`} />
+                            </div>
+                        ))}
                     </div>
                 </Variant>
 

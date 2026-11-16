@@ -37,7 +37,7 @@
 | **데이터** | 표 · 페이지 이동 · 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · 두 목록 사이 옮기기 | `StandardDataCatalog.jsx` |
 | **배치 · 탐색** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 3단 배치 · 팝업 창 틀 | `StandardLayoutCatalog.jsx` |
 | **내용** | 시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 인용 · 세로 키-값 · 상자 목록 | `StandardContentCatalog.jsx` |
-| **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 과제 상세(보기 ↔ 수정) · 설문 편집기 | `StandardScreenCatalog.jsx` |
+| **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 문제 은행 문제 추가 · 수정 · 과제 상세(보기 ↔ 수정) · 설문 편집기 | `StandardScreenCatalog.jsx` |
 | 토큰 (통일 전 값) | **통일 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
@@ -46,7 +46,7 @@
 | 피드백 | 배지 · 태그, 안내 · 빈 상태 · 로딩, 오류 · 성공 · 힌트 문구, 경고 상자, 토스트, 오류 화면 | `FeedbackCatalog.jsx` |
 | 레이아웃 | 패널 · 카드 6종, 화면 배치 (목록 \| 상세, 3패널) | `LayoutCatalog.jsx` |
 | 오버레이 | 폼 모달, 확인 모달, 큰 내용 모달 (열어 볼 수 있음) | `OverlayCatalog.jsx` |
-| 과정 · 시험 · 과제 · 설문 화면 | admin/course · survey의 과정 머리 · 탭, 등록 폼, 문제 고르기(Grid 둘), 과제 상세, 설문 편집 | `CourseLegacyCatalog.jsx` |
+| 과정 · 시험 · 문제 은행 · 과제 · 설문 화면 | admin/course · test · survey의 과정 머리 · 탭, 등록 폼, 문제 고르기(Grid 둘), 문제 은행 문제 추가 폼(`AddTest` · `UpdateTest`), 과제 상세, 설문 편집 | `CourseLegacyCatalog.jsx` |
 | 기존 샘플 | 원래 있던 Buttons · Modals · FileInput · Grids · Paginator · Chart · Poll | `Sample.jsx` 아래쪽 |
 
 카탈로그의 칸 하나는 `Variant`입니다. 칸 머리 오른쪽 회색 글자가 **원본 파일**(`src/components` 기준)이고, 클래스 이름은 `Catalog.module.css`의 주석에 원본 CSS 위치가 적혀 있습니다.
@@ -649,6 +649,7 @@ const [options, setOptions] = useState([newListItem(), newListItem()]);
 ```
 
 - `Survey`의 보기 입력(입력 + 삭제 · 추가 버튼)을 대신합니다. 줄에서 Enter → 바로 아래에 새 줄, 빈 줄에서 Backspace → 그 줄을 지웁니다 (한글 입력 중 Enter는 무시).
+- `renderMarker(item, index)`: 입력 칸 앞에 넣을 것. 시험 보기의 정답 표시처럼 줄마다 붙는 작은 입력에 씁니다. `<label className="list-editor-mark">` 안에 radio(하나) · checkbox(여러 개)를 넣으면 고른 줄의 입력 칸이 초록이 됩니다 (`styles/content.css`).
 - 줄마다 `id`가 있어야 지우거나 끼워 넣어도 입력이 섞이지 않습니다. 새 줄은 `newListItem()`, 서버에서 받은 값은 `{ id: 서버 id, value }`로 바꿔 넣습니다.
 
 ### 표시 · 상태
@@ -1078,15 +1079,16 @@ import Comment from "../common/ui/Comment";
 | 대시보드 | `card-grid` + `StatCard` → 과정 `card` + `Progress` → `Panel flush` + `list-group` | `main/Main` 대시보드 카드 |
 | 오류 화면 | `StatusBox type="notFound" size="lg"` · `StatusBox type="error" size="lg" code="500"` | `common/error/*` 404 · 라우트 오류 상자 |
 
-#### 과정 · 시험 · 과제 · 설문 (admin/course · survey)
+#### 과정 · 시험 · 문제 은행 · 과제 · 설문 (admin/course · test · survey)
 
-샘플 "화면 예시"에 있습니다. 통일 전 탭 "과정 · 시험 · 과제 · 설문 화면"에 같은 화면의 지금 모양이 있어 나란히 비교할 수 있습니다.
+샘플 "화면 예시"에 있습니다. 통일 전 탭 "과정 · 시험 · 문제 은행 · 과제 · 설문 화면"에 같은 화면의 지금 모양이 있어 나란히 비교할 수 있습니다.
 
 | 예시 | 부품 | 대신하는 것 | 메모 |
 | --- | --- | --- | --- |
 | 과정 등록 폼 | `form` + `Panel`(바닥 버튼) + `Field` · `form-row` + `SelectBox` + `input-range` + `FilePicker` | `CourseAdd` (h3 라벨 · 스타일 없는 입력) | 빈 채로 제출하면 오류, 저장 중 `loading` |
 | 과정 상세 | `PageHeader` + `card`(`desc-list-stacked` + `Progress`) + `Tabs` 9개 | `CourseItem` (글자 진행률 · IconButton 탭) | 탭이 많으면 탭 줄이 가로 스크롤. 상태는 `Badge tone="info"` (강조색 아님) |
 | 시험 문제 고르기 | `Panel` + `Field` + `Switch`(공개) + `TransferList` | `ExamPage` 추가 화면 · `ExamQuestionPicker` | 유형은 `Badge`, 총 배점은 `rightSummary` |
+| 문제 은행: 문제 추가 · 수정 | `form` + `Panel`(수정이면 바닥 왼쪽에 삭제) + `ChoiceGroup`(유형) + `Field` + `ListEditor renderMarker`(보기 + 정답 표시) · `ChoiceGroup variant="segmented"`(O/X 정답) · `Callout`(주관식 · 코드) + 미리 보기 `QuestionBlock showResult` | `AddTest` · `UpdateTest` | 추가와 수정은 같은 폼. 보기 개수 · 정답 번호 숫자 칸 대신 줄 수 = 보기 개수(`answerCount`), 줄 순서 = `answerSheet1~5`, 표시한 줄 번호 = `correctAnswer`(여러 개는 "1,3"). 유형을 바꾸면 정답 표시만 초기화 |
 | 채점 | `Modal size="lg"` + `Tabs`(수강생, 건수 = 채점한 문항) + `question` + `answer-box` + `btn[aria-pressed]` + `Badge` | `ExamGradeModal` | 미제출이면 채점 버튼 비활성 |
 | 과제 상세 | `PageHeader`(보기: 수정 · 삭제 / 수정: 취소 · 저장) + `toolbar`(미제출 · 랜덤 뽑기) + `layout-split`(본문 \| 댓글 `Panel`, 바닥에 입력) | `HomeworkItem` · `HomeworkSubmitStatus` | 고친 채로 취소하면 `useConfirm`. 마감 후에는 [수정] · 입력 대신 `Callout tone="warning"` |
 | 설문 편집기 | `Tabs`(사전 · 사후) + `layout-split`(문항 `Panel` 목록 \| 미리 보기 `Panel`) + `ChoiceGroup variant="segmented"`(답하는 방식) + `ListEditor`(보기) | `Survey` | 미리 보기가 입력을 바로 따라감. 문항 삭제는 확인 창 |

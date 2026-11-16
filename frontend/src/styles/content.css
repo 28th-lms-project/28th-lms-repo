@@ -529,6 +529,30 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 줄 앞 표시 (ListEditor renderMarker): 시험 보기의 정답 동그라미 · 네모. 고른 줄은 입력 칸이 초록 */
+.list-editor-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: var(--control-height-sm);
+  cursor: pointer;
+}
+
+.list-editor-mark > input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--color-success);
+  cursor: pointer;
+}
+
+.list-editor-row:has(.list-editor-mark > input:checked) > .form-control {
+  border-color: var(--color-success-border);
+  background-color: var(--color-success-bg);
+}
+
 /* ───── 답안 상자 (채점 · 문제 보기) ─────
  *   <div class="answer-box answer-box-model"><span class="answer-box-label">모범 답안</span>…</div>
  *   answer-box-model: 정답 · 모범 답안 (초록) · answer-box-empty: 미제출 (점선 · 흐림)

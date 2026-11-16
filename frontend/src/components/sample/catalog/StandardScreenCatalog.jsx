@@ -23,6 +23,7 @@ import Switch from "../../common/ui/Switch.jsx";
 import ChoiceGroup from "../../common/ui/ChoiceGroup.jsx";
 import TransferList from "../../common/ui/TransferList.jsx";
 import ListEditor from "../../common/ui/ListEditor.jsx";
+import QuestionBlock from "../../common/ui/QuestionBlock.jsx";
 import { newListItem } from "../../common/ui/listEditorItem.js";
 
 /*
@@ -673,6 +674,290 @@ const ExamScreens = () => {
     );
 };
 
+/* 문제 은행: 문제 하나 추가 · 수정 (admin/test AddTest · UpdateTest) */
+const QB_TYPES = [
+    { value: "ANSWER_SELECT", label: "객관식 (하나)" },
+    { value: "ANSWER_MULTIPLE", label: "객관식 (여러 개)" },
+    { value: "ANSWER_CHECK", label: "O/X" },
+    { value: "ANSWER_WRITE", label: "주관식" },
+    { value: "ANSWER_CODE", label: "코드 작성" },
+];
+const QB_CHOICE_TYPES = ["ANSWER_SELECT", "ANSWER_MULTIPLE"];
+const QB_MODES = [
+    { value: "add", label: "새 문제" },
+    { value: "edit", label: "수정 (저장된 문제)" },
+];
+
+const emptyQuestion = () => ({
+    type: "",
+    question: "",
+    subQuestion: "",
+    point: "4",
+    items: [newListItem(), newListItem(), newListItem(), newListItem()],
+    correct: [], // 객관식: 정답 줄 id
+    ox: "",
+});
+
+const savedQuestion = () => {
+    const items = [newListItem("public"), newListItem("protected"), newListItem("friend"), newListItem("private")];
+    return {
+        type: "ANSWER_MULTIPLE",
+        question: "Java의 접근 제한자를 모두 고르세요.",
+        subQuestion: "",
+        point: "3",
+        items,
+        correct: [items[0].id, items[1].id, items[3].id],
+        ox: "",
+    };
+};
+
+const validateQuestion = (q) => {
+    const errors = {};
+    if (!q.type) errors.type = "문제 유형을 고르세요.";
+    if (!q.question.trim()) errors.question = "문제를 입력하세요.";
+    const point = Number(q.point);
+    if (!Number.isInteger(point) || point < 1 || point > 4) errors.point = "배점은 1~4점입니다.";
+    if (QB_CHOICE_TYPES.includes(q.type)) {
+        if (q.items.some((item) => !item.value.trim())) errors.items = "빈 보기가 있습니다. 내용을 쓰거나 줄을 지우세요.";
+        else if (q.type === "ANSWER_SELECT" && q.correct.length !== 1) errors.items = "정답 보기 하나를 고르세요 (왼쪽 동그라미).";
+        else if (q.type === "ANSWER_MULTIPLE" && q.correct.length < 2) errors.items = "정답 보기를 2개 이상 고르세요 (왼쪽 네모).";
+    }
+    if (q.type === "ANSWER_CHECK" && !q.ox) errors.ox = "정답(O 또는 X)을 고르세요.";
+    return errors;
+};
+
+const QuestionBankScreen = () => {
+    const toast = useToast();
+    const confirm = useConfirm();
+    const formId = useId();
+    const [mode, setMode] = useState("add");
+    const [q, setQ] = useState(emptyQuestion);
+    const [submitted, setSubmitted] = useState(false);
+    const [saving, setSaving] = useState(false);
+
+    const update = (patch) => setQ((prev) => ({ ...prev, ...patch }));
+    const errors = submitted ? validateQuestion(q) : {};
+    const isChoice = QB_CHOICE_TYPES.includes(q.type);
+    const isMultiple = q.type === "ANSWER_MULTIPLE";
+    const isCode = q.type === "ANSWER_CODE";
+    const editing = mode === "edit";
+
+    const changeMode = (next) => {
+        setMode(next);
+        setQ(next === "edit" ? savedQuestion() : emptyQuestion());
+        setSubmitted(false);
+    };
+
+    const changeType = (type) => {
+        // 하나 ↔ 여러 개를 바꾸면 정답 표시는 다시 고름. 보기 내용은 그대로
+        const keepCorrect = type === "ANSWER_MULTIPLE" && q.type === "ANSWER_SELECT";
+        update({ type, correct: keepCorrect ? q.correct : [], ox: "" });
+    };
+
+    const changeItems = (items) => {
+        const ids = items.map((item) => item.id);
+        update({ items, correct: q.correct.filter((id) => ids.includes(id)) });
+    };
+
+    const toggleCorrect = (id) => {
+        if (!isMultiple) return update({ correct: [id] });
+        update({ correct: q.correct.includes(id) ? q.correct.filter((c) => c !== id) : [...q.correct, id] });
+    };
+
+    const submit = (event) => {
+        event.preventDefault();
+        setSubmitted(true);
+        if (Object.keys(validateQuestion(q)).length) return;
+        setSaving(true);
+        setTimeout(() => {
+            setSaving(false);
+            setSubmitted(false);
+            toast.success(editing ? "문제를 저장했습니다. (예시)" : "문제를 등록했습니다. (예시)");
+            if (!editing) setQ(emptyQuestion());
+        }, 900);
+    };
+
+    const remove = async () => {
+        const ok = await confirm({ message: "이 문제를 삭제할까요?\n시험에 이미 쓰인 문제는 시험에서도 빠집니다.", confirmText: "삭제", danger: true });
+        if (ok) toast.success("삭제했습니다. (예시)");
+    };
+
+    const previewOptions = isChoice
+        ? q.items.map((item, i) => ({ value: item.id, label: item.value || `보기 ${i + 1}` }))
+        : q.type === "ANSWER_CHECK"
+          ? [
+                { value: "O", label: "O" },
+                { value: "X", label: "X" },
+            ]
+          : undefined;
+    const previewAnswer = isChoice ? q.correct : q.ox;
+
+    return (
+        <>
+            <GroupTitle>화면 예시: 문제 은행</GroupTitle>
+            <Variants wide>
+                <Variant
+                    name="문제 추가 · 수정 폼 (+ 미리 보기)"
+                    source="Panel · Field · ChoiceGroup · ListEditor(renderMarker) · Callout · QuestionBlock"
+                    note={
+                        "AddTest · UpdateTest(유형 라디오 + 이름 없는 textarea 2개 + 정답 번호 · 보기 개수 숫자 칸 + 보기 5칸)를 표준 부품으로. 추가와 수정은 같은 폼 (수정은 값이 채워져 열림).\n" +
+                        "보기 개수 · 정답 번호 칸을 없애고, 보기 줄을 더하고 빼며 줄 앞 동그라미(하나) · 네모(여러 개)로 정답을 바로 표시. 유형에 따라 보기 · O/X 정답 · 채점 안내만 바뀜.\n" +
+                        "빈 채로 [등록]을 누르면 오류. 오른쪽은 수강생에게 보이는 모양 (정답은 초록)"
+                    }
+                    block
+                >
+                    <div className="form-stack" style={{ width: "100%" }}>
+                        <ChoiceGroup variant="segmented" name={`${formId}-mode`} legend="예시 상태" options={QB_MODES} value={mode} onChange={changeMode} />
+                        <div className="layout-split" style={{ "--layout-aside-width": "360px" }}>
+                            <form onSubmit={submit} noValidate>
+                                <Panel
+                                    title={editing ? "문제 수정" : "문제 추가"}
+                                    badge={<Badge>JAVA</Badge>}
+                                    footer={
+                                        <>
+                                            {editing && (
+                                                <Button variant="danger" icon={icons.delete} onClick={remove} style={{ marginRight: "auto" }}>
+                                                    삭제
+                                                </Button>
+                                            )}
+                                            <Button onClick={() => changeMode(mode)}>취소</Button>
+                                            <Button type="submit" variant="primary" icon={editing ? undefined : icons.add} loading={saving}>
+                                                {saving ? "저장 중..." : editing ? "저장" : "등록"}
+                                            </Button>
+                                        </>
+                                    }
+                                >
+                                    <div className="form-stack">
+                                        <Field label="문제 유형" required error={errors.type}>
+                                            <ChoiceGroup name={`${formId}-type`} legend="문제 유형" options={QB_TYPES} value={q.type} onChange={changeType} />
+                                        </Field>
+                                        <Field label="문제" htmlFor={`${formId}-question`} required error={errors.question}>
+                                            <textarea
+                                                id={`${formId}-question`}
+                                                className="form-control"
+                                                rows={2}
+                                                placeholder="예: Java의 기본형이 아닌 것은?"
+                                                value={q.question}
+                                                onChange={(e) => update({ question: e.target.value })}
+                                                aria-invalid={!!errors.question}
+                                                aria-describedby={`${formId}-question-msg`}
+                                            />
+                                        </Field>
+                                        <Field
+                                            label={isCode ? "부연 설명 · 예시 코드" : "부연 설명"}
+                                            htmlFor={`${formId}-sub`}
+                                            hint="선택. 조건 · 예시 코드처럼 문제 아래 회색 상자에 보이는 내용 (줄바꿈 유지)"
+                                        >
+                                            <textarea
+                                                id={`${formId}-sub`}
+                                                className={`form-control${isCode ? " form-control-mono" : ""}`}
+                                                rows={isCode ? 5 : 3}
+                                                value={q.subQuestion}
+                                                onChange={(e) => update({ subQuestion: e.target.value })}
+                                                aria-describedby={`${formId}-sub-msg`}
+                                            />
+                                        </Field>
+                                        <Field label="배점" htmlFor={`${formId}-point`} required error={errors.point} hint="1~4점">
+                                            <input
+                                                id={`${formId}-point`}
+                                                type="number"
+                                                min={1}
+                                                max={4}
+                                                className="form-control"
+                                                style={{ width: "120px" }}
+                                                value={q.point}
+                                                onChange={(e) => update({ point: e.target.value })}
+                                                aria-invalid={!!errors.point}
+                                                aria-describedby={`${formId}-point-msg`}
+                                            />
+                                        </Field>
+
+                                        {isChoice && (
+                                            <Field
+                                                label="보기 · 정답"
+                                                required
+                                                error={errors.items}
+                                                hint={isMultiple ? "2~5개. 정답 보기를 왼쪽 네모로 모두 표시 (2개 이상)" : "2~5개. 정답 보기 하나를 왼쪽 동그라미로 표시"}
+                                            >
+                                                <ListEditor
+                                                    label="보기"
+                                                    items={q.items}
+                                                    onChange={changeItems}
+                                                    min={2}
+                                                    max={5}
+                                                    addLabel="보기 추가"
+                                                    placeholder="보기 내용"
+                                                    renderMarker={(item, index) => (
+                                                        <label className="list-editor-mark" title="정답으로 표시">
+                                                            <input
+                                                                type={isMultiple ? "checkbox" : "radio"}
+                                                                name={`${formId}-correct`}
+                                                                checked={q.correct.includes(item.id)}
+                                                                onChange={() => toggleCorrect(item.id)}
+                                                                aria-label={`보기 ${index + 1} 정답`}
+                                                            />
+                                                        </label>
+                                                    )}
+                                                />
+                                            </Field>
+                                        )}
+                                        {q.type === "ANSWER_CHECK" && (
+                                            <Field label="정답" required error={errors.ox}>
+                                                <ChoiceGroup
+                                                    variant="segmented"
+                                                    name={`${formId}-ox`}
+                                                    legend="정답"
+                                                    options={[
+                                                        { value: "O", label: "O" },
+                                                        { value: "X", label: "X" },
+                                                    ]}
+                                                    value={q.ox}
+                                                    onChange={(ox) => update({ ox })}
+                                                />
+                                            </Field>
+                                        )}
+                                        {(q.type === "ANSWER_WRITE" || isCode) && (
+                                            <Callout tone="info">정답을 따로 적지 않습니다. 수강생이 제출한 답안을 강사가 채점 화면에서 채점합니다.</Callout>
+                                        )}
+                                    </div>
+                                </Panel>
+                            </form>
+
+                            <Panel title="미리 보기" subtitle="수강생 화면">
+                                {q.type ? (
+                                    <QuestionBlock
+                                        no={1}
+                                        title={q.question || "문제를 입력하세요"}
+                                        score={Number(q.point) || undefined}
+                                        body={!isCode ? q.subQuestion || undefined : undefined}
+                                        code={isCode ? q.subQuestion || undefined : undefined}
+                                        options={previewOptions}
+                                        multiple={isMultiple}
+                                        answer={previewAnswer}
+                                        showResult={!!previewOptions}
+                                    >
+                                        {!previewOptions && (
+                                            <textarea
+                                                className={`form-control${isCode ? " form-control-mono" : ""}`}
+                                                rows={3}
+                                                disabled
+                                                placeholder="수강생 답안 칸"
+                                                aria-label="수강생 답안 칸 (미리 보기)"
+                                            />
+                                        )}
+                                    </QuestionBlock>
+                                ) : (
+                                    <StatusBox type="empty" size="sm" title="문제 유형을 고르면 여기에 보입니다." />
+                                )}
+                            </Panel>
+                        </div>
+                    </div>
+                </Variant>
+            </Variants>
+        </>
+    );
+};
+
 const HomeworkScreen = () => {
     const toast = useToast();
     const confirm = useConfirm();
@@ -1014,11 +1299,12 @@ const SurveyScreen = () => {
 
 export const StandardScreenCatalog = () => (
     <div>
-        <p className={styles.standardIntro}>부품을 조합한 화면 예시. 기존 화면(admin/course · survey 등)을 표준 부품으로 바꾸면 이런 모양이 됩니다.</p>
+        <p className={styles.standardIntro}>부품을 조합한 화면 예시. 기존 화면(admin/course · test · survey 등)을 표준 부품으로 바꾸면 이런 모양이 됩니다.</p>
         <ListDetailScreen />
         <DetailScreens />
         <CourseScreens />
         <ExamScreens />
+        <QuestionBankScreen />
         <HomeworkScreen />
         <SurveyScreen />
     </div>
