@@ -53,8 +53,11 @@
   border-bottom: 0;
 }
 
+/* .tab의 margin-bottom: -1px은 .tabs 밑줄과 겹치려는 것인데, 여기는 밑줄이 없어서
+   탭(46px)이 상자(45px)보다 1px 커지고 overflow-x: auto 때문에 스크롤바가 생김 → 0으로 */
 .partTabs :global(.tab) {
   height: 46px;
+  margin-bottom: 0;
   font-size: var(--font-size-lg);
 }
 
