@@ -29,7 +29,19 @@ export default function Chart({
   const chartRef = useRef(null);
 
   useEffect(() => {
-    const formatValue = (value) => `${value}${unit}`;
+    const formatDataLabel = (value) => {
+      if (value === null || value === undefined) {
+        return "";
+      }
+      return `${value}${unit}`;
+    };
+
+    const formatTooltipValue = (value) => {
+      if (value === null || value === undefined) {
+        return "-";
+      }
+      return `${value}${unit}`;
+    };
 
     const options = {
       series,
@@ -50,7 +62,7 @@ export default function Chart({
       },
       dataLabels: {
         enabled: true,
-        formatter: formatValue,
+        formatter: formatDataLabel,
         style: {
           colors: ["#333"],
         },
@@ -82,7 +94,7 @@ export default function Chart({
       tooltip: {
         enabled: true,
         y: {
-          formatter: formatValue,
+          formatter: formatTooltipValue,
         },
       },
       legend: {
