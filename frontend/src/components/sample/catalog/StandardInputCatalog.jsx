@@ -283,7 +283,7 @@ const FormGroup = () => {
                 <Variant
                     name="한 줄 폼 (검색 툴바)"
                     source="styles/form.css"
-                    note="form-row: 필드가 한 줄에 놓이고 좁으면 줄바꿈. 버튼은 입력 아래쪽에 맞춰 정렬"
+                    note="form-row: 필드가 한 줄에 놓이고 좁으면 줄바꿈. 필드는 위(라벨)에 맞춤, 옆 버튼은 라벨 높이만큼 내려 입력 칸과 같은 줄"
                     block
                     code={`
 <div className="form-row">

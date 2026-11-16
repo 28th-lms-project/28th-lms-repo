@@ -602,7 +602,7 @@ import { icons } from "../common/input/icons";
 | `field` · `field-label` · `field-required` · `field-hint` · `field-error` · `field-counter` | 필드 틀 (`Field` 컴포넌트가 붙여 줌) |
 | `input-group` + `input-group-text` | 접두어 + 입력 (`ROLE_`). 접두어는 `<label htmlFor="입력 id">`로 써서 눌러도 입력 칸에 포커스가 가게 함 |
 | `form-check` · `form-check-group` | 체크박스 · 라디오 + 글자 (네이티브 input, 강조색) |
-| `form-row` | 필드 여러 개를 한 줄에 (좁으면 줄바꿈, 버튼은 아래쪽 정렬) |
+| `form-row` | 필드 여러 개를 한 줄에 (좁으면 줄바꿈). 필드는 **위(라벨)에 맞춤**이라 힌트 · 오류가 있는 필드와 없는 필드가 섞여도 라벨 · 입력 칸 줄이 같음. 필드 옆 버튼처럼 라벨 없는 것은 라벨 높이만큼 내려 입력 칸과 같은 줄 |
 | `form-stack` | 필드를 세로로 16px 간격 |
 
 ```jsx
@@ -932,6 +932,8 @@ import Pagination from "../common/ui/Pagination";
 
 - 묶음마다 `<tbody>`, 묶음 머리는 `<th scope="rowgroup" rowSpan={줄 수}>`.
 - 강조(오늘)는 묶음의 모든 `tr`에 `is-highlight` (열 강조 `col-highlight`와 같은 색).
+- **쉬는 날**(휴강 · 공휴일)은 그 날짜를 한 줄 `tr.is-off`로 합치고 칸 하나(`colSpan`)에 사유를 적습니다 ("쉬는 날 · 학원 행사"). 빗금 회색이라 빈 칸('-') · 쉬는 시간(`is-break`, 점심)과 구별됩니다.
+- 날짜가 **열**인 표(출석 · 접속 기록)에서 쉬는 날은 머리에 "쉬는 날", 열 전체 `col-off`, 칸은 "쉼". 결석으로 세지 않습니다.
 - 예시: 샘플 "화면 예시" → 날짜별 시간표.
 
 #### 두 목록 사이 옮기기 (TransferList)
@@ -953,6 +955,7 @@ import TransferList from "../common/ui/TransferList";
 
 - `ExamQuestionPicker`(Grid 둘, 행을 누르면 바로 옮겨짐)를 대신합니다. 체크한 뒤 가운데 [추가 →] · [← 빼기]로 옮기고, 두 번 누르면 바로 옮깁니다. 머리 체크박스는 그 목록 모두 체크입니다.
 - 체크박스라서 키보드(Tab · 스페이스)로도 고를 수 있습니다. 768px 이하에서는 위아래로 쌓입니다.
+- 양쪽 뜻이 반대일 때(권한 허용 · 미허용)는 `leftTone="danger"`(붉은 머리 · 흐린 글자) · `rightTone="success"`(초록 머리)로 한눈에 구분합니다. 고르기만 하는 곳(시험 문제)에는 색을 넣지 않습니다.
 - 과정 수강생 추가(`CourseStudentList`)처럼 "전체 중 일부를 고르는" 곳에도 씁니다. 고를 것이 수백 개면 왼쪽을 검색 + `Table` 체크 선택으로 바꾸는 편이 낫습니다.
 
 ### 배치 · 탐색
@@ -1094,7 +1097,7 @@ import QuestionBlock from "../common/ui/QuestionBlock";
 #### 문항 번호 이동 (시험 응시)
 
 ```jsx
-<nav aria-label="문항 이동">
+<nav className="question-nav-bar" aria-label="문항 이동">
   <ol className="question-nav">
     <li><button type="button" className="question-nav-item is-done" aria-current="step" aria-label="1번 (답함)">1</button></li>
   </ol>
@@ -1102,6 +1105,7 @@ import QuestionBlock from "../common/ui/QuestionBlock";
 ```
 
 - 답한 문항은 `is-done`(강조색 옅은 배경), 지금 문항은 `aria-current="step"`(테두리). 누르면 그 문항으로 스크롤.
+- `question-nav-bar`는 모달 본문 맨 위에 붙어(sticky) 스크롤해도 보입니다. 문항 상자에는 `scroll-margin-top`(막대 높이만큼)을 줘서 이동했을 때 막대에 가리지 않게 합니다.
 - 바닥에 "답함 n / N" + `Progress size="sm"`.
 
 #### 답안 상자
@@ -1204,12 +1208,12 @@ import Comment from "../common/ui/Comment";
 | --- | --- | --- | --- |
 | 시험 응시 · 시험지 보기 | `Modal size="lg" dismissible={false}` + `question-nav` + `QuestionBlock` + `Progress` · `answer-box` | `ExamTakeModal` · `ExamQuestionViewModal` | 응시는 [제출]로만 닫힘. 안 푼 문항 수를 알려 주고 확인. 유형별 답 칸 (주관식 textarea · 코드 고정폭) |
 | 문제 은행 목록 | `Tabs`(건수) + `card` + `Badge`(유형) + `card-meta` + `QuestionBlock showResult` | `Test` | 통계는 이름 붙인 한 줄 글자 (목록 카드 안에 `StatCard` 안 씀). 펼침은 문항마다 따로 (`aria-expanded`) |
-| 주간 접속 기록 | `toolbar`(지난주 · 기간 · 다음 주 · 이번 주) + `Table bordered` + `col-highlight` + `Badge` | `StudentConnected` | 칸은 첫 접속 시각, 없으면 '결석', 기준 넘으면 '지각', 안 온 날은 흐린 '-' |
+| 주간 접속 기록 | `toolbar`(지난주 · 기간 · 다음 주 · 이번 주) + `Table bordered` + `col-highlight` · `col-off` + `Badge` | `StudentConnected` | 칸은 첫 접속 시각, 없으면 '결석', 기준 넘으면 '지각', 안 온 날은 흐린 '-', 쉬는 날은 열 전체 '쉼' |
 | 날짜별 시간표 | `table.table-bordered`(rowSpan) + `tr.is-highlight` + `Panel`(접기) | `MyTimetable` | 위 "한 묶음이 여러 줄인 표" |
 | 목록 위 추가 폼 | `toolbar` + `Panel`(form) + `Field` + `SelectBox` + `datetime-local` + `Table` | `MyInterview` · `HomeWorkList` · `CourseStudentList` | 아래 "목록 위 추가 폼 vs 모달" |
 | 댓글 수정 | `Comment`(actions · badge) + 같은 자리 textarea + `Callout`(마감) | `HomeworkReply` | 아래 "할 수 없는 동작" |
-| 권한 코드 관리 | `Panel`(form) + 연쇄 select(`input-range`) + `Table`(선택 행) | `Access` | 연쇄 선택: 위를 고르기 전 아래 비활성 + 안내, 위를 바꾸면 아래 비움. 표의 [수정] → 위 폼이 수정 모드(제목 · 배지 · 버튼 문구), 못 바꾸는 값은 잠금 + 이유 |
-| 역할별 권한 | `layout-split-start` + `list-group` + 연쇄 select(필터) + `TransferList` + `Callout`(actions) | `AccessRole` | 옮긴 것은 바로 저장하지 않고 "저장하지 않은 변경 +n · -n" + [되돌리기] [저장]. 변경이 있는데 다른 역할을 고르면 확인 |
+| 권한 코드 관리 | `Panel`(form) + 연쇄 select(`input-range`) + `form-row`(도메인 · 권한 · 이름) + `Table`(선택 행) | `Access` | 연쇄 선택: 위를 고르기 전 아래 비활성 + 안내, 위를 바꾸면 아래 비움. 권한은 원래 화면처럼 서버가 준 목록에서 "설명 (동작)"으로 고르고(등록된 것은 비활성), 고르면 이름을 채움. 결과 코드는 권한 칸 힌트로 (사이 기호 · 따로 상자 없음). 표의 [수정] → 위 폼이 수정 모드(제목 · 배지 · 버튼 문구), 못 바꾸는 값은 잠금 + 이유 |
+| 역할별 권한 | `layout-split-start` + `list-group` + 연쇄 select(필터) + `TransferList`(`leftTone` · `rightTone`) + `Callout`(actions) | `AccessRole` | 미허용 붉은색 · 허용 초록색. 옮긴 것은 바로 저장하지 않고 "저장하지 않은 변경 +n · -n" + [되돌리기] [저장]. 변경이 있는데 다른 역할을 고르면 확인 |
 | 공통 코드 | `layout-3col` + `list-group` + `Table`(선택 · 흐린 행) + `Panel` + `desc-list` · `Field` · `Switch` | `Code` · `AddCode` · `UpdateCode` · `CodeForm` | 상세 패널 하나가 보기 · 수정 · 추가. [저장]은 바뀐 게 있을 때만. 추가한 뒤 코드(ID)는 못 바꿈 |
 | 로그인 · 비밀번호 다시 확인 | `auth-page` + `auth-card` + `Field` + `Callout` + `Button block` | `Login` · `MyPassword` | 위 "가운데 카드" |
 | 상담 기록 | `Callout`(actions) + `desc-list` + `Panel`(actions) + `card-grid` + `Badge`(수준) + `ChoiceGroup` + `Field count` + `timeline` + `StatCard` | `MyCounsel` | 기본 정보가 없으면 위에 안내 + 아래 구역 잠금(버튼 비활성 + 이유). 구역마다 [수정] → [취소] [저장]. 고칠 수 없는 기록은 등록 전에 확인 |

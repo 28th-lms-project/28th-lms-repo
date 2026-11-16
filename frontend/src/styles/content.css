@@ -399,6 +399,37 @@
   border-radius: var(--radius-lg);
 }
 
+/* 색 있는 목록 (TransferList leftTone · rightTone): 허용 · 미허용처럼 양쪽 뜻이 반대일 때 */
+.transfer-list-danger {
+  border-color: var(--color-danger-border);
+}
+
+.transfer-list-danger > .transfer-head {
+  background-color: var(--color-danger-bg);
+  border-bottom-color: var(--color-danger-border);
+}
+
+.transfer-list-danger .transfer-title {
+  color: var(--color-danger);
+}
+
+.transfer-list-danger .transfer-item-body {
+  color: var(--color-text-muted);
+}
+
+.transfer-list-success {
+  border-color: var(--color-success-border);
+}
+
+.transfer-list-success > .transfer-head {
+  background-color: var(--color-success-bg);
+  border-bottom-color: var(--color-success-border);
+}
+
+.transfer-list-success .transfer-title {
+  color: var(--color-success);
+}
+
 .transfer-head {
   display: flex;
   align-items: center;
@@ -604,6 +635,17 @@
 }
 
 /* ───── 문항 번호 이동 (시험 응시) ───── */
+/* 모달 본문 위에 붙어서 스크롤해도 보임. 음수 여백 = .modal-body 안쪽 여백 (16px 20px) */
+.question-nav-bar {
+  position: sticky;
+  top: -16px;
+  z-index: 1;
+  margin: -16px -20px 0;
+  padding: 12px 20px;
+  background-color: var(--color-bg-raised);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
 .question-nav {
   display: flex;
   flex-wrap: wrap;

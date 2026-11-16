@@ -69,7 +69,7 @@ const ExamTakeScreen = () => {
             source="Modal size=lg dismissible=false · question-nav · Progress · QuestionBlock · answer-box"
             note={
                 "ExamTakeModal · ExamQuestionViewModal을 표준으로. 응시는 [제출]로만 닫힘 (X · Esc · 바깥 누르기 없음 → 답이 날아가지 않음). 안 푼 문항이 있으면 개수를 알려 주고 한 번 더 확인.\n" +
-                "위의 문항 번호(question-nav): 답한 문항은 색, 누르면 그 문항으로 이동. 바닥에 '답함 n / N' 막대.\n" +
+                "위의 문항 번호(question-nav-bar > question-nav)는 본문 위에 붙어 스크롤해도 보임. 답한 문항은 색, 누르면 그 문항으로 이동. 바닥에 '답함 n / N' 막대.\n" +
                 "유형별 답 칸: 객관식 radio · 여러 개 checkbox · O/X는 두 보기 · 주관식 textarea · 코드는 고정폭 textarea. 시험지 보기(강사)는 같은 모양에 정답 초록 · 모범 답안 상자"
             }
         >
@@ -106,7 +106,7 @@ const ExamTakeScreen = () => {
             >
                 <div className="form-stack">
                     {!view && (
-                        <nav aria-label="문항 이동">
+                        <nav className="question-nav-bar" aria-label="문항 이동">
                             <ol className="question-nav">
                                 {PAPER.map((q) => (
                                     <li key={q.no}>
@@ -125,7 +125,7 @@ const ExamTakeScreen = () => {
                         </nav>
                     )}
                     {PAPER.map((q) => (
-                        <div key={q.no} id={`${baseId}-q${q.no}`} onFocus={() => setCurrent(q.no)} style={{ scrollMarginTop: "8px" }}>
+                        <div key={q.no} id={`${baseId}-q${q.no}`} onFocus={() => setCurrent(q.no)} style={{ scrollMarginTop: "72px" }}>
                             <QuestionBlock
                                 no={q.no}
                                 title={
@@ -279,7 +279,7 @@ const QuestionBankListScreen = () => {
 /* ───── 주간 접속 기록 (StudentConnected) ───── */
 const WEEKS = [
     { label: "11-09 ~ 11-13", days: ["11-09", "11-10", "11-11", "11-12", "11-13"], today: null },
-    { label: "11-16 ~ 11-20", days: ["11-16", "11-17", "11-18", "11-19", "11-20"], today: "11-16" },
+    { label: "11-16 ~ 11-20", days: ["11-16", "11-17", "11-18", "11-19", "11-20"], today: "11-16", off: { "11-18": "학원 행사" } },
 ];
 const DAY_NAMES = ["월", "화", "수", "목", "금"];
 const CONNECT = [
@@ -298,12 +298,14 @@ const ConnectedScreen = () => {
         { key: "name", title: "수강생", width: "100px" },
         ...w.days.map((d, i) => {
             const future = w.today && d > w.today;
+            const off = w.off?.[d];
             return {
                 key: d,
-                title: `${d} (${DAY_NAMES[i]})`,
+                title: off ? `${d} (${DAY_NAMES[i]}) 쉬는 날` : `${d} (${DAY_NAMES[i]})`,
                 align: "center",
-                className: d === w.today ? "col-highlight" : undefined,
+                className: d === w.today ? "col-highlight" : off ? "col-off" : undefined,
                 render: (r) => {
+                    if (off) return <span title={off}>쉼</span>;
                     if (future) return <span className="field-hint">-</span>;
                     const t = r.times[Math.max(0, offset + i)] ?? null;
                     if (!t) return <Badge tone="danger">결석</Badge>;
@@ -320,7 +322,7 @@ const ConnectedScreen = () => {
             note={
                 "StudentConnected(이번 주 월~금 첫 접속 시각, 없으면 '-')를 표준으로.\n" +
                 "위에 [‹ 지난주] 기간 [다음 주 ›] [이번 주]. 칸은 첫 접속 시각(고정폭), 없으면 '결석' 배지, 기준(09:00) 넘으면 '지각' 배지. 아직 안 온 날은 흐린 '-'.\n" +
-                "오늘 열은 col-highlight. 다음 주는 오지 않았으므로 비활성"
+                "쉬는 날(휴강 · 공휴일)은 머리에 '쉬는 날' + 열 전체 회색(col-off) + 칸은 '쉼'. 결석으로 세지 않음.\n오늘 열은 col-highlight. 다음 주는 오지 않았으므로 비활성"
             }
             block
         >
@@ -359,6 +361,7 @@ const DAYS = [
     { date: "11-13 (금)", cells: { p1: ["Java", "컬렉션"], p2: ["Java", "스트림"], p3: ["SQL", "JOIN 실습"] } },
     { date: "11-16 (월)", today: true, cells: { p1: ["Spring", "DI · IoC"], p2: ["Spring", "Bean 등록"], p3: ["React", "상태 관리"] } },
     { date: "11-17 (화)", cells: { p1: ["Spring", "AOP"], p2: ["실습", "프로젝트"], p3: ["React", "라우터"] } },
+    { date: "11-18 (수)", off: "쉬는 날 · 학원 행사" },
 ];
 
 const TimetableScreen = () => {
@@ -370,7 +373,7 @@ const TimetableScreen = () => {
             note={
                 "MyTimetable 전체 시간표(날짜 칸 rowSpan 2 + 과목 줄 · 내용 줄)를 표준으로. 한 날짜가 두 줄이라 Table 컴포넌트 대신 같은 클래스의 <table>을 씀.\n" +
                 "오늘은 두 줄 모두 tr.is-highlight (열 강조 col-highlight와 같은 색). 점심 칸은 두 줄을 합쳐 흐린 글자.\n" +
-                "접기는 Panel 머리의 버튼 (aria-expanded). 날짜 머리는 <th scope=\"rowgroup\">"
+                "쉬는 날은 그 날짜를 한 줄(tr.is-off)로 합쳐 사유를 적음 (빈 칸 '-'과 구별, 점심 같은 쉬는 시간 is-break와도 구별).\n접기는 Panel 머리의 버튼 (aria-expanded). 날짜 머리는 <th scope=\"rowgroup\">"
             }
             block
         >
@@ -400,7 +403,17 @@ const TimetableScreen = () => {
                                     ))}
                                 </tr>
                             </thead>
-                            {DAYS.map((d) => (
+                            {DAYS.map((d) =>
+                                d.off ? (
+                                    <tbody key={d.date}>
+                                        <tr className="is-off">
+                                            <th scope="rowgroup" style={{ whiteSpace: "nowrap" }}>
+                                                {d.date}
+                                            </th>
+                                            <td colSpan={SLOTS.length}>{d.off}</td>
+                                        </tr>
+                                    </tbody>
+                                ) : (
                                 <tbody key={d.date}>
                                     {[0, 1].map((row) => (
                                         <tr key={row} className={d.today ? "is-highlight" : undefined}>
@@ -431,7 +444,8 @@ const TimetableScreen = () => {
                                         </tr>
                                     ))}
                                 </tbody>
-                            ))}
+                                ),
+                            )}
                         </table>
                     </div>
                 )}

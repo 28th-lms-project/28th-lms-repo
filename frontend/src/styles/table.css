@@ -12,6 +12,7 @@
  *   col-num(오른쪽 · 고정폭 숫자) · col-center · col-actions(오른쪽 버튼 칸) · cell-mono
  *   tr.is-clickable · tr.is-selected · tr.is-muted
  *   table-bordered: 세로 칸선 (시간표) · col-highlight: 강조 열 (오늘) · tr.is-highlight: 강조 행 · tr.is-break: 쉬는 시간 행
+ *   쉬는 날 (휴강 · 공휴일): 행이면 tr.is-off(한 줄로 합쳐 사유), 열이면 col-off(열 전체 회색 + 칸은 '쉼')
  *   col-check: 체크박스 칸 · col-handle + table-handle: 순서 손잡이 (끌기는 손잡이에서만 시작, tr.is-dragging · is-drop-before · is-drop-after)
  *   tr.is-added · is-modified · is-deleted: 편집 표 변경 상태 · cell-input: 칸 안 입력
  *   table-wrap-scroll: 높이 제한 + 머리글 고정
@@ -262,6 +263,24 @@ th[aria-sort] .table-sort-icon {
   color: var(--color-text-muted);
   text-align: center;
   background-color: var(--color-bg-subtle);
+}
+
+/* 쉬는 날: 빗금 배경 + 흐린 글자. 빈 칸('-') · 쉬는 시간(is-break)과 구별 */
+.table tr.is-off td,
+.table .col-off {
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-subtle);
+  background-image: repeating-linear-gradient(-45deg, transparent 0 6px, var(--color-border-light) 6px 7px);
+}
+
+.table tr.is-off td {
+  height: 36px;
+  text-align: center;
+}
+
+.table tr.is-off th,
+.table th.col-off {
+  color: var(--color-text-muted);
 }
 
 /* 강조 행 (오늘 날짜처럼 여러 줄이 한 묶음일 때는 묶음의 모든 tr에) */

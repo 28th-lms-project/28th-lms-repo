@@ -25,6 +25,7 @@
 
 .field-label {
   font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
 }
@@ -188,11 +189,19 @@ select.form-control {
 }
 
 /* ───── 배치 ───── */
+/*
+ * 필드는 위(라벨)에 맞춤: 힌트 · 오류가 있는 필드와 없는 필드가 섞여도 라벨 · 입력 칸 줄이 같음.
+ * 필드 옆의 라벨 없는 것(버튼 등)은 라벨 높이 + 간격만큼 내려 입력 칸과 같은 줄에.
+ */
 .form-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 12px;
+}
+
+.form-row:has(> .field) > :not(.field) {
+  margin-top: calc(var(--font-size-md) * var(--line-height-base) + 6px);
 }
 
 .form-row > .field {
