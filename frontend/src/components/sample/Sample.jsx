@@ -30,7 +30,7 @@ import { StandardCatalog } from "./catalog/StandardCatalog.jsx";
  */
 /** 표준 UI (디자인 시스템): 새 화면은 이것을 쓴다 */
 const STANDARD = [
-    { id: "standard-ui", title: "표준 UI (버튼 · 입력 · 배지 · 상태 상자)", Component: StandardCatalog },
+    { id: "standard-ui", title: "표준 UI (버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 모달)", Component: StandardCatalog },
 ];
 
 /** 통일 전 현재 UI (비교용) */

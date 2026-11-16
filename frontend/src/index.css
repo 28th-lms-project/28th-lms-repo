@@ -10,6 +10,8 @@
 @import "./styles/form.css";
 @import "./styles/badge.css";
 @import "./styles/status.css";
+@import "./styles/modal.css";
+@import "./styles/toast.css";
 
 :root {
   /* ───── 팔레트 (Open Color) ───── */
@@ -104,6 +106,7 @@
   /* ───── 오버레이 ───── */
   --color-overlay: rgba(0, 0, 0, 0.4);
   --color-toast-bg: rgba(33, 37, 41, 0.92);
+  --color-toast-error-bg: rgba(201, 42, 42, 0.95);
 
   /* ───── 글꼴 ───── */
   /* Pretendard는 main.jsx에서 불러옴 (npm pretendard). 뒤는 불러오기 전 · 실패 시 대체 글꼴 */
@@ -134,6 +137,10 @@
 
   --table-header-height: 40px;
   --table-row-height: 48px;
+
+  --modal-width-sm: 400px; /* 확인 */
+  --modal-width-md: 460px; /* 폼 */
+  --modal-width-lg: 800px; /* 내용 (시험 문제 등) */
 
   /* ───── 모서리 ───── */
   --radius: 4px; /* 기본: 입력 · 버튼 · 표 · 작은 상자 */

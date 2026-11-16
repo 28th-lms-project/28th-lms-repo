@@ -14,7 +14,7 @@
 
 | 목차 | 내용 | 파일 |
 | --- | --- | --- |
-| **표준 UI** | 버튼 · 입력 · 배지 · 상태 상자의 표준 모양과 사용 코드 (8장). 새 화면은 이것을 씀 | `StandardCatalog.jsx` |
+| **표준 UI** | 버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 확인 창 · 모달의 표준 모양과 사용 코드 (8장). 새 화면은 이것을 씀 | `StandardCatalog.jsx` |
 | 토큰 | 표준 토큰(index.css, 7장) + 통일 전 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
@@ -42,7 +42,7 @@
 
 ## 2. 공통 컴포넌트
 
-표준 UI 컴포넌트(`common/ui/` — `Button` · `Field` · `Badge` · `StatusBox`)는 8장에 따로 정리했습니다. 아래는 그 전부터 있던 컴포넌트입니다.
+표준 UI 컴포넌트(`common/ui/` — `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `useToast` · `useConfirm`)는 8장에 따로 정리했습니다. 아래는 그 전부터 있던 컴포넌트입니다.
 
 | 컴포넌트 | 위치 | 주요 props · 메모 |
 | --- | --- | --- |
@@ -56,7 +56,7 @@
 | `Id` · `Password` · `TextField` · `NativeSelect` · `Textarea` · `Checkbox` · `Radio` · `FileField` · `Button` | `common/input/Input.jsx` | `NativeSelect` · `Textarea`는 스타일 클래스가 정의되어 있지 않아 브라우저 기본 모양 |
 | `Editor` | `common/Editor.jsx` | 리치 텍스트 에디터 (MyCourseData에서 사용). 카탈로그에는 넣지 않음 |
 | `NotFound` · `RouteError` | `common/error/` | 404 · 라우트 오류 화면 |
-| `Alert` · `Confirm` | `sample/Modal.jsx` | `ref.current.open()`. **common에는 아직 모달이 없음** |
+| `Alert` · `Confirm` | `sample/Modal.jsx` | `ref.current.open()`. 새 코드는 `common/ui/Modal` · `useConfirm()`을 씀 (8장). 쓰는 곳(`admin/system/menu/Menu.jsx`)을 옮기면 삭제 |
 | `Chart` · `PollList` · `DataGrid` | `sample/` | 샘플 전용. `Chart`(apexcharts)는 샘플에서만 사용 |
 
 ### sample / common 중복
@@ -294,7 +294,7 @@
 1. ~~결정 사항을 `index.css`에 CSS 변수로 선언~~ → 완료 (7장)
 2. 많이 겹치는 것부터 공통 클래스 + common 컴포넌트를 만들고 샘플 페이지 "표준" 섹션에 추가합니다.
    - ~~1차: 버튼 · 입력 · 배지 · 상태 상자~~ → 완료 (8장)
-   - 2차: 토스트(provider) · 모달(`common/Modal`) — 동작까지 만들어야 해서 따로
+   - ~~2차: 토스트 · 확인 창 · 모달~~ → 완료 (8장)
    - 3차: 표(Grid · native table) · 탭 · 패널 · 카드
 3. 화면들을 표준으로 옮기면서 카탈로그의 해당 `Variant`를 지웁니다. 카탈로그가 비면 샘플 페이지가 곧 디자인 시스템 페이지가 됩니다.
 4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`으로 옮기고, `Modal`은 `common/`으로 이동합니다.
@@ -388,7 +388,7 @@
 
 ---
 
-## 8. 표준 UI (버튼 · 입력 · 배지 · 상태 상자)
+## 8. 표준 UI (버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 모달)
 
 샘플 페이지 맨 위 **"표준 UI"** 섹션에서 모양과 사용 코드를 같이 볼 수 있습니다.
 
@@ -397,8 +397,9 @@
 | 층 | 위치 | 역할 |
 | --- | --- | --- |
 | 토큰 | `src/index.css` `:root` | 색 · 크기 값 (7장) |
-| 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` (`index.css`가 `@import`) | **스타일의 원본.** 토큰만 사용 |
-| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구) |
+| 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` (`index.css`가 `@import`) | **스타일의 원본.** 토큰만 사용 |
+| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
+| 훅 | `src/components/common/ui/feedbackContext.js` `useToast` · `useConfirm` | `alert()` · `confirm()` 대신. `main.jsx`의 `FeedbackProvider`가 앱 전체를 감쌈 |
 
 - raw HTML에도 클래스만 붙이면 같은 모양이 됩니다 (`<button className="btn btn-primary">`). 동작이 필요하면 컴포넌트를 씁니다.
 - 클래스 이름은 짧은 접두어 + 하이픈(`btn-*`, `form-*`, `field-*`, `badge-*`, `status-box-*`)으로, `.input` · `.section` 같은 일반 단어는 쓰지 않습니다 (전역이라 다른 CSS와 부딪힘).
@@ -503,3 +504,105 @@ if (list.length === 0) return <StatusBox type="empty" title="검색 결과가 �
 - `title`로 기본 문구를 바꾸고, `detail`로 둘째 줄(줄바꿈 유지)을 넣습니다. `onRetry`가 있으면 [다시 시도] 버튼이 나옵니다.
 - `size="sm"`: 테두리 없이 작게. 목록 · 표 안의 빈 상태에 씁니다.
 - 지금 5곳에 복사된 `.notice`(권한 확인 중 · 권한 없음), 빈 상태 5가지, 로딩 문구들을 옮길 대상입니다.
+
+### 토스트 (`alert()` 대신)
+
+```jsx
+import { useToast } from "../common/ui/feedbackContext";
+
+const toast = useToast();
+
+try {
+  await saveMember(form);
+  toast.success("저장했습니다.");
+} catch (error) {
+  toast.error(getErrorMessage(error));
+}
+```
+
+| 함수 | 모양 | 사라지는 시간 |
+| --- | --- | --- |
+| `toast.success(문구)` | 어두운 배경 + 확인 아이콘 | 2.5초 |
+| `toast.error(문구)` | 빨간 배경 + 오류 아이콘, `role="alert"` | 4초 |
+| `toast.show(문구)` | 어두운 배경 | 2.5초 |
+
+- 화면 아래 가운데에 뜨고, 누르면 바로 닫힙니다. 한 번에 3개까지 (넘으면 오래된 것부터 사라짐).
+- 시간을 바꾸려면 `toast.error(문구, { duration: 6000 })`. 문구의 `\n`은 줄바꿈됩니다.
+- 언제 무엇을 쓰나
+  - 저장 · 삭제 성공, 요청 실패 → 토스트
+  - 입력값 오류 → 필드 아래 문구 (`Field`의 `error`), 토스트 아님
+  - 화면을 못 쓰는 상태(권한 없음 · 목록을 못 불러옴) → 상태 상자
+- `my/course/MyCourseData`의 자체 토스트는 이것으로 옮길 대상입니다 (모양은 같은 계열).
+
+### 확인 창 (`confirm()` 대신)
+
+```jsx
+import { useConfirm } from "../common/ui/feedbackContext";
+
+const confirm = useConfirm();
+
+const handleDelete = async () => {
+  const ok = await confirm({
+    title: "시험 삭제",
+    message: "Java 기초 시험을 삭제할까요?\n삭제하면 되돌릴 수 없습니다.",
+    confirmText: "삭제",
+    danger: true,
+  });
+  if (!ok) return;
+  // 삭제 요청
+};
+
+if (await confirm("변경 내용을 저장할까요?")) save();   // 문구만
+```
+
+| 옵션 | 기본값 | 설명 |
+| --- | --- | --- |
+| `title` | 확인 | |
+| `message` | — | `\n` 줄바꿈 유지 |
+| `confirmText` · `cancelText` | 확인 · 취소 | 동작을 그대로 적기 ("삭제", "제출") |
+| `danger` | false | 확인 버튼 빨강(`danger-solid`), 처음 포커스는 **취소** (Enter 실수 방지) |
+
+- 바깥 클릭 · Esc · 닫기(X)는 모두 취소(`false`)입니다.
+- 확인을 누른 뒤 요청이 끝날 때까지 창을 띄워 두려면 `ConfirmDialog`를 상태로 직접 씁니다 (`open` · `loading` · `onConfirm` · `onCancel`).
+
+### 모달
+
+```jsx
+import Modal from "../common/ui/Modal";
+
+<Modal
+  open={open}
+  onClose={() => setOpen(false)}
+  title="회원 등록"
+  description="초기 비밀번호는 아이디와 같습니다."
+  onSubmit={save}
+  dismissible={!saving}
+  footer={
+    <>
+      <Button onClick={() => setOpen(false)} disabled={saving}>취소</Button>
+      <Button type="submit" variant="primary" loading={saving}>
+        {saving ? "등록 중..." : "등록"}
+      </Button>
+    </>
+  }
+>
+  <div className="form-stack">{/* Field들 */}</div>
+</Modal>
+```
+
+| props | 설명 |
+| --- | --- |
+| `open` · `onClose` | 열림 여부 · 닫기. `onClose`가 없으면 닫기(X) 버튼도 없음 |
+| `title` · `summary` · `description` | 제목, 제목 오른쪽 요약("문제 8개 · 총 80점"), 본문 맨 위 회색 설명 |
+| `size` | `sm` 400px(확인) · `md` 460px(폼, 기본) · `lg` 800px(내용) |
+| `footer` | 바닥 버튼 (오른쪽 정렬, 간격 8px). 순서는 **취소 → 주 동작** |
+| `onSubmit` | 주면 모달 전체가 `<form>` → Enter · `type="submit"` 버튼으로 제출, 브라우저 `required` 검사도 동작 |
+| `dismissible` | `false`면 Esc · X · 바깥 클릭으로 닫히지 않음 (저장 중) |
+| `closeOnBackdrop` | 바깥 클릭으로 닫기. **읽기 · 확인용만** `true` (폼은 입력이 날아가므로 기본 `false`) |
+| `initialFocusRef` | 처음 포커스할 요소 (기본: 본문의 첫 입력, 없으면 모달 자체) |
+
+- `document.body`에 portal로 그리므로 화면의 스크롤 · `overflow: hidden` 영향을 받지 않습니다.
+- 접근성: `role="dialog"` · `aria-modal` · 제목 연결, Tab은 모달 안에서만 돌고, 닫히면 연 버튼으로 포커스가 돌아갑니다.
+- 모달 안에서 또 모달(확인 창)을 띄우면 Esc · Tab은 맨 위 것만 처리합니다.
+- 본문만 스크롤되고 머리 · 바닥은 고정입니다 (높이는 화면 높이 - 32px까지).
+- 옮길 대상: `Member*Modal`(폼, md), `RoleUserMoveModal`(md), `ConfirmModal`(→ `useConfirm`), `Exam*Modal`(lg), `sample/Modal`의 `Alert` · `Confirm`.

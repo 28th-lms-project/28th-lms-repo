@@ -5,9 +5,17 @@ import Button from "../../common/ui/Button.jsx";
 import Field from "../../common/ui/Field.jsx";
 import Badge from "../../common/ui/Badge.jsx";
 import StatusBox from "../../common/ui/StatusBox.jsx";
+import Modal from "../../common/ui/Modal.jsx";
+import { useConfirm, useToast } from "../../common/ui/feedbackContext.js";
 import { icons } from "../../common/input/icons.js";
 
 const MEMO_MAX = 200;
+
+const QUESTIONS = Array.from({ length: 8 }, (_, i) => ({
+    no: i + 1,
+    title: `${i + 1}번 문제`,
+    body: "다음 코드의 실행 결과로 알맞은 것을 고르시오.",
+}));
 
 /**
  * 표준 UI (디자인 시스템). 스타일 원본은 src/styles/*.css의 전역 클래스,
@@ -18,6 +26,46 @@ export const StandardCatalog = () => {
     const [memo, setMemo] = useState("");
     const [userId, setUserId] = useState("홍길동");
     const [retryCount, setRetryCount] = useState(0);
+
+    const toast = useToast();
+    const confirm = useConfirm();
+    const [formOpen, setFormOpen] = useState(false);
+    const [formSaving, setFormSaving] = useState(false);
+    const [newName, setNewName] = useState("");
+    const [examOpen, setExamOpen] = useState(false);
+
+    const submitForm = () => {
+        setFormSaving(true);
+        setTimeout(() => {
+            setFormSaving(false);
+            setFormOpen(false);
+            toast.success(`${newName || "회원"}을(를) 등록했습니다.`);
+            setNewName("");
+        }, 1200);
+    };
+
+    const askDelete = async () => {
+        const ok = await confirm({
+            title: "시험 삭제",
+            message: "Java 기초 시험을 삭제할까요?\n삭제하면 되돌릴 수 없습니다.",
+            confirmText: "삭제",
+            danger: true,
+        });
+        if (ok) toast.success("삭제했습니다.");
+        else toast.show("취소했습니다.");
+    };
+
+    const askSave = async () => {
+        if (await confirm("변경 내용을 저장할까요?")) toast.success("저장했습니다.");
+    };
+
+    const askSubmitExam = async () => {
+        // 모달 안에서 확인 창: Esc는 맨 위 확인 창만 닫음
+        if (await confirm({ title: "답안 제출", message: "제출하면 수정할 수 없습니다. 제출할까요?", confirmText: "제출" })) {
+            setExamOpen(false);
+            toast.success("답안을 제출했습니다.");
+        }
+    };
 
     const userIdError = /[^a-z0-9]/i.test(userId) ? "아이디는 영문과 숫자만 쓸 수 있습니다." : "";
 
@@ -357,6 +405,161 @@ export const StandardCatalog = () => {
                     </div>
                 </Variant>
             </Variants>
+
+            <GroupTitle>토스트 (alert() 대신)</GroupTitle>
+            <Variants>
+                <Variant
+                    name="useToast"
+                    source="styles/toast.css · common/ui/feedbackContext.js"
+                    note="화면 아래 가운데. 성공 · 기본 2.5초, 오류 4초. 누르면 닫힘. 한 번에 3개까지"
+                    code={`
+const toast = useToast();
+
+toast.success("저장했습니다.");
+toast.error(getErrorMessage(error));
+toast.show("복사했습니다.");`}
+                >
+                    <Button icon={icons.ok} onClick={() => toast.success("저장했습니다.")}>성공</Button>
+                    <Button icon={icons.error} onClick={() => toast.error("저장하지 못했습니다.\n잠시 후 다시 시도하세요.")}>오류</Button>
+                    <Button onClick={() => toast.show("주소를 복사했습니다.")}>기본</Button>
+                </Variant>
+            </Variants>
+
+            <GroupTitle>모달 · 확인 창</GroupTitle>
+            <Variants>
+                <Variant
+                    name="확인 창 (confirm() 대신)"
+                    source="common/ui/feedbackContext.js · ConfirmDialog.jsx"
+                    note="결과를 await로 받음. 바깥 클릭 · Esc = 취소. danger는 빨간 확인 버튼 + 취소 버튼에 포커스"
+                    code={`
+const confirm = useConfirm();
+
+if (await confirm("저장할까요?")) save();
+
+const ok = await confirm({
+  title: "시험 삭제",
+  message: "삭제할까요?\\n되돌릴 수 없습니다.",
+  confirmText: "삭제",
+  danger: true,
+});`}
+                >
+                    <Button onClick={askSave}>저장 확인</Button>
+                    <Button variant="danger" icon={icons.delete} onClick={askDelete}>삭제 확인</Button>
+                </Variant>
+                <Variant
+                    name="폼 모달 (md 460px)"
+                    source="common/ui/Modal.jsx"
+                    note="onSubmit을 주면 모달이 <form>이 되어 Enter · 제출 버튼으로 저장. 저장 중에는 dismissible={false}로 닫기를 막음. 바깥 클릭으로는 닫히지 않음"
+                    code={`
+<Modal
+  open={open}
+  onClose={() => setOpen(false)}
+  title="회원 등록"
+  description="초기 비밀번호는 아이디와 같습니다."
+  onSubmit={save}
+  dismissible={!saving}
+  footer={
+    <>
+      <Button onClick={() => setOpen(false)} disabled={saving}>취소</Button>
+      <Button type="submit" variant="primary" loading={saving}>
+        {saving ? "등록 중..." : "등록"}
+      </Button>
+    </>
+  }
+>
+  <div className="form-stack">
+    <Field label="이름" htmlFor="name" required>
+      <input id="name" className="form-control" />
+    </Field>
+  </div>
+</Modal>`}
+                >
+                    <Button variant="primary" icon={icons.add} onClick={() => setFormOpen(true)}>회원 등록</Button>
+                </Variant>
+                <Variant
+                    name="내용 모달 (lg 800px) + 모달 안 확인 창"
+                    source="common/ui/Modal.jsx"
+                    note="summary로 제목 오른쪽 요약, 본문만 스크롤. closeOnBackdrop으로 바깥 클릭 닫기 허용 (읽기용)"
+                    code={`
+<Modal open={open} onClose={close} size="lg"
+       title="Java 기초 시험" summary="문제 8개 · 총 80점"
+       closeOnBackdrop
+       footer={<Button variant="primary" onClick={submit}>제출</Button>}>
+  ...
+</Modal>`}
+                >
+                    <Button icon={icons.full} onClick={() => setExamOpen(true)}>시험 보기</Button>
+                </Variant>
+            </Variants>
+
+            <Modal
+                open={formOpen}
+                onClose={() => setFormOpen(false)}
+                title="회원 등록"
+                description="초기 비밀번호는 아이디와 같습니다."
+                onSubmit={submitForm}
+                dismissible={!formSaving}
+                footer={
+                    <>
+                        <Button onClick={() => setFormOpen(false)} disabled={formSaving}>취소</Button>
+                        <Button type="submit" variant="primary" loading={formSaving}>
+                            {formSaving ? "등록 중..." : "등록"}
+                        </Button>
+                    </>
+                }
+            >
+                <div className="form-stack">
+                    <Field label="이름" htmlFor="std-modal-name" required>
+                        <input
+                            id="std-modal-name"
+                            className="form-control"
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            required
+                        />
+                    </Field>
+                    <Field label="역할" htmlFor="std-modal-role">
+                        <select id="std-modal-role" className="form-control">
+                            <option>학생</option>
+                            <option>강사</option>
+                        </select>
+                    </Field>
+                </div>
+            </Modal>
+
+            <Modal
+                open={examOpen}
+                onClose={() => setExamOpen(false)}
+                size="lg"
+                title="Java 기초 시험"
+                summary={`문제 ${QUESTIONS.length}개 · 총 ${QUESTIONS.length * 10}점`}
+                closeOnBackdrop
+                footer={
+                    <>
+                        <Button onClick={() => setExamOpen(false)}>닫기</Button>
+                        <Button variant="primary" onClick={askSubmitExam}>제출</Button>
+                    </>
+                }
+            >
+                <div className="form-stack">
+                    {QUESTIONS.map((q) => (
+                        <div key={q.no} className={styles.question} style={{ padding: "0 0 16px" }}>
+                            <div className={styles.questionTitle}>
+                                <span>{q.title}</span>
+                                <Badge>객관식 · 10점</Badge>
+                            </div>
+                            <div className={styles.subQuestion}>{q.body}</div>
+                            <div className="form-check-group" style={{ marginTop: "10px" }}>
+                                {[1, 2, 3, 4].map((n) => (
+                                    <label key={n} className="form-check">
+                                        <input type="radio" name={`std-exam-${q.no}`} /> 보기 {n}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </Modal>
         </div>
     );
 };

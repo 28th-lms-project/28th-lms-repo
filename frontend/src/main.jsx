@@ -6,11 +6,15 @@ import "./index.css";
 import MainRouterProvider from "./router/MainRouterProvider.jsx";
 
 import StoreProvider from "./store/StoreProvider.jsx";
+// 토스트(useToast) · 확인 창(useConfirm)
+import FeedbackProvider from "./components/common/ui/FeedbackProvider.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <StoreProvider>
-      <MainRouterProvider />
+      <FeedbackProvider>
+        <MainRouterProvider />
+      </FeedbackProvider>
     </StoreProvider>
   </StrictMode>,
 );
