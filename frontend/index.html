@@ -4,6 +4,13 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>28th-lms-project</title>
+    <!-- 테마(사이드바 색)를 그리기 전에 붙여서 새로고침 때 기본 색이 잠깐 보이지 않게 (src/theme/brandTheme.js와 같은 키) -->
+    <script>
+      try {
+        var brand = localStorage.getItem("lms-brand");
+        if (brand && brand !== "charcoal") document.documentElement.dataset.brand = brand;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

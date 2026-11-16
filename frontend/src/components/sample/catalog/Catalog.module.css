@@ -42,49 +42,11 @@
   margin-left: auto;
 }
 
-/* 테마 색상 고르기: 동그란 견본 (진짜 radio라 방향키로 이동) */
-.themePicker {
-  position: relative; /* 안의 visually-hidden 기준 */
-  display: flex;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.themeSwatch {
-  position: relative;
-  width: 22px;
-  height: 22px;
-  background-color: var(--swatch);
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
-  transition: transform 0.15s;
-}
-
-.themeSwatch:hover {
-  transform: scale(1.1);
-}
-
-.themeSwatch > input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  pointer-events: none;
-}
-
-/* 고른 견본: 바깥 링 */
-.themeSwatch:has(> input:checked) {
-  box-shadow:
-    0 0 0 2px var(--color-bg-surface),
-    0 0 0 4px var(--swatch);
-}
-
-.themeSwatch:has(> input:focus-visible) {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 5px;
+/* 목차 줄의 작은 이름표 (강조색 후보) */
+.tocLabel {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }
 
 /* 한 줄: 구역 탭 + 다크 모드 버튼 / 이 구역 목차 */

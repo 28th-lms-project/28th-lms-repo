@@ -1,5 +1,6 @@
 import styles from "./Catalog.module.css";
 import { GroupTitle } from "./CatalogParts.jsx";
+import { useBrandTheme } from "../../../theme/brandTheme.js";
 
 /*
  * 현재 화면들에서 쓰는 색 · 글자 크기 · 모서리 · 컨트롤 높이 (2026-11 기준 집계).
@@ -159,8 +160,15 @@ const STANDARD_COLORS = [
         ],
     },
     {
-        title: "사이드바 · 오버레이",
-        tokens: ["--color-sidebar-bg", "--color-sidebar-text", "--color-sidebar-muted", "--color-sidebar-active", "--color-overlay", "--color-toast-bg"],
+        title: "사이드바 (테마 brand를 따름)",
+        tokens: [
+            "--color-sidebar-bg", "--color-sidebar-text", "--color-sidebar-text-secondary", "--color-sidebar-muted",
+            "--color-sidebar-subtle", "--color-sidebar-active", "--color-sidebar-active-bg",
+        ],
+    },
+    {
+        title: "오버레이",
+        tokens: ["--color-overlay", "--color-toast-bg"],
     },
 ];
 
@@ -302,13 +310,16 @@ const StandardTokens = () => (
     </div>
 );
 
-/** 표준 토큰 (표준 탭) */
-export const TokenCatalog = () => (
-    <div>
-        <GroupTitle>표준 토큰 (index.css)</GroupTitle>
-        <StandardTokens />
-    </div>
-);
+/** 표준 토큰 (표준 탭). 테마(brand)가 바뀌면 다시 그려서 사이드바 토큰 값을 새로 읽음 */
+export const TokenCatalog = () => {
+    useBrandTheme();
+    return (
+        <div>
+            <GroupTitle>표준 토큰 (index.css)</GroupTitle>
+            <StandardTokens />
+        </div>
+    );
+};
 
 /** 통일 전 화면들에 흩어진 값 (통일 전 탭, 비교용) */
 export const LegacyTokenCatalog = () => (

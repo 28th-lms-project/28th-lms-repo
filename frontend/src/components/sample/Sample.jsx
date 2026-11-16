@@ -30,6 +30,7 @@ import { StandardDataCatalog } from "./catalog/StandardDataCatalog.jsx";
 import { PartHeader } from "./catalog/CatalogParts.jsx";
 import UiButton from "../common/ui/Button.jsx";
 import { Tabs, TabPanel } from "../common/ui/Tabs.jsx";
+import SwatchPicker from "../common/ui/SwatchPicker.jsx";
 
 /*
  * 디자인 시스템 페이지
@@ -115,30 +116,21 @@ const applyScheme = (scheme) => {
 };
 
 /*
- * 테마 (샘플 페이지에서만): <html data-theme="...">. 다크 모드와 같은 방식으로 이 페이지에서만 붙이고 떠날 때 지운다.
- * swatch는 버튼 견본 색 (index.css의 --theme-fill과 같은 값).
+ * 강조색(primary) 후보 미리 보기 (샘플 페이지에서만): <html data-primary-preview="...">.
+ * 팀이 강조색을 정할 때 비교용. 저장하지 않고, 페이지를 떠나면 지운다 (다른 화면은 항상 확정된 강조색).
+ * 정해지면 index.css의 --primary-* 기본값을 그 색으로 바꾼다. swatch는 --primary-fill과 같은 값.
+ * 상태색(위험 빨강 · 성공 초록 · 경고 노랑)과 헷갈리는 붉은 · 초록 · 노랑 계열은 후보에 넣지 않는다.
  */
-const THEME_KEY = "sample-theme";
-const THEMES = [
-    { id: "indigo", label: "인디고 (기본)", swatch: "#3b5bdb" },
+const PRIMARY_CANDIDATES = [
+    { id: "indigo", label: "인디고 (지금 값)", swatch: "#3b5bdb" },
     { id: "violet", label: "바이올렛", swatch: "#7048e8" },
     { id: "grape", label: "그레이프", swatch: "#ae3ec9" },
-    { id: "pink", label: "핑크", swatch: "#d6336c" },
     { id: "cyan", label: "사이언", swatch: "#0b7285" },
 ];
 
-const readTheme = () => {
-    try {
-        const saved = localStorage.getItem(THEME_KEY);
-        return THEMES.some((t) => t.id === saved) ? saved : "indigo";
-    } catch {
-        return "indigo";
-    }
-};
-
-const applyTheme = (theme) => {
-    if (theme && theme !== "indigo") document.documentElement.dataset.theme = theme;
-    else delete document.documentElement.dataset.theme;
+const applyPrimaryPreview = (id) => {
+    if (id && id !== "indigo") document.documentElement.dataset.primaryPreview = id;
+    else delete document.documentElement.dataset.primaryPreview;
 };
 
 const SampleDashboard = () => {
@@ -167,25 +159,16 @@ const SampleDashboard = () => {
         setScheme(next);
     };
 
-    const [theme, setTheme] = useState(() => {
-        const saved = readTheme();
-        applyTheme(saved);
-        return saved;
-    });
+    const [primaryPreview, setPrimaryPreview] = useState("indigo");
 
     useEffect(() => {
-        applyTheme(theme);
-        return () => applyTheme("indigo");
-    }, [theme]);
+        applyPrimaryPreview(primaryPreview);
+        return () => applyPrimaryPreview("indigo");
+    }, [primaryPreview]);
 
-    const changeTheme = (next) => {
-        applyTheme(next); // 다시 그리기 전에 적용 (토큰 값 표시)
-        try {
-            localStorage.setItem(THEME_KEY, next);
-        } catch {
-            /* 저장 못 해도 지금 화면에는 적용됨 */
-        }
-        setTheme(next);
+    const changePrimaryPreview = (next) => {
+        applyPrimaryPreview(next); // 다시 그리기 전에 적용 (토큰 값 표시)
+        setPrimaryPreview(next);
     };
 
     /* 구역 탭 */
@@ -225,21 +208,16 @@ const SampleDashboard = () => {
                 <div className={catalogStyles.tocRow}>
                     <Tabs idBase={tabsId} items={PART_TABS} value={part} onChange={changePart} ariaLabel="샘플 구역" className={catalogStyles.partTabs} />
                     <span className={catalogStyles.tocEnd}>
-                        <fieldset className={catalogStyles.themePicker}>
-                            <legend className="visually-hidden">테마 색상</legend>
-                            {THEMES.map((t) => (
-                                <label key={t.id} className={catalogStyles.themeSwatch} title={t.label} style={{ "--swatch": t.swatch }}>
-                                    <input
-                                        type="radio"
-                                        name="sample-theme"
-                                        value={t.id}
-                                        checked={theme === t.id}
-                                        onChange={() => changeTheme(t.id)}
-                                    />
-                                    <span className="visually-hidden">{t.label}</span>
-                                </label>
-                            ))}
-                        </fieldset>
+                        <span className={catalogStyles.tocLabel} aria-hidden="true">
+                            강조색 후보
+                        </span>
+                        <SwatchPicker
+                            name="sample-primary-preview"
+                            legend="강조색 후보 (이 페이지에서만 미리 보기)"
+                            options={PRIMARY_CANDIDATES}
+                            value={primaryPreview}
+                            onChange={changePrimaryPreview}
+                        />
                         <UiButton size="sm" aria-pressed={scheme === "dark"} onClick={toggleScheme}>
                             {scheme === "dark" ? "☀ 밝은 모드" : "☾ 다크 모드"}
                         </UiButton>

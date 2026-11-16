@@ -12,6 +12,8 @@ import FilePicker, { FileList } from "../../common/ui/FilePicker.jsx";
 import Progress from "../../common/ui/Progress.jsx";
 import { useToast } from "../../common/ui/feedbackContext.js";
 import { icons } from "../../common/input/icons.js";
+import SwatchPicker from "../../common/ui/SwatchPicker.jsx";
+import { BRANDS, useBrandTheme } from "../../../theme/brandTheme.js";
 
 /* ───── 예시 데이터 ───── */
 const NAV_GROUPS = [
@@ -60,6 +62,7 @@ export const StandardNavCatalog = () => {
 
     /* 메뉴 */
     const [currentMenu, setCurrentMenu] = useState("member");
+    const [brand, setBrand] = useBrandTheme();
 
     /* 선택 */
     const [counselType, setCounselType] = useState("study");
@@ -143,7 +146,7 @@ export const StandardNavCatalog = () => {
                 <Variant
                     name="SideNav (그룹 접기 · 현재 화면)"
                     source="styles/nav.css · common/ui/SideNav.jsx"
-                    note={"기존 menu/SideMenu 색(#212529 · 현재 #ff5252)을 토큰(--color-sidebar-*)으로.\n그룹 제목을 누르면 접힘. 현재 화면은 aria-current=\"page\" (빨간 글자 + 왼쪽 선).\n다크 모드와 상관없이 항상 어두움"}
+                    note={"색은 --color-sidebar-* 토큰 (실제 menu/SideMenu와 같음). 배경 · 현재 메뉴 색은 옆의 테마를 따름.\n그룹 제목을 누르면 접힘. 현재 화면은 aria-current=\"page\" (강조 글자 + 왼쪽 선).\n다크 모드와 상관없이 항상 어두움"}
                     code={`
 <SideNav
   groups={menuGroups}        // [{ key, title, items: [{ key, title, icon }] }]
@@ -153,6 +156,21 @@ export const StandardNavCatalog = () => {
                 >
                     <div style={{ width: "240px", borderRadius: "var(--radius-lg)", overflow: "hidden", border: "1px solid var(--color-border)" }}>
                         <SideNav groups={NAV_GROUPS} currentKey={currentMenu} onSelect={(item) => setCurrentMenu(item.key)} ariaLabel="메뉴 (예시)" />
+                    </div>
+                </Variant>
+                <Variant
+                    name="테마: 사이드바 색 (앱 전체)"
+                    source="theme/brandTheme.js · common/ui/SwatchPicker.jsx · index.css --brand-*"
+                    note={"사용자가 고르는 색. 사이드바 배경과 현재 메뉴 색만 바뀌고 버튼 · 입력 · 상태색은 그대로 (그건 팀이 정하는 강조색).\n여기서 고르면 실제 사이드바도 바로 바뀌고 이 브라우저에 기억됨. 사이드바 프로필 아래에도 같은 견본이 있음.\n어두운 배경만 써서 사이드바 글자 · 현재 메뉴가 모든 테마에서 4.5:1 이상"}
+                    code={`
+import { BRANDS, useBrandTheme } from "../theme/brandTheme";
+
+const [brand, setBrand] = useBrandTheme();
+<SwatchPicker name="brand" legend="사이드바 테마" options={BRANDS} value={brand} onChange={setBrand} />`}
+                >
+                    <div className="form-stack" style={{ gap: "10px" }}>
+                        <SwatchPicker name="sample-brand" legend="사이드바 테마" options={BRANDS} value={brand} onChange={setBrand} />
+                        <span className="field-hint">지금: {BRANDS.find((b) => b.id === brand)?.label}</span>
                     </div>
                 </Variant>
                 <Variant name="어떤 것을 쓸까" note="비슷해 보이는 내비게이션의 쓰임 구분">

@@ -2,8 +2,11 @@
  * 디자인 토큰 (frontend/docs/ui-style-guide.md 6 · 7장)
  * - 팔레트: Open Color 값 그대로. 화면 코드에서는 직접 쓰지 않는다.
  * - 의미 토큰(--color-* 등): 화면 코드는 이것만 쓴다.
- * - 테마: 강조색(--color-primary*)만 바뀐다. :root[data-theme="..."]가 --theme-* 값만 덮어쓰고,
- *   밝은 · 다크 의미 토큰이 그 값을 읽는다. 회색 · 상태색(info 포함)은 고정. 지금은 샘플 페이지에서만 고른다.
+ * - 강조색(primary): 팀이 정하는 값. --primary-* 8개를 밝은 · 다크 의미 토큰(--color-primary* 등)이 읽는다.
+ *   후보 미리 보기는 :root[data-primary-preview="..."] (샘플 페이지에서만 붙음, 저장 안 함).
+ * - 테마(brand): 사용자가 고르는 값. --brand-* 2개를 사이드바 토큰(--color-sidebar-*)만 읽는다.
+ *   버튼 · 입력 · 표 · 상태색에는 닿지 않는다. <html data-brand="...">, 앱 전체 (index.html · theme/brandTheme.js).
+ * - 회색 · 상태색(info 포함)은 어느 쪽과도 상관없이 고정.
  * - 다크 모드: 색 토큰만 [data-color-scheme="dark"]에서 바뀐다 (파일 끝).
  *   <html>에 붙이면 전체, 요소에 붙이면 그 안만. [data-color-scheme="light"]는 다크 안의 "밝은 섬".
  *   지금은 샘플 페이지에서만 켠다 (가이드 9장).
@@ -57,7 +60,7 @@
   --red-8: #e03131;
   --red-9: #c92a2a;
 
-  /* 정보(info): 테마와 겹치지 않도록 파랑 고정 */
+  /* 정보(info): 강조색 후보와 겹치지 않도록 파랑 고정 */
   --blue-0: #e7f5ff;
   --blue-2: #a5d8ff;
   --blue-3: #74c0fc;
@@ -76,62 +79,78 @@
   --dark-raised: #2b3035; /* 모달 · 메뉴처럼 떠 있는 표면 (카드보다 한 단계 밝게) */
   --dark-muted: #9ca3aa; /* gray-5와 gray-6 사이: 흐린 글자가 모달 · 회색 배경 위에서도 4.5:1 이상 */
 
-  /* ───── 테마 (강조색) 기본: 인디고 ─────
+  /* ───── 강조색 (primary) 기본: 인디고 ─────
    * fill: 채운 배경(흰 글자 4.5:1 이상) · text: 연한 배경 위 글자 · light · border: 연한 배경 · 테두리
    * dark-text · dark-focus · dark-tint: 다크 모드용 (글자 · 포커스 · 반투명 배경의 바탕색) */
-  --theme-fill: var(--indigo-7);
-  --theme-fill-hover: var(--indigo-8);
-  --theme-text: var(--indigo-7);
-  --theme-light: var(--indigo-0);
-  --theme-border: var(--indigo-2);
-  --theme-dark-text: var(--indigo-3);
-  --theme-dark-focus: var(--indigo-4);
-  --theme-dark-tint: var(--indigo-6);
+  --primary-fill: var(--indigo-7);
+  --primary-fill-hover: var(--indigo-8);
+  --primary-text: var(--indigo-7);
+  --primary-light: var(--indigo-0);
+  --primary-border: var(--indigo-2);
+  --primary-dark-text: var(--indigo-3);
+  --primary-dark-focus: var(--indigo-4);
+  --primary-dark-tint: var(--indigo-6);
+
+  /* ───── 테마 (brand) 기본: 차콜 ─────
+   * bg: 사이드바 배경 (어두운 색만. 회색 글자 gray-6까지 4.5:1 이상)
+   * accent: 현재 메뉴 글자 · 왼쪽 선 (bg와 그 위 10% 배경 모두에서 4.5:1 이상) */
+  --brand-bg: var(--gray-9);
+  --brand-accent: #ff6b6b;
 }
 
-/* ───── 테마 (Open Color 단계에서 명암비를 맞춰 고름. 가이드 7장) ───── */
-:root[data-theme="violet"] {
-  --theme-fill: #7048e8;
-  --theme-fill-hover: #6741d9;
-  --theme-text: #7048e8;
-  --theme-light: #f3f0ff;
-  --theme-border: #d0bfff;
-  --theme-dark-text: #b197fc;
-  --theme-dark-focus: #9775fa;
-  --theme-dark-tint: #7950f2;
+/* ───── 테마 (brand): 앱 전체, 사이드바에만 (가이드 7장) ───── */
+:root[data-brand="navy"] {
+  --brand-bg: #1b2440;
+  --brand-accent: #91a7ff;
 }
 
-:root[data-theme="grape"] {
-  --theme-fill: #ae3ec9;
-  --theme-fill-hover: #9c36b5;
-  --theme-text: #9c36b5;
-  --theme-light: #f8f0fc;
-  --theme-border: #eebefa;
-  --theme-dark-text: #e599f7;
-  --theme-dark-focus: #da77f2;
-  --theme-dark-tint: #be4bdb;
+:root[data-brand="plum"] {
+  --brand-bg: #261d3d;
+  --brand-accent: #b197fc;
 }
 
-:root[data-theme="pink"] {
-  --theme-fill: #d6336c;
-  --theme-fill-hover: #c2255c;
-  --theme-text: #c2255c;
-  --theme-light: #fff0f6;
-  --theme-border: #fcc2d7;
-  --theme-dark-text: #faa2c1;
-  --theme-dark-focus: #f783ac;
-  --theme-dark-tint: #e64980;
+:root[data-brand="forest"] {
+  --brand-bg: #11271f;
+  --brand-accent: #63e6be;
 }
 
-:root[data-theme="cyan"] {
-  --theme-fill: #0b7285;
-  --theme-fill-hover: #095c6b;
-  --theme-text: #0b7285;
-  --theme-light: #e3fafc;
-  --theme-border: #99e9f2;
-  --theme-dark-text: #66d9e8;
-  --theme-dark-focus: #3bc9db;
-  --theme-dark-tint: #15aabf;
+:root[data-brand="wine"] {
+  --brand-bg: #33182a;
+  --brand-accent: #faa2c1;
+}
+
+/* ───── 강조색 후보 미리 보기 (샘플 페이지에서만. Open Color 단계에서 명암비를 맞춰 고름, 가이드 7장) ───── */
+:root[data-primary-preview="violet"] {
+  --primary-fill: #7048e8;
+  --primary-fill-hover: #6741d9;
+  --primary-text: #7048e8;
+  --primary-light: #f3f0ff;
+  --primary-border: #d0bfff;
+  --primary-dark-text: #b197fc;
+  --primary-dark-focus: #9775fa;
+  --primary-dark-tint: #7950f2;
+}
+
+:root[data-primary-preview="grape"] {
+  --primary-fill: #ae3ec9;
+  --primary-fill-hover: #9c36b5;
+  --primary-text: #9c36b5;
+  --primary-light: #f8f0fc;
+  --primary-border: #eebefa;
+  --primary-dark-text: #e599f7;
+  --primary-dark-focus: #da77f2;
+  --primary-dark-tint: #be4bdb;
+}
+
+:root[data-primary-preview="cyan"] {
+  --primary-fill: #0b7285;
+  --primary-fill-hover: #095c6b;
+  --primary-text: #0b7285;
+  --primary-light: #e3fafc;
+  --primary-border: #99e9f2;
+  --primary-dark-text: #66d9e8;
+  --primary-dark-focus: #3bc9db;
+  --primary-dark-tint: #15aabf;
 }
 
 /* ───── 색 토큰: 밝은 모드 (기본) ───── */
@@ -158,12 +177,12 @@
   --color-border-light: var(--gray-3); /* 표 행 · 구분선 */
   --color-border-strong: var(--gray-5); /* hover */
 
-  /* ───── 강조 (테마로 바뀌는 부분) ───── */
-  --color-primary: var(--theme-fill);
-  --color-primary-hover: var(--theme-fill-hover);
-  --color-primary-light: var(--theme-light); /* 선택 행 · 연한 강조 배경 */
-  --color-primary-border: var(--theme-border);
-  --color-primary-text: var(--theme-text); /* 연한 배경 위 강조 글자 (배지 · 태그 · 선택 탭) */
+  /* ───── 강조 (--primary-*를 읽음. 팀이 정하는 값) ───── */
+  --color-primary: var(--primary-fill);
+  --color-primary-hover: var(--primary-fill-hover);
+  --color-primary-light: var(--primary-light); /* 선택 행 · 연한 강조 배경 */
+  --color-primary-border: var(--primary-border);
+  --color-primary-text: var(--primary-text); /* 연한 배경 위 강조 글자 (배지 · 태그 · 선택 탭) */
   --color-on-primary: var(--white);
   --color-link: var(--color-primary-text);
   --color-focus: var(--color-primary);
@@ -184,17 +203,23 @@
   --color-warning-bg: var(--yellow-0);
   --color-warning-border: var(--yellow-3);
 
-  /* 정보: 테마와 상관없이 파랑 고정 (테마가 바뀌어도 안내의 의미가 같게) */
+  /* 정보: 강조색과 상관없이 파랑 고정 (강조색이 바뀌어도 안내의 의미가 같게) */
   --color-info: var(--blue-8);
   --color-info-bg: var(--blue-0);
   --color-info-border: var(--blue-2);
 
   /* ───── 사이드바 (어두운 배경) ───── */
-  --color-sidebar-bg: var(--gray-9);
-  --color-sidebar-text: var(--gray-1);
-  --color-sidebar-muted: var(--gray-5);
-  --color-sidebar-active: #ff5252;
-  --color-sidebar-active-bg: rgba(255, 82, 82, 0.08);
+  /* 배경 · 현재 메뉴만 테마(--brand-*)를 따르고, 글자 · 선은 어떤 테마 배경에서도 읽히는 회색 · 반투명 흰색 */
+  --color-sidebar-bg: var(--brand-bg);
+  --color-sidebar-text: var(--gray-1); /* 본문 · 이름 */
+  --color-sidebar-text-strong: var(--white); /* hover */
+  --color-sidebar-text-secondary: var(--gray-4); /* 메뉴 그룹 이름 */
+  --color-sidebar-muted: var(--gray-5); /* 메뉴 링크 · 로고 · 역할 */
+  --color-sidebar-subtle: var(--gray-6); /* 대분류 제목 */
+  --color-sidebar-border: rgba(255, 255, 255, 0.2); /* 버튼 테두리 · 스크롤바 */
+  --color-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --color-sidebar-active: var(--brand-accent);
+  --color-sidebar-active-bg: color-mix(in srgb, var(--brand-accent) 10%, transparent);
 
   /* ───── 오버레이 ───── */
   --color-overlay: rgba(0, 0, 0, 0.4);
@@ -332,7 +357,7 @@ ul {
  * ───── 다크 모드 색 토큰 ─────
  * 글자 단계 (surface gray-9 위 명암비): 본문 gray-0 14.6 · 보조 gray-5 7.4 · 흐림 #9ca3aa 6.1 · placeholder gray-6 4.6.
  *   순백 · 순검정은 눈부심 때문에 쓰지 않고, 단계 사이를 넓혀 본문이 앞으로 나오게 한다.
- * primary 버튼은 흰 글자 명암비를 지키려고 밝은 모드와 같은 채움(--theme-fill · -hover). 글자용 강조는 --theme-dark-text.
+ * primary 버튼은 흰 글자 명암비를 지키려고 밝은 모드와 같은 채움(--primary-fill · -hover). 글자용 강조는 --primary-dark-text.
  * 높이는 그림자 대신 밝기로: 페이지 < 카드(surface) < 모달 · 메뉴(raised). 그림자에는 밝은 1px 링을 더해 경계를 그림.
  */
 [data-color-scheme="dark"] {
@@ -353,10 +378,10 @@ ul {
   --color-border-light: var(--gray-8);
   --color-border-strong: var(--gray-6);
 
-  --color-primary-light: color-mix(in srgb, var(--theme-dark-tint) 18%, transparent);
-  --color-primary-border: color-mix(in srgb, var(--theme-dark-focus) 45%, transparent);
-  --color-primary-text: var(--theme-dark-text);
-  --color-focus: var(--theme-dark-focus);
+  --color-primary-light: color-mix(in srgb, var(--primary-dark-tint) 18%, transparent);
+  --color-primary-border: color-mix(in srgb, var(--primary-dark-focus) 45%, transparent);
+  --color-primary-text: var(--primary-dark-text);
+  --color-focus: var(--primary-dark-focus);
 
   --color-success: var(--green-4);
   --color-success-bg: rgba(43, 138, 62, 0.2);
