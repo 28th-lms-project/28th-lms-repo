@@ -9,7 +9,7 @@
  *
  *   form-control       input · select · textarea 공통 (36px)
  *   form-control-sm    30px
- *   input-group        접두어 + 입력  (<span class="input-group-text">ROLE_</span>)
+ *   input-group        접두어 + 입력  (<label class="input-group-text" for="id">ROLE_</label>, 누르면 입력 칸에 포커스)
  *   form-check         체크박스 · 라디오 + 글자
  *   form-row           필드 여러 개를 한 줄에 (좁으면 줄바꿈)
  *

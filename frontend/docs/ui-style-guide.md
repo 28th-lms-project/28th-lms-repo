@@ -550,7 +550,7 @@ import { icons } from "../common/input/icons";
 | `form-control-sm` | 30px |
 | `form-control-mono` | 코드 · ID 입력 (고정폭) |
 | `field` · `field-label` · `field-required` · `field-hint` · `field-error` · `field-counter` | 필드 틀 (`Field` 컴포넌트가 붙여 줌) |
-| `input-group` + `input-group-text` | 접두어 + 입력 (`ROLE_`) |
+| `input-group` + `input-group-text` | 접두어 + 입력 (`ROLE_`). 접두어는 `<label htmlFor="입력 id">`로 써서 눌러도 입력 칸에 포커스가 가게 함 |
 | `form-check` · `form-check-group` | 체크박스 · 라디오 + 글자 (네이티브 input, 강조색) |
 | `form-row` | 필드 여러 개를 한 줄에 (좁으면 줄바꿈, 버튼은 아래쪽 정렬) |
 | `form-stack` | 필드를 세로로 16px 간격 |

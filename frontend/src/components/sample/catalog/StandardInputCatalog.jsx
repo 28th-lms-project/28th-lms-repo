@@ -231,19 +231,19 @@ const FormGroup = () => {
                 <Variant
                     name="접두어 입력 · 작은 크기 · 코드 입력"
                     source="styles/form.css"
-                    note="form-control-sm(30px)은 표 안 · 툴바처럼 좁은 곳. form-control-mono는 코드 · ID"
+                    note={"접두어는 <label htmlFor>: 접두어를 눌러도 입력 칸으로 포커스가 감.\nform-control-sm(30px)은 표 안 · 툴바처럼 좁은 곳. form-control-mono는 코드 · ID"}
                     block
                     code={`
 <div className="input-group">
-  <span className="input-group-text">ROLE_</span>
-  <input className="form-control form-control-mono" />
+  <label className="input-group-text" htmlFor="role-id">ROLE_</label>
+  <input id="role-id" className="form-control form-control-mono" />
 </div>
 <input className="form-control form-control-sm" />`}
                 >
                     <div className="form-stack">
                         <Field label="역할 ID" htmlFor="std-role">
                             <div className="input-group">
-                                <span className="input-group-text">ROLE_</span>
+                                <label className="input-group-text" htmlFor="std-role">ROLE_</label>
                                 <input id="std-role" className="form-control form-control-mono" placeholder="STUDENT" />
                             </div>
                         </Field>
