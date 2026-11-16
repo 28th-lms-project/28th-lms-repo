@@ -12,4 +12,5 @@ public class ScoreVO {
   private Integer totalPoint;
   private Integer score;
   private Integer pendingCount;
+  private Double averageScore;
 }

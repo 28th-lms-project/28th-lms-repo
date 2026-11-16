@@ -11,6 +11,26 @@
            AND USER_ID = #{userId}
     </select>
 
+    <sql id="gradedScoreSum">
+        SUM(CASE
+              WHEN TA.IS_CORRECT = 'Y' THEN
+                NVL(T.POINT_ALLOC, 0)
+              WHEN TA.IS_CORRECT = 'H' THEN
+                LEAST(2, NVL(T.POINT_ALLOC, 0)) <!-- 부분정답 2점 (배점을 넘지 않게) -->
+              ELSE
+                0
+            END)
+    </sql>
+
+    <sql id="pendingCountSum">
+        SUM(CASE
+              WHEN TA.IS_CORRECT = 'R' THEN
+                1
+              ELSE
+                0
+            END)
+    </sql>
+
     <select id="selectMyScoreList"
             resultType="com.learningworks.score.vo.response.ScoreVO">
         SELECT TS.ID AS TEST_SET_ID
@@ -19,6 +39,7 @@
              , TP.TOTAL_POINT
              , MA.SCORE
              , MA.PENDING_COUNT
+             , CA.AVERAGE_SCORE
           FROM TEST_SET TS
          INNER JOIN (SELECT TST.TEST_SET_ID
                           , SUM(NVL(T.POINT_ALLOC, 0)) AS TOTAL_POINT
@@ -29,20 +50,8 @@
                       GROUP BY TST.TEST_SET_ID) TP
             ON TP.TEST_SET_ID = TS.ID
           LEFT OUTER JOIN (SELECT TA.TEST_SET_ID
-                                , SUM(CASE
-                                        WHEN TA.IS_CORRECT = 'Y' THEN
-                                          NVL(T.POINT_ALLOC, 0)
-                                        WHEN TA.IS_CORRECT = 'H' THEN
-                                          LEAST(2, NVL(T.POINT_ALLOC, 0)) <!-- 부분정답 2점 (배점을 넘지 않게) -->
-                                        ELSE
-                                          0
-                                      END) AS SCORE
-                                , SUM(CASE
-                                        WHEN TA.IS_CORRECT = 'R' THEN
-                                          1
-                                        ELSE
-                                          0
-                                      END) AS PENDING_COUNT
+                                , <include refid="gradedScoreSum" /> AS SCORE
+                                , <include refid="pendingCountSum" /> AS PENDING_COUNT
                              FROM TEST_ANSWERS TA
                             INNER JOIN TESTS T
                                ON TA.TEST_ID = T.ID
@@ -50,6 +59,28 @@
                               AND T.DEL_YN = 'N'
                             GROUP BY TA.TEST_SET_ID) MA
             ON MA.TEST_SET_ID = TS.ID
+          LEFT OUTER JOIN (SELECT SS.TEST_SET_ID
+                                , ROUND(AVG(SS.STUDENT_SCORE), 1) AS AVERAGE_SCORE
+                             FROM (SELECT TA.TEST_SET_ID
+                                        , TA.COURSE_STUDENT_ID
+                                        , <include refid="gradedScoreSum" /> AS STUDENT_SCORE
+                                        , <include refid="pendingCountSum" /> AS PENDING_COUNT
+                                     FROM TEST_ANSWERS TA
+                                    INNER JOIN TESTS T
+                                       ON TA.TEST_ID = T.ID
+                                    WHERE T.DEL_YN = 'N'
+                                      AND EXISTS (SELECT 1
+                                                    FROM COURSE_STUDENT CS
+                                                   INNER JOIN "USER" U
+                                                      ON U.ID = CS.USER_ID
+                                                   WHERE CS.COURSE_ID = #{courseId}
+                                                     AND CS.USER_ID = TA.COURSE_STUDENT_ID
+                                                     AND U.DEL_YN = 'N')
+                                    GROUP BY TA.TEST_SET_ID
+                                        , TA.COURSE_STUDENT_ID) SS
+                            GROUP BY SS.TEST_SET_ID
+                           HAVING SUM(SS.PENDING_COUNT) = 0) CA
+            ON CA.TEST_SET_ID = TS.ID
          WHERE TS.COURSE_ID = #{courseId}
            AND TS.SHOW_YN = 'Y'
          ORDER BY TS.ID ASC
@@ -95,20 +126,8 @@
             ON TP.TEST_SET_ID = TS.ID
           LEFT OUTER JOIN (SELECT TA.COURSE_STUDENT_ID
                                 , TA.TEST_SET_ID
-                                , SUM(CASE
-                                        WHEN TA.IS_CORRECT = 'Y' THEN
-                                          NVL(T.POINT_ALLOC, 0)
-                                        WHEN TA.IS_CORRECT = 'H' THEN
-                                          LEAST(2, NVL(T.POINT_ALLOC, 0)) <!-- 부분정답 2점 (배점을 넘지 않게) -->
-                                        ELSE
-                                          0
-                                      END) AS SCORE
-                                , SUM(CASE
-                                        WHEN TA.IS_CORRECT = 'R' THEN
-                                          1
-                                        ELSE
-                                          0
-                                      END) AS PENDING_COUNT
+                                , <include refid="gradedScoreSum" /> AS SCORE
+                                , <include refid="pendingCountSum" /> AS PENDING_COUNT
                              FROM TEST_ANSWERS TA
                             INNER JOIN TESTS T
                                ON TA.TEST_ID = T.ID
