@@ -143,7 +143,7 @@ const STANDARD_COLORS = [
     },
     {
         title: "배경 · 테두리",
-        tokens: ["--color-bg-page", "--color-bg-surface", "--color-bg-subtle", "--color-bg-hover", "--color-bg-disabled", "--color-border", "--color-border-light", "--color-border-strong"],
+        tokens: ["--color-bg-page", "--color-bg-surface", "--color-bg-subtle", "--color-bg-hover", "--color-bg-disabled", "--color-bg-raised", "--color-border", "--color-border-light", "--color-border-strong"],
     },
     {
         title: "강조 (테마로 바뀜)",

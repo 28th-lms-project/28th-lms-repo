@@ -58,7 +58,7 @@ export const selectStyles = {
     ...base,
     marginTop: 4,
     overflow: "hidden",
-    backgroundColor: "var(--color-bg-surface)",
+    backgroundColor: "var(--color-bg-raised)",
     border: "1px solid var(--color-border-light)",
     borderRadius: "var(--radius)",
     boxShadow: "var(--shadow-md)",

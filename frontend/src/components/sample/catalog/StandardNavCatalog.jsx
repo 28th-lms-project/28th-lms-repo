@@ -151,7 +151,7 @@ export const StandardNavCatalog = () => {
   onSelect={(item) => navigate(item.path)}
 />`}
                 >
-                    <div style={{ width: "240px", borderRadius: "var(--radius-lg)", overflow: "hidden" }}>
+                    <div style={{ width: "240px", borderRadius: "var(--radius-lg)", overflow: "hidden", border: "1px solid var(--color-border)" }}>
                         <SideNav groups={NAV_GROUPS} currentKey={currentMenu} onSelect={(item) => setCurrentMenu(item.key)} ariaLabel="메뉴 (예시)" />
                     </div>
                 </Variant>

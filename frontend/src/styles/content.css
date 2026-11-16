@@ -191,7 +191,7 @@
 }
 
 .option.is-answer::before {
-  color: var(--white);
+  color: var(--color-bg-surface); /* 밝은 모드 흰색, 다크는 진한 글자 (다크의 green-4 위 흰 글자는 1.75:1) */
   background-color: var(--color-success);
   border-color: var(--color-success);
 }
@@ -202,7 +202,7 @@
 }
 
 .option.is-wrong::before {
-  color: var(--white);
+  color: var(--color-bg-surface);
   background-color: var(--color-danger);
   border-color: var(--color-danger);
 }

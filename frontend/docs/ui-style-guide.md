@@ -348,7 +348,7 @@
 | 묶음 | 토큰 |
 | --- | --- |
 | 글자색 | `--color-text` · `-text-secondary` · `-text-muted` · `-text-placeholder` · `-text-disabled` · `-text-inverse` |
-| 배경 | `--color-bg-page` · `-bg-surface` · `-bg-subtle`(표 머리글 · 패널 머리 · 줄무늬) · `-bg-hover` · `-bg-disabled` |
+| 배경 | `--color-bg-page` · `-bg-surface` · `-bg-subtle`(표 머리글 · 패널 머리 · 줄무늬) · `-bg-hover` · `-bg-disabled` · `-bg-raised`(모달 · 드롭다운 메뉴처럼 떠 있는 표면. 밝은 모드는 `-bg-surface`와 같고 다크에서만 한 단계 밝음) |
 | 테두리 | `--color-border`(입력 · 버튼 · 카드) · `-border-light`(표 행 · 구분선) · `-border-strong`(hover) |
 | 강조 | `--color-primary`(채움) · `-primary-hover` · `-primary-light`(선택 행) · `-primary-border` · `-primary-text`(연한 배경 위 글자) · `--color-on-primary` · `--color-link` · `--color-focus` |
 | 상태 | `--color-{success · danger · warning · info}` + `-bg` · `-border`, `--color-danger-fill` · `-danger-fill-hover`(채운 버튼) · `-danger-border-hover` |
@@ -357,7 +357,7 @@
 | 글꼴 | `--font-sans` · `--font-mono`, `--font-size-{xs · sm · md · base · lg · xl · 2xl · 3xl}`, `--font-weight-{regular · semibold · bold}`, `--line-height-{tight · base}` |
 | 크기 | `--control-height-{sm · md}` · `--control-padding-x-{sm · md}` · `--table-header-height` · `--table-row-height` · `--modal-width-{sm · md · lg}` |
 | 모서리 | `--radius` · `--radius-lg` · `--radius-pill` |
-| 그림자 | `--shadow-sm`(패널) · `--shadow-md`(토스트) · `--shadow-lg`(모달) |
+| 그림자 | `--shadow-sm`(패널) · `--shadow-md`(토스트) · `--shadow-lg`(모달). 다크에서는 밝은 1px 링 + 진한 그림자 (9장) |
 | 쌓임 순서 | `--z-sticky` · `--z-modal` · `--z-toast` |
 
 ### 옮길 때 대응표
@@ -940,7 +940,11 @@ import Comment from "../common/ui/Comment";
 | 토큰 | 밝은 모드 | 다크 모드 |
 | --- | --- | --- |
 | `--color-bg-page` · `-bg-surface` · `-bg-subtle` | gray-2 · 흰색 · gray-0 | `#141619` · gray-9 · `#2a2f34` |
-| `--color-text` · `-text-secondary` · `-text-muted` | gray-9 · gray-7 · gray-6 | gray-1 · gray-4 · gray-5 |
+| `--color-bg-raised` (모달 · 드롭다운 메뉴) | 흰색 (`-bg-surface`와 같음) | `#2b3035` (카드보다 한 단계 밝게) |
+| `--color-text` · `-text-secondary` · `-text-muted` · `-text-placeholder` | gray-9 · gray-7 · gray-6 · gray-5 | gray-0 · gray-5 · `#9ca3aa` · gray-6 |
+| `--color-primary-hover` | indigo-8 | indigo-8 (그대로, 흰 글자 6.8:1) |
+| `--shadow-*` | 검정 그림자 | 밝은 1px 링 + 진한 검정 그림자 |
+| `--color-overlay` (모달 뒤) | 검정 0.4 | 검정 0.65 |
 | `--color-border` · `-border-light` | gray-4 · gray-3 | gray-7 · gray-8 |
 | `--color-primary`(채움) | indigo-7 | indigo-7 (흰 글자 명암비를 지키려고 그대로) |
 | `--color-primary-text` · `--color-link` | indigo-7 | indigo-3 (어두운 배경 위 글자) |
@@ -948,6 +952,12 @@ import Comment from "../common/ui/Comment";
 | 상태 글자 (`success` · `danger` · `warning` · `info`) | green-9 · red-8 · `#8a6100` · indigo-7 | green-4 · red-4 · yellow-4 · indigo-3 |
 | 상태 배경 · 테두리 | 0단계 · 2단계 | 반투명 (배경 0.14 ~ 0.2, 테두리 0.35) |
 | `--color-danger-fill` (채운 위험 버튼) | red-8 | red-8 (그대로) |
+
+**글자 단계**: 다크 글자는 눈부심을 줄이려고 순백을 쓰지 않습니다 (배경도 순검정이 아님). 대신 단계 사이를 넓혀(카드 위 명암비 본문 14.6 · 보조 7.4 · 흐림 6.1 · placeholder 4.6) 본문이 앞으로 나오게 했습니다. 흐린 글자는 모달 · 회색 배경 위에서도 4.5:1을 넘도록 gray-5와 gray-6 사이 값(`#9ca3aa`)입니다.
+
+**높이(떠 있는 정도)**: 어두운 배경에서는 그림자가 잘 안 보여서, 높이를 밝기로 나타냅니다: 페이지 < 카드(`bg-surface`) < 모달 · 메뉴(`bg-raised`). 그림자에는 밝은 1px 링을 더해 경계를 그립니다 (Material Design · GitHub · Linear와 같은 방식). 떠 있는 요소를 새로 만들면 배경을 `--color-bg-raised`로 둡니다.
+
+**강조 배경 위 글자**: 성공 · 위험색 채움 위의 글자(시험 보기 번호)는 `--white` 대신 `--color-bg-surface`를 씁니다. 다크의 밝은 초록 · 빨강 위 흰 글자는 읽히지 않기 때문입니다.
 
 "채움"(버튼 배경)과 "글자"(연한 배경 · 어두운 배경 위 글씨)를 다른 토큰으로 나눈 이유가 이것입니다. 어두운 배경 위 글자는 밝은 색이어야 읽히지만, 흰 글자를 올리는 버튼 배경은 진해야 합니다. 새 코드에서 강조색 **글자**는 `--color-primary-text`, 위험 **채운 배경**은 `--color-danger-fill`을 씁니다.
 
