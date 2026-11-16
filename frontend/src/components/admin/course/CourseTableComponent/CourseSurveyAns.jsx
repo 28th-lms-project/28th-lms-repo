@@ -2,8 +2,9 @@ import { useParams } from "react-router-dom";
 import style from "./CourseSurveyAns.module.css";
 import { useEffect, useState } from "react";
 import {
-  getCourseSurvey,
-  getSurvey,
+  createCourseSurveyAnswers,
+  getCourseSurveyQuestions,
+  getMySurveyAnswered,
 } from "../../../../api/admin/system/survey/surveyApi";
 import { IconButton } from "../../../common/input/IconButton";
 
@@ -17,26 +18,28 @@ export default function CourseSurveyAns() {
     let ignore = false;
     (async () => {
       try {
-        // 1. 과정 설문 목록에서 선택한 설문 찾기
-        const result = await getCourseSurvey(courseId);
-        let found = null;
-        if (result) {
-          found = result.find((s) => s.id === courseSurveyId);
+        const answered = await getMySurveyAnswered(courseId, courseSurveyId);
+        if (answered) {
+          if (!ignore) {
+            alert("이미 참여한 설문입니다.");
+            window.close();
+          }
+          return;
         }
-        if (!found) {
+
+        // 과정 설문 정보 + 문항/보기 조회
+        const result = await getCourseSurveyQuestions(courseId, courseSurveyId);
+        if (!result || !result.courseSurvey) {
           if (!ignore) {
             alert("설문을 찾을 수 없습니다.");
           }
           return;
         }
 
-        // 2. 설문 그룹으로 문항 + 보기 조회
-        const surveyResult = await getSurvey(found.surveyGroup);
-
         if (!ignore) {
-          setSurveys(found);
-          if (surveyResult) {
-            setQuestions(surveyResult.surveyList);
+          setSurveys(result.courseSurvey);
+          if (result.surveyList) {
+            setQuestions(result.surveyList);
           } else {
             setQuestions([]);
           }
@@ -84,8 +87,31 @@ export default function CourseSurveyAns() {
     return <div>불러오는 중...</div>;
   }
 
-  const onClickSaveButtonHandler = () => {
+  const onClickSaveButtonHandler = async () => {
+    const answerList = Object.keys(answers).map((questionId) => {
+      const answer = answers[questionId];
+      return {
+        questionId: questionId,
+        optionIds: answer.optionIds,
+        textAnswer: answer.textAnswer,
+      };
+    });
+    if (answerList.length < questions.length) {
+      alert("모든 문항에 답변해주세요.");
+      return;
+    }
+    console.log(answerList);
     console.log(answers);
+
+    try {
+      await createCourseSurveyAnswers(courseId, courseSurveyId, {
+        answers: answerList,
+      });
+      alert("제출되었습니다.");
+      window.close();
+    } catch (e) {
+      alert(e.message);
+    }
   };
 
   // 분해

@@ -8,6 +8,9 @@ import com.learningworks.survey.vo.request.RegistCourseSurveyAnswerListVO;
 import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
+import com.learningworks.survey.vo.response.CourseSurveyQuestionVO;
+import com.learningworks.survey.vo.response.CourseSurveyResultVO;
+import com.learningworks.survey.vo.response.SurveyStudentAnswerVO;
 import com.learningworks.survey.vo.response.CourseSurveyVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
 import com.learningworks.survey.vo.response.SurveyListVO;
@@ -38,5 +41,14 @@ public interface SurveyService {
 	String deleteCourseSurvey(String courseId, String courseSurveyId);
 
 	void createCourseSurveyAnswers(String courseId, String courseSurveyId, String userId,  @Valid RegistCourseSurveyAnswerListVO answer);
+
+	boolean isAnswered(String courseId, String courseSurveyId, String userId);
+
+	CourseSurveyQuestionVO readCourseSurveyQuestions(String courseId, String courseSurveyId, String userId);
+
+	CourseSurveyResultVO readCourseSurveyResult(String courseId, String courseSurveyId);
+
+	List<SurveyStudentAnswerVO> readCourseSurveyStudentAnswers(String courseId, String courseSurveyId,
+			String courseStudentId);
 
 }

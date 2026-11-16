@@ -10,6 +10,8 @@ public class RegistCourseSurveyAnswerVO {
 
 	@NotBlank
 	private String questionId;
+	
+	private String id;
 
 	private List<@NotBlank String> optionIds;
 

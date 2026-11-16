@@ -16,7 +16,7 @@ import {
 import { surveyActions } from "../../../../store/slices/surveySliceStore";
 import Select from "react-select";
 import { IconButton } from "../../../sample/input/IconButton";
-import { SUBJECTS } from "../../test/test/subjects";
+import { getCodeOptionList } from "../../../../api/admin/system/code/codeApi";
 import usePermission from "../../../../hooks/usePermission";
 import { PollItem } from "../../../sample/Poll";
 
@@ -82,15 +82,39 @@ function SurveyManagement() {
   const { surveyList } = useSelector((state) => state.survey);
   const dispatch = useDispatch();
 
-  const [selectedSubject, setSelectedSubject] = useState(SUBJECTS[0].value);
+  const [subjectList, setSubjectList] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectGroup, setSelectGroup] = useState("pre");
 
   const currentCourse = selectedSubject;
 
   const surveyRef = useRef();
 
-  const currGroup = currentCourse && `${currentCourse}_${selectGroup}`;
-  console.log(currGroup);
+  let currGroup = null;
+  if (currentCourse) {
+    currGroup = `${currentCourse}_${selectGroup}`;
+  }
+
+  // 환경 변수(TEST_SUBJECT)에서 과목 목록 조회
+  useEffect(() => {
+    let ignoreUpdateState = false;
+    (async () => {
+      try {
+        const codes = await getCodeOptionList("TEST_SUBJECT");
+        if (!ignoreUpdateState) {
+          setSubjectList(codes);
+          if (codes.length > 0) {
+            setSelectedSubject(codes[0].id);
+          }
+        }
+      } catch (e) {
+        alert(e.message);
+      }
+    })();
+    return () => {
+      ignoreUpdateState = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (courseList.length > 0) {
@@ -113,6 +137,10 @@ function SurveyManagement() {
   }, [dispatch, courseList.length]);
 
   useEffect(() => {
+    if (!currGroup) {
+      // 과목 목록을 받기 전에는 조회하지 않음
+      return;
+    }
     let ignoreUpdateState = false;
     (async () => {
       try {
@@ -253,18 +281,17 @@ function SurveyManagement() {
             >
               수강
             </li>
-            {SUBJECTS.map((subject) => (
+            {subjectList.map((subject) => (
               <li
-                key={subject.value}
+                key={subject.id}
                 onClick={() => {
-                  setSelectedSubject(subject.label);
+                  setSelectedSubject(subject.id);
                 }}
                 className={
-                  (selectedSubject === subject.label && style.active) ||
-                  undefined
+                  (selectedSubject === subject.id && style.active) || undefined
                 }
               >
-                {subject.label}
+                {subject.name}
               </li>
             ))}
           </ul>

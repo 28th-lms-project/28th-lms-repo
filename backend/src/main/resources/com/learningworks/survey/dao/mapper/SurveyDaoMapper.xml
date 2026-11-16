@@ -214,6 +214,80 @@
 		   AND COURSE_ID = #{courseId}
 	</delete>
 	
-	 
-	 
+	<select id="selectCourseStudentId">
+		SELECT ID
+		  FROM COURSE_STUDENT
+		 WHERE COURSE_ID = #{courseId}
+		   AND USER_ID = #{userId}
+	</select>
+	
+	<select id="selectCourseSurveyAnswerCount">
+		SELECT COUNT(ID)
+		  FROM COURSE_SURVEY_ANSWER
+		 WHERE COURSE_SURVEY_ID = #{courseSurveyId}
+		   AND COURSE_STUDENT_ID = #{courseStudentId}
+	</select>
+	
+	<insert id="insertNewCourseSurveyAnswer">
+	<selectKey order="BEFORE" keyProperty="answer.id" resultType="string">
+        SELECT ('CA-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_SURVEY_ANSWER_PK.NEXTVAL, 6, '0'))
+          FROM DUAL
+    </selectKey>
+		INSERT INTO COURSE_SURVEY_ANSWER
+		  	   ( ID
+		  	   , SURVEY_ID
+		  	   , COURSE_SURVEY_ID
+		  	   , COURSE_STUDENT_ID)
+		  VALUES
+		  	   ( #{answer.id}
+		  	   , #{answer.questionId}
+		  	   , #{courseSurveyId}
+		  	   , #{courseStudentId})
+	</insert>
+	
+	<insert id="insertNewCourseSurveyAnswerData">
+	<selectKey order="BEFORE" keyProperty="id" resultType="string">
+		SELECT ('CD-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_SURVEY_ANSWER_DATA_PK.NEXTVAL,6,'0'))
+		  FROM DUAL
+	</selectKey>
+		INSERT INTO COURSE_SURVEY_ANSWER_DATA
+			 ( ID
+			 , COURSE_SURVEY_ANSWER_ID
+			 , DATA_ID
+			 , TEXT_ANSWER)
+		VALUES
+			 ( #{id}
+			 , #{answerId}
+			 , #{dataId, jdbcType=VARCHAR}
+			 , #{textAnswer, jdbcType=VARCHAR})
+	</insert>
+
+	<!-- 과정 설문에 응답한 학생 목록 (USER는 이름만 조회) -->
+	<select id="selectCourseSurveyRespondents"
+		resultType="com.learningworks.survey.vo.response.SurveyRespondentVO"
+		parameterType="string">
+		SELECT DISTINCT CS.ID AS COURSE_STUDENT_ID
+			 , U.NAME
+		  FROM COURSE_SURVEY_ANSWER CA
+		 INNER JOIN COURSE_STUDENT CS
+			ON CS.ID = CA.COURSE_STUDENT_ID
+		 INNER JOIN "USER" U
+			ON U.ID = CS.USER_ID
+		 WHERE CA.COURSE_SURVEY_ID = #{_parameter}
+		 ORDER BY U.NAME
+	</select>
+
+	<!-- 한 학생의 과정 설문 답변 -->
+	<select id="selectCourseSurveyStudentAnswers"
+		resultType="com.learningworks.survey.vo.response.SurveyStudentAnswerVO">
+		SELECT CA.SURVEY_ID
+			 , CAD.DATA_ID
+			 , CAD.TEXT_ANSWER
+		  FROM COURSE_SURVEY_ANSWER CA
+		 INNER JOIN COURSE_SURVEY_ANSWER_DATA CAD
+			ON CAD.COURSE_SURVEY_ANSWER_ID = CA.ID
+		 WHERE CA.COURSE_SURVEY_ID = #{courseSurveyId}
+		   AND CA.COURSE_STUDENT_ID = #{courseStudentId}
+	</select>
+
 </mapper>

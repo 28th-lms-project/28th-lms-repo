@@ -11,9 +11,13 @@ import com.learningworks.survey.dao.SurveyDao;
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
 import com.learningworks.survey.vo.request.ModifySurveyVO;
 import com.learningworks.survey.vo.request.RegistCourseSurveyAnswerListVO;
+import com.learningworks.survey.vo.request.RegistCourseSurveyAnswerVO;
 import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
+import com.learningworks.survey.vo.response.CourseSurveyQuestionVO;
+import com.learningworks.survey.vo.response.CourseSurveyResultVO;
+import com.learningworks.survey.vo.response.SurveyStudentAnswerVO;
 import com.learningworks.survey.vo.response.CourseSurveyVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
 import com.learningworks.survey.vo.response.SurveyListVO;
@@ -62,11 +66,11 @@ public class SurveyServiceImpl implements SurveyService {
 		if (updateRows != 1) {
 			throw new LearningworksException(ErrorCode.SURVEY_FAILURE_UPDATE);
 		}
-		
-		if("text".equals(modifySurvey.getType())) {
+
+		if ("text".equals(modifySurvey.getType())) {
 			this.surveyDao.deleteSurveyDatas(surveyId);
 		}
-		
+
 		SurveyVO updateSurvey = this.surveyDao.selectSurveyById(surveyId);
 		if (updateSurvey == null) {
 			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
@@ -81,10 +85,9 @@ public class SurveyServiceImpl implements SurveyService {
 		if (registSurveyDataVO == null) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
-		
+
 		SurveyVO survey = this.surveyDao.selectSurveyById(surveyId);
-		
-		
+
 		int insertCount = this.surveyDao.insertNewSurveyData(surveyId, registSurveyDataVO);
 
 		if (insertCount > 0) {
@@ -166,20 +169,20 @@ public class SurveyServiceImpl implements SurveyService {
 	@Override
 	@Transactional
 	public CourseSurveyVO createCourseSurvey(@Valid RegistCourseSurveyVO registCourseSurvey, String courseId) {
-		if(registCourseSurvey == null || courseId == null || courseId.isBlank()) {
+		if (registCourseSurvey == null || courseId == null || courseId.isBlank()) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 		registCourseSurvey.setCourseId(courseId);
-		
+
 		int insertCount = this.surveyDao.insertNewCourseSurvey(registCourseSurvey);
-		if(insertCount != 1) {
+		if (insertCount != 1) {
 			throw new LearningworksException(ErrorCode.SURVEY_FAILURE_CREATE);
 		}
 		CourseSurveyVO courseSurvey = this.surveyDao.selectCourseSurvey(registCourseSurvey.getId());
-		if(courseSurvey == null) {
+		if (courseSurvey == null) {
 			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
 		}
-		
+
 		return courseSurvey;
 	}
 
@@ -201,12 +204,151 @@ public class SurveyServiceImpl implements SurveyService {
 	@Transactional
 	public void createCourseSurveyAnswers(String courseId, String courseSurveyId, String userId,
 			@Valid RegistCourseSurveyAnswerListVO answer) {
+
+		if (courseId == null || courseId.isBlank() || courseSurveyId == null || courseSurveyId.isBlank()
+				|| userId == null || answer == null || answer.getAnswers() == null || answer.getAnswers().isEmpty()) {
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
+
+		CourseSurveyVO courseSurvey = this.surveyDao.selectCourseSurvey(courseSurveyId);
+		if (courseSurvey == null) {
+			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+		}
+
+		String courseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
+		if (courseStudentId == null) {
+			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+		}
+
+		int answerCount = this.surveyDao.selectCourseSurveyAnswerCount(courseSurveyId, courseStudentId);
+		if (answerCount > 0) {
+			throw new LearningworksException(ErrorCode.GLOBAL_DUPLICATED);
+		}
+
+		List<SurveyVO> questions = this.surveyDao.selectAllSurveyByGroup(courseSurvey.getSurveyGroup());
+
+		for (RegistCourseSurveyAnswerVO ans : answer.getAnswers()) {
+
+			SurveyVO question = null;
+			for (SurveyVO q : questions) {
+				if (q.getId().equals(ans.getQuestionId())) {
+					question = q;
+					break;
+				}
+			}
+			if (question == null) {
+				throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+			}
+
+			int insertCount = this.surveyDao.insertNewCourseSurveyAnswer(courseSurveyId, courseStudentId, ans);
+			if (insertCount != 1) {
+				throw new LearningworksException(ErrorCode.SURVEY_FAILURE_CREATE);
+			}
+
+			if ("text".equals(question.getType())) {
+				String text = ans.getTextAnswer();
+				if (text == null || text.isBlank()) {
+					throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+				}
+				this.surveyDao.insertNewCourseSurveyAnswerData(ans.getId(), null, text);
+			} else {
+				List<String> optionIds = ans.getOptionIds();
+				if (optionIds == null || optionIds.isEmpty()) {
+					throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+				}
+				if (!"checkBox".equals(question.getType()) && optionIds.size() != 1) {
+					throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+				}
+
+				for (String optionId : optionIds) {
+					boolean validOption = false;
+					for (SurveyDataVO data : question.getSurveyDataList()) {
+						if (data.getId().equals(optionId)) {
+							validOption = true;
+							break;
+						}
+					}
+					if (!validOption) {
+						throw new LearningworksException(ErrorCode.SURVEY_DATA_NOT_EXISTS);
+					}
+					this.surveyDao.insertNewCourseSurveyAnswerData(ans.getId(), optionId, null);
+				}
+
+			}
+
+		}
+	}
+	
+	@Override
+	public boolean isAnswered(String courseId, String courseSurveyId, String userId) {
+		String courseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
 		
-		//TODO 설문 답변 등록 구현 필요
-		
+		if(courseStudentId == null) {
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
+		int count = this.surveyDao.selectCourseSurveyAnswerCount(courseSurveyId, courseStudentId);
+		if(count > 0) {
+			return true;
+		}
+		return false;
 	}
 
-	
-	
-	
+	@Override
+	public CourseSurveyQuestionVO readCourseSurveyQuestions(String courseId, String courseSurveyId, String userId) {
+		if (courseId == null || courseId.isBlank() || courseSurveyId == null || courseSurveyId.isBlank()
+				|| userId == null) {
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
+
+		// 이 과정의 수강생만 조회 가능
+		String courseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
+		if (courseStudentId == null) {
+			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+		}
+
+		// 과정 설문이 있고, 요청한 과정의 설문인지 확인
+		CourseSurveyVO courseSurvey = this.surveyDao.selectCourseSurvey(courseSurveyId);
+		if (courseSurvey == null || !courseId.equals(courseSurvey.getCourseId())) {
+			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+		}
+
+		CourseSurveyQuestionVO result = new CourseSurveyQuestionVO();
+		result.setCourseSurvey(courseSurvey);
+		result.setSurveyList(this.surveyDao.selectAllSurveyByGroup(courseSurvey.getSurveyGroup()));
+		return result;
+	}
+
+	@Override
+	public CourseSurveyResultVO readCourseSurveyResult(String courseId, String courseSurveyId) {
+		CourseSurveyVO courseSurvey = this.findCourseSurvey(courseId, courseSurveyId);
+
+		CourseSurveyResultVO result = new CourseSurveyResultVO();
+		result.setCourseSurvey(courseSurvey);
+		result.setSurveyList(this.surveyDao.selectAllSurveyByGroup(courseSurvey.getSurveyGroup()));
+		result.setRespondents(this.surveyDao.selectCourseSurveyRespondents(courseSurveyId));
+		return result;
+	}
+
+	@Override
+	public List<SurveyStudentAnswerVO> readCourseSurveyStudentAnswers(String courseId, String courseSurveyId,
+			String courseStudentId) {
+		if (courseStudentId == null || courseStudentId.isBlank()) {
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
+		this.findCourseSurvey(courseId, courseSurveyId);
+		return this.surveyDao.selectCourseSurveyStudentAnswers(courseSurveyId, courseStudentId);
+	}
+
+	/** 과정 설문이 있고, 요청한 과정의 설문인지 확인 */
+	private CourseSurveyVO findCourseSurvey(String courseId, String courseSurveyId) {
+		if (courseId == null || courseId.isBlank() || courseSurveyId == null || courseSurveyId.isBlank()) {
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
+		CourseSurveyVO courseSurvey = this.surveyDao.selectCourseSurvey(courseSurveyId);
+		if (courseSurvey == null || !courseId.equals(courseSurvey.getCourseId())) {
+			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+		}
+		return courseSurvey;
+	}
+
 }

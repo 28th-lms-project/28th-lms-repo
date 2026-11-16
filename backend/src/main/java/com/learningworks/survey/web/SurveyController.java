@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.learningworks.common.action.LoginRequired;
 import com.learningworks.common.action.RequireAction;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.survey.service.SurveyService;
@@ -20,6 +21,9 @@ import com.learningworks.survey.vo.request.RegistCourseSurveyAnswerListVO;
 import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
+import com.learningworks.survey.vo.response.CourseSurveyQuestionVO;
+import com.learningworks.survey.vo.response.CourseSurveyResultVO;
+import com.learningworks.survey.vo.response.SurveyStudentAnswerVO;
 import com.learningworks.survey.vo.response.CourseSurveyVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
 import com.learningworks.survey.vo.response.SurveyListVO;
@@ -106,6 +110,17 @@ public class SurveyController {
 		return ApiResponse.OK(this.surveyService.deleteCourseSurvey(courseId, courseSurveyId));
 	}
 	
+	/** 설문 답변 팝업용: 과정 설문 정보 + 문항/보기 (이 과정의 수강생만) */
+	@LoginRequired
+	@GetMapping("/survey/{courseId}/{courseSurveyId}")
+	public ApiResponse<CourseSurveyQuestionVO> getCourseSurveyQuestions(@PathVariable String courseId,
+			@PathVariable String courseSurveyId, Authentication authentication) {
+		CourseSurveyQuestionVO result = this.surveyService.readCourseSurveyQuestions(courseId, courseSurveyId,
+				authentication.getName());
+		return ApiResponse.OK(result);
+	}
+
+	@LoginRequired
 	@PostMapping("/survey/{courseId}/{courseSurveyId}/response")
 	public ApiResponse<String> createCourseSurveyAnswers(@PathVariable String courseId,
 			@PathVariable String courseSurveyId, @Valid @RequestBody RegistCourseSurveyAnswerListVO answer,
@@ -113,5 +128,30 @@ public class SurveyController {
 		this.surveyService.createCourseSurveyAnswers(courseId, courseSurveyId, authentication.getName() ,answer);
 		
 		return ApiResponse.OK("답변 제출");
+	}
+	
+	@LoginRequired
+	@GetMapping("/survey/{courseId}/{courseSurveyId}/response")
+	public ApiResponse<Boolean> getMySurveyAnswer(@PathVariable String courseId, @PathVariable String courseSurveyId
+			, Authentication authentication){
+		boolean answered = this.surveyService.isAnswered(courseId, courseSurveyId, authentication.getName());
+		return ApiResponse.OK(answered);
+	}
+
+	/** 설문 결과 팝업: 과정 설문 정보 + 문항/보기 + 응답한 학생 목록 */
+	@RequireAction(domain = "COURSE_SURVEY", action = "READ", description = "과정 설문 조회")
+	@GetMapping("/survey/{courseId}/{courseSurveyId}/result")
+	public ApiResponse<CourseSurveyResultVO> getCourseSurveyResult(@PathVariable String courseId,
+			@PathVariable String courseSurveyId) {
+		return ApiResponse.OK(this.surveyService.readCourseSurveyResult(courseId, courseSurveyId));
+	}
+
+	/** 설문 결과 팝업: 한 학생의 답변 */
+	@RequireAction(domain = "COURSE_SURVEY", action = "READ", description = "과정 설문 조회")
+	@GetMapping("/survey/{courseId}/{courseSurveyId}/result/{courseStudentId}")
+	public ApiResponse<List<SurveyStudentAnswerVO>> getCourseSurveyStudentAnswers(@PathVariable String courseId,
+			@PathVariable String courseSurveyId, @PathVariable String courseStudentId) {
+		return ApiResponse.OK(
+				this.surveyService.readCourseSurveyStudentAnswers(courseId, courseSurveyId, courseStudentId));
 	}
 }

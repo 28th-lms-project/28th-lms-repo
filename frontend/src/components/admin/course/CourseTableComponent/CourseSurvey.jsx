@@ -73,7 +73,7 @@ export default function StudentSurvey() {
       surveyType: survey.surveyType,
       count: survey.count,
       participation: `${survey.answerCount} / ${survey.studentCount}`,
-      result: <div onClick={() => onClickResult()}>결과보기</div>,
+      result: <div onClick={() => onClickResult(survey.id)}>결과보기</div>,
       delete: <div onClick={() => onClickDelete(survey)}>삭제</div>,
     };
     return SURVEY_HEADER.map((col) => ({
@@ -90,11 +90,12 @@ export default function StudentSurvey() {
     );
   };
 
-  const onClickResult = () => {
-    // TODO: 결과 화면 연결
-    console.log("화면 구현중");
-
-    alert("결과 화면은 준비 중입니다.");
+  const onClickResult = (courseSurveyId) => {
+    window.open(
+      `/survey/result/${courseId}/${courseSurveyId}`,
+      "courseSurveyResult",
+      "width=1620,height=1080",
+    );
   };
 
   const onClickDelete = async (survey) => {
