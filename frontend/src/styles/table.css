@@ -1,0 +1,416 @@
+/*
+ * 표 · 페이지 이동 (frontend/docs/ui-style-guide.md 8장)
+ *
+ *   <div class="table-wrap">
+ *     <table class="table table-hover">
+ *       <thead><tr><th>이름</th><th class="col-actions">작업</th></tr></thead>
+ *       <tbody><tr class="is-selected" aria-selected="true">...</tr></tbody>
+ *     </table>
+ *   </div>
+ *
+ *   table-hover · table-striped · table-sm
+ *   col-num(오른쪽 · 고정폭 숫자) · col-center · col-actions(오른쪽 버튼 칸) · cell-mono
+ *   tr.is-clickable · tr.is-selected · tr.is-muted
+ *   table-bordered: 세로 칸선 (시간표) · col-highlight: 강조 열 (오늘) · tr.is-highlight: 강조 행 · tr.is-break: 쉬는 시간 행
+ *   col-check: 체크박스 칸 · col-handle + table-handle: 순서 손잡이 (끌기는 손잡이에서만 시작, tr.is-dragging · is-drop-before · is-drop-after)
+ *   tr.is-added · is-modified · is-deleted: 편집 표 변경 상태 · cell-input: 칸 안 입력
+ *   table-wrap-scroll: 높이 제한 + 머리글 고정
+ *
+ * React: common/ui/Table.jsx, common/ui/Pagination.jsx
+ */
+
+.table-wrap {
+  position: relative; /* 칸 안 visually-hidden 기준 (choice.css 주석) */
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+}
+
+.table-wrap-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.table-wrap-scroll .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+}
+
+.table th,
+.table td {
+  padding: 0 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table th {
+  height: var(--table-header-height);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  background-color: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table td {
+  height: var(--table-row-height);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table-hover tbody tr:not(.table-empty):hover {
+  background-color: var(--color-bg-hover);
+}
+
+.table-striped tbody tr:nth-child(even) {
+  background-color: var(--color-bg-subtle);
+}
+
+.table-sm th {
+  height: 34px;
+}
+
+.table-sm td {
+  height: 38px;
+}
+
+.table tr.is-clickable {
+  cursor: pointer;
+}
+
+.table tr.is-selected,
+.table tr.is-selected:hover {
+  background-color: var(--color-primary-light);
+}
+
+.table tr.is-selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.table tr.is-muted {
+  color: var(--color-text-disabled);
+}
+
+.table tr.is-clickable:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* 칸 정렬 */
+.table .col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table .col-center {
+  text-align: center;
+}
+
+.table .col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.table .col-actions .btn + .btn {
+  margin-left: 6px;
+}
+
+.table .cell-mono {
+  font-family: var(--font-mono);
+}
+
+.table .cell-ellipsis {
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 정렬 머리글 */
+.table-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.table-sort:hover {
+  color: var(--color-text);
+}
+
+.table-sort:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.table-sort-icon {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-placeholder);
+}
+
+th[aria-sort] .table-sort-icon {
+  color: var(--color-primary-text);
+}
+
+/* 빈 · 로딩 행 (StatusBox size="sm"을 넣음) */
+.table-empty td {
+  height: auto;
+  padding: 0;
+}
+
+/* 표 아래 건수 · 페이지 */
+.table-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* ───── 페이지 이동 ───── */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--control-height-sm);
+  height: var(--control-height-sm);
+  padding: 0 6px;
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.page-btn:not(:disabled):not([aria-current="page"]):hover {
+  background-color: var(--color-bg-hover);
+}
+
+.page-btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.page-btn:disabled {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.page-btn[aria-current="page"] {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-on-primary);
+  background-color: var(--color-primary);
+}
+
+/* ───── 세로 칸선 · 강조 열 · 쉬는 시간 행 (시간표) ───── */
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid var(--color-border-light);
+}
+
+.table-bordered tbody tr:last-child td {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.table .col-highlight {
+  background-color: var(--color-success-bg);
+}
+
+.table th.col-highlight {
+  color: var(--color-success);
+}
+
+.table tr.is-break td {
+  height: 30px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  text-align: center;
+  background-color: var(--color-bg-subtle);
+}
+
+/* 강조 행 (오늘 날짜처럼 여러 줄이 한 묶음일 때는 묶음의 모든 tr에) */
+.table tr.is-highlight td,
+.table tr.is-highlight th {
+  background-color: var(--color-success-bg);
+}
+
+.table tr.is-highlight th {
+  color: var(--color-success);
+}
+
+/* ───── 체크박스 칸 ───── */
+.table .col-check {
+  width: 44px;
+  padding: 0;
+  text-align: center;
+}
+
+.table .col-check > input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  vertical-align: middle;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.table .col-check > input:disabled {
+  cursor: not-allowed;
+}
+
+/* ───── 순서 바꾸기 ───── */
+.table .col-handle {
+  width: 40px;
+  padding: 0;
+  text-align: center;
+}
+
+.table-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  user-select: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  color: var(--color-text-placeholder);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: grab;
+}
+
+.table-handle:hover {
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-hover);
+}
+
+.table-handle:active,
+.table tr.is-dragging .table-handle {
+  cursor: grabbing;
+}
+
+.table-handle:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.table-lock {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.table tr.is-dragging {
+  opacity: 0.45;
+}
+
+.table tr.is-drop-before td {
+  box-shadow: inset 0 2px 0 var(--color-primary);
+}
+
+.table tr.is-drop-after td {
+  box-shadow: inset 0 -2px 0 var(--color-primary);
+}
+
+/* ───── 편집 표: 변경 상태 · 칸 안 입력 ───── */
+.table tr.is-added td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-success);
+}
+
+.table tr.is-added {
+  background-color: var(--color-success-bg);
+}
+
+.table tr.is-modified td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-warning);
+}
+
+.table tr.is-modified {
+  background-color: var(--color-warning-bg);
+}
+
+.table tr.is-deleted td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-danger);
+}
+
+.table tr.is-deleted {
+  color: var(--color-text-disabled);
+  background-color: var(--color-danger-bg);
+}
+
+.table tr.is-deleted td:not(.col-check):not(.col-handle):not(.col-actions) {
+  text-decoration: line-through;
+}
+
+/* 평소에는 글자처럼, 올리거나 누르면 입력 칸 */
+.cell-input {
+  width: 100%;
+  min-width: 0;
+  height: var(--control-height-sm);
+  padding: 0 8px;
+  margin: 0 -8px;
+  font: inherit;
+  color: inherit;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  outline: 0;
+}
+
+.cell-input:hover:not(:disabled) {
+  border-color: var(--color-border);
+}
+
+.cell-input:focus {
+  background-color: var(--color-bg-surface);
+  border-color: var(--color-focus);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.cell-input[aria-invalid="true"] {
+  border-color: var(--color-danger);
+}
+
+.cell-input:disabled {
+  cursor: not-allowed;
+}
