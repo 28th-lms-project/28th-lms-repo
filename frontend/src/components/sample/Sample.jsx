@@ -15,7 +15,7 @@ import { Section } from "../Section.jsx";
 import { IconButton } from "./input/IconButton.jsx";
 import { icons } from "./input/icons.js";
 import catalogStyles from "./catalog/Catalog.module.css";
-import { TokenCatalog } from "./catalog/TokenCatalog.jsx";
+import { LegacyTokenCatalog, TokenCatalog } from "./catalog/TokenCatalog.jsx";
 import { ButtonCatalog } from "./catalog/ButtonCatalog.jsx";
 import { FormCatalog } from "./catalog/FormCatalog.jsx";
 import { ListCatalog } from "./catalog/ListCatalog.jsx";
@@ -41,11 +41,12 @@ const STANDARD = [
     { id: "standard-ui", title: "표준 UI (버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 모달)", Component: StandardCatalog },
     { id: "standard-layout", title: "표준 UI (표 · 탭 · 패널 · 카드 · 안내 · 목록 · 배치)", Component: StandardLayoutCatalog },
     { id: "standard-nav", title: "표준 UI (화면 머리 · 메뉴 · 선택 · 날짜 · 파일 · 진행 막대)", Component: StandardNavCatalog },
-    { id: "catalog-tokens", title: "토큰 (표준 토큰 · 통일 전 값)", Component: TokenCatalog },
+    { id: "catalog-tokens", title: "토큰 (index.css)", Component: TokenCatalog },
 ];
 
 /** 통일 전 현재 UI (비교용) */
 const CATALOG = [
+    { id: "catalog-legacy-tokens", title: "토큰 (통일 전 값: 색 · 글자 크기 · 모서리 · 높이 · 포커스)", Component: LegacyTokenCatalog },
     { id: "catalog-buttons", title: "버튼", Component: ButtonCatalog },
     { id: "catalog-forms", title: "입력 · 폼", Component: FormCatalog },
     { id: "catalog-lists", title: "리스트 · 표", Component: ListCatalog },
@@ -83,8 +84,13 @@ const TOC = {
     old: LEGACY.map(({ id, title }) => ({ id, label: title })),
 };
 
-const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+/** 섹션 위쪽이 고정 목차(toc)에 가리지 않게 목차 높이 + 여유만큼 띄워서 이동 */
+const SCROLL_GAP = 16;
+const scrollToSection = (id, tocEl) => {
+    const target = document.getElementById(id);
+    if (!target) return;
+    target.style.scrollMarginTop = `${(tocEl?.offsetHeight ?? 0) + SCROLL_GAP}px`;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
 /*
@@ -134,6 +140,7 @@ const SampleDashboard = () => {
 
     /* 구역 탭 */
     const tabsId = useId();
+    const tocRef = useRef(null);
     const [searchParams, setSearchParams] = useSearchParams();
     const part = TOC[searchParams.get("part")] ? searchParams.get("part") : "standard";
     const tocItems = TOC[part];
@@ -164,7 +171,7 @@ const SampleDashboard = () => {
     };
     return (
         <PageContainer>
-            <div className={catalogStyles.toc}>
+            <div ref={tocRef} className={catalogStyles.toc}>
                 <div className={catalogStyles.tocRow}>
                     <Tabs idBase={tabsId} items={PART_TABS} value={part} onChange={changePart} ariaLabel="샘플 구역" className={catalogStyles.partTabs} />
                     <span className={catalogStyles.tocEnd}>
@@ -175,7 +182,7 @@ const SampleDashboard = () => {
                 </div>
                 <nav className={catalogStyles.tocRow} aria-label="이 구역 목차">
                     {tocItems.map(({ id, label }) => (
-                        <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
+                        <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollToSection(id, tocRef.current)}>
                             {label}
                         </button>
                     ))}

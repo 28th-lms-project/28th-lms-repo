@@ -60,7 +60,8 @@
 
 /* 목차 버튼으로 이동할 때 sticky 목차에 가리지 않도록 */
 .anchor {
-  scroll-margin-top: 60px;
+  /* 기본값. 목차 버튼은 실제 목차 높이 + 16px로 덮어씀 (Sample.jsx scrollToSection) */
+  scroll-margin-top: 140px;
 }
 
 /* 다크 모드를 따르는 영역: 공통 Section(흰 배경 고정)도 토큰 색으로 */

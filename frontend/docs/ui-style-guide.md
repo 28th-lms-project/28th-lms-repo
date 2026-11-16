@@ -25,7 +25,8 @@
 | **표준 UI** | 버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 확인 창 · 모달의 표준 모양과 사용 코드 (8장). 새 화면은 이것을 씀 | `StandardCatalog.jsx` |
 | **표준 UI 2** | 표 · 페이지 이동 · 탭 · 패널 · 카드 · 안내 상자 · 키-값 목록 · 타임라인 · 선택 목록 · 배치, 화면 조합 예시 (8장) | `StandardLayoutCatalog.jsx` |
 | **표준 UI 3** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · pill 선택 · 세그먼트 · 켜고 끄는 버튼 · 스위치 · 날짜 · 기간 · 파일 · 진행 막대 (8장) | `StandardNavCatalog.jsx` |
-| 토큰 | 표준 토큰(index.css, 7장) + 통일 전 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` |
+| 토큰 | 표준 토큰(index.css, 7장). 실제 값을 index.css에서 읽어 표시 | `TokenCatalog.jsx` (`TokenCatalog`) |
+| 토큰 (통일 전 값) | **통일 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
 | 리스트 · 표 | Grid, native table 3종, 3단 컬럼 리스트, 키-값 목록 4종, 타임라인, 문제 블록, 댓글 | `ListCatalog.jsx` |
