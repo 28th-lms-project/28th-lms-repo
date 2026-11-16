@@ -100,6 +100,8 @@ export default function CourseItem() {
 
             <div>{finishCourse(showCourse.startDate, showCourse.endDated)}</div>
             <div>{showCourse.name}</div>
+            <button type="button">수정</button>
+            <button type="button">삭제</button>
           </>
         )}
         <ul className="pageList">
