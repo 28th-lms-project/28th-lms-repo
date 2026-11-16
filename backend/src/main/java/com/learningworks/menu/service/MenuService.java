@@ -1,6 +1,7 @@
 package com.learningworks.menu.service;
 
 import com.learningworks.menu.vo.request.ModifyMenuOrderVO;
+import com.learningworks.menu.vo.request.ModifyMenuParentVO;
 import com.learningworks.menu.vo.request.ModifyMenuVO;
 import com.learningworks.menu.vo.request.RegistMenuVO;
 import com.learningworks.menu.vo.response.MenuListVO;
@@ -21,6 +22,13 @@ public interface MenuService {
   MenuVO updateMenu(String actorId, String menuId, ModifyMenuVO modifyMenuVO);
 
   MenuListVO updateMenuOrder(ModifyMenuOrderVO modifyMenuOrderVO);
+
+  /**
+   * 상위 메뉴 변경 (메뉴 옮기기). 소메뉴는 다른 중메뉴로, 중메뉴는 다른 대메뉴로만 옮긴다.
+   * 이 메뉴를 가리키는 ACTION의 메뉴 컬럼도 같은 트랜잭션에서 고친다 (menu-design.md 4-7).
+   * actorId: 자기 잠금 검사(MENU_SELF_LOCK)용 요청자 ID
+   */
+  MenuListVO moveMenu(String actorId, String menuId, ModifyMenuParentVO modifyMenuParentVO);
 
   /** actorId: 자기 잠금 검사(MENU_SELF_LOCK)용 요청자 ID */
   MenuVO deleteMenu(String actorId, String menuId);

@@ -47,6 +47,10 @@ public interface MenuDao {
   /** menuIds 순서대로 MENU_ORDER를 1부터 다시 매긴다. MDFY_DT는 바꾸지 않는다 */
   int updateMenuOrders(@Param("menuIds") List<String> menuIds);
 
+  /** 상위 메뉴 변경. 새 상위 메뉴 안의 순서(menuOrder)와 함께 저장하고 MDFY_DT = SYSDATE */
+  int updateMenuParent(@Param("menuId") String menuId, @Param("parentId") String parentId,
+      @Param("menuOrder") int menuOrder);
+
   int deleteMenu(String menuId);
 
   /** MENU_ROLE 전체 */
