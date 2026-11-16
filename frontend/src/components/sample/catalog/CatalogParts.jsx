@@ -26,5 +26,20 @@ export const Variants = ({ wide = false, children }) => (
     <div className={wide ? styles.variantsWide : styles.variants}>{children}</div>
 );
 
+const PART_TONE = { standard: styles.partStandard, legacy: styles.partLegacy, old: styles.partOld };
+
+/**
+ * 샘플 페이지의 큰 구역 머리 (표준 / 통일 전 / 기존 샘플).
+ * @param {{ id: string, part: string, title: string, tone: "standard"|"legacy"|"old", children: React.ReactNode }} props
+ *  - children: 구역 설명 (한두 줄)
+ */
+export const PartHeader = ({ id, part, title, tone, children }) => (
+    <header id={id} className={`${styles.partHeader} ${PART_TONE[tone] ?? ""} ${styles.anchor}`}>
+        <span className={styles.partLabel}>{part}</span>
+        <h2 className={styles.partTitle}>{title}</h2>
+        <p className={styles.partDesc}>{children}</p>
+    </header>
+);
+
 /** 섹션 안의 소제목 */
 export const GroupTitle = ({ children }) => <h4 className={styles.groupTitle}>{children}</h4>;

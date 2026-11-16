@@ -59,15 +59,84 @@
   background-color: var(--color-bg-surface);
 }
 
-/* 통일 전 영역: 다크 모드에서도 밝게 (data-color-scheme="light"와 함께 씀) */
-.legacyNotice {
-  margin: 16px 0 0;
-  padding: 10px 12px;
-  font-size: var(--font-size-md);
-  color: var(--color-text-secondary);
-  background-color: var(--color-bg-subtle);
-  border: 1px dashed var(--color-border);
+/* 목차의 구역 이름 (누르면 구역 머리로 이동) */
+.toc button.tocGroup {
+  padding: 4px 6px;
+  font-family: inherit;
+  font-weight: var(--font-weight-bold);
+  background: none;
+  border: 0;
   border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.toc button.tocGroup:hover {
+  color: var(--color-text);
+  background-color: var(--color-bg-hover);
+}
+
+/* ───── 큰 구역 머리 (표준 / 통일 전 / 기존 샘플) ───── */
+.partHeader {
+  margin: 40px 0 8px;
+  padding: 24px 28px;
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-left: 8px solid var(--part-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.partLabel {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 10px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  color: var(--part-color);
+  background-color: var(--part-bg);
+  border-radius: var(--radius-pill);
+}
+
+.partTitle {
+  margin: 0;
+  font-size: 30px;
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+.partDesc {
+  margin: 8px 0 0;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+}
+
+.partStandard {
+  --part-color: var(--color-primary-text);
+  --part-bg: var(--color-primary-light);
+}
+
+.partLegacy {
+  --part-color: var(--color-warning);
+  --part-bg: var(--color-warning-bg);
+}
+
+.partOld {
+  --part-color: var(--color-text-muted);
+  --part-bg: var(--color-bg-hover);
+}
+
+@media screen and (max-width: 768px) {
+  .partHeader {
+    padding: 16px 18px;
+  }
+
+  .partTitle {
+    font-size: 24px;
+  }
 }
 
 .variants {

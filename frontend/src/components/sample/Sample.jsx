@@ -24,6 +24,7 @@ import { LayoutCatalog } from "./catalog/LayoutCatalog.jsx";
 import { OverlayCatalog } from "./catalog/OverlayCatalog.jsx";
 import { StandardCatalog } from "./catalog/StandardCatalog.jsx";
 import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
+import { PartHeader } from "./catalog/CatalogParts.jsx";
 import UiButton from "../common/ui/Button.jsx";
 
 /*
@@ -134,19 +135,19 @@ const SampleDashboard = () => {
     return (
         <PageContainer>
             <nav className={catalogStyles.toc} aria-label="샘플 목차">
-                <span className={catalogStyles.tocGroup}>표준</span>
+                <button type="button" className={catalogStyles.tocGroup} onClick={() => scrollTo("part-standard")}>표준</button>
                 {STANDARD.map(({ id, title }) => (
                     <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
                         {title.includes("표 · 탭") ? "표준 UI 2" : title.split(" (")[0]}
                     </button>
                 ))}
-                <span className={catalogStyles.tocGroup}>통일 전 (현재)</span>
+                <button type="button" className={catalogStyles.tocGroup} onClick={() => scrollTo("part-legacy")}>통일 전 (현재)</button>
                 {CATALOG.map(({ id, title }) => (
                     <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
                         {title.split(" (")[0]}
                     </button>
                 ))}
-                <span className={catalogStyles.tocGroup}>기존 샘플</span>
+                <button type="button" className={catalogStyles.tocGroup} onClick={() => scrollTo("part-old")}>기존 샘플</button>
                 {LEGACY.map(({ id, title }) => (
                     <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
                         {title}
@@ -161,6 +162,9 @@ const SampleDashboard = () => {
 
             {/* 표준: 토큰을 쓰므로 다크 모드를 따름 */}
             <div className={catalogStyles.themed}>
+                <PartHeader id="part-standard" part="PART 1" title="표준" tone="standard">
+                    {"새 화면은 이 구역의 토큰 · 공통 클래스(src/styles) · 컴포넌트(common/ui)를 씁니다.\n다크 모드를 지원합니다."}
+                </PartHeader>
                 {STANDARD.map(({ id, title, Component }) => (
                     <div key={id} id={id} className={catalogStyles.anchor}>
                         <Section title={title}>
@@ -172,11 +176,9 @@ const SampleDashboard = () => {
 
             {/* 통일 전 · 기존 샘플: hex를 직접 써서 다크 모드에서도 밝게 고정 */}
             <div data-color-scheme="light">
-            {scheme === "dark" && (
-                <p className={catalogStyles.legacyNotice}>
-                    아래 &quot;통일 전&quot; · &quot;기존 샘플&quot;은 색을 직접 적어서(토큰 미사용) 다크 모드에서도 밝게 보입니다.
-                </p>
-            )}
+            <PartHeader id="part-legacy" part="PART 2" title="통일 전 (현재)" tone="legacy">
+                {"지금 각 화면에 흩어져 있는 UI를 모양 그대로 모은 비교용입니다. 새 코드에서 따라 쓰지 마세요.\n색을 직접 적어서(토큰 미사용) 다크 모드에서도 밝게 보입니다."}
+            </PartHeader>
             {CATALOG.map(({ id, title, Component }) => (
                 <div key={id} id={id} className={catalogStyles.anchor}>
                     <Section title={title}>
@@ -185,6 +187,9 @@ const SampleDashboard = () => {
                 </div>
             ))}
 
+            <PartHeader id="part-old" part="PART 3" title="기존 샘플" tone="old">
+                {"처음부터 있던 sample/ 컴포넌트 예시 (IconButton · Alert/Confirm · Grid · Paginator · Chart · Poll).\n일부 화면이 아직 이 컴포넌트를 씁니다."}
+            </PartHeader>
             <div>
                 <div id="sample-buttons" className={catalogStyles.anchor} />
                 <Section title="Sample Buttons">
