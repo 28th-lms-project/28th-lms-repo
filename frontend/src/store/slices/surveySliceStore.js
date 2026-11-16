@@ -33,6 +33,7 @@ export const surveySliceStore = createSlice({
       console.log(action.payload);
 
       const survey = state.surveyList.find((s) => s.id === id);
+
       if (survey && changes.subject !== undefined) {
         survey.subject = changes.subject;
       }

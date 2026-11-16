@@ -4,6 +4,7 @@ import { modifyCode } from "../../../../api/admin/system/code/codeApi";
 import { IconButton } from "../../../common/input/IconButton";
 import { icons } from "../../../common/input/icons";
 import CodeForm from "./CodeForm";
+import style from "./UpdateCode.module.css";
 
 // 선택된 코드 → 폼 초기값 (코드가 없으면 빈 폼)
 const toForm = (code, defaultParentId) => {
@@ -87,7 +88,7 @@ export default function UpdateCode({
         crtDt={crtDt}
         mdfyDt={mdfyDt}
       />
-      <div className="codeButtons">
+      <div className={style.codeButtons}>
         {!modifying && (
           <>
             {code && (
