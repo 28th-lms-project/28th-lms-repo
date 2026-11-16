@@ -82,7 +82,8 @@
                            HAVING SUM(SS.PENDING_COUNT) = 0) CA
             ON CA.TEST_SET_ID = TS.ID
          WHERE TS.COURSE_ID = #{courseId}
-           AND TS.SHOW_YN = 'Y'
+           AND (TS.SHOW_YN = 'Y'
+                OR MA.TEST_SET_ID IS NOT NULL)
          ORDER BY TS.ID ASC
     </select>
     
