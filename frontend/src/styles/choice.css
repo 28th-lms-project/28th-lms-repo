@@ -14,7 +14,11 @@
  * React: common/ui/ChoiceGroup.jsx · common/ui/Switch.jsx · common/ui/FilePicker.jsx
  */
 
-/* 화면에서는 숨기고 스크린 리더 · 키보드에는 남김 */
+/*
+ * 화면에서는 숨기고 스크린 리더 · 키보드에는 남김.
+ * 주의: position: absolute라서 감싸는 요소에 position: relative가 있어야 한다.
+ * 없으면 기준이 문서 전체가 되어, 스크롤 상자(main) 밖으로 빠져나가 브라우저 스크롤바를 만든다.
+ */
 .visually-hidden {
   position: absolute !important;
   width: 1px !important;
@@ -29,6 +33,7 @@
 
 /* ───── pill 선택 ───── */
 .choice-group {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -93,6 +98,7 @@
 
 /* ───── 세그먼트 ───── */
 .segmented {
+  position: relative;
   display: inline-flex;
   padding: 3px;
   margin: 0;
@@ -208,6 +214,7 @@
 
 /* ───── 파일 선택 ───── */
 .file-picker {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
