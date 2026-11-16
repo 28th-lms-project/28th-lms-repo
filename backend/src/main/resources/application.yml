@@ -35,3 +35,6 @@ app:
   # 교육 자료 첨부 파일 저장 경로 (웹 루트 외부). 환경별로 COURSE_DATA_UPLOAD_DIR 환경변수로 변경 가능
   course-data:
     upload-dir: ${COURSE_DATA_UPLOAD_DIR:${user.home}/learningworks/upload/course-data}
+  attendance:
+    late-time: "09:10" # 이 시각까지 누르면 출석(Y), 넘으면 지각(L). 반드시 두 자리 HH:mm
+    absent-time: "13:00" # 이 시각까지 누르면 지각(L), 넘으면 결석(N)
