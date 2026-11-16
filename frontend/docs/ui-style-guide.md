@@ -280,7 +280,7 @@
 | --- | --- | --- |
 | 회색 팔레트 | Open Color gray 0 ~ 9 (= Bootstrap 계열) | 단순 회색은 테두리색만 6가지인 즉흥 값. 10단계 스케일이라 "테두리는 4번"처럼 규칙으로 말할 수 있고, 옮겨도 눈에 띄는 차이가 거의 없음 |
 | 강조색 | indigo 7 `#3b5bdb`, hover indigo 8, 연한 배경 indigo 0 | 명암비 약 5.7:1 (`#4a7fd8`은 약 3.9:1로 AA 미달). 스케일에 속해 hover · 선택 배경이 따라옴. 지금 선택 행 `#eef3fd` ≒ indigo 0 |
-| 상태색 | 성공 green · 오류 red · 정보 indigo, 각각 글자 / 배경 / 테두리 3단계. 경고 글자만 `#8a6100` | MemberDetail 배지가 이미 이 값. 오류 빨강 7가지 → red 8 하나. Open Color 노랑 · 주황은 명암비 4.5:1 미만이라 경고 글자만 예외 |
+| 상태색 | 성공 green · 오류 red · 정보 blue (처음엔 indigo, 테마를 넣으며 분리), 각각 글자 / 배경 / 테두리 3단계. 경고 글자만 `#8a6100` | MemberDetail 배지가 이미 이 값. 오류 빨강 7가지 → red 8 하나. Open Color 노랑 · 주황은 명암비 4.5:1 미만이라 경고 글자만 예외 |
 | 글자 크기 단위 | px, 7단계 (11 · 12 · 13 · 14 · 16 · 18 · 22) | 높이 · 여백이 모두 px이라 글자만 rem이면 확대 시 깨짐. 변수로 묶었으니 나중에 rem 전환은 한 곳만 고치면 됨 |
 | 컨트롤 높이 | sm 30px · md 36px (표 머리글 40 · 행 48은 별도) | 36px이 가장 많고 34 · 35 · 37 · 38은 1 ~ 2px 차이. 단계가 적을수록 규칙이 단순함 |
 | radius | 4px 기본 · 6px 큰 상자 · 999px pill | 4px이 ×59로 압도적. 배지 12 · pill 14는 "높이 절반"을 노린 값이라 pill이 의도를 유지 |
@@ -324,7 +324,7 @@
 ### 규칙
 
 - 새 코드는 색 · 글자 크기 · 모서리 · 높이 · 그림자를 **hex나 px로 직접 적지 말고** `var(--토큰)`으로 씁니다.
-- 화면 코드는 **의미 토큰**(`--color-*`, `--font-size-*` …)만 씁니다. 팔레트(`--gray-*`, `--indigo-*`, `--green-*`, `--red-*`, `--yellow-*`, `--brown-8`)는 의미 토큰을 정의할 때만 씁니다.
+- 화면 코드는 **의미 토큰**(`--color-*`, `--font-size-*` …)만 씁니다. 팔레트(`--gray-*`, `--indigo-*`, `--blue-*`, `--green-*`, `--red-*`, `--yellow-*`, `--brown-8`)는 의미 토큰을 정의할 때만 씁니다.
 - 맞는 토큰이 없으면 값을 직접 적지 말고 이 문서에 토큰 추가를 먼저 제안합니다.
 - 토큰 선언만 추가한 상태라 **기존 화면 모양은 아직 바뀌지 않았습니다.** 화면을 옮기는 작업은 다음 단계 2 · 3번입니다.
 
@@ -389,18 +389,37 @@
 | 0.75rem | `--font-size-sm` (12px) |
 | 17px · 20px · 1.25rem | `--font-size-lg` · `--font-size-xl` 중 가까운 것 |
 
-### 테마 (예정)
+### 테마
 
-강조색만 테마로 바뀌게 설계했습니다. `<html data-theme="...">`에 따라 `--color-primary*` 네 개만 덮어쓰면 됩니다. 회색 · 상태색 · 정보색은 고정입니다.
+강조색만 테마로 바뀝니다. 회색 · 상태색(성공 · 위험 · 경고 · 정보)은 고정입니다. 지금은 **샘플 페이지에서만** 고를 수 있습니다 (목차 오른쪽 동그란 견본, 이 브라우저에만 기억).
+
+**구조**: 테마는 `--theme-*` 값 8개만 덮어쓰고, 밝은 · 다크 의미 토큰(`--color-primary*` · `--color-focus` · `--color-link`)이 그 값을 읽습니다. 그래서 테마 하나만 정의하면 다크 모드도 따라옵니다.
 
 ```css
-:root[data-theme="teal"] {
-  --color-primary: #087f5b;
-  --color-primary-hover: #066649;
-  --color-primary-light: #e6fcf5;
-  --color-primary-border: #96f2d7;
+:root[data-theme="violet"] {
+  --theme-fill: #7048e8;        /* 채운 배경: 주 버튼 · 현재 페이지 · 스위치 · 체크 (흰 글자 4.5:1 이상) */
+  --theme-fill-hover: #6741d9;
+  --theme-text: #7048e8;        /* 밝은 모드: 연한 배경 위 글자 (선택 탭 · 배지) */
+  --theme-light: #f3f0ff;       /* 밝은 모드: 연한 배경 (선택 행) */
+  --theme-border: #d0bfff;
+  --theme-dark-text: #b197fc;   /* 다크 모드: 글자 */
+  --theme-dark-focus: #9775fa;  /* 다크 모드: 포커스 테두리 · 연한 테두리(45%)의 바탕 */
+  --theme-dark-tint: #7950f2;   /* 다크 모드: 연한 배경(18%)의 바탕 */
 }
 ```
+
+| 테마 | `data-theme` | 채움 | 메모 |
+| --- | --- | --- | --- |
+| 인디고 (기본) | 없음 | `#3b5bdb` | |
+| 바이올렛 | `violet` | `#7048e8` | |
+| 그레이프 | `grape` | `#ae3ec9` | 연한 배경 위 글자는 한 단계 진하게 (`#9c36b5`) |
+| 핑크 | `pink` | `#d6336c` | 연한 배경 위 글자는 한 단계 진하게 (`#c2255c`) |
+| 사이언 | `cyan` | `#0b7285` | Open Color 7단계는 흰 글자 미달이라 9단계. hover는 별도 값 |
+
+- **고른 기준**: 모든 테마에서 흰 글자 · 연한 배경 위 글자 · 다크 글자가 4.5:1 이상입니다. 초록 · 틸(성공색과 겹침), 노랑 · 주황(경고색과 겹치고 흰 글자 불가), 빨강(위험색)은 뺐습니다.
+- **정보색(info)은 파랑 고정**(blue-8, 다크 blue-3)입니다. 예전에는 강조색과 같은 인디고라서, 테마를 바꾸면 안내 상자(`Callout tone="info"`) · `badge-info`만 인디고로 남았습니다. 안내의 의미가 테마에 따라 바뀌지 않도록 강조색과 분리했습니다.
+- **새 테마 추가**: `index.css`에 `:root[data-theme="이름"]`과 `--theme-*` 8개를 넣고, `Sample.jsx`의 `THEMES`에 견본을 추가합니다. 흰 글자가 4.5:1이 안 되는 밝은 색이면 `--color-on-primary`도 어두운 색으로 덮어써야 합니다.
+- **앱 전체로 넓히려면** 다크 모드와 같은 순서(9장 "앱 전체로 넓히려면")로, 설정 화면에 고르는 곳을 두고 속성을 붙이는 코드를 `main.jsx` 쪽으로 옮깁니다.
 
 ---
 
@@ -942,14 +961,13 @@ import Comment from "../common/ui/Comment";
 | `--color-bg-page` · `-bg-surface` · `-bg-subtle` | gray-2 · 흰색 · gray-0 | `#141619` · gray-9 · `#2a2f34` |
 | `--color-bg-raised` (모달 · 드롭다운 메뉴) | 흰색 (`-bg-surface`와 같음) | `#2b3035` (카드보다 한 단계 밝게) |
 | `--color-text` · `-text-secondary` · `-text-muted` · `-text-placeholder` | gray-9 · gray-7 · gray-6 · gray-5 | gray-0 · gray-5 · `#9ca3aa` · gray-6 |
-| `--color-primary-hover` | indigo-8 | indigo-8 (그대로, 흰 글자 6.8:1) |
+| `--color-primary` · `-primary-hover` (채움) | `--theme-fill` · `-fill-hover` (기본 indigo-7 · 8) | 같음 (흰 글자 명암비를 지키려고 그대로) |
 | `--shadow-*` | 검정 그림자 | 밝은 1px 링 + 진한 검정 그림자 |
 | `--color-overlay` (모달 뒤) | 검정 0.4 | 검정 0.65 |
 | `--color-border` · `-border-light` | gray-4 · gray-3 | gray-7 · gray-8 |
-| `--color-primary`(채움) | indigo-7 | indigo-7 (흰 글자 명암비를 지키려고 그대로) |
-| `--color-primary-text` · `--color-link` | indigo-7 | indigo-3 (어두운 배경 위 글자) |
-| `--color-primary-light` | indigo-0 | 반투명 인디고 |
-| 상태 글자 (`success` · `danger` · `warning` · `info`) | green-9 · red-8 · `#8a6100` · indigo-7 | green-4 · red-4 · yellow-4 · indigo-3 |
+| `--color-primary-text` · `--color-link` · `--color-focus` | `--theme-text` · 채움 | `--theme-dark-text` · `--theme-dark-focus` (기본 indigo-3 · 4) |
+| `--color-primary-light` | indigo-0 | 반투명 강조색 (`color-mix` 18%) |
+| 상태 글자 (`success` · `danger` · `warning` · `info`) | green-9 · red-8 · `#8a6100` · blue-8 | green-4 · red-4 · yellow-4 · blue-3 |
 | 상태 배경 · 테두리 | 0단계 · 2단계 | 반투명 (배경 0.14 ~ 0.2, 테두리 0.35) |
 | `--color-danger-fill` (채운 위험 버튼) | red-8 | red-8 (그대로) |
 
