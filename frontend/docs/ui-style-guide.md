@@ -6,7 +6,7 @@
 - 코드: `src/components/sample/catalog/` (스타일은 `Catalog.module.css` 하나에 모음)
 - 기준: 2026-11-16 `dev` 브랜치
 
-> 이 문서와 카탈로그는 **"지금 이렇게 되어 있다"** 를 보여 줍니다. "앞으로 이렇게 쓴다"는 6장(통일 방향)에서 정한 뒤 이 문서를 고쳐 나갑니다.
+> 1 ~ 5장과 카탈로그는 **"지금 이렇게 되어 있다"** 를, 6장 결정 사항과 7장 토큰은 **"앞으로 이렇게 쓴다"** 를 다룹니다. 새 코드는 7장의 토큰을 씁니다.
 
 ---
 
@@ -14,7 +14,7 @@
 
 | 목차 | 내용 | 파일 |
 | --- | --- | --- |
-| 토큰 | 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` |
+| 토큰 | 표준 토큰(index.css, 7장) + 통일 전 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
 | 리스트 · 표 | Grid, native table 3종, 3단 컬럼 리스트, 키-값 목록 4종, 타임라인, 문제 블록, 댓글 | `ListCatalog.jsx` |
@@ -88,7 +88,7 @@
 
 - 회색이 두 계열로 나뉩니다: **Bootstrap 계열**(`#212529` `#495057` `#ced4da` `#e9ecef` `#f8f9fa`, member · login · my/info · 사이드바)과 **단순 회색 계열**(`#333` `#666` `#ccc` `#e5e5e5` `#f7f7f7`, admin/system · my/course · course).
 - 오류 빨강만 7가지입니다.
-- CSS 변수는 하나도 정의되어 있지 않습니다. `App.css`의 `var(--accent)` 등은 Vite 템플릿 잔재이고 아무 데서도 쓰지 않습니다.
+- 토큰 도입 전에는 CSS 변수가 하나도 없었습니다 (`App.css`의 `var(--accent)` 등은 Vite 템플릿 잔재). 지금은 `index.css`에 토큰이 있습니다 → 7장.
 
 ### 글자
 
@@ -257,23 +257,114 @@
 - 같은 CSS 복사본: `.notice`(5곳), 모달 인라인 스타일 객체(`overlayStyle` · `boxStyle` · `headerStyle` … 4개 모달)
 - `@fullcalendar/*` 패키지: 설치만 되어 있고 쓰는 곳이 없습니다.
 
-### 결정이 필요한 것 (디자인 시스템)
+### 결정 사항 (2026-11-16)
 
-| 항목 | 선택지 |
-| --- | --- |
-| 회색 팔레트 | Bootstrap 계열(`#212529` · `#495057` · `#ced4da` · `#f8f9fa`) vs 단순 회색(`#333` · `#666` · `#ccc` · `#f7f7f7`) |
-| 강조색 | `#3b5bdb` · `#3f6fb5` · `#4a7fd8` 중 하나 (+ hover 한 단계 진하게) |
-| 상태색 | 성공 · 오류 · 경고 · 정보 각각 글자 / 배경 / 테두리 3단계 (배지 · 경고 상자 · 오류 문구 공용) |
-| 글자 크기 단위 | px 또는 rem 하나로. 단계 후보: 11 · 12 · 13 · 14 · 16 · 18 · 22 |
-| 컨트롤 높이 | sm 30 · md 36 · lg 38 정도의 3단계 |
-| radius | 4px 기본, 6px 큰 상자(패널 · 툴바 · 모달), 999px pill(배지 · 칩) |
-| 버튼 종류 | primary · secondary · danger · text(link) + 크기 sm · md, IconButton과의 관계 |
-| 모달 | 공통 Modal 컴포넌트 하나로 (폼 · 확인 · 큰 내용 크기 변형, 바깥 클릭 · Esc 규칙 통일) |
-| 피드백 | alert() 대신 토스트, 빈 상태 · 로딩 · 오류 상자 각각 하나로 |
+기준: 가장 정돈된 화면(회원 관리 · 로그인 · 내 정보 · 사이드바)이 이미 [Open Color](https://yeun.github.io/open-color/) 값을 쓰고 있어서(`#495057` `#ced4da` `#3b5bdb` `#2b8a3e` `#e03131` `#fff5f5` `#ffc9c9` `#ebfbee` `#b2f2bb`), 나머지를 이 체계로 맞춥니다. 명암비는 흰 배경 기준 어림값입니다.
+
+| 항목 | 결정 | 이유 |
+| --- | --- | --- |
+| 회색 팔레트 | Open Color gray 0 ~ 9 (= Bootstrap 계열) | 단순 회색은 테두리색만 6가지인 즉흥 값. 10단계 스케일이라 "테두리는 4번"처럼 규칙으로 말할 수 있고, 옮겨도 눈에 띄는 차이가 거의 없음 |
+| 강조색 | indigo 7 `#3b5bdb`, hover indigo 8, 연한 배경 indigo 0 | 명암비 약 5.7:1 (`#4a7fd8`은 약 3.9:1로 AA 미달). 스케일에 속해 hover · 선택 배경이 따라옴. 지금 선택 행 `#eef3fd` ≒ indigo 0 |
+| 상태색 | 성공 green · 오류 red · 정보 indigo, 각각 글자 / 배경 / 테두리 3단계. 경고 글자만 `#8a6100` | MemberDetail 배지가 이미 이 값. 오류 빨강 7가지 → red 8 하나. Open Color 노랑 · 주황은 명암비 4.5:1 미만이라 경고 글자만 예외 |
+| 글자 크기 단위 | px, 7단계 (11 · 12 · 13 · 14 · 16 · 18 · 22) | 높이 · 여백이 모두 px이라 글자만 rem이면 확대 시 깨짐. 변수로 묶었으니 나중에 rem 전환은 한 곳만 고치면 됨 |
+| 컨트롤 높이 | sm 30px · md 36px (표 머리글 40 · 행 48은 별도) | 36px이 가장 많고 34 · 35 · 37 · 38은 1 ~ 2px 차이. 단계가 적을수록 규칙이 단순함 |
+| radius | 4px 기본 · 6px 큰 상자 · 999px pill | 4px이 ×59로 압도적. 배지 12 · pill 14는 "높이 절반"을 노린 값이라 pill이 의도를 유지 |
+| 버튼 | variant primary · secondary(기본) · danger · text × size sm · md. IconButton은 같은 스타일에 아이콘 옵션 | 초록 "등록"은 primary로 합침 (강조색은 화면당 하나). IconButton이 가장 많이 쓰여 API는 유지하고 스타일만 교체. `buttonface` → 토큰, hover 굵기 변화(폭 흔들림) → 배경 변화, `className` · 나머지 props 전달 |
+| 모달 | `common/Modal` 하나, 크기 sm 400 · md 460 · lg 800, `open` prop. Esc · 닫기 버튼은 항상, 바깥 클릭은 확인 · 읽기 모달만 | RoleUserMoveModal(portal · Esc · 바깥 클릭 · `role="dialog"`)을 기반으로 MemberModal 스타일. `sample/Modal`의 ref 명령형 API · 항상 렌더링 · z-index 999999는 버림 |
+| 피드백 | 성공 · 요청 실패는 토스트, 입력 오류는 필드 아래 문구, `confirm()`은 확인 모달, 권한 없음 · 로딩 · 오류 · 빈 목록은 상태 상자 하나 | `alert()`는 화면을 막고 모양을 못 바꿈. 토스트는 MyCourseData 구현을 common으로. 상태 상자는 5곳에 복사된 `.notice` 기준 |
+
+남은 결정: **글꼴**. 지금은 `"Roboto Mono"`가 첫 글꼴이라 영문 · 숫자가 고정폭이고, 글꼴 파일을 불러오지 않아 PC마다 다르게 보입니다. 본문은 Pretendard 또는 Noto Sans KR(웹폰트)로, 고정폭은 코드 · ID에만 쓰는 것을 추천합니다. 정해지면 `--font-sans`만 바꿉니다.
 
 ### 다음 단계
 
-1. 6장의 "결정이 필요한 것"을 정해 `index.css`에 CSS 변수(`--color-*`, `--font-size-*`, `--radius-*`, `--control-height-*`)로 선언합니다.
+1. ~~결정 사항을 `index.css`에 CSS 변수로 선언~~ → 완료 (7장)
 2. 버튼 · 입력 · 배지 · 안내 상자 · 모달처럼 많이 겹치는 것부터 공통 클래스(또는 common 컴포넌트)를 만들고, 샘플 페이지에 "표준" 섹션을 추가합니다.
 3. 화면들을 표준으로 옮기면서 카탈로그의 해당 `Variant`를 지웁니다. 카탈로그가 비면 샘플 페이지가 곧 디자인 시스템 페이지가 됩니다.
 4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`으로 옮기고, `Modal`은 `common/`으로 이동합니다.
+
+---
+
+## 7. 디자인 토큰 (`index.css`)
+
+`src/index.css`의 `:root`에 선언되어 있습니다. 샘플 페이지 "토큰" 섹션 맨 위에서 실제 값과 모양을 볼 수 있습니다 (index.css에서 직접 읽어 표시).
+
+### 규칙
+
+- 새 코드는 색 · 글자 크기 · 모서리 · 높이 · 그림자를 **hex나 px로 직접 적지 말고** `var(--토큰)`으로 씁니다.
+- 화면 코드는 **의미 토큰**(`--color-*`, `--font-size-*` …)만 씁니다. 팔레트(`--gray-*`, `--indigo-*`, `--green-*`, `--red-*`, `--yellow-*`, `--brown-8`)는 의미 토큰을 정의할 때만 씁니다.
+- 맞는 토큰이 없으면 값을 직접 적지 말고 이 문서에 토큰 추가를 먼저 제안합니다.
+- 토큰 선언만 추가한 상태라 **기존 화면 모양은 아직 바뀌지 않았습니다.** 화면을 옮기는 작업은 다음 단계 2 · 3번입니다.
+
+```css
+.saveButton {
+  height: var(--control-height-md);
+  padding: 0 var(--control-padding-x-md);
+  font-size: var(--font-size-md);
+  color: var(--color-on-primary);
+  background-color: var(--color-primary);
+  border-radius: var(--radius);
+}
+
+.saveButton:hover {
+  background-color: var(--color-primary-hover);
+}
+```
+
+### 목록
+
+| 묶음 | 토큰 |
+| --- | --- |
+| 글자색 | `--color-text` · `-text-secondary` · `-text-muted` · `-text-placeholder` · `-text-disabled` · `-text-inverse` |
+| 배경 | `--color-bg-page` · `-bg-surface` · `-bg-subtle`(표 머리글 · 패널 머리 · 줄무늬) · `-bg-hover` · `-bg-disabled` |
+| 테두리 | `--color-border`(입력 · 버튼 · 카드) · `-border-light`(표 행 · 구분선) · `-border-strong`(hover) |
+| 강조 | `--color-primary` · `-primary-hover` · `-primary-light`(선택 행) · `-primary-border` · `--color-on-primary` · `--color-link` · `--color-focus` |
+| 상태 | `--color-{success · danger · warning · info}` + `-bg` · `-border`, `--color-danger-hover` · `-danger-border-hover` |
+| 사이드바 | `--color-sidebar-bg` · `-sidebar-text` · `-sidebar-muted` · `-sidebar-active` · `-sidebar-active-bg` |
+| 오버레이 | `--color-overlay` · `--color-toast-bg` |
+| 글꼴 | `--font-sans` · `--font-mono`, `--font-size-{xs · sm · md · base · lg · xl · 2xl}`, `--font-weight-{regular · semibold · bold}`, `--line-height-{tight · base}` |
+| 크기 | `--control-height-{sm · md}` · `--control-padding-x-{sm · md}` · `--table-header-height` · `--table-row-height` |
+| 모서리 | `--radius` · `--radius-lg` · `--radius-pill` |
+| 그림자 | `--shadow-sm`(패널) · `--shadow-md`(토스트) · `--shadow-lg`(모달) |
+| 쌓임 순서 | `--z-sticky` · `--z-modal` · `--z-toast` |
+
+### 옮길 때 대응표
+
+| 지금 값 | → 토큰 |
+| --- | --- |
+| `#333` `#222` `#212529` | `--color-text` |
+| `#495057` `#555` `#666` | `--color-text-secondary` |
+| `#777` `#888` `#999` `#868e96` | `--color-text-muted` |
+| `#adb5bd` `#aaa` (placeholder · 비활성 글자) | `--color-text-placeholder` · `--color-text-disabled` |
+| `#e9e9e9` (body) | `--color-bg-page` |
+| `#f7f7f7` `#fafafa` `#f8f9fa` `#f5f5f5` | `--color-bg-subtle` |
+| `#f2f2f2` `#f1f3f5` `#eee`(배경) | `--color-bg-hover` · `--color-bg-disabled` |
+| `#ccc` `#ced4da` `#ddd` | `--color-border` |
+| `#e5e5e5` `#e4e4e4` `#eee` `#e9ecef`(선) | `--color-border-light` |
+| `#3b5bdb` `#3f6fb5` `#4a7fd8` `#6b9cf6` `rgb(86 151 255)` | `--color-primary` |
+| `#eef3fd` `#f3f7ff` `#e8eef7` | `--color-primary-light` |
+| `#1c7ed6` `#1a73e8` `#1a5fb4` `#24518b` | `--color-link` |
+| `#c62828` `#dc3545` `#d64545` `#b42318` `#e03131` `#d93025` `#d1242f` | `--color-danger` |
+| `#2b8a3e` `#1a7f37` `#1e7b34` `#0f5132` | `--color-success` |
+| `#8a6100` `#9a6700` `#7a5b00` | `--color-warning` |
+| 34 · 35 · 36 · 37 · 38 · 43.5px (입력 · 버튼) | `--control-height-md` |
+| 29 · 30px | `--control-height-sm` |
+| radius 3 · 4 · 5 · 7px | `--radius` |
+| radius 6 · 8 · 10px (큰 상자) | `--radius-lg` |
+| radius 12 · 14px (배지 · pill) | `--radius-pill` |
+| 15px · 0.9rem · 0.875rem | `--font-size-base` (14px) |
+| 0.85rem · 0.8rem | `--font-size-md` (13px) |
+| 0.75rem | `--font-size-sm` (12px) |
+| 17px · 20px · 1.25rem | `--font-size-lg` · `--font-size-xl` 중 가까운 것 |
+
+### 테마 (예정)
+
+강조색만 테마로 바뀌게 설계했습니다. `<html data-theme="...">`에 따라 `--color-primary*` 네 개만 덮어쓰면 됩니다. 회색 · 상태색 · 정보색은 고정입니다.
+
+```css
+:root[data-theme="teal"] {
+  --color-primary: #087f5b;
+  --color-primary-hover: #066649;
+  --color-primary-light: #e6fcf5;
+  --color-primary-border: #96f2d7;
+}
+```
