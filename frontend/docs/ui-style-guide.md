@@ -671,7 +671,7 @@ import Pagination from "../common/ui/Pagination";
 | 열 · 행 클래스 | 열에 `className`(머리글 · 칸 모두, 예: `col-highlight` 오늘 열), `rowClassName={(row) => ...}`(예: `is-break` 쉬는 시간 행) |
 | 체크 선택 | `checkedKeys` · `onCheckedChange` → 맨 앞 체크박스 칸 + 머리글 전체 선택(이 페이지만, 일부면 `-`). 못 고르는 행은 `isRowCheckable` |
 | 편집 표 | 칸을 `render`로 `<input className="cell-input">`, `rowStatus={(row) => row.status}`(`"added"` · `"modified"` · `"deleted"`) → 왼쪽 선 + 배경 (삭제 예정은 취소선) |
-| 순서 바꾸기 | `onReorder(from, to)` → 맨 앞 손잡이 칸. 끌어 놓기 또는 손잡이에서 ↑ ↓ 키. 못 옮기는 행은 `isRowLocked` ("고정" 표시, 그 자리로 놓기도 막음) |
+| 순서 바꾸기 | `onReorder(from, to)` → 맨 앞 손잡이 칸. 손잡이를 잡고 끌거나 손잡이에서 ↑ ↓ 키 (행의 다른 곳은 끌리지 않아 글자 선택 · 클릭 · 입력이 그대로). 못 옮기는 행은 `isRowLocked` ("고정" 표시, 그 자리로 놓기도 막음) |
 
 - 컴포넌트 없이: `<div className="table-wrap"><table className="table table-hover">…`, 행에 `is-selected` · `is-clickable` · `is-muted`, 칸에 `col-num` · `col-center` · `col-actions` · `cell-mono`.
 - 공통 `Grid`와 대응: `checkable` → `checkedKeys`, 편집 모드(`type: add · modify · del`) → `rowStatus` + `cell-input`, `activeRows` → `selectedKey`. `Grid`처럼 표가 데이터를 들고 있지 않고, **바뀐 목록은 화면이 state로 들고 있다가 저장할 때 보냅니다** (샘플 "표준 UI 4"의 편집 표 예시).

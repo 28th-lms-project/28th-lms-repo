@@ -281,7 +281,7 @@ const columns = [
                 <Variant
                     name="순서 바꾸기 (onReorder + isRowLocked)"
                     source="common/ui/Table.jsx"
-                    note={"역할 · 메뉴 순서 변경의 표준. 행을 끌어 놓거나, 손잡이(⠿)에 포커스한 뒤 ↑ ↓ 키.\n보호 행(관리자)은 \"고정\"으로 표시되고 옮기거나 그 자리에 놓을 수 없음. 바뀌면 Callout으로 저장 안내"}
+                    note={"역할 · 메뉴 순서 변경의 표준. 손잡이(⠿)를 잡고 끌거나, 손잡이에 포커스한 뒤 ↑ ↓ 키. 행의 다른 곳은 끌리지 않음.\n보호 행(관리자)은 \"고정\"으로 표시되고 옮기거나 그 자리에 놓을 수 없음. 바뀌면 Callout으로 저장 안내"}
                     block
                     code={`
 <Table

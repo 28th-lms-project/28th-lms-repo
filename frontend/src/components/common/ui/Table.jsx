@@ -74,6 +74,8 @@ export default function Table({
 }) {
   const [dragIndex, setDragIndex] = useState(null);
   const [overIndex, setOverIndex] = useState(null);
+  // 손잡이를 누르고 있는 행만 draggable (행의 다른 곳은 글자 선택 · 클릭 · 입력이 그대로)
+  const [armedIndex, setArmedIndex] = useState(null);
 
   const getKey = (row) => (typeof rowKey === "function" ? rowKey(row) : row[rowKey]);
   const checkable = Array.isArray(checkedKeys) && !!onCheckedChange;
@@ -131,6 +133,7 @@ export default function Table({
   const endDrag = () => {
     setDragIndex(null);
     setOverIndex(null);
+    setArmedIndex(null);
   };
 
   const handleHandleKeyDown = (event, index) => {
@@ -233,10 +236,11 @@ export default function Table({
                   onKeyDown={onRowClick ? (event) => handleRowKeyDown(event, row) : undefined}
                   tabIndex={onRowClick ? 0 : undefined}
                   aria-current={selected || undefined}
-                  draggable={reorderable && !rowLocked ? true : undefined}
+                  draggable={reorderable && !rowLocked && armedIndex === index ? true : undefined}
                   onDragStart={
                     reorderable && !rowLocked
                       ? (event) => {
+                          if (armedIndex !== index) return event.preventDefault();
                           event.dataTransfer.effectAllowed = "move";
                           event.dataTransfer.setData("text/plain", String(index));
                           setDragIndex(index);
@@ -268,15 +272,20 @@ export default function Table({
                       {rowLocked ? (
                         <span className="table-lock" title="옮길 수 없는 행">고정</span>
                       ) : (
-                        <button
-                          type="button"
+                        // <button>이 아닌 이유: Firefox는 버튼을 누른 채로는 부모 행을 끌 수 없음
+                        <span
+                          role="button"
+                          tabIndex={0}
                           className="table-handle"
                           aria-label={`순서 바꾸기 (${index + 1}번째, ↑ ↓ 키로 이동)`}
+                          onPointerDown={() => setArmedIndex(index)}
+                          onPointerUp={() => setArmedIndex(null)}
+                          onPointerCancel={() => setArmedIndex(null)}
                           onKeyDown={(event) => handleHandleKeyDown(event, index)}
                           onClick={(event) => event.stopPropagation()}
                         >
                           ⠿
-                        </button>
+                        </span>
                       )}
                     </td>
                   )}
