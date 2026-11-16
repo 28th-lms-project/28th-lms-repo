@@ -1,193 +1,163 @@
-import { useId, useMemo, useState } from "react";
+import { useState, useId } from "react";
 import styles from "./Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
 import Button from "../../common/ui/Button.jsx";
 import Badge from "../../common/ui/Badge.jsx";
-import Field from "../../common/ui/Field.jsx";
+import PageHeader, { Breadcrumb } from "../../common/ui/PageHeader.jsx";
+import SideNav from "../../common/ui/SideNav.jsx";
+import { useToast } from "../../common/ui/feedbackContext.js";
+import { icons } from "../../common/input/icons.js";
 import Table from "../../common/ui/Table.jsx";
-import Pagination from "../../common/ui/Pagination.jsx";
 import { Tabs, TabPanel } from "../../common/ui/Tabs.jsx";
 import Panel from "../../common/ui/Panel.jsx";
 import StatCard from "../../common/ui/StatCard.jsx";
-import Callout from "../../common/ui/Callout.jsx";
 import StatusBox from "../../common/ui/StatusBox.jsx";
-import { useToast } from "../../common/ui/feedbackContext.js";
-import { icons } from "../../common/input/icons.js";
+
+/*
+ * 표준 UI: 화면 머리 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 배치 · 팝업 창 틀.
+ * 스타일 원본은 src/styles/*.css의 전역 클래스, React 컴포넌트는 common/ui/. 가이드: frontend/docs/ui-style-guide.md 8장
+ */
 
 /* ───── 예시 데이터 ───── */
-const NAMES = ["홍길동", "김철수", "이영희", "박민수", "최지우", "정해인", "강다니엘", "윤아름", "임수정", "한지민", "오세훈", "서지수"];
-const ROLES = ["학생", "학생", "학생", "강사", "관리자"];
-const MEMBERS = Array.from({ length: 47 }, (_, i) => ({
-    id: `user${String(i + 1).padStart(2, "0")}`,
-    name: NAMES[i % NAMES.length],
-    role: ROLES[i % ROLES.length],
-    score: 55 + ((i * 37) % 45),
-    joined: `2026-${String((i % 9) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
-    locked: i % 11 === 4,
-}));
-const PAGE_SIZE = 8;
+const NAV_GROUPS = [
+    {
+        key: "system",
+        title: "시스템 관리",
+        items: [
+            { key: "member", title: "회원 관리", icon: icons.setting },
+            { key: "role", title: "역할 관리", icon: icons.setting },
+            { key: "menu", title: "메뉴 관리", icon: icons.setting },
+        ],
+    },
+    {
+        key: "my",
+        title: "내 강의실",
+        items: [
+            { key: "timetable", title: "시간표", icon: icons.home },
+            { key: "data", title: "자료실", icon: icons.download },
+            { key: "counsel", title: "상담 기록", icon: icons.edit },
+        ],
+    },
+];
 
+/* ───── 예시 데이터 ───── */
 const MENU_TREE = {
     top: ["시스템 관리", "과정 관리", "내 강의실"],
     mid: { "시스템 관리": ["회원 관리", "역할 관리", "메뉴 관리", "코드 관리"], "과정 관리": ["과정 목록", "시험 관리"], "내 강의실": ["시간표", "자료실"] },
 };
 
-const sortRows = (rows, sort) => {
-    if (!sort) return rows;
-    const dir = sort.direction === "asc" ? 1 : -1;
-    return [...rows].sort((a, b) => (a[sort.key] > b[sort.key] ? dir : a[sort.key] < b[sort.key] ? -dir : 0));
+const HOMEWORK = {
+    subject: "1주차 과제: 배열 뒤집기",
+    endDate: "2026-11-20",
+    content: "정수 배열을 받아 순서를 뒤집은 새 배열을 돌려주는 메서드를 작성하세요.\n\n- 원래 배열은 바꾸지 않습니다.\n- 실행 결과 캡처를 함께 올립니다.",
 };
 
-export const StandardLayoutCatalog = () => {
-    const toast = useToast();
+const SUBMITTED = ["홍길동", "김철수", "이영희", "최지우"];
 
-    /* 표 */
-    const [sort, setSort] = useState({ key: "joined", direction: "desc" });
-    const [page, setPage] = useState(0);
-    const [selectedId, setSelectedId] = useState("user01");
-    const [tableState, setTableState] = useState("data");
-    const sorted = useMemo(() => sortRows(MEMBERS, sort), [sort]);
-    const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-    const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
-    const selected = MEMBERS.find((m) => m.id === selectedId);
+const NOT_SUBMITTED = ["박민수", "정해인"];
 
-    const memberColumns = [
-        { key: "id", title: "아이디", width: "18%", mono: true, sortable: true },
-        { key: "name", title: "이름", sortable: true },
-        { key: "role", title: "역할", width: "14%" },
-        { key: "score", title: "평균", width: "12%", align: "num", sortable: true, render: (r) => `${r.score}점` },
-        {
-            key: "status",
-            title: "상태",
-            width: "14%",
-            align: "center",
-            render: (r) => (r.locked ? <Badge tone="danger">잠김</Badge> : <Badge tone="success">정상</Badge>),
-        },
-        { key: "joined", title: "가입일", width: "16%", sortable: true },
-    ];
+const PageHeaderGroup = () => {
+    return (
+        <>
+            <GroupTitle>화면 머리 · 브레드크럼</GroupTitle>
+            <Variants wide>
+                <Variant
+                    name="PageHeader (브레드크럼 + 제목 + 설명 + 버튼)"
+                    source="styles/nav.css · common/ui/PageHeader.jsx"
+                    note={"기존 PageContainer 머리(⌂ > 대 > 중, 22px 제목)를 대신할 모양. 마지막 항목은 현재 화면이라 링크 없이 굵게.\n버튼은 화면 전체에 걸리는 동작만 (등록 · 내보내기). 목록 위 검색은 toolbar"}
+                    block
+                    code={`
+<PageHeader
+  crumbs={[
+    { title: "시스템 관리", to: "/admin/system" },
+    { title: "회원 관리" },
+  ]}
+  title="회원 관리"
+  description="회원 정보 · 역할 · 잠금 상태를 관리합니다."
+  actions={<Button variant="primary" icon={icons.add}>회원 등록</Button>}
+/>`}
+                >
+                    <PageHeader
+                        crumbs={[{ title: "시스템 관리", to: "/sample" }, { title: "회원 관리" }]}
+                        title="회원 관리"
+                        description="회원 정보 · 역할 · 잠금 상태를 관리합니다."
+                        actions={
+                            <>
+                                <Button icon={icons.download}>내보내기</Button>
+                                <Button variant="primary" icon={icons.add}>
+                                    회원 등록
+                                </Button>
+                            </>
+                        }
+                    />
+                </Variant>
+                <Variant
+                    name="Breadcrumb만 / 제목만"
+                    source="common/ui/PageHeader.jsx (Breadcrumb)"
+                    note="상세 · 작성 화면처럼 깊은 곳. crumbs를 비우면 제목만"
+                    block
+                    code={`<Breadcrumb crumbs={[{ title: "내 강의실", to: "/my" }, { title: "자료실", to: "/my/data" }, { title: "1주차 강의자료" }]} />
+<PageHeader title="대시보드" />`}
+                >
+                    <Breadcrumb crumbs={[{ title: "내 강의실", to: "/sample" }, { title: "자료실", to: "/sample" }, { title: "1주차 강의자료" }]} />
+                    <div style={{ marginTop: "20px" }}>
+                        <PageHeader title="대시보드" />
+                    </div>
+                </Variant>
+            </Variants>
+        </>
+    );
+};
 
+const SideNavGroup = () => {
+    /* 메뉴 */
+    const [currentMenu, setCurrentMenu] = useState("member");
+
+    return (
+        <>
+            <GroupTitle>사이드 메뉴</GroupTitle>
+            <Variants>
+                <Variant
+                    name="SideNav (그룹 접기 · 현재 화면)"
+                    source="styles/nav.css · common/ui/SideNav.jsx"
+                    note={"색은 --color-sidebar-* 토큰 (실제 menu/SideMenu와 같음). 배경 · 현재 메뉴 색은 옆의 테마를 따름.\n그룹 제목을 누르면 접힘. 현재 화면은 aria-current=\"page\" (강조 글자 + 왼쪽 선).\n다크 모드와 상관없이 항상 어두움"}
+                    code={`
+<SideNav
+  groups={menuGroups}        // [{ key, title, items: [{ key, title, icon }] }]
+  currentKey={currentMenuKey}
+  onSelect={(item) => navigate(item.path)}
+/>`}
+                >
+                    <div style={{ width: "240px", borderRadius: "var(--radius-lg)", overflow: "hidden", border: "1px solid var(--color-border)" }}>
+                        <SideNav groups={NAV_GROUPS} currentKey={currentMenu} onSelect={(item) => setCurrentMenu(item.key)} ariaLabel="메뉴 (예시)" />
+                    </div>
+                </Variant>
+                <Variant name="어떤 것을 쓸까" note="비슷해 보이는 내비게이션의 쓰임 구분">
+                    <dl className="desc-list" style={{ "--desc-label-width": "120px", width: "100%" }}>
+                        <dt>화면 이동</dt>
+                        <dd>SideNav (앱 왼쪽) · PageHeader 브레드크럼</dd>
+                        <dt>화면 안 구역 전환</dt>
+                        <dd>Tabs (세로 탭 · 회색 탭 바 대신)</dd>
+                        <dt>목록에서 하나 고르기</dt>
+                        <dd>list-group (3단 메뉴 · CourseMain 세로 탭 대신)</dd>
+                        <dt>값 고르기</dt>
+                        <dd>아래 &quot;선택&quot; (ChoiceGroup · Switch)</dd>
+                    </dl>
+                </Variant>
+            </Variants>
+        </>
+    );
+};
+
+const TabsGroup = () => {
     /* 탭 */
     const tabsId = useId();
     const pillsId = useId();
     const [tab, setTab] = useState("timetable");
     const [pill, setPill] = useState("choice");
 
-    /* 카드 · 목록 */
-    const [selectedCourse, setSelectedCourse] = useState("fullstack");
-    const [top, setTop] = useState("시스템 관리");
-    const [mid, setMid] = useState("회원 관리");
-    const [orderChanged, setOrderChanged] = useState(true);
-
     return (
-        <div>
-            <p className={styles.standardIntro}>
-                표 · 탭 · 패널 · 카드 · 안내 상자 · 목록 · 배치. 스타일 원본: styles/table.css · tabs.css · panel.css
-            </p>
-
-            <GroupTitle>표 · 페이지 이동</GroupTitle>
-            <Variants wide>
-                <Variant
-                    name="Table (정렬 · 선택 행 · 배지 칸 · 숫자 칸) + Pagination"
-                    source="styles/table.css · common/ui/Table.jsx · Pagination.jsx"
-                    note={"머리글을 누르면 정렬, 행을 누르거나 Enter로 선택 (선택 행: 강조 배경 + 왼쪽 선).\nPagination은 0부터 세는 page (API와 같음). 아래 버튼으로 빈 · 로딩 상태 확인"}
-                    block
-                    code={`
-<Table
-  ariaLabel="회원 목록"
-  columns={[
-    { key: "id", title: "아이디", width: "18%", mono: true, sortable: true },
-    { key: "name", title: "이름", sortable: true },
-    { key: "score", title: "평균", align: "num", render: (r) => \`\${r.score}점\` },
-    { key: "status", title: "상태", align: "center",
-      render: (r) => <Badge tone={r.locked ? "danger" : "success"}>...</Badge> },
-  ]}
-  rows={pageRows}
-  rowKey="id"
-  selectedKey={selectedId}
-  onRowClick={(row) => setSelectedId(row.id)}
-  sort={sort}
-  onSortChange={setSort}
-  loading={loading}
-  emptyText="검색 결과가 없습니다."
-/>
-<div className="table-footer">
-  <span>전체 {total}건</span>
-  <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-</div>`}
-                >
-                    <div className="btn-group" style={{ marginBottom: "12px" }}>
-                        {[
-                            ["data", "데이터"],
-                            ["loading", "로딩"],
-                            ["empty", "빈 목록"],
-                        ].map(([value, label]) => (
-                            <Button key={value} size="sm" variant={tableState === value ? "primary" : "secondary"} onClick={() => setTableState(value)}>
-                                {label}
-                            </Button>
-                        ))}
-                    </div>
-                    <Table
-                        ariaLabel="회원 목록"
-                        columns={memberColumns}
-                        rows={tableState === "data" ? pageRows : []}
-                        selectedKey={selectedId}
-                        onRowClick={(row) => setSelectedId(row.id)}
-                        isRowMuted={(row) => row.locked}
-                        sort={sort}
-                        onSortChange={(next) => {
-                            setSort(next);
-                            setPage(0);
-                        }}
-                        loading={tableState === "loading"}
-                        emptyText="검색 결과가 없습니다."
-                    />
-                    <div className="table-footer">
-                        <span>
-                            전체 {MEMBERS.length}건 · 선택: {selected?.name ?? "-"}
-                        </span>
-                        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-                    </div>
-                </Variant>
-                <Variant
-                    name="작업 칸 · 작은 표 · 줄무늬 · 높이 제한(머리글 고정)"
-                    source="styles/table.css"
-                    note="align: 'actions'는 오른쪽 정렬 버튼 칸. maxHeight를 주면 표 안에서 스크롤되고 머리글이 고정됨"
-                    block
-                    code={`
-<Table size="sm" striped maxHeight={240}
-  columns={[..., { key: "actions", title: "작업", align: "actions",
-    render: (r) => <><Button size="sm">수정</Button>
-                     <Button size="sm" variant="danger">삭제</Button></> }]} />`}
-                >
-                    <Table
-                        ariaLabel="역할 목록"
-                        size="sm"
-                        striped
-                        maxHeight={240}
-                        columns={[
-                            { key: "id", title: "아이디", mono: true, width: "22%" },
-                            { key: "name", title: "이름" },
-                            { key: "role", title: "역할", width: "16%" },
-                            {
-                                key: "actions",
-                                title: "작업",
-                                align: "actions",
-                                width: 170,
-                                render: (r) => (
-                                    <>
-                                        <Button size="sm" icon={icons.edit} onClick={() => toast.show(`${r.name} 수정`)}>
-                                            수정
-                                        </Button>
-                                        <Button size="sm" variant="danger" icon={icons.delete} aria-label={`${r.name} 삭제`} title="삭제" />
-                                    </>
-                                ),
-                            },
-                        ]}
-                        rows={MEMBERS.slice(0, 14)}
-                    />
-                </Variant>
-            </Variants>
-
+        <>
             <GroupTitle>탭</GroupTitle>
             <Variants>
                 <Variant
@@ -244,7 +214,13 @@ const idBase = useId();
                     </TabPanel>
                 </Variant>
             </Variants>
+        </>
+    );
+};
 
+const PanelGroup = () => {
+    return (
+        <>
             <GroupTitle>패널</GroupTitle>
             <Variants>
                 <Variant
@@ -304,7 +280,17 @@ const idBase = useId();
                     </Panel>
                 </Variant>
             </Variants>
+        </>
+    );
+};
 
+const CardGroup = () => {
+
+    /* 카드 · 목록 */
+    const [selectedCourse, setSelectedCourse] = useState("fullstack");
+
+    return (
+        <>
             <GroupTitle>카드</GroupTitle>
             <Variants wide>
                 <Variant
@@ -364,125 +350,16 @@ const idBase = useId();
                     </div>
                 </Variant>
             </Variants>
+        </>
+    );
+};
 
-            <GroupTitle>안내 상자 (Callout)</GroupTitle>
-            <Variants>
-                <Variant
-                    name="tone 4가지"
-                    source="styles/panel.css · common/ui/Callout.jsx"
-                    note="화면에 머무는 안내. 결과 알림은 토스트, 화면을 못 쓰는 상태는 StatusBox"
-                    block
-                    code={`
-<Callout tone="warning" title="주의">
-  이 역할을 빼면 지금 계정이 메뉴 관리에 들어올 수 없습니다.
-</Callout>`}
-                >
-                    <div className="form-stack">
-                        <Callout tone="info">초기 비밀번호는 아이디와 같습니다.</Callout>
-                        <Callout tone="success">모든 과제를 제출했습니다.</Callout>
-                        <Callout tone="warning" title="주의">
-                            이 역할을 빼면 지금 계정이 메뉴 관리에 들어올 수 없습니다.
-                        </Callout>
-                        <Callout tone="danger">마감이 지났습니다. 제출하면 지각으로 기록됩니다.</Callout>
-                    </div>
-                </Variant>
-                <Variant
-                    name="버튼이 있는 안내 (변경 알림)"
-                    source="common/ui/Callout.jsx (actions)"
-                    note="Role.jsx의 '순서가 변경되었습니다' 바"
-                    block
-                    code={`
-<Callout tone="info" actions={<>
-  <Button size="sm">되돌리기</Button>
-  <Button size="sm" variant="primary">저장</Button>
-</>}>순서가 변경되었습니다.</Callout>`}
-                >
-                    {orderChanged ? (
-                        <Callout
-                            tone="info"
-                            actions={
-                                <>
-                                    <Button size="sm" onClick={() => setOrderChanged(false)}>되돌리기</Button>
-                                    <Button
-                                        size="sm"
-                                        variant="primary"
-                                        onClick={() => {
-                                            setOrderChanged(false);
-                                            toast.success("순서를 저장했습니다.");
-                                        }}
-                                    >
-                                        저장
-                                    </Button>
-                                </>
-                            }
-                        >
-                            순서가 변경되었습니다.
-                        </Callout>
-                    ) : (
-                        <Button size="sm" onClick={() => setOrderChanged(true)}>다시 보기</Button>
-                    )}
-                </Variant>
-            </Variants>
+const ListLayoutGroup = () => {
+    const [top, setTop] = useState("시스템 관리");
+    const [mid, setMid] = useState("회원 관리");
 
-            <GroupTitle>키-값 목록 · 타임라인</GroupTitle>
-            <Variants>
-                <Variant
-                    name="desc-list · desc-list-boxed"
-                    source="styles/panel.css"
-                    note="라벨 폭은 style={{ '--desc-label-width': '80px' }}로 조절"
-                    block
-                    code={`
-<dl className="desc-list">
-  <dt>아이디</dt><dd>user01</dd>
-</dl>
-<dl className="desc-list desc-list-boxed" style={{ "--desc-label-width": "80px" }}>...</dl>`}
-                >
-                    <div className="form-stack">
-                        <dl className="desc-list">
-                            <dt>과정</dt>
-                            <dd>풀스택 28기</dd>
-                            <dt>기간</dt>
-                            <dd>2026-03-02 ~ 2026-12-18</dd>
-                            <dt>담당 강사</dt>
-                            <dd>김강사</dd>
-                        </dl>
-                        <dl className="desc-list desc-list-boxed" style={{ "--desc-label-width": "80px" }}>
-                            <dt>아이디</dt>
-                            <dd className="cell-mono">user01</dd>
-                            <dt>이름</dt>
-                            <dd>홍길동</dd>
-                        </dl>
-                    </div>
-                </Variant>
-                <Variant
-                    name="timeline"
-                    source="styles/panel.css (MyCounsel 상담 기록)"
-                    block
-                    code={`
-<ol className="timeline">
-  <li className="timeline-item">
-    <div className="timeline-meta">2026-11-10 <span className="tag">학습</span></div>
-    <p className="timeline-body">...</p>
-  </li>
-</ol>`}
-                >
-                    <ol className="timeline">
-                        <li className="timeline-item">
-                            <div className="timeline-meta">
-                                2026-11-10 <span className="tag">학습</span>
-                            </div>
-                            <p className="timeline-body">진도 확인, 복습 자료 안내.</p>
-                        </li>
-                        <li className="timeline-item">
-                            <div className="timeline-meta">
-                                2026-10-28 <span className="tag">진로</span>
-                            </div>
-                            <p className="timeline-body">{"희망 직무: 백엔드\n포트폴리오 방향 상담"}</p>
-                        </li>
-                    </ol>
-                </Variant>
-            </Variants>
-
+    return (
+        <>
             <GroupTitle>선택 목록 · 3단 배치</GroupTitle>
             <Variants wide>
                 <Variant
@@ -546,89 +423,70 @@ const idBase = useId();
                     </div>
                 </Variant>
             </Variants>
+        </>
+    );
+};
 
-            <GroupTitle>화면 조합 예시: 목록 | 상세</GroupTitle>
+const PopupGroup = () => {
+    const toast = useToast();
+
+    return (
+        <>
+            <GroupTitle>팝업 창 틀</GroupTitle>
             <Variants wide>
                 <Variant
-                    name="toolbar + layout-split (Table · Pagination | Panel)"
-                    source="styles/panel.css (MemberManagement 화면 구조)"
-                    note="화면 하나를 표준 부품만으로 만든 예. 위 표와 선택 상태를 같이 씀"
+                    name="popup-page (사이드바 없는 화면 틀)"
+                    source="styles/nav.css"
+                    note={"HomeWorkList가 window.open으로 연 /popup/homework처럼 사이드바 없이 뜨는 화면의 틀. 머리(제목 + 버튼 · 닫기)는 위에 붙고 본문만 스크롤.\n먼저 모달(Modal lg) · 같은 창의 상세 화면으로 될지 검토 (팝업은 차단 · 권한 조회 · 뒤로 가기 문제가 있음)"}
                     block
                     code={`
-<div className="form-stack">
-  <div className="toolbar">
-    <div className="form-row">...검색 필드 · 버튼...</div>
-    <Button variant="primary" icon={icons.add}>회원 등록</Button>
-  </div>
-  <div className="layout-split">
-    <div><Table ... /><div className="table-footer">...</div></div>
-    <Panel title={selected.name} ...>...</Panel>
-  </div>
+<div className="popup-page">
+  <header className="popup-header">
+    <h1 className="popup-title">1주차 과제</h1>
+    <div className="popup-actions"><Button onClick={() => window.close()}>닫기</Button></div>
+  </header>
+  <main className="popup-body">…</main>
 </div>`}
                 >
-                    <div className="form-stack">
-                        <div className="toolbar">
-                            <div className="form-row">
-                                <Field label="검색 조건" htmlFor="std-split-type">
-                                    <select id="std-split-type" className="form-control">
-                                        <option>이름</option>
-                                        <option>아이디</option>
-                                    </select>
-                                </Field>
-                                <Field label="검색어" htmlFor="std-split-q">
-                                    <input id="std-split-q" type="search" className="form-control" placeholder="검색어" />
-                                </Field>
-                                <div className="btn-group">
-                                    <Button variant="primary">검색</Button>
-                                    <Button>초기화</Button>
+                    <div style={{ height: "260px", overflow: "auto", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)" }}>
+                        <div className="popup-page" style={{ minHeight: "100%" }}>
+                            <header className="popup-header">
+                                <h1 className="popup-title">{HOMEWORK.subject}</h1>
+                                <div className="popup-actions">
+                                    <Button size="sm" icon={icons.refresh} aria-label="새로고침" />
+                                    <Button size="sm" onClick={() => toast.show("팝업이면 window.close()로 닫습니다. (예시)")}>
+                                        닫기
+                                    </Button>
                                 </div>
-                            </div>
-                            <Button variant="primary" icon={icons.add}>회원 등록</Button>
-                        </div>
-                        <div className="layout-split">
-                            <div>
+                            </header>
+                            <main className="popup-body">
                                 <Table
-                                    ariaLabel="회원 목록 (조합 예시)"
+                                    ariaLabel="제출 현황 (팝업 예시)"
                                     size="sm"
-                                    columns={memberColumns.filter((c) => ["id", "name", "role", "status"].includes(c.key))}
-                                    rows={pageRows}
-                                    selectedKey={selectedId}
-                                    onRowClick={(row) => setSelectedId(row.id)}
+                                    columns={[
+                                        { key: "name", title: "이름" },
+                                        { key: "state", title: "제출", width: "30%", align: "center", render: (r) => <Badge tone={r.done ? "success" : "neutral"}>{r.done ? "제출" : "미제출"}</Badge> },
+                                    ]}
+                                    rows={[...SUBMITTED, ...NOT_SUBMITTED].map((name) => ({ id: name, name, done: SUBMITTED.includes(name) }))}
                                 />
-                                <div className="table-footer">
-                                    <span>전체 {MEMBERS.length}건</span>
-                                    <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-                                </div>
-                            </div>
-                            {selected ? (
-                                <Panel
-                                    title={selected.name}
-                                    badge={selected.locked ? <Badge tone="danger">잠김</Badge> : <Badge tone="success">정상</Badge>}
-                                    footer={
-                                        <>
-                                            <Button variant="danger">{selected.locked ? "잠금 해제" : "잠금"}</Button>
-                                            <Button variant="primary">저장</Button>
-                                        </>
-                                    }
-                                >
-                                    <dl className="desc-list" style={{ "--desc-label-width": "72px" }}>
-                                        <dt>아이디</dt>
-                                        <dd className="cell-mono">{selected.id}</dd>
-                                        <dt>역할</dt>
-                                        <dd>{selected.role}</dd>
-                                        <dt>평균</dt>
-                                        <dd>{selected.score}점</dd>
-                                        <dt>가입일</dt>
-                                        <dd>{selected.joined}</dd>
-                                    </dl>
-                                </Panel>
-                            ) : (
-                                <StatusBox type="empty" title="회원을 선택하세요." />
-                            )}
+                            </main>
                         </div>
                     </div>
                 </Variant>
             </Variants>
-        </div>
+        </>
     );
 };
+
+export const StandardLayoutCatalog = () => (
+    <div>
+        <p className={styles.standardIntro}>화면 머리 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 배치 · 팝업 창 틀. 스타일 원본: styles/nav.css · tabs.css · panel.css</p>
+        <PageHeaderGroup />
+        <SideNavGroup />
+        <TabsGroup />
+        <PanelGroup />
+        <CardGroup />
+        <ListLayoutGroup />
+        <PopupGroup />
+    </div>
+);

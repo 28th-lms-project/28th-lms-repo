@@ -20,14 +20,24 @@
 | PART 2 **통일 전 (현재)** | 경고색 | 지금 화면들의 모양 그대로 (비교용). 다크 모드에서도 밝게 고정 |
 | PART 3 **기존 샘플** | 회색 | 처음부터 있던 `sample/` 컴포넌트 예시 |
 
+표준 탭은 **부품의 역할**로 일곱 묶음으로 나눕니다 (만든 순서가 아님). 기초 → 동작 · 입력 → 표시 · 상태 → 데이터 → 배치 · 탐색 → 내용 → 화면 예시 순서이고, 8장도 같은 순서입니다.
+
+- **동작 · 입력**: 사용자가 누르거나 값을 넣는 것
+- **표시 · 상태**: 상태 · 결과 · 알림을 보여 주는 것 (값을 넣지 않음)
+- **데이터**: 여러 행을 보여 주고 고르는 것
+- **배치 · 탐색**: 화면의 틀과 이동
+- **내용**: 글 · 문제 · 기록처럼 읽는 내용을 담는 블록
+- **화면 예시**: 위 부품만으로 만든 화면. 화면을 옮길 때 따라 만드는 본
+
 | 목차 | 내용 | 파일 |
 | --- | --- | --- |
-| **표준 UI** | 버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 확인 창 · 모달의 표준 모양과 사용 코드 (8장). 새 화면은 이것을 씀 | `StandardCatalog.jsx` |
-| **표준 UI 2** | 표 · 페이지 이동 · 탭 · 패널 · 카드 · 안내 상자 · 키-값 목록 · 타임라인 · 선택 목록 · 배치, 화면 조합 예시 (8장) | `StandardLayoutCatalog.jsx` |
-| **표준 UI 3** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · pill 선택 · 세그먼트 · 켜고 끄는 버튼 · 스위치 · 날짜 · 기간 · 파일 · 진행 막대 (8장) | `StandardNavCatalog.jsx` |
-| **표준 UI 4** | 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · 검색 셀렉트 · 시험 문제 · 댓글 · 인용 · 세로 키-값 · 상자 목록, 화면 예시(상세 · 대시보드 · 오류 화면) (8장) | `StandardDataCatalog.jsx` |
-| **표준 UI 5** | 두 목록 사이 옮기기(`TransferList`) · 반복 입력 행(`ListEditor`), 화면 예시: 과정 등록 폼 · 과정 상세 · 시험 문제 고르기 · 채점 · 과제 상세(보기 ↔ 수정) · 설문 편집기 · 팝업 창 (8장) | `StandardScreenCatalog.jsx` |
-| 토큰 | 표준 토큰(index.css, 7장). 실제 값을 index.css에서 읽어 표시 | `TokenCatalog.jsx` (`TokenCatalog`) |
+| **기초** | 표준 토큰(index.css, 7장. 실제 값을 index.css에서 읽어 표시) · 테마(사이드바 색, 7장). 표준 탭 사용법 안내 | `TokenCatalog.jsx` (`TokenCatalog`) |
+| **동작 · 입력** | 버튼 · 입력 · 폼 · 검색 셀렉트 · 선택(pill · 세그먼트 · 켜고 끄는 버튼 · 스위치) · 날짜 · 기간 · 파일 · 반복 입력 행 | `StandardInputCatalog.jsx` |
+| **표시 · 상태** | 배지 · 태그 · 안내 상자 · 상태 상자 · 진행 막대 · 토스트 · 확인 창 · 모달 | `StandardFeedbackCatalog.jsx` |
+| **데이터** | 표 · 페이지 이동 · 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · 두 목록 사이 옮기기 | `StandardDataCatalog.jsx` |
+| **배치 · 탐색** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 3단 배치 · 팝업 창 틀 | `StandardLayoutCatalog.jsx` |
+| **내용** | 시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 인용 · 세로 키-값 · 상자 목록 | `StandardContentCatalog.jsx` |
+| **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 과제 상세(보기 ↔ 수정) · 설문 편집기 | `StandardScreenCatalog.jsx` |
 | 토큰 (통일 전 값) | **통일 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
@@ -45,6 +55,7 @@
 
 1. 화면에 새로운 모양(버튼 · 배지 · 상자 등)을 만들었으면 먼저 카탈로그에 비슷한 것이 있는지 봅니다. 있으면 그 값을 그대로 씁니다.
 2. 없어서 새로 만들었다면 해당 카탈로그 파일에 `Variant`를 하나 추가하고, 이 문서 5장 표에 한 줄 추가합니다.
+3. 표준 부품을 새로 만들면 위 묶음 중 역할이 맞는 파일에 그룹 컴포넌트(`GroupTitle` + `Variants`, 상태는 그 그룹 안에)로 넣고 8장의 같은 묶음에 설명을 씁니다.
 
 ```jsx
 <Variant name="이름" source="원본 경로" note="설명 (선택)">
@@ -313,6 +324,7 @@
    - ~~4차: 화면 머리 · 브레드크럼 · 사이드 메뉴 · 선택(pill · 세그먼트 · 스위치 · 켜고 끄는 버튼) · 날짜 · 파일 · 진행 막대~~ → 완료 (8장)
    - ~~5차: 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · react-select 테마 · 시험 문제 · 댓글 · 인용 · 세로 키-값 · 상자 목록 · 오류 화면 + 화면 예시(상세 · 대시보드)~~ → 완료 (8장)
    - ~~6차 (admin/course · survey): 두 목록 사이 옮기기 · 반복 입력 행 · 답안 상자 · 팝업 창 틀 + 화면 예시 7개(과정 등록 · 과정 상세 · 문제 고르기 · 채점 · 과제 상세 · 설문 편집기 · 팝업), 통일 전 탭에 같은 화면의 지금 모양~~ → 완료 (8장)
+   - ~~표준 탭 재구성: 만든 차수(표준 UI 1~5)로 나뉘던 섹션을 역할별 일곱 묶음(기초 · 동작 · 입력 · 표시 · 상태 · 데이터 · 배치 · 탐색 · 내용 · 화면 예시)으로~~ → 완료 (1장 · 8장)
    - 표준을 만들지 않기로 한 것: TextField 떠 있는 라벨(라벨은 위), 팝업 창(`window.open`, UI 아님), 기존 샘플 Chart · Poll(샘플 밖에서 안 씀. 차트를 쓰게 되면 그때 색을 토큰으로), 리치 텍스트 `Editor`(외부 에디터, 옮길 때 테두리 · 높이만 맞춤)
    - 다크 모드: 토큰 · 표준 UI는 대응 완료, 샘플 페이지에서만 켬 (9장)
    - 강조색 · 테마 분리: 강조색(primary)은 샘플 페이지 후보 미리 보기(팀 결정용), 테마(brand)는 사이드바 색으로 앱 전체 (7장 "강조색과 테마")
@@ -403,7 +415,7 @@
 | 닿는 곳 | 주 버튼 · 선택 행 · 탭 · 체크 · 스위치 · 포커스 · 링크 | **사이드바 배경 · 현재 메뉴만** |
 | 닿지 않는 곳 | 상태 표시 (진행 중 · 오류 등은 의미색) | 버튼 · 입력 · 표 · 배지 · 상태색 전부 |
 | 토큰 | `--primary-*` 8개 → `--color-primary*` · `--color-focus` · `--color-link` | `--brand-bg` · `--brand-accent` → `--color-sidebar-*` |
-| 바꾸는 곳 | 샘플 페이지 목차의 "강조색 후보" (이 페이지에서만, 저장 안 함) | 사이드바 프로필 아래 견본 · 샘플 "표준 UI 3" 사이드 메뉴 (앱 전체, 이 브라우저에 기억) |
+| 바꾸는 곳 | 샘플 페이지 목차의 "강조색 후보" (이 페이지에서만, 저장 안 함) | 사이드바 프로필 아래 견본 · 샘플 표준 탭 "기초"의 테마 (앱 전체, 이 브라우저에 기억) |
 | 속성 | `<html data-primary-preview="violet">` | `<html data-brand="navy">` |
 
 테마를 버튼 색에 쓰지 않는 이유: 사용자가 붉은 계열을 고르면 "저장"과 "삭제"가, 초록을 고르면 "저장"과 "완료"가 같은 색이 됩니다. Slack(사이드바 테마) · Jira · Confluence(상단 바 색)처럼 사용자 색은 중요한 동작에서 먼 장식 영역에만 입히고, 동작 · 의미 색은 고정합니다.
@@ -475,7 +487,7 @@
 
 ## 8. 표준 UI
 
-샘플 페이지 맨 위 **"표준 UI"** 섹션에서 모양과 사용 코드를 같이 볼 수 있습니다.
+샘플 페이지 **표준 탭**에서 모양과 사용 코드를 같이 볼 수 있습니다. 아래 설명은 표준 탭과 같은 묶음 · 순서입니다 (1장).
 
 ### 구조
 
@@ -491,7 +503,15 @@
 - 전역 클래스는 `main.jsx`에서 CSS module보다 먼저 불러옵니다. 그래서 화면의 CSS module이 같은 요소에 스타일을 주면 module 쪽이 이깁니다 (화면별로 살짝 조정할 수 있음, 남용은 금지).
 - **기존 화면 모양은 바뀌지 않았습니다.** 새 클래스를 쓰는 곳은 샘플 페이지뿐이고, 기존 화면은 다음 단계 3번에서 옮깁니다.
 
-### 버튼
+### 기초
+
+토큰과 테마는 7장에 있습니다. 샘플은 표준 탭 "기초" (`TokenCatalog.jsx`).
+
+### 동작 · 입력
+
+샘플 파일: `StandardInputCatalog.jsx`
+
+#### 버튼
 
 | 클래스 | `Button` props | 쓰는 곳 |
 | --- | --- | --- |
@@ -522,7 +542,7 @@ import { icons } from "../common/input/icons";
 - 아이콘은 기존 `icons.js`를 그대로 씁니다. 크기는 md 16px · sm 14px로 정해져 있습니다.
 - 나머지 props(`onClick`, `type`, `title`, `aria-*` …)는 `<button>`에 그대로 전달됩니다. `type` 기본값은 `"button"` (폼 제출 버튼만 `type="submit"`).
 
-### 입력 · 폼
+#### 입력 · 폼
 
 | 클래스 | 쓰는 곳 |
 | --- | --- |
@@ -556,7 +576,86 @@ import Field from "../common/ui/Field";
 - 상태: `disabled`(회색 배경), `readOnly`(회색 배경 · 글자는 보통), 포커스는 강조색 테두리 + 연한 그림자.
 - 기존 `common/input/Input.jsx`의 컴포넌트(`Id` · `Password` · `TextField` · `Checkbox` · `Radio` …)는 그대로 두었습니다. 새 화면은 네이티브 입력 + `form-control`을 씁니다.
 
-### 배지 · 태그
+#### 검색 셀렉트 (react-select)
+
+```jsx
+import SelectBox from "../common/ui/SelectBox";
+
+<Field label="담당 강사" htmlFor="tutor" required error={error}>
+  <SelectBox inputId="tutor" options={tutors} value={tutor} onChange={setTutor} isClearable aria-invalid={!!error} />
+</Field>
+<SelectBox isMulti options={students} value={picked} onChange={setPicked} />
+```
+
+- `SelectBox`는 react-select에 `selectStyles`(`common/ui/selectStyles.js`)를 넣어 둔 것입니다. 높이 36px · 테두리 · 포커스 · 다중 선택 칩이 표준 입력과 같고, 값이 모두 토큰이라 다크 모드를 따릅니다.
+- props는 react-select 그대로입니다. 추가로 `size="sm"`(30px), `aria-invalid`(오류 테두리), `inModal`(메뉴를 `body`로 띄워 모달 밖으로 잘리지 않게).
+- 이미 `Select`를 직접 쓰는 화면(`admin/course/selector/*` · `Survey`)은 `import Select` → `SelectBox`로 바꾸거나, `styles={selectStyles}`만 넣어도 됩니다. 폭을 정하던 감싸는 div는 `Field` · `form-row`로.
+- 짧은 고정 목록은 `<select className="form-control">`을 씁니다.
+
+#### 선택 (pill · 세그먼트 · 켜고 끄는 버튼 · 스위치)
+
+```jsx
+<ChoiceGroup name="counsel-type" legend="상담 유형" options={[{ value: "study", label: "학습" }]} value={type} onChange={setType} />
+<ChoiceGroup multiple name="filter" legend="분류" options={options} value={filters} onChange={setFilters} />
+<ChoiceGroup variant="segmented" name="period" legend="기간" options={options} value={period} onChange={setPeriod} />
+
+<Button aria-pressed={grade === "Y"} onClick={() => setGrade("Y")}>정답</Button>
+<Switch checked={onlyMine} onChange={setOnlyMine}>내 과정만 보기</Switch>
+```
+
+| 무엇 | 쓰는 곳 | 메모 |
+| --- | --- | --- |
+| `ChoiceGroup` (pill) | 상담 유형 · 분류 필터 (`MyCounsel` `.typeGroup` 대신) | 진짜 `radio` · `checkbox`라 키보드 · 폼 제출이 그대로. `multiple`이면 `value`가 배열. `name`은 화면에서 고유하게 |
+| `ChoiceGroup variant="segmented"` | 보기 방식 · 기간 | 항상 하나가 골라진 2~4개 |
+| `btn` + `aria-pressed` | 선택형 채점 (`ExamGradeModal`) | 눌린 버튼은 강조 배경. 결과 색(정답 초록 · 오답 빨강)은 버튼이 아니라 `Badge`로 |
+| `Switch` | 바로 적용되는 설정 | 저장 버튼을 눌러야 적용되는 값은 체크박스(`form-check`) |
+
+#### 날짜 · 숫자 · 기간
+
+- `date` · `time` · `number` · `search` 입력도 `.form-control` 하나로 씁니다 (`CourseAdd` · `HomeworkSubmitStatus`의 스타일 없는 입력 대신). 달력 아이콘 색은 다크 모드를 따릅니다.
+- 기간은 `input-range`로 묶습니다.
+
+```jsx
+<Field label="수강 기간" htmlFor="period-start" required error={rangeError}>
+  <div className="input-range">
+    <input id="period-start" type="date" className="form-control" aria-invalid={!!rangeError} aria-describedby="period-start-msg" />
+    <span className="input-range-sep">~</span>
+    <input type="date" className="form-control" aria-label="종료일" />
+  </div>
+</Field>
+```
+
+#### 파일
+
+```jsx
+<FilePicker accept=".xlsx" onSelect={([file]) => setFile(file)} fileName={file?.name} />
+<FilePicker multiple label="첨부 추가" onSelect={addFiles} />
+<FileList files={[{ key, name, size, href }]} onRemove={removeFile} />
+```
+
+- 숨긴 `input[type=file]`(`visually-hidden`) + 버튼 모양 label입니다. Tab으로 오면 버튼에 포커스 테두리가 생깁니다. `common/input`의 `FileField` · `MyTimetable` 파일 상자를 대신합니다.
+- `onSelect`는 `File[]`을 줍니다. 같은 파일을 다시 골라도 불리도록 고른 뒤 input 값을 비웁니다.
+- `FileList`: `href`가 있으면 이름이 내려받기 링크(`MyCourseData` 첨부 칩 대신), `onRemove`가 있으면 지우기 버튼. 크기는 `size`(바이트)를 KB · MB로 보여 줍니다.
+
+#### 반복 입력 행 (ListEditor)
+
+```jsx
+import ListEditor from "../common/ui/ListEditor";
+import { newListItem } from "../common/ui/listEditorItem";
+
+const [options, setOptions] = useState([newListItem(), newListItem()]);
+<ListEditor label="보기" items={options} onChange={setOptions} min={2} max={8} addLabel="보기 추가" />
+// 저장할 때: options.map((o) => o.value)
+```
+
+- `Survey`의 보기 입력(입력 + 삭제 · 추가 버튼)을 대신합니다. 줄에서 Enter → 바로 아래에 새 줄, 빈 줄에서 Backspace → 그 줄을 지웁니다 (한글 입력 중 Enter는 무시).
+- 줄마다 `id`가 있어야 지우거나 끼워 넣어도 입력이 섞이지 않습니다. 새 줄은 `newListItem()`, 서버에서 받은 값은 `{ id: 서버 id, value }`로 바꿔 넣습니다.
+
+### 표시 · 상태
+
+샘플 파일: `StandardFeedbackCatalog.jsx`
+
+#### 배지 · 태그
 
 | 클래스 | `Badge` props | 쓰는 곳 |
 | --- | --- | --- |
@@ -570,7 +669,17 @@ import Field from "../common/ui/Field";
 
 같은 의미에는 같은 tone을 씁니다. 화면마다 새 배지 색을 만들지 않습니다.
 
-### 상태 상자
+#### 안내 상자 (Callout)
+
+```jsx
+<Callout tone="warning" title="주의">이 역할을 빼면 메뉴 관리에 들어올 수 없습니다.</Callout>
+<Callout tone="info" actions={<Button size="sm" variant="primary">저장</Button>}>순서가 변경되었습니다.</Callout>
+```
+
+- tone `info` · `success` · `warning` · `danger` · `neutral`. 화면에 **머무는** 안내.
+- 결과 알림은 토스트, 화면을 못 쓰는 상태는 `StatusBox`.
+
+#### 상태 상자
 
 | `type` | 기본 문구 | 아이콘 | 스크린 리더 |
 | --- | --- | --- | --- |
@@ -593,7 +702,17 @@ if (list.length === 0) return <StatusBox type="empty" title="검색 결과가 �
 - `size="lg"`: 화면 전체 (404 · 라우트 오류, `common/error/*` 대신). `code`로 큰 숫자("500" 등), `actions`로 아래 버튼(뒤로 · 홈으로).
 - 지금 5곳에 복사된 `.notice`(권한 확인 중 · 권한 없음), 빈 상태 5가지, 로딩 문구들을 옮길 대상입니다.
 
-### 토스트 (`alert()` 대신)
+#### 진행 막대
+
+```jsx
+<Progress label="진도율" value={42} showValue />
+<Progress label="제출률" value={18} max={20} tone="success" showValue />
+```
+
+- `tone`: 기본(강조색) · `success`(완료) · `warning` · `danger`(마감 임박). `size="sm"`은 4px.
+- `label`은 화면에 안 보이는 이름입니다 (`role="progressbar"`). 과정 카드 안에서 쓰는 예시는 샘플 "표시 · 상태"의 진행 막대에 있습니다.
+
+#### 토스트 (`alert()` 대신)
 
 ```jsx
 import { useToast } from "../common/ui/feedbackContext";
@@ -622,7 +741,7 @@ try {
   - 화면을 못 쓰는 상태(권한 없음 · 목록을 못 불러옴) → 상태 상자
 - `my/course/MyCourseData`의 자체 토스트는 이것으로 옮길 대상입니다 (모양은 같은 계열).
 
-### 확인 창 (`confirm()` 대신)
+#### 확인 창 (`confirm()` 대신)
 
 ```jsx
 import { useConfirm } from "../common/ui/feedbackContext";
@@ -653,7 +772,7 @@ if (await confirm("변경 내용을 저장할까요?")) save();   // 문구만
 - 바깥 클릭 · Esc · 닫기(X)는 모두 취소(`false`)입니다.
 - 확인을 누른 뒤 요청이 끝날 때까지 창을 띄워 두려면 `ConfirmDialog`를 상태로 직접 씁니다 (`open` · `loading` · `onConfirm` · `onCancel`).
 
-### 모달
+#### 모달
 
 ```jsx
 import Modal from "../common/ui/Modal";
@@ -695,7 +814,11 @@ import Modal from "../common/ui/Modal";
 - 본문만 스크롤되고 머리 · 바닥은 고정입니다 (높이는 화면 높이 - 32px까지).
 - 옮길 대상: `Member*Modal`(폼, md), `RoleUserMoveModal`(md), `ConfirmModal`(→ `useConfirm`), `Exam*Modal`(lg), `sample/Modal`의 `Alert` · `Confirm`.
 
-### 표 · 페이지 이동
+### 데이터
+
+샘플 파일: `StandardDataCatalog.jsx`
+
+#### 표 · 페이지 이동
 
 `Table`은 공통 `Grid`를 대신할 표준 표입니다. 칸 내용은 `render`로 자유롭게 넣습니다 (배지 · 버튼).
 
@@ -748,7 +871,65 @@ import Pagination from "../common/ui/Pagination";
 - 시간표: `bordered` + 오늘 열 `className: "col-highlight"` + 쉬는 시간 `rowClassName` → `is-break`. 머리글 파랑 · 오늘 초록 같은 직접 색은 쓰지 않습니다.
 - `Pagination`의 `page`는 **0부터** (API와 같음). 번호는 10개씩, 처음 · 이전 · 다음 · 끝 버튼, 페이지가 1개면 아무것도 그리지 않습니다.
 
-### 탭
+#### 두 목록 사이 옮기기 (TransferList)
+
+```jsx
+import TransferList from "../common/ui/TransferList";
+
+<TransferList
+  items={questions}                 // 전체
+  selectedKeys={picked}             // 고른 것 (오른쪽, 이 순서로 보임)
+  onChange={setPicked}
+  leftTitle="Java 문제"
+  rightTitle="시험 문제"
+  rightSummary={`총 ${total}점`}
+  filter={(q, text) => q.question.includes(text)}   // 있으면 왼쪽 검색 칸
+  renderItem={(q) => q.question}
+/>
+```
+
+- `ExamQuestionPicker`(Grid 둘, 행을 누르면 바로 옮겨짐)를 대신합니다. 체크한 뒤 가운데 [추가 →] · [← 빼기]로 옮기고, 두 번 누르면 바로 옮깁니다. 머리 체크박스는 그 목록 모두 체크입니다.
+- 체크박스라서 키보드(Tab · 스페이스)로도 고를 수 있습니다. 768px 이하에서는 위아래로 쌓입니다.
+- 과정 수강생 추가(`CourseStudentList`)처럼 "전체 중 일부를 고르는" 곳에도 씁니다. 고를 것이 수백 개면 왼쪽을 검색 + `Table` 체크 선택으로 바꾸는 편이 낫습니다.
+
+### 배치 · 탐색
+
+샘플 파일: `StandardLayoutCatalog.jsx`
+
+#### 화면 머리 · 브레드크럼
+
+```jsx
+<PageHeader
+  crumbs={[{ title: "시스템 관리", to: "/admin/system" }, { title: "회원 관리" }]}
+  title="회원 관리"
+  description="회원 정보 · 역할 · 잠금 상태를 관리합니다."
+  actions={<Button variant="primary" icon={icons.add}>회원 등록</Button>}
+/>
+<Breadcrumb crumbs={[...]} />   {/* 브레드크럼만 */}
+```
+
+- 기존 `common/PageContainer`(`⌂ > 대 > 중`, 22px 제목)를 대신할 모양입니다. `PageContainer`는 아직 그대로이며, 옮길 때 안쪽 머리를 `PageHeader`로 바꾸면 됩니다 (`useBreadcrumbs`의 결과를 `crumbs`로).
+- 브레드크럼은 `<ol>`이고 구분자 `›`는 CSS가 그립니다. 마지막 항목(현재 화면)은 링크 없이 `aria-current="page"`.
+- `actions`에는 화면 전체에 걸리는 동작만 둡니다 (등록 · 내보내기). 목록 위 검색 · 필터는 `toolbar`.
+
+#### 사이드 메뉴
+
+```jsx
+<SideNav groups={[{ key, title, items: [{ key, title, icon }] }]} currentKey={current} onSelect={(item) => navigate(item.path)} />
+```
+
+- 색은 `--color-sidebar-*` 토큰입니다. 실제 사이드바(`menu/SideMenu` · `UserProfile`)도 같은 토큰을 씁니다 (2026-11-16, 직접 적은 색 → 토큰). 다크 모드와 상관없이 항상 어둡고, 배경 · 현재 메뉴 색은 테마(7장 "강조색과 테마")를 따릅니다.
+- 그룹은 `<details open>`이라 제목을 누르면 접힙니다. 현재 화면 항목은 `aria-current="page"` (테마의 현재 메뉴 색 글자 + 왼쪽 선).
+- 사이드바 프로필 아래에 테마 견본(`SwatchPicker`)이 있습니다.
+
+| 비슷한 것 | 쓰는 곳 |
+| --- | --- |
+| `SideNav` | 화면 이동 (앱 왼쪽) |
+| `Tabs` | 화면 안 구역 전환 (회색 탭 바 · 세로 탭 · 폴더 탭 대신) |
+| `list-group` | 목록에서 하나 고르기 (3단 메뉴 · `CourseMain` 세로 탭 대신) |
+| `ChoiceGroup` · `Switch` | 값 고르기 |
+
+#### 탭
 
 ```jsx
 import { useId } from "react";
@@ -774,7 +955,7 @@ const idBase = useId();
 - 키보드: ← → 로 이동하며 바로 선택, Home · End.
 - 선택 상태는 부모가 가집니다. 쿼리 파라미터 탭은 `value={searchParams.get("tab")}` · `onChange={(id) => setSearchParams({ tab: id })}`처럼 연결합니다.
 
-### 패널 · 카드
+#### 패널 · 카드
 
 | 무엇 | 쓰는 곳 | 사용 |
 | --- | --- | --- |
@@ -786,12 +967,73 @@ const idBase = useId();
 
 패널과 카드의 차이: 패널은 **화면을 나누는 틀**(보통 한 화면에 1 ~ 3개, 머리 · 바닥 있음), 카드는 **같은 모양의 항목을 여러 개** 늘어놓을 때 씁니다.
 
-### 안내 상자 · 키-값 목록 · 선택 목록 · 타임라인
+#### 배치
+
+| 클래스 | 쓰는 곳 |
+| --- | --- |
+| `toolbar` | 화면 위 검색 · 필터 줄 (왼쪽 `form-row`, 오른쪽 주 동작 버튼) |
+| `layout-split` | 목록 \| 상세 (오른쪽 폭 `--layout-aside-width`, 기본 380px) |
+| `layout-3col` | 3단 (대 > 중 > 소, 역할 · 허용 · 전체) |
+| `form-stack` | 세로로 16px 간격 쌓기 (폼 밖에서도 씀) |
+
+1024px보다 좁으면 `layout-split` · `layout-3col`은 한 줄에 하나씩 쌓입니다. 샘플 "화면 예시"의 첫 예시(목록 | 상세, 회원 관리 화면)가 이 부품들만으로 만든 화면입니다.
+
+#### 팝업 창 틀
+
+| 클래스 | 쓰는 곳 | 메모 |
+| --- | --- | --- |
+| `popup-page` · `popup-header` · `popup-title` · `popup-actions` · `popup-body` | `window.open`으로 연 창 (`/popup/homework`) | 사이드바 없는 화면 틀. 머리는 위에 붙고 본문만 스크롤 |
+
+팝업 창은 차단 · 권한 조회(MainLayout 밖) · 뒤로 가기 문제가 있어서, 새로 만들 때는 먼저 큰 모달(`Modal size="lg"`)이나 같은 창의 상세 화면으로 될지 검토합니다.
+
+### 내용
+
+샘플 파일: `StandardContentCatalog.jsx`
+
+#### 시험 문제 · 보기
 
 ```jsx
-<Callout tone="warning" title="주의">이 역할을 빼면 메뉴 관리에 들어올 수 없습니다.</Callout>
-<Callout tone="info" actions={<Button size="sm" variant="primary">저장</Button>}>순서가 변경되었습니다.</Callout>
+import QuestionBlock from "../common/ui/QuestionBlock";
 
+<QuestionBlock no={1} title="기본형이 아닌 것은?" score={5} options={options} value={answer} onChange={setAnswer} />
+<QuestionBlock no={2} title="..." multiple options={options} value={answers} onChange={setAnswers} />
+<QuestionBlock no={1} title="..." options={options} value={submitted} answer={correct} showResult />
+<QuestionBlock no={3} title="출력 결과는?" code={source}>
+  <textarea className="form-control form-control-mono" aria-label="3번 답안" />
+</QuestionBlock>
+```
+
+- `Exam*Modal`(인라인 문제 블록) · `admin/test`(보기 선택 `#bbfdbb`) · 잠긴 정답 표시를 대신합니다.
+- 보기 전체가 눌리는 칸이고 진짜 `radio` · `checkbox`입니다 (방향키 · 스페이스). 고른 보기는 강조색, `showResult`면 정답 초록 · 고른 오답 빨강이고 고칠 수 없습니다.
+- `onChange`가 없으면 읽기 전용 (문제 미리 보기). 주관식 · 코드 답안은 `children`.
+- 컴포넌트 없이: `question` · `question-head` · `question-no` · `question-title` · `question-score` · `question-body` · `question-code`, 보기는 `option-list > li > label.option`(`is-answer` · `is-wrong`).
+
+#### 답안 상자
+
+| 클래스 | 쓰는 곳 | 메모 |
+| --- | --- | --- |
+| `answer-box` | 채점 · 문제 보기의 학생 답안 | `answer-box-label`(이름 + 결과 배지), `answer-box-code`(코드 답안 고정폭) |
+| `answer-box-model` | 모범 답안 · 정답 | 초록 상자 |
+| `answer-box-empty` | 미제출 | 점선 · 흐린 글자. 이때 채점 버튼은 비활성 |
+
+#### 댓글
+
+```jsx
+import Comment from "../common/ui/Comment";
+
+<ul className="comment-list">
+  <Comment author="홍길동" time="2026-11-16 14:20" body={text} actions={<Button variant="text">답글</Button>}>
+    <Comment author="김강사" badge={<Badge tone="primary">강사</Badge>} time="..." body="..." />
+  </Comment>
+</ul>
+```
+
+- `HomeworkReply` · `ReplyForm`의 인라인 댓글을 대신합니다. 120자를 넘는 글은 3줄로 접고 [더 보기]가 붙습니다.
+- 답글은 `children`으로 넣으면 왼쪽 선으로 들여 씁니다. 입력 칸은 `textarea.form-control` + 오른쪽 [등록] 버튼.
+
+#### 키-값 목록 · 선택 목록 · 타임라인
+
+```jsx
 <dl className="desc-list" style={{ "--desc-label-width": "80px" }}>
   <dt>아이디</dt><dd>user01</dd>
 </dl>
@@ -810,160 +1052,11 @@ const idBase = useId();
 
 | 무엇 | 메모 |
 | --- | --- |
-| `Callout` | tone `info` · `success` · `warning` · `danger` · `neutral`. 화면에 **머무는** 안내. 결과 알림은 토스트, 화면을 못 쓰는 상태는 `StatusBox` |
 | `desc-list` | 키-값. 라벨 폭은 `--desc-label-width`(기본 120px), 회색 상자는 `desc-list-boxed` |
 | `list-group` · `list-item` | 선택 목록 (메뉴 관리 3단 등). 선택은 `aria-current="true"`, 미사용은 `is-muted`, 오른쪽 내용은 `list-item-end` |
 | `timeline` | 상담 기록처럼 날짜순 기록 |
 
-### 배치
-
-| 클래스 | 쓰는 곳 |
-| --- | --- |
-| `toolbar` | 화면 위 검색 · 필터 줄 (왼쪽 `form-row`, 오른쪽 주 동작 버튼) |
-| `layout-split` | 목록 \| 상세 (오른쪽 폭 `--layout-aside-width`, 기본 380px) |
-| `layout-3col` | 3단 (대 > 중 > 소, 역할 · 허용 · 전체) |
-| `form-stack` | 세로로 16px 간격 쌓기 (폼 밖에서도 씀) |
-
-1024px보다 좁으면 `layout-split` · `layout-3col`은 한 줄에 하나씩 쌓입니다. 샘플 "표준 UI 2"의 마지막 예시(회원 관리 화면)가 이 부품들만으로 만든 화면입니다.
-
-### 화면 머리 · 브레드크럼
-
-```jsx
-<PageHeader
-  crumbs={[{ title: "시스템 관리", to: "/admin/system" }, { title: "회원 관리" }]}
-  title="회원 관리"
-  description="회원 정보 · 역할 · 잠금 상태를 관리합니다."
-  actions={<Button variant="primary" icon={icons.add}>회원 등록</Button>}
-/>
-<Breadcrumb crumbs={[...]} />   {/* 브레드크럼만 */}
-```
-
-- 기존 `common/PageContainer`(`⌂ > 대 > 중`, 22px 제목)를 대신할 모양입니다. `PageContainer`는 아직 그대로이며, 옮길 때 안쪽 머리를 `PageHeader`로 바꾸면 됩니다 (`useBreadcrumbs`의 결과를 `crumbs`로).
-- 브레드크럼은 `<ol>`이고 구분자 `›`는 CSS가 그립니다. 마지막 항목(현재 화면)은 링크 없이 `aria-current="page"`.
-- `actions`에는 화면 전체에 걸리는 동작만 둡니다 (등록 · 내보내기). 목록 위 검색 · 필터는 `toolbar`.
-
-### 사이드 메뉴
-
-```jsx
-<SideNav groups={[{ key, title, items: [{ key, title, icon }] }]} currentKey={current} onSelect={(item) => navigate(item.path)} />
-```
-
-- 색은 `--color-sidebar-*` 토큰입니다. 실제 사이드바(`menu/SideMenu` · `UserProfile`)도 같은 토큰을 씁니다 (2026-11-16, 직접 적은 색 → 토큰). 다크 모드와 상관없이 항상 어둡고, 배경 · 현재 메뉴 색은 테마(7장 "강조색과 테마")를 따릅니다.
-- 그룹은 `<details open>`이라 제목을 누르면 접힙니다. 현재 화면 항목은 `aria-current="page"` (테마의 현재 메뉴 색 글자 + 왼쪽 선).
-- 사이드바 프로필 아래에 테마 견본(`SwatchPicker`)이 있습니다.
-
-| 비슷한 것 | 쓰는 곳 |
-| --- | --- |
-| `SideNav` | 화면 이동 (앱 왼쪽) |
-| `Tabs` | 화면 안 구역 전환 (회색 탭 바 · 세로 탭 · 폴더 탭 대신) |
-| `list-group` | 목록에서 하나 고르기 (3단 메뉴 · `CourseMain` 세로 탭 대신) |
-| `ChoiceGroup` · `Switch` | 값 고르기 |
-
-### 선택 (pill · 세그먼트 · 켜고 끄는 버튼 · 스위치)
-
-```jsx
-<ChoiceGroup name="counsel-type" legend="상담 유형" options={[{ value: "study", label: "학습" }]} value={type} onChange={setType} />
-<ChoiceGroup multiple name="filter" legend="분류" options={options} value={filters} onChange={setFilters} />
-<ChoiceGroup variant="segmented" name="period" legend="기간" options={options} value={period} onChange={setPeriod} />
-
-<Button aria-pressed={grade === "Y"} onClick={() => setGrade("Y")}>정답</Button>
-<Switch checked={onlyMine} onChange={setOnlyMine}>내 과정만 보기</Switch>
-```
-
-| 무엇 | 쓰는 곳 | 메모 |
-| --- | --- | --- |
-| `ChoiceGroup` (pill) | 상담 유형 · 분류 필터 (`MyCounsel` `.typeGroup` 대신) | 진짜 `radio` · `checkbox`라 키보드 · 폼 제출이 그대로. `multiple`이면 `value`가 배열. `name`은 화면에서 고유하게 |
-| `ChoiceGroup variant="segmented"` | 보기 방식 · 기간 | 항상 하나가 골라진 2~4개 |
-| `btn` + `aria-pressed` | 선택형 채점 (`ExamGradeModal`) | 눌린 버튼은 강조 배경. 결과 색(정답 초록 · 오답 빨강)은 버튼이 아니라 `Badge`로 |
-| `Switch` | 바로 적용되는 설정 | 저장 버튼을 눌러야 적용되는 값은 체크박스(`form-check`) |
-
-### 날짜 · 숫자 · 기간
-
-- `date` · `time` · `number` · `search` 입력도 `.form-control` 하나로 씁니다 (`CourseAdd` · `HomeworkSubmitStatus`의 스타일 없는 입력 대신). 달력 아이콘 색은 다크 모드를 따릅니다.
-- 기간은 `input-range`로 묶습니다.
-
-```jsx
-<Field label="수강 기간" htmlFor="period-start" required error={rangeError}>
-  <div className="input-range">
-    <input id="period-start" type="date" className="form-control" aria-invalid={!!rangeError} aria-describedby="period-start-msg" />
-    <span className="input-range-sep">~</span>
-    <input type="date" className="form-control" aria-label="종료일" />
-  </div>
-</Field>
-```
-
-### 파일
-
-```jsx
-<FilePicker accept=".xlsx" onSelect={([file]) => setFile(file)} fileName={file?.name} />
-<FilePicker multiple label="첨부 추가" onSelect={addFiles} />
-<FileList files={[{ key, name, size, href }]} onRemove={removeFile} />
-```
-
-- 숨긴 `input[type=file]`(`visually-hidden`) + 버튼 모양 label입니다. Tab으로 오면 버튼에 포커스 테두리가 생깁니다. `common/input`의 `FileField` · `MyTimetable` 파일 상자를 대신합니다.
-- `onSelect`는 `File[]`을 줍니다. 같은 파일을 다시 골라도 불리도록 고른 뒤 input 값을 비웁니다.
-- `FileList`: `href`가 있으면 이름이 내려받기 링크(`MyCourseData` 첨부 칩 대신), `onRemove`가 있으면 지우기 버튼. 크기는 `size`(바이트)를 KB · MB로 보여 줍니다.
-
-### 진행 막대
-
-```jsx
-<Progress label="진도율" value={42} showValue />
-<Progress label="제출률" value={18} max={20} tone="success" showValue />
-```
-
-- `tone`: 기본(강조색) · `success`(완료) · `warning` · `danger`(마감 임박). `size="sm"`은 4px.
-- `label`은 화면에 안 보이는 이름입니다 (`role="progressbar"`). 과정 카드 안에서 쓰는 예시는 샘플 "표준 UI 3"에 있습니다.
-
-### 검색 셀렉트 (react-select)
-
-```jsx
-import SelectBox from "../common/ui/SelectBox";
-
-<Field label="담당 강사" htmlFor="tutor" required error={error}>
-  <SelectBox inputId="tutor" options={tutors} value={tutor} onChange={setTutor} isClearable aria-invalid={!!error} />
-</Field>
-<SelectBox isMulti options={students} value={picked} onChange={setPicked} />
-```
-
-- `SelectBox`는 react-select에 `selectStyles`(`common/ui/selectStyles.js`)를 넣어 둔 것입니다. 높이 36px · 테두리 · 포커스 · 다중 선택 칩이 표준 입력과 같고, 값이 모두 토큰이라 다크 모드를 따릅니다.
-- props는 react-select 그대로입니다. 추가로 `size="sm"`(30px), `aria-invalid`(오류 테두리), `inModal`(메뉴를 `body`로 띄워 모달 밖으로 잘리지 않게).
-- 이미 `Select`를 직접 쓰는 화면(`admin/course/selector/*` · `Survey`)은 `import Select` → `SelectBox`로 바꾸거나, `styles={selectStyles}`만 넣어도 됩니다. 폭을 정하던 감싸는 div는 `Field` · `form-row`로.
-- 짧은 고정 목록은 `<select className="form-control">`을 씁니다.
-
-### 시험 문제 · 보기
-
-```jsx
-import QuestionBlock from "../common/ui/QuestionBlock";
-
-<QuestionBlock no={1} title="기본형이 아닌 것은?" score={5} options={options} value={answer} onChange={setAnswer} />
-<QuestionBlock no={2} title="..." multiple options={options} value={answers} onChange={setAnswers} />
-<QuestionBlock no={1} title="..." options={options} value={submitted} answer={correct} showResult />
-<QuestionBlock no={3} title="출력 결과는?" code={source}>
-  <textarea className="form-control form-control-mono" aria-label="3번 답안" />
-</QuestionBlock>
-```
-
-- `Exam*Modal`(인라인 문제 블록) · `admin/test`(보기 선택 `#bbfdbb`) · 잠긴 정답 표시를 대신합니다.
-- 보기 전체가 눌리는 칸이고 진짜 `radio` · `checkbox`입니다 (방향키 · 스페이스). 고른 보기는 강조색, `showResult`면 정답 초록 · 고른 오답 빨강이고 고칠 수 없습니다.
-- `onChange`가 없으면 읽기 전용 (문제 미리 보기). 주관식 · 코드 답안은 `children`.
-- 컴포넌트 없이: `question` · `question-head` · `question-no` · `question-title` · `question-score` · `question-body` · `question-code`, 보기는 `option-list > li > label.option`(`is-answer` · `is-wrong`).
-
-### 댓글
-
-```jsx
-import Comment from "../common/ui/Comment";
-
-<ul className="comment-list">
-  <Comment author="홍길동" time="2026-11-16 14:20" body={text} actions={<Button variant="text">답글</Button>}>
-    <Comment author="김강사" badge={<Badge tone="primary">강사</Badge>} time="..." body="..." />
-  </Comment>
-</ul>
-```
-
-- `HomeworkReply` · `ReplyForm`의 인라인 댓글을 대신합니다. 120자를 넘는 글은 3줄로 접고 [더 보기]가 붙습니다.
-- 답글은 `children`으로 넣으면 왼쪽 선으로 들여 씁니다. 입력 칸은 `textarea.form-control` + 오른쪽 [등록] 버튼.
-
-### 인용 · 세로 키-값 · 상자 목록
+#### 인용 · 세로 키-값 · 상자 목록
 
 | 클래스 | 대신하는 것 | 메모 |
 | --- | --- | --- |
@@ -971,9 +1064,13 @@ import Comment from "../common/ui/Comment";
 | `desc-list-stacked` | `MyCounsel` 3열 정보 | 라벨 위 · 값 아래. 항목마다 `<div><dt/><dd/></div>`, 열 수 `--desc-columns`(기본 3, 768px 이하 2) |
 | `list-boxed` | `RoleUserMoveModal` 회색 상자 목록 | `<ul>`. 길면 `--list-max-height`로 높이 제한 + 스크롤 |
 
-### 화면 예시 (상세 · 대시보드 · 오류 화면)
+### 화면 예시
 
-샘플 "표준 UI 4" 맨 아래에 표준 부품만으로 만든 화면 세 가지가 있습니다. 화면을 옮길 때 그대로 따라 만들면 됩니다.
+샘플 파일: `StandardScreenCatalog.jsx`. 목록 | 상세 예시는 "배치" 설명을 참고합니다.
+
+#### 상세 · 대시보드 · 오류 화면
+
+샘플 "화면 예시"에 표준 부품만으로 만든 화면 세 가지가 있습니다. 화면을 옮길 때 그대로 따라 만들면 됩니다.
 
 | 예시 | 부품 | 대신하는 것 |
 | --- | --- | --- |
@@ -981,55 +1078,9 @@ import Comment from "../common/ui/Comment";
 | 대시보드 | `card-grid` + `StatCard` → 과정 `card` + `Progress` → `Panel flush` + `list-group` | `main/Main` 대시보드 카드 |
 | 오류 화면 | `StatusBox type="notFound" size="lg"` · `StatusBox type="error" size="lg" code="500"` | `common/error/*` 404 · 라우트 오류 상자 |
 
-### 두 목록 사이 옮기기 (TransferList)
+#### 과정 · 시험 · 과제 · 설문 (admin/course · survey)
 
-```jsx
-import TransferList from "../common/ui/TransferList";
-
-<TransferList
-  items={questions}                 // 전체
-  selectedKeys={picked}             // 고른 것 (오른쪽, 이 순서로 보임)
-  onChange={setPicked}
-  leftTitle="Java 문제"
-  rightTitle="시험 문제"
-  rightSummary={`총 ${total}점`}
-  filter={(q, text) => q.question.includes(text)}   // 있으면 왼쪽 검색 칸
-  renderItem={(q) => q.question}
-/>
-```
-
-- `ExamQuestionPicker`(Grid 둘, 행을 누르면 바로 옮겨짐)를 대신합니다. 체크한 뒤 가운데 [추가 →] · [← 빼기]로 옮기고, 두 번 누르면 바로 옮깁니다. 머리 체크박스는 그 목록 모두 체크입니다.
-- 체크박스라서 키보드(Tab · 스페이스)로도 고를 수 있습니다. 768px 이하에서는 위아래로 쌓입니다.
-- 과정 수강생 추가(`CourseStudentList`)처럼 "전체 중 일부를 고르는" 곳에도 씁니다. 고를 것이 수백 개면 왼쪽을 검색 + `Table` 체크 선택으로 바꾸는 편이 낫습니다.
-
-### 반복 입력 행 (ListEditor)
-
-```jsx
-import ListEditor from "../common/ui/ListEditor";
-import { newListItem } from "../common/ui/listEditorItem";
-
-const [options, setOptions] = useState([newListItem(), newListItem()]);
-<ListEditor label="보기" items={options} onChange={setOptions} min={2} max={8} addLabel="보기 추가" />
-// 저장할 때: options.map((o) => o.value)
-```
-
-- `Survey`의 보기 입력(입력 + 삭제 · 추가 버튼)을 대신합니다. 줄에서 Enter → 바로 아래에 새 줄, 빈 줄에서 Backspace → 그 줄을 지웁니다 (한글 입력 중 Enter는 무시).
-- 줄마다 `id`가 있어야 지우거나 끼워 넣어도 입력이 섞이지 않습니다. 새 줄은 `newListItem()`, 서버에서 받은 값은 `{ id: 서버 id, value }`로 바꿔 넣습니다.
-
-### 답안 상자 · 팝업 창 틀
-
-| 클래스 | 쓰는 곳 | 메모 |
-| --- | --- | --- |
-| `answer-box` | 채점 · 문제 보기의 학생 답안 | `answer-box-label`(이름 + 결과 배지), `answer-box-code`(코드 답안 고정폭) |
-| `answer-box-model` | 모범 답안 · 정답 | 초록 상자 |
-| `answer-box-empty` | 미제출 | 점선 · 흐린 글자. 이때 채점 버튼은 비활성 |
-| `popup-page` · `popup-header` · `popup-title` · `popup-actions` · `popup-body` | `window.open`으로 연 창 (`/popup/homework`) | 사이드바 없는 화면 틀. 머리는 위에 붙고 본문만 스크롤 |
-
-팝업 창은 차단 · 권한 조회(MainLayout 밖) · 뒤로 가기 문제가 있어서, 새로 만들 때는 먼저 큰 모달(`Modal size="lg"`)이나 같은 창의 상세 화면으로 될지 검토합니다.
-
-### 화면 예시: 과정 · 시험 · 과제 · 설문 (admin/course · survey)
-
-샘플 "표준 UI 5"에 있습니다. 통일 전 탭 "과정 · 시험 · 과제 · 설문 화면"에 같은 화면의 지금 모양이 있어 나란히 비교할 수 있습니다.
+샘플 "화면 예시"에 있습니다. 통일 전 탭 "과정 · 시험 · 과제 · 설문 화면"에 같은 화면의 지금 모양이 있어 나란히 비교할 수 있습니다.
 
 | 예시 | 부품 | 대신하는 것 | 메모 |
 | --- | --- | --- | --- |

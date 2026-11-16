@@ -24,10 +24,11 @@ import { FeedbackCatalog } from "./catalog/FeedbackCatalog.jsx";
 import { LayoutCatalog } from "./catalog/LayoutCatalog.jsx";
 import { OverlayCatalog } from "./catalog/OverlayCatalog.jsx";
 import { CourseLegacyCatalog } from "./catalog/CourseLegacyCatalog.jsx";
-import { StandardCatalog } from "./catalog/StandardCatalog.jsx";
-import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
-import { StandardNavCatalog } from "./catalog/StandardNavCatalog.jsx";
+import { StandardInputCatalog } from "./catalog/StandardInputCatalog.jsx";
+import { StandardFeedbackCatalog } from "./catalog/StandardFeedbackCatalog.jsx";
 import { StandardDataCatalog } from "./catalog/StandardDataCatalog.jsx";
+import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
+import { StandardContentCatalog } from "./catalog/StandardContentCatalog.jsx";
 import { StandardScreenCatalog } from "./catalog/StandardScreenCatalog.jsx";
 import { PartHeader } from "./catalog/CatalogParts.jsx";
 import UiButton from "../common/ui/Button.jsx";
@@ -40,14 +41,18 @@ import SwatchPicker from "../common/ui/SwatchPicker.jsx";
  * - 통일 전: 프론트엔드 화면들의 현재 모양 그대로 (비교용). 다크 모드에서도 밝게 고정.
  * 가이드: frontend/docs/ui-style-guide.md
  */
-/** 표준 UI (디자인 시스템): 새 화면은 이것을 쓴다 */
+/**
+ * 표준 UI (디자인 시스템): 새 화면은 이것을 쓴다. 부품의 역할로 묶음 (가이드 1장).
+ * 기초 → 동작 · 입력 → 표시 · 상태 → 데이터 → 배치 · 탐색 → 내용 → 화면 예시
+ */
 const STANDARD = [
-    { id: "standard-ui", title: "표준 UI (버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 모달)", Component: StandardCatalog },
-    { id: "standard-layout", title: "표준 UI (표 · 탭 · 패널 · 카드 · 안내 · 목록 · 배치)", Component: StandardLayoutCatalog },
-    { id: "standard-nav", title: "표준 UI (화면 머리 · 메뉴 · 선택 · 날짜 · 파일 · 진행 막대)", Component: StandardNavCatalog },
-    { id: "standard-data", title: "표준 UI (표 확장 · 검색 셀렉트 · 시험 문제 · 댓글 · 내용 블록 · 화면 예시)", Component: StandardDataCatalog },
-    { id: "standard-screen", title: "표준 UI (화면 예시: 과정 · 시험 · 과제 · 설문 · 팝업)", Component: StandardScreenCatalog },
-    { id: "catalog-tokens", title: "토큰 (index.css)", Component: TokenCatalog },
+    { id: "standard-foundation", label: "기초", title: "기초 (토큰 · 테마)", Component: TokenCatalog },
+    { id: "standard-input", label: "동작 · 입력", title: "동작 · 입력 (버튼 · 입력 · 셀렉트 · 선택 · 날짜 · 파일 · 반복 입력 행)", Component: StandardInputCatalog },
+    { id: "standard-feedback", label: "표시 · 상태", title: "표시 · 상태 (배지 · 안내 상자 · 상태 상자 · 진행 막대 · 토스트 · 모달)", Component: StandardFeedbackCatalog },
+    { id: "standard-data", label: "데이터", title: "데이터 (표 · 페이지 이동 · 표 확장 · 두 목록 옮기기)", Component: StandardDataCatalog },
+    { id: "standard-layout", label: "배치 · 탐색", title: "배치 · 탐색 (화면 머리 · 사이드 메뉴 · 탭 · 패널 · 카드 · 배치 · 팝업 창 틀)", Component: StandardLayoutCatalog },
+    { id: "standard-content", label: "내용", title: "내용 (시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 내용 블록)", Component: StandardContentCatalog },
+    { id: "standard-screen", label: "화면 예시", title: "화면 예시 (목록 | 상세 · 상세 · 대시보드 · 오류 · 과정 · 시험 · 과제 · 설문)", Component: StandardScreenCatalog },
 ];
 
 /** 통일 전 현재 UI (비교용) */
@@ -83,10 +88,7 @@ const PART_TABS = [
 
 /** 탭별 목차 */
 const TOC = {
-    standard: STANDARD.map(({ id, title }) => ({
-        id,
-        label: title.includes("표 · 탭") ? "표준 UI 2" : title.includes("화면 머리") ? "표준 UI 3" : title.includes("표 확장") ? "표준 UI 4" : title.includes("화면 예시: 과정") ? "표준 UI 5" : title.split(" (")[0],
-    })),
+    standard: STANDARD.map(({ id, label }) => ({ id, label })),
     legacy: CATALOG.map(({ id, title }) => ({ id, label: title.split(" (")[0] })),
     old: LEGACY.map(({ id, title }) => ({ id, label: title })),
 };

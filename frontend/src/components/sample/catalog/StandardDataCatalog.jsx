@@ -1,23 +1,41 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import styles from "./Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
 import Button from "../../common/ui/Button.jsx";
 import Badge from "../../common/ui/Badge.jsx";
-import Field from "../../common/ui/Field.jsx";
 import Table from "../../common/ui/Table.jsx";
 import Pagination from "../../common/ui/Pagination.jsx";
 import Callout from "../../common/ui/Callout.jsx";
-import Panel from "../../common/ui/Panel.jsx";
-import StatCard from "../../common/ui/StatCard.jsx";
-import StatusBox from "../../common/ui/StatusBox.jsx";
-import SelectBox from "../../common/ui/SelectBox.jsx";
-import QuestionBlock from "../../common/ui/QuestionBlock.jsx";
-import Comment from "../../common/ui/Comment.jsx";
-import PageHeader from "../../common/ui/PageHeader.jsx";
-import Progress from "../../common/ui/Progress.jsx";
-import { FileList } from "../../common/ui/FilePicker.jsx";
-import { useConfirm, useToast } from "../../common/ui/feedbackContext.js";
+import { useToast, useConfirm } from "../../common/ui/feedbackContext.js";
 import { icons } from "../../common/input/icons.js";
+import TransferList from "../../common/ui/TransferList.jsx";
+
+/*
+ * 표준 UI: 표 · 페이지 이동 · 표 확장(체크 선택 · 편집 · 순서 · 시간표) · 두 목록 사이 옮기기.
+ * 스타일 원본은 src/styles/*.css의 전역 클래스, React 컴포넌트는 common/ui/. 가이드: frontend/docs/ui-style-guide.md 8장
+ */
+
+/* ───── 예시 데이터 ───── */
+const NAMES = ["홍길동", "김철수", "이영희", "박민수", "최지우", "정해인", "강다니엘", "윤아름", "임수정", "한지민", "오세훈", "서지수"];
+
+const ROLES = ["학생", "학생", "학생", "강사", "관리자"];
+
+const MEMBERS = Array.from({ length: 47 }, (_, i) => ({
+    id: `user${String(i + 1).padStart(2, "0")}`,
+    name: NAMES[i % NAMES.length],
+    role: ROLES[i % ROLES.length],
+    score: 55 + ((i * 37) % 45),
+    joined: `2026-${String((i % 9) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
+    locked: i % 11 === 4,
+}));
+
+const PAGE_SIZE = 8;
+
+const sortRows = (rows, sort) => {
+    if (!sort) return rows;
+    const dir = sort.direction === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => (a[sort.key] > b[sort.key] ? dir : a[sort.key] < b[sort.key] ? -dir : 0));
+};
 
 /* ───── 예시 데이터 ───── */
 const STUDENTS = Array.from({ length: 23 }, (_, i) => ({
@@ -26,6 +44,7 @@ const STUDENTS = Array.from({ length: 23 }, (_, i) => ({
     course: ["풀스택 개발자", "데이터 분석"][i % 2],
     state: i % 9 === 3 ? "수료" : "수강 중",
 }));
+
 const STUDENT_PAGE = 6;
 
 const INITIAL_CODES = [
@@ -49,7 +68,9 @@ const DAYS = [
     { key: "thu", title: "목" },
     { key: "fri", title: "금" },
 ];
+
 const TODAY = "wed";
+
 const TIMETABLE = [
     { id: "p1", time: "09:00", mon: "Java", tue: "Java", wed: "Spring", thu: "Spring", fri: "SQL" },
     { id: "p2", time: "10:00", mon: "Java", tue: "Java", wed: "Spring", thu: "Spring", fri: "SQL" },
@@ -58,27 +79,156 @@ const TIMETABLE = [
     { id: "p4", time: "14:00", mon: "React", tue: "실습", wed: "실습", thu: "React", fri: "프로젝트" },
 ];
 
-const TUTORS = [
-    { value: "t1", label: "김강사 (Java)" },
-    { value: "t2", label: "이강사 (Spring)" },
-    { value: "t3", label: "박강사 (React)" },
-    { value: "t4", label: "최강사 (SQL)", isDisabled: true },
-];
-const STUDENT_OPTIONS = STUDENTS.slice(0, 8).map((s) => ({ value: s.id, label: `${s.name} (${s.id})` }));
-
-const Q1_OPTIONS = [
-    { value: "1", label: "int" },
-    { value: "2", label: "String" },
-    { value: "3", label: "boolean" },
-    { value: "4", label: "double" },
-];
-
-const LONG_COMMENT =
-    "과제 제출 형식 관련 질문입니다. 압축 파일 안에 소스 코드와 실행 결과 캡처를 같이 넣으라고 하셨는데, 캡처는 이미지 파일 하나로 합쳐야 하나요, 아니면 여러 장이어도 괜찮을까요? 그리고 README 파일은 필수인지도 궁금합니다.";
-
 let nextCodeNo = 4;
 
-export const StandardDataCatalog = () => {
+const QUESTIONS = [
+    { id: "q1", question: "Java의 기본형이 아닌 것은?", answerType: "객관식-단항", pointAlloc: 5 },
+    { id: "q2", question: "JVM이 하는 일을 설명하세요.", answerType: "주관식", pointAlloc: 10 },
+    { id: "q3", question: "String은 불변 객체이다.", answerType: "O/X", pointAlloc: 5 },
+    { id: "q4", question: "배열을 뒤집는 메서드를 작성하세요.", answerType: "코드작성", pointAlloc: 20 },
+    { id: "q5", question: "접근 제한자를 모두 고르세요.", answerType: "객관식-다항", pointAlloc: 10 },
+    { id: "q6", question: "오버로딩과 오버라이딩의 차이는?", answerType: "주관식", pointAlloc: 10 },
+    { id: "q7", question: "인터페이스는 다중 구현이 가능하다.", answerType: "O/X", pointAlloc: 5 },
+];
+
+const TableGroup = () => {
+    const toast = useToast();
+
+    /* 표 */
+    const [sort, setSort] = useState({ key: "joined", direction: "desc" });
+    const [page, setPage] = useState(0);
+    const [selectedId, setSelectedId] = useState("user01");
+    const [tableState, setTableState] = useState("data");
+    const sorted = useMemo(() => sortRows(MEMBERS, sort), [sort]);
+    const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+    const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+    const selected = MEMBERS.find((m) => m.id === selectedId);
+
+    const memberColumns = [
+        { key: "id", title: "아이디", width: "18%", mono: true, sortable: true },
+        { key: "name", title: "이름", sortable: true },
+        { key: "role", title: "역할", width: "14%" },
+        { key: "score", title: "평균", width: "12%", align: "num", sortable: true, render: (r) => `${r.score}점` },
+        {
+            key: "status",
+            title: "상태",
+            width: "14%",
+            align: "center",
+            render: (r) => (r.locked ? <Badge tone="danger">잠김</Badge> : <Badge tone="success">정상</Badge>),
+        },
+        { key: "joined", title: "가입일", width: "16%", sortable: true },
+    ];
+
+    return (
+        <>
+            <GroupTitle>표 · 페이지 이동</GroupTitle>
+            <Variants wide>
+                <Variant
+                    name="Table (정렬 · 선택 행 · 배지 칸 · 숫자 칸) + Pagination"
+                    source="styles/table.css · common/ui/Table.jsx · Pagination.jsx"
+                    note={"머리글을 누르면 정렬, 행을 누르거나 Enter로 선택 (선택 행: 강조 배경 + 왼쪽 선).\nPagination은 0부터 세는 page (API와 같음). 아래 버튼으로 빈 · 로딩 상태 확인"}
+                    block
+                    code={`
+<Table
+  ariaLabel="회원 목록"
+  columns={[
+    { key: "id", title: "아이디", width: "18%", mono: true, sortable: true },
+    { key: "name", title: "이름", sortable: true },
+    { key: "score", title: "평균", align: "num", render: (r) => \`\${r.score}점\` },
+    { key: "status", title: "상태", align: "center",
+      render: (r) => <Badge tone={r.locked ? "danger" : "success"}>...</Badge> },
+  ]}
+  rows={pageRows}
+  rowKey="id"
+  selectedKey={selectedId}
+  onRowClick={(row) => setSelectedId(row.id)}
+  sort={sort}
+  onSortChange={setSort}
+  loading={loading}
+  emptyText="검색 결과가 없습니다."
+/>
+<div className="table-footer">
+  <span>전체 {total}건</span>
+  <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+</div>`}
+                >
+                    <div className="btn-group" style={{ marginBottom: "12px" }}>
+                        {[
+                            ["data", "데이터"],
+                            ["loading", "로딩"],
+                            ["empty", "빈 목록"],
+                        ].map(([value, label]) => (
+                            <Button key={value} size="sm" variant={tableState === value ? "primary" : "secondary"} onClick={() => setTableState(value)}>
+                                {label}
+                            </Button>
+                        ))}
+                    </div>
+                    <Table
+                        ariaLabel="회원 목록"
+                        columns={memberColumns}
+                        rows={tableState === "data" ? pageRows : []}
+                        selectedKey={selectedId}
+                        onRowClick={(row) => setSelectedId(row.id)}
+                        isRowMuted={(row) => row.locked}
+                        sort={sort}
+                        onSortChange={(next) => {
+                            setSort(next);
+                            setPage(0);
+                        }}
+                        loading={tableState === "loading"}
+                        emptyText="검색 결과가 없습니다."
+                    />
+                    <div className="table-footer">
+                        <span>
+                            전체 {MEMBERS.length}건 · 선택: {selected?.name ?? "-"}
+                        </span>
+                        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+                    </div>
+                </Variant>
+                <Variant
+                    name="작업 칸 · 작은 표 · 줄무늬 · 높이 제한(머리글 고정)"
+                    source="styles/table.css"
+                    note="align: 'actions'는 오른쪽 정렬 버튼 칸. maxHeight를 주면 표 안에서 스크롤되고 머리글이 고정됨"
+                    block
+                    code={`
+<Table size="sm" striped maxHeight={240}
+  columns={[..., { key: "actions", title: "작업", align: "actions",
+    render: (r) => <><Button size="sm">수정</Button>
+                     <Button size="sm" variant="danger">삭제</Button></> }]} />`}
+                >
+                    <Table
+                        ariaLabel="역할 목록"
+                        size="sm"
+                        striped
+                        maxHeight={240}
+                        columns={[
+                            { key: "id", title: "아이디", mono: true, width: "22%" },
+                            { key: "name", title: "이름" },
+                            { key: "role", title: "역할", width: "16%" },
+                            {
+                                key: "actions",
+                                title: "작업",
+                                align: "actions",
+                                width: 170,
+                                render: (r) => (
+                                    <>
+                                        <Button size="sm" icon={icons.edit} onClick={() => toast.show(`${r.name} 수정`)}>
+                                            수정
+                                        </Button>
+                                        <Button size="sm" variant="danger" icon={icons.delete} aria-label={`${r.name} 삭제`} title="삭제" />
+                                    </>
+                                ),
+                            },
+                        ]}
+                        rows={MEMBERS.slice(0, 14)}
+                    />
+                </Variant>
+            </Variants>
+        </>
+    );
+};
+
+const TableExtGroup = () => {
     const toast = useToast();
     const confirm = useConfirm();
 
@@ -99,16 +249,19 @@ export const StandardDataCatalog = () => {
     const changedCount = codes.filter((c) => c.status).length;
     const updateCode = (id, patch) =>
         setCodes((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch, status: c.status ?? "modified" } : c)));
+
     const toggleDelete = (code) => {
         if (code.status === "added") return setCodes((prev) => prev.filter((c) => c.id !== code.id));
         setCodes((prev) =>
             prev.map((c) => (c.id === code.id ? { ...c, status: c.status === "deleted" ? c.prevStatus : "deleted", prevStatus: c.status } : c)),
         );
     };
+
     const addCode = () => {
         const id = `C${String(nextCodeNo++).padStart(2, "0")}`;
         setCodes((prev) => [...prev, { id, name: "", order: prev.length + 1, status: "added" }]);
     };
+
     const saveCodes = () => {
         if (codes.some((c) => c.status !== "deleted" && !c.name.trim())) return toast.error("이름이 빈 코드가 있습니다.");
         setCodes((prev) => prev.filter((c) => c.status !== "deleted").map((c) => ({ ...c, status: undefined, prevStatus: undefined })));
@@ -166,6 +319,7 @@ export const StandardDataCatalog = () => {
     /* 순서 바꾸기 */
     const [roles, setRoles] = useState(INITIAL_ROLES);
     const orderChanged = roles.some((r, i) => r.id !== INITIAL_ROLES[i].id);
+
     const reorder = (from, to) =>
         setRoles((prev) => {
             const next = [...prev];
@@ -174,26 +328,8 @@ export const StandardDataCatalog = () => {
             return next;
         });
 
-    /* 셀렉트 */
-    const [tutor, setTutor] = useState(null);
-    const [students, setStudents] = useState(STUDENT_OPTIONS.slice(0, 2));
-    const [tutorTouched, setTutorTouched] = useState(false);
-    const tutorError = tutorTouched && !tutor ? "강사를 선택하세요." : "";
-
-    /* 문제 */
-    const [q1, setQ1] = useState("2");
-    const [q2, setQ2] = useState(["1", "3"]);
-    const [code, setCode] = useState("");
-
-    /* 댓글 */
-    const [reply, setReply] = useState("");
-
     return (
-        <div>
-            <p className={styles.standardIntro}>
-                표 확장(체크 선택 · 편집 · 순서 · 시간표) · 검색 셀렉트 · 시험 문제 · 댓글 · 내용 블록 · 화면 예시. 스타일 원본: styles/table.css · content.css · status.css, common/ui/selectStyles.js
-            </p>
-
+        <>
             <GroupTitle>표 확장 (common/Grid 대신)</GroupTitle>
             <Variants wide>
                 <Variant
@@ -366,343 +502,51 @@ const columns = [
                     />
                 </Variant>
             </Variants>
-
-            <GroupTitle>검색 셀렉트 (react-select)</GroupTitle>
-            <Variants>
-                <Variant
-                    name="SelectBox: 하나 (검색 · 지우기)"
-                    source="common/ui/SelectBox.jsx · selectStyles.js"
-                    note={"react-select에 표준 모양(36px · 테두리 · 포커스 · 다크 모드)을 입힌 것. 강사 · 과목 선택처럼 목록이 길 때.\n짧은 목록이면 <select className=\"form-control\">. 고를 수 없는 항목은 isDisabled"}
-                    code={`
-<Field label="담당 강사" htmlFor="tutor" required error={error}>
-  <SelectBox inputId="tutor" options={tutors} value={tutor} onChange={setTutor}
-             isClearable aria-invalid={!!error} />
-</Field>`}
-                >
-                    <div style={{ width: "100%" }}>
-                        <Field label="담당 강사" htmlFor="std-tutor" required error={tutorError} hint="이름이나 과목으로 검색">
-                            <SelectBox
-                                inputId="std-tutor"
-                                options={TUTORS}
-                                value={tutor}
-                                onChange={setTutor}
-                                onBlur={() => setTutorTouched(true)}
-                                isClearable
-                                placeholder="강사 선택"
-                                aria-invalid={!!tutorError}
-                            />
-                        </Field>
-                    </div>
-                </Variant>
-                <Variant name="isMulti: 여러 개" note="고른 항목은 칩 (.tag와 같은 색). 칩의 ×로 하나씩 빼기" code={`<SelectBox isMulti options={students} value={value} onChange={setValue} />`}>
-                    <div style={{ width: "100%" }}>
-                        <Field label="수강생" htmlFor="std-students">
-                            <SelectBox inputId="std-students" isMulti options={STUDENT_OPTIONS} value={students} onChange={setStudents} placeholder="수강생 선택" />
-                        </Field>
-                    </div>
-                </Variant>
-                <Variant name="작게 · 비활성 · 불러오는 중" note={'size="sm"(30px, 표 · 툴바 안) · isDisabled · isLoading'} code={`<SelectBox size="sm" ... />\n<SelectBox isDisabled ... />\n<SelectBox isLoading ... />`}>
-                    <div className="form-stack" style={{ gap: "8px", width: "100%" }}>
-                        <SelectBox size="sm" options={TUTORS} aria-label="강사 (작게)" placeholder="작게 (30px)" />
-                        <SelectBox isDisabled options={TUTORS} value={TUTORS[0]} aria-label="강사 (비활성)" />
-                        <SelectBox isLoading options={[]} aria-label="과목 (불러오는 중)" placeholder="과목 불러오는 중" />
-                    </div>
-                </Variant>
-            </Variants>
-
-            <GroupTitle>시험 문제 · 보기</GroupTitle>
-            <Variants>
-                <Variant
-                    name="QuestionBlock: 객관식 (하나)"
-                    source="styles/content.css · common/ui/QuestionBlock.jsx"
-                    note={"Exam*Modal 문제 블록 · admin/test 보기 목록(선택 #bbfdbb)의 표준.\n보기 전체가 눌리는 칸이고 진짜 radio라 방향키로 이동"}
-                    code={`<QuestionBlock no={1} title="..." score={5} options={options} value={answer} onChange={setAnswer} />`}
-                >
-                    <div style={{ width: "100%" }}>
-                        <QuestionBlock no={1} title="Java의 기본형(primitive type)이 아닌 것은?" score={5} options={Q1_OPTIONS} value={q1} onChange={setQ1} />
-                    </div>
-                </Variant>
-                <Variant name="채점 결과 (showResult)" note="정답 초록 · 고른 오답 빨강. 고칠 수 없음 (잠긴 정답 표시)" code={`<QuestionBlock ... value={submitted} answer={correct} showResult />`}>
-                    <div style={{ width: "100%" }}>
-                        <QuestionBlock no={1} title="Java의 기본형(primitive type)이 아닌 것은?" score={5} options={Q1_OPTIONS} value="3" answer="2" showResult />
-                    </div>
-                </Variant>
-                <Variant name="여러 개 고르기 (multiple) + 문제 내용" note="body: 회색 상자 (줄바꿈 유지)" code={`<QuestionBlock multiple body="..." options={...} value={[...]} onChange={...} />`}>
-                    <div style={{ width: "100%" }}>
-                        <QuestionBlock
-                            no={2}
-                            title="HTTP 메서드 중 멱등(idempotent)인 것을 모두 고르세요."
-                            score={10}
-                            multiple
-                            body={"같은 요청을 여러 번 보내도 서버 상태가 한 번 보낸 것과 같으면 멱등입니다."}
-                            options={[
-                                { value: "1", label: "GET" },
-                                { value: "2", label: "POST" },
-                                { value: "3", label: "PUT" },
-                                { value: "4", label: "PATCH" },
-                            ]}
-                            value={q2}
-                            onChange={setQ2}
-                        />
-                    </div>
-                </Variant>
-                <Variant name="코드 문제 + 답안 칸 (children)" note="code: 고정폭 상자. 주관식 · 코드 답안은 children으로 textarea" code={`<QuestionBlock code={src}>\n  <textarea className="form-control form-control-mono" aria-label="답안" />\n</QuestionBlock>`}>
-                    <div style={{ width: "100%" }}>
-                        <QuestionBlock no={3} title="다음 코드의 출력 결과를 쓰세요." score={10} code={'int a = 7;\nint b = 2;\nSystem.out.println(a / b + a % b);'}>
-                            <textarea
-                                className="form-control form-control-mono"
-                                aria-label="3번 답안"
-                                placeholder="답안 입력"
-                                value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                style={{ minHeight: "64px" }}
-                            />
-                        </QuestionBlock>
-                    </div>
-                </Variant>
-            </Variants>
-
-            <GroupTitle>댓글</GroupTitle>
-            <Variants wide>
-                <Variant
-                    name="Comment (답글 · 긴 글 접기) + 답글 입력"
-                    source="styles/content.css · common/ui/Comment.jsx"
-                    note={"HomeworkReply · ReplyForm의 표준. 120자를 넘는 글은 3줄로 접고 [더 보기].\n답글은 왼쪽 선으로 들여 씀. 작업 버튼은 btn-text"}
-                    block
-                    code={`
-<ul className="comment-list">
-  <Comment author="홍길동" time="2026-11-16 14:20" body={text}
-           actions={<Button variant="text">답글</Button>}>
-    <Comment author="김강사" badge={<Badge tone="primary">강사</Badge>} time="..." body="..." />
-  </Comment>
-</ul>`}
-                >
-                    <ul className="comment-list">
-                        <Comment
-                            author="홍길동"
-                            time="2026-11-16 14:20"
-                            body={LONG_COMMENT}
-                            actions={
-                                <>
-                                    <Button variant="text">답글</Button>
-                                    <Button variant="text">수정</Button>
-                                    <Button variant="text">삭제</Button>
-                                </>
-                            }
-                        >
-                            <Comment author="김강사" badge={<Badge tone="primary">강사</Badge>} time="2026-11-16 15:02" body={"이미지는 여러 장이어도 괜찮습니다.\nREADME는 선택입니다."} />
-                        </Comment>
-                        <Comment author="이영희" time="2026-11-16 16:45" body="마감이 금요일 자정 맞나요?" actions={<Button variant="text">답글</Button>} />
-                    </ul>
-                    <div className="form-stack" style={{ gap: "8px", marginTop: "12px" }}>
-                        <textarea
-                            className="form-control"
-                            aria-label="댓글 입력"
-                            placeholder="댓글을 입력하세요."
-                            value={reply}
-                            onChange={(e) => setReply(e.target.value)}
-                            style={{ minHeight: "64px" }}
-                        />
-                        <div className="btn-group btn-group-end">
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                disabled={!reply.trim()}
-                                onClick={() => {
-                                    toast.success("댓글을 등록했습니다. (예시)");
-                                    setReply("");
-                                }}
-                            >
-                                등록
-                            </Button>
-                        </div>
-                    </div>
-                </Variant>
-            </Variants>
-
-            <GroupTitle>내용 블록 (인용 · 세로 키-값 · 상자 목록)</GroupTitle>
-            <Variants>
-                <Variant name="quote: 의견 · 인용" source="styles/content.css" note="MyCounsel 의견 인용 상자의 표준" code={`<blockquote className="quote"><p>내용</p><footer>김강사</footer></blockquote>`}>
-                    <blockquote className="quote" style={{ width: "100%" }}>
-                        <p>{"기초 문법은 잘 이해하고 있습니다.\n예외 처리 부분을 한 번 더 복습하면 좋겠습니다."}</p>
-                        <footer>김강사 · 2026-11-10 상담</footer>
-                    </blockquote>
-                </Variant>
-                <Variant
-                    name="desc-list-stacked: 라벨 위 · 값 아래"
-                    source="styles/content.css"
-                    note={"MyCounsel 3열 정보의 표준. 열 수는 --desc-columns (기본 3, 좁으면 2).\n항목마다 <div>로 dt + dd를 묶음"}
-                    code={`<dl className="desc-list-stacked">\n  <div><dt>과정</dt><dd>풀스택 개발자</dd></div>\n</dl>`}
-                >
-                    <dl className="desc-list-stacked" style={{ width: "100%" }}>
-                        <div>
-                            <dt>과정</dt>
-                            <dd>풀스택 개발자</dd>
-                        </div>
-                        <div>
-                            <dt>상담 일시</dt>
-                            <dd>2026-11-10 14:00</dd>
-                        </div>
-                        <div>
-                            <dt>상담자</dt>
-                            <dd>김강사</dd>
-                        </div>
-                        <div>
-                            <dt>유형</dt>
-                            <dd>
-                                <span className="tag">학습</span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>진단</dt>
-                            <dd>
-                                <Badge tone="warning">중</Badge>
-                            </dd>
-                        </div>
-                    </dl>
-                </Variant>
-                <Variant
-                    name="list-boxed: 회색 상자 글머리 목록"
-                    source="styles/content.css"
-                    note="RoleUserMoveModal 대상 목록의 표준. 길면 --list-max-height로 높이 제한 + 스크롤"
-                    code={`<ul className="list-boxed" style={{ "--list-max-height": "120px" }}>...</ul>`}
-                >
-                    <div style={{ width: "100%" }}>
-                        <p className="field-hint" style={{ marginBottom: "6px" }}>
-                            아래 5명을 &quot;강사&quot; 역할로 옮깁니다.
-                        </p>
-                        <ul className="list-boxed" style={{ "--list-max-height": "120px" }}>
-                            {STUDENTS.slice(0, 5).map((s) => (
-                                <li key={s.id}>
-                                    {s.name} ({s.id})
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                </Variant>
-            </Variants>
-
-            <GroupTitle>화면 예시: 상세 · 대시보드 · 오류 화면</GroupTitle>
-            <Variants wide>
-                <Variant
-                    name="상세 화면 (PageHeader + 메타 + 본문 + 첨부)"
-                    source="PageHeader · Panel · FileList · Comment"
-                    note="MyCourseData 상세(제목 + 작업 버튼 · 메타 12px · 본문 · 첨부 칩)를 표준 부품으로 만든 예시"
-                    block
-                >
-                    <PageHeader
-                        crumbs={[{ title: "내 강의실", to: "/sample" }, { title: "자료실", to: "/sample" }, { title: "1주차 강의자료" }]}
-                        title="1주차 강의자료"
-                        actions={
-                            <>
-                                <Button icon={icons.edit}>수정</Button>
-                                <Button variant="danger" icon={icons.delete}>
-                                    삭제
-                                </Button>
-                            </>
-                        }
-                    />
-                    <Panel
-                        title="Java 기초: 변수와 자료형"
-                        badge={<span className="tag">강의자료</span>}
-                        footer={<Button>목록으로</Button>}
-                    >
-                        <p className="card-meta" style={{ marginBottom: "12px" }}>
-                            김강사 · 2026-03-02 09:00 · 조회 42
-                        </p>
-                        <p className="card-body" style={{ whiteSpace: "pre-line", marginBottom: "16px" }}>
-                            {"1주차 수업 자료입니다.\n실습 예제는 압축 파일 안에 있습니다. 수업 전에 미리 받아 두세요."}
-                        </p>
-                        <FileList
-                            files={[
-                                { key: "a1", name: "1주차_강의자료.pdf", size: 2_411_520, href: "#" },
-                                { key: "a2", name: "실습_예제코드.zip", size: 845_312, href: "#" },
-                            ]}
-                        />
-                    </Panel>
-                </Variant>
-
-                <Variant
-                    name="대시보드 (StatCard · 진행 카드 · 패널)"
-                    source="StatCard · card-grid · Progress · Panel"
-                    note="main/Main 대시보드 카드를 표준 부품으로 만든 예시. 맨 위 수치 → 과정 진행 → 최근 목록 순"
-                    block
-                >
-                    <div className="form-stack">
-                        <div className="card-grid">
-                            <StatCard label="수강 중 과정" value={2} unit="개" />
-                            <StatCard label="평균 점수" value={86.5} unit="점" hint="지난달보다 +3.2" trend="up" />
-                            <StatCard label="출석률" value={94} unit="%" hint="지각 2회" trend="down" />
-                            <StatCard label="남은 과제" value={3} unit="건" hint="가장 빠른 마감: 금요일" />
-                        </div>
-                        <div className="card-grid">
-                            <div className="card">
-                                <div className="card-header">
-                                    <strong className="card-title">풀스택 개발자 과정</strong>
-                                    <Badge tone="primary">진행 중</Badge>
-                                </div>
-                                <p className="card-meta">2026-03-02 ~ 2026-08-28</p>
-                                <Progress label="풀스택 과정 진행" value={52} max={120} showValue />
-                            </div>
-                            <div className="card">
-                                <div className="card-header">
-                                    <strong className="card-title">데이터 분석 과정</strong>
-                                    <Badge tone="warning">마감 임박</Badge>
-                                </div>
-                                <p className="card-meta">2026-06-01 ~ 2026-11-20</p>
-                                <Progress label="데이터 분석 과정 진행" value={96} tone="warning" showValue />
-                            </div>
-                        </div>
-                        <Panel title="최근 공지" flush>
-                            <ul className="list-group">
-                                {["11월 시험 일정 안내", "실습실 사용 시간 변경", "수료 기준 안내"].map((t, i) => (
-                                    <li key={t}>
-                                        <button type="button" className="list-item">
-                                            {t}
-                                            <span className="list-item-end">2026-11-{String(14 - i * 3).padStart(2, "0")}</span>
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </Panel>
-                    </div>
-                </Variant>
-
-                <Variant
-                    name='오류 화면 (StatusBox size="lg")'
-                    source="styles/status.css · common/ui/StatusBox.jsx"
-                    note={'common/error 404 · 라우트 오류 상자의 표준. type="notFound"는 큰 "404"가 기본.\n오류는 code="500" + detail(개발 환경에서만 상세) + 다시 시도'}
-                    block
-                    code={`
-<StatusBox type="notFound" size="lg" detail="주소가 바뀌었거나 삭제된 화면입니다."
-           actions={<><Button onClick={() => navigate(-1)}>뒤로</Button><Button variant="primary">홈으로</Button></>} />
-<StatusBox type="error" size="lg" code="500" title="화면을 그리지 못했습니다." onRetry={reload} />`}
-                >
-                    <div className="layout-split" style={{ "--layout-aside-width": "1fr" }}>
-                        <StatusBox
-                            type="notFound"
-                            size="lg"
-                            detail="주소가 바뀌었거나 삭제된 화면입니다."
-                            actions={
-                                <>
-                                    <Button>뒤로</Button>
-                                    <Button variant="primary" icon={icons.home}>
-                                        홈으로
-                                    </Button>
-                                </>
-                            }
-                        />
-                        <StatusBox
-                            type="error"
-                            size="lg"
-                            code="500"
-                            title="화면을 그리지 못했습니다."
-                            detail="TypeError: Cannot read properties of undefined (개발 환경에서만 표시)"
-                            onRetry={() => toast.show("다시 불러옵니다. (예시)")}
-                        />
-                    </div>
-                </Variant>
-            </Variants>
-        </div>
+        </>
     );
 };
+
+const TransferGroup = () => {
+    /* 새 부품 단독 예시 */
+    const [demoPicked, setDemoPicked] = useState(["q2"]);
+
+    return (
+        <>
+            <GroupTitle>두 목록 사이 옮기기</GroupTitle>
+            <Variants>
+                <Variant
+                    name="TransferList: 두 목록 사이 옮기기"
+                    source="styles/content.css · common/ui/TransferList.jsx"
+                    note={"ExamQuestionPicker(Grid 둘 + 클릭으로 이동)의 표준. 체크한 뒤 가운데 버튼으로 옮기고, 두 번 누르면 바로 옮김.\n머리 체크박스는 그 목록 모두 체크. filter를 주면 왼쪽에 검색 칸"}
+                    code={`
+<TransferList
+  items={questions}
+  selectedKeys={picked}
+  onChange={setPicked}
+  renderItem={(q) => q.question}
+  filter={(q, text) => q.question.includes(text)}
+/>`}
+                >
+                    <div style={{ width: "100%" }}>
+                        <TransferList
+                            items={QUESTIONS.slice(0, 4)}
+                            selectedKeys={demoPicked}
+                            onChange={setDemoPicked}
+                            renderItem={(q) => q.question}
+                            height={150}
+                        />
+                    </div>
+                </Variant>
+            </Variants>
+        </>
+    );
+};
+
+export const StandardDataCatalog = () => (
+    <div>
+        <p className={styles.standardIntro}>표 · 페이지 이동 · 표 확장(체크 선택 · 편집 · 순서 · 시간표) · 두 목록 사이 옮기기. 스타일 원본: styles/table.css · content.css(transfer)</p>
+        <TableGroup />
+        <TableExtGroup />
+        <TransferGroup />
+    </div>
+);

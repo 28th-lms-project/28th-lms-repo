@@ -1,26 +1,56 @@
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import styles from "./Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
 import Button from "../../common/ui/Button.jsx";
 import Badge from "../../common/ui/Badge.jsx";
 import Field from "../../common/ui/Field.jsx";
-import Panel from "../../common/ui/Panel.jsx";
-import Callout from "../../common/ui/Callout.jsx";
-import Modal from "../../common/ui/Modal.jsx";
-import Switch from "../../common/ui/Switch.jsx";
-import Progress from "../../common/ui/Progress.jsx";
 import Table from "../../common/ui/Table.jsx";
+import Pagination from "../../common/ui/Pagination.jsx";
+import { Tabs, TabPanel } from "../../common/ui/Tabs.jsx";
+import Panel from "../../common/ui/Panel.jsx";
+import StatCard from "../../common/ui/StatCard.jsx";
+import Callout from "../../common/ui/Callout.jsx";
+import StatusBox from "../../common/ui/StatusBox.jsx";
+import { useToast, useConfirm } from "../../common/ui/feedbackContext.js";
+import { icons } from "../../common/input/icons.js";
 import SelectBox from "../../common/ui/SelectBox.jsx";
-import ChoiceGroup from "../../common/ui/ChoiceGroup.jsx";
 import Comment from "../../common/ui/Comment.jsx";
 import PageHeader from "../../common/ui/PageHeader.jsx";
-import FilePicker from "../../common/ui/FilePicker.jsx";
+import Progress from "../../common/ui/Progress.jsx";
+import FilePicker, { FileList } from "../../common/ui/FilePicker.jsx";
+import Modal from "../../common/ui/Modal.jsx";
+import Switch from "../../common/ui/Switch.jsx";
+import ChoiceGroup from "../../common/ui/ChoiceGroup.jsx";
 import TransferList from "../../common/ui/TransferList.jsx";
 import ListEditor from "../../common/ui/ListEditor.jsx";
 import { newListItem } from "../../common/ui/listEditorItem.js";
-import { Tabs, TabPanel } from "../../common/ui/Tabs.jsx";
-import { useConfirm, useToast } from "../../common/ui/feedbackContext.js";
-import { icons } from "../../common/input/icons.js";
+
+/*
+ * 표준 UI: 부품을 조합한 화면 예시.
+ * 스타일 원본은 src/styles/*.css의 전역 클래스, React 컴포넌트는 common/ui/. 가이드: frontend/docs/ui-style-guide.md 8장
+ */
+
+/* ───── 예시 데이터 ───── */
+const NAMES = ["홍길동", "김철수", "이영희", "박민수", "최지우", "정해인", "강다니엘", "윤아름", "임수정", "한지민", "오세훈", "서지수"];
+
+const ROLES = ["학생", "학생", "학생", "강사", "관리자"];
+
+const MEMBERS = Array.from({ length: 47 }, (_, i) => ({
+    id: `user${String(i + 1).padStart(2, "0")}`,
+    name: NAMES[i % NAMES.length],
+    role: ROLES[i % ROLES.length],
+    score: 55 + ((i * 37) % 45),
+    joined: `2026-${String((i % 9) + 1).padStart(2, "0")}-${String((i % 27) + 1).padStart(2, "0")}`,
+    locked: i % 11 === 4,
+}));
+
+const PAGE_SIZE = 8;
+
+const sortRows = (rows, sort) => {
+    if (!sort) return rows;
+    const dir = sort.direction === "asc" ? 1 : -1;
+    return [...rows].sort((a, b) => (a[sort.key] > b[sort.key] ? dir : a[sort.key] < b[sort.key] ? -dir : 0));
+};
 
 /* ───── 예시 데이터 ───── */
 const TUTORS = [
@@ -28,6 +58,7 @@ const TUTORS = [
     { value: "t2", label: "이강사 (Spring)" },
     { value: "t3", label: "박강사 (React)" },
 ];
+
 const STUDENT_OPTIONS = ["홍길동", "김철수", "이영희", "박민수", "최지우", "정해인"].map((name, i) => ({
     value: `stu0${i + 1}`,
     label: `${name} (stu0${i + 1})`,
@@ -47,16 +78,19 @@ const QUESTIONS = [
     { id: "q6", question: "오버로딩과 오버라이딩의 차이는?", answerType: "주관식", pointAlloc: 10 },
     { id: "q7", question: "인터페이스는 다중 구현이 가능하다.", answerType: "O/X", pointAlloc: 5 },
 ];
+
 const TYPE_TONE = { "객관식-단항": "primary", "객관식-다항": "primary", "O/X": "neutral", 주관식: "info", 코드작성: "warning" };
 
 const GRADE_STUDENTS = ["홍길동", "김철수", "이영희", "박민수", "최지우", "정해인", "윤아름", "임수정", "한지민", "오세훈", "서지수", "강다니엘"].map(
     (name, i) => ({ id: `s${i + 1}`, label: name }),
 );
+
 const GRADE_QUESTIONS = [
     { id: "g1", no: 1, title: "String은 불변 객체이다.", type: "O/X", point: 5, model: "O", answer: "O" },
     { id: "g2", no: 2, title: "JVM이 하는 일을 설명하세요.", type: "주관식", point: 10, model: "바이트코드를 기계어로 바꿔 실행하고 메모리(GC)를 관리한다.", answer: "자바 코드를 실행해 준다." },
     { id: "g3", no: 3, title: "배열을 뒤집는 메서드를 작성하세요.", type: "코드작성", point: 20, model: "", answer: "" },
 ];
+
 const GRADES = [
     { value: "Y", label: "정답", tone: "success" },
     { value: "H", label: "부분 정답", tone: "info" },
@@ -68,7 +102,9 @@ const HOMEWORK = {
     endDate: "2026-11-20",
     content: "정수 배열을 받아 순서를 뒤집은 새 배열을 돌려주는 메서드를 작성하세요.\n\n- 원래 배열은 바꾸지 않습니다.\n- 실행 결과 캡처를 함께 올립니다.",
 };
+
 const SUBMITTED = ["홍길동", "김철수", "이영희", "최지우"];
+
 const NOT_SUBMITTED = ["박민수", "정해인"];
 
 const SURVEY_TYPES = [
@@ -76,16 +112,256 @@ const SURVEY_TYPES = [
     { value: "checkBox", label: "여러 개 고르기" },
     { value: "text", label: "글로 답하기" },
 ];
+
 let nextSurveyNo = 3;
+
 const newSurvey = (no) => ({ id: `sv${no}`, subject: "", type: "radio", items: [newListItem(), newListItem()] });
 
-export const StandardScreenCatalog = () => {
-    const toast = useToast();
-    const confirm = useConfirm();
+const ListDetailScreen = () => {
+    /* 표 */
+    const [sort] = useState({ key: "joined", direction: "desc" }); // 이 예시는 정렬을 바꾸지 않음
+    const [page, setPage] = useState(0);
+    const [selectedId, setSelectedId] = useState("user01");
+    const sorted = useMemo(() => sortRows(MEMBERS, sort), [sort]);
+    const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+    const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+    const selected = MEMBERS.find((m) => m.id === selectedId);
 
-    /* 새 부품 단독 예시 */
-    const [demoPicked, setDemoPicked] = useState(["q2"]);
-    const [demoOptions, setDemoOptions] = useState(() => [newListItem("매우 만족"), newListItem("만족"), newListItem("보통")]);
+    const memberColumns = [
+        { key: "id", title: "아이디", width: "18%", mono: true, sortable: true },
+        { key: "name", title: "이름", sortable: true },
+        { key: "role", title: "역할", width: "14%" },
+        { key: "score", title: "평균", width: "12%", align: "num", sortable: true, render: (r) => `${r.score}점` },
+        {
+            key: "status",
+            title: "상태",
+            width: "14%",
+            align: "center",
+            render: (r) => (r.locked ? <Badge tone="danger">잠김</Badge> : <Badge tone="success">정상</Badge>),
+        },
+        { key: "joined", title: "가입일", width: "16%", sortable: true },
+    ];
+
+    return (
+        <>
+            <GroupTitle>화면 예시: 목록 | 상세</GroupTitle>
+            <Variants wide>
+                <Variant
+                    name="toolbar + layout-split (Table · Pagination | Panel)"
+                    source="styles/panel.css (MemberManagement 화면 구조)"
+                    note="화면 하나를 표준 부품만으로 만든 예. 위 표와 선택 상태를 같이 씀"
+                    block
+                    code={`
+<div className="form-stack">
+  <div className="toolbar">
+    <div className="form-row">...검색 필드 · 버튼...</div>
+    <Button variant="primary" icon={icons.add}>회원 등록</Button>
+  </div>
+  <div className="layout-split">
+    <div><Table ... /><div className="table-footer">...</div></div>
+    <Panel title={selected.name} ...>...</Panel>
+  </div>
+</div>`}
+                >
+                    <div className="form-stack">
+                        <div className="toolbar">
+                            <div className="form-row">
+                                <Field label="검색 조건" htmlFor="std-split-type">
+                                    <select id="std-split-type" className="form-control">
+                                        <option>이름</option>
+                                        <option>아이디</option>
+                                    </select>
+                                </Field>
+                                <Field label="검색어" htmlFor="std-split-q">
+                                    <input id="std-split-q" type="search" className="form-control" placeholder="검색어" />
+                                </Field>
+                                <div className="btn-group">
+                                    <Button variant="primary">검색</Button>
+                                    <Button>초기화</Button>
+                                </div>
+                            </div>
+                            <Button variant="primary" icon={icons.add}>회원 등록</Button>
+                        </div>
+                        <div className="layout-split">
+                            <div>
+                                <Table
+                                    ariaLabel="회원 목록 (조합 예시)"
+                                    size="sm"
+                                    columns={memberColumns.filter((c) => ["id", "name", "role", "status"].includes(c.key))}
+                                    rows={pageRows}
+                                    selectedKey={selectedId}
+                                    onRowClick={(row) => setSelectedId(row.id)}
+                                />
+                                <div className="table-footer">
+                                    <span>전체 {MEMBERS.length}건</span>
+                                    <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+                                </div>
+                            </div>
+                            {selected ? (
+                                <Panel
+                                    title={selected.name}
+                                    badge={selected.locked ? <Badge tone="danger">잠김</Badge> : <Badge tone="success">정상</Badge>}
+                                    footer={
+                                        <>
+                                            <Button variant="danger">{selected.locked ? "잠금 해제" : "잠금"}</Button>
+                                            <Button variant="primary">저장</Button>
+                                        </>
+                                    }
+                                >
+                                    <dl className="desc-list" style={{ "--desc-label-width": "72px" }}>
+                                        <dt>아이디</dt>
+                                        <dd className="cell-mono">{selected.id}</dd>
+                                        <dt>역할</dt>
+                                        <dd>{selected.role}</dd>
+                                        <dt>평균</dt>
+                                        <dd>{selected.score}점</dd>
+                                        <dt>가입일</dt>
+                                        <dd>{selected.joined}</dd>
+                                    </dl>
+                                </Panel>
+                            ) : (
+                                <StatusBox type="empty" title="회원을 선택하세요." />
+                            )}
+                        </div>
+                    </div>
+                </Variant>
+            </Variants>
+        </>
+    );
+};
+
+const DetailScreens = () => {
+    const toast = useToast();
+
+    return (
+        <>
+            <GroupTitle>화면 예시: 상세 · 대시보드 · 오류 화면</GroupTitle>
+            <Variants wide>
+                <Variant
+                    name="상세 화면 (PageHeader + 메타 + 본문 + 첨부)"
+                    source="PageHeader · Panel · FileList · Comment"
+                    note="MyCourseData 상세(제목 + 작업 버튼 · 메타 12px · 본문 · 첨부 칩)를 표준 부품으로 만든 예시"
+                    block
+                >
+                    <PageHeader
+                        crumbs={[{ title: "내 강의실", to: "/sample" }, { title: "자료실", to: "/sample" }, { title: "1주차 강의자료" }]}
+                        title="1주차 강의자료"
+                        actions={
+                            <>
+                                <Button icon={icons.edit}>수정</Button>
+                                <Button variant="danger" icon={icons.delete}>
+                                    삭제
+                                </Button>
+                            </>
+                        }
+                    />
+                    <Panel
+                        title="Java 기초: 변수와 자료형"
+                        badge={<span className="tag">강의자료</span>}
+                        footer={<Button>목록으로</Button>}
+                    >
+                        <p className="card-meta" style={{ marginBottom: "12px" }}>
+                            김강사 · 2026-03-02 09:00 · 조회 42
+                        </p>
+                        <p className="card-body" style={{ whiteSpace: "pre-line", marginBottom: "16px" }}>
+                            {"1주차 수업 자료입니다.\n실습 예제는 압축 파일 안에 있습니다. 수업 전에 미리 받아 두세요."}
+                        </p>
+                        <FileList
+                            files={[
+                                { key: "a1", name: "1주차_강의자료.pdf", size: 2_411_520, href: "#" },
+                                { key: "a2", name: "실습_예제코드.zip", size: 845_312, href: "#" },
+                            ]}
+                        />
+                    </Panel>
+                </Variant>
+
+                <Variant
+                    name="대시보드 (StatCard · 진행 카드 · 패널)"
+                    source="StatCard · card-grid · Progress · Panel"
+                    note="main/Main 대시보드 카드를 표준 부품으로 만든 예시. 맨 위 수치 → 과정 진행 → 최근 목록 순"
+                    block
+                >
+                    <div className="form-stack">
+                        <div className="card-grid">
+                            <StatCard label="수강 중 과정" value={2} unit="개" />
+                            <StatCard label="평균 점수" value={86.5} unit="점" hint="지난달보다 +3.2" trend="up" />
+                            <StatCard label="출석률" value={94} unit="%" hint="지각 2회" trend="down" />
+                            <StatCard label="남은 과제" value={3} unit="건" hint="가장 빠른 마감: 금요일" />
+                        </div>
+                        <div className="card-grid">
+                            <div className="card">
+                                <div className="card-header">
+                                    <strong className="card-title">풀스택 개발자 과정</strong>
+                                    <Badge tone="primary">진행 중</Badge>
+                                </div>
+                                <p className="card-meta">2026-03-02 ~ 2026-08-28</p>
+                                <Progress label="풀스택 과정 진행" value={52} max={120} showValue />
+                            </div>
+                            <div className="card">
+                                <div className="card-header">
+                                    <strong className="card-title">데이터 분석 과정</strong>
+                                    <Badge tone="warning">마감 임박</Badge>
+                                </div>
+                                <p className="card-meta">2026-06-01 ~ 2026-11-20</p>
+                                <Progress label="데이터 분석 과정 진행" value={96} tone="warning" showValue />
+                            </div>
+                        </div>
+                        <Panel title="최근 공지" flush>
+                            <ul className="list-group">
+                                {["11월 시험 일정 안내", "실습실 사용 시간 변경", "수료 기준 안내"].map((t, i) => (
+                                    <li key={t}>
+                                        <button type="button" className="list-item">
+                                            {t}
+                                            <span className="list-item-end">2026-11-{String(14 - i * 3).padStart(2, "0")}</span>
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </Panel>
+                    </div>
+                </Variant>
+
+                <Variant
+                    name='오류 화면 (StatusBox size="lg")'
+                    source="styles/status.css · common/ui/StatusBox.jsx"
+                    note={'common/error 404 · 라우트 오류 상자의 표준. type="notFound"는 큰 "404"가 기본.\n오류는 code="500" + detail(개발 환경에서만 상세) + 다시 시도'}
+                    block
+                    code={`
+<StatusBox type="notFound" size="lg" detail="주소가 바뀌었거나 삭제된 화면입니다."
+           actions={<><Button onClick={() => navigate(-1)}>뒤로</Button><Button variant="primary">홈으로</Button></>} />
+<StatusBox type="error" size="lg" code="500" title="화면을 그리지 못했습니다." onRetry={reload} />`}
+                >
+                    <div className="layout-split" style={{ "--layout-aside-width": "1fr" }}>
+                        <StatusBox
+                            type="notFound"
+                            size="lg"
+                            detail="주소가 바뀌었거나 삭제된 화면입니다."
+                            actions={
+                                <>
+                                    <Button>뒤로</Button>
+                                    <Button variant="primary" icon={icons.home}>
+                                        홈으로
+                                    </Button>
+                                </>
+                            }
+                        />
+                        <StatusBox
+                            type="error"
+                            size="lg"
+                            code="500"
+                            title="화면을 그리지 못했습니다."
+                            detail="TypeError: Cannot read properties of undefined (개발 환경에서만 표시)"
+                            onRetry={() => toast.show("다시 불러옵니다. (예시)")}
+                        />
+                    </div>
+                </Variant>
+            </Variants>
+        </>
+    );
+};
+
+const CourseScreens = () => {
+    const toast = useToast();
 
     /* 과정 등록 폼 */
     const [courseName, setCourseName] = useState("");
@@ -99,6 +375,7 @@ export const StandardScreenCatalog = () => {
     const nameError = courseSubmitted && !courseName.trim() ? "과정 명을 입력하세요." : "";
     const tutorError = courseSubmitted && !tutor ? "담당 강사를 고르세요." : "";
     const rangeError = courseStart && courseEnd && courseStart > courseEnd ? "종료일이 시작일보다 빠릅니다." : "";
+
     const submitCourse = (event) => {
         event.preventDefault();
         setCourseSubmitted(true);
@@ -114,122 +391,8 @@ export const StandardScreenCatalog = () => {
     const courseTabsId = useId();
     const [courseTab, setCourseTab] = useState("0");
 
-    /* 시험 문제 고르기 */
-    const [examTitle, setExamTitle] = useState("Java 기초 중간 평가");
-    const [examPublic, setExamPublic] = useState(false);
-    const [picked, setPicked] = useState(["q1", "q3"]);
-    const totalPoint = picked.reduce((sum, id) => sum + (QUESTIONS.find((q) => q.id === id)?.pointAlloc ?? 0), 0);
-
-    /* 채점 */
-    const gradeTabsId = useId();
-    const [gradeOpen, setGradeOpen] = useState(false);
-    const [gradeStudent, setGradeStudent] = useState("s1");
-    const [grades, setGrades] = useState({ "s1-g1": "Y" });
-    const gradedCount = Object.keys(grades).filter((k) => k.startsWith(`${gradeStudent}-`)).length;
-
-    /* 과제 상세 */
-    const [editing, setEditing] = useState(false);
-    const [hwContent, setHwContent] = useState(HOMEWORK.content);
-    const [hwEndDate, setHwEndDate] = useState(HOMEWORK.endDate);
-    const [draftContent, setDraftContent] = useState(HOMEWORK.content);
-    const [draftEndDate, setDraftEndDate] = useState(HOMEWORK.endDate);
-    const [hwSaving, setHwSaving] = useState(false);
-    const [deadlinePassed, setDeadlinePassed] = useState(false);
-    const [reply, setReply] = useState("");
-    const [pickCount, setPickCount] = useState("2");
-    const [pickedNames, setPickedNames] = useState([]);
-    const dirty = draftContent !== hwContent || draftEndDate !== hwEndDate;
-
-    const startEdit = () => {
-        setDraftContent(hwContent);
-        setDraftEndDate(hwEndDate);
-        setEditing(true);
-    };
-    const cancelEdit = async () => {
-        if (dirty && !(await confirm({ message: "고친 내용을 버리고 나갈까요?", confirmText: "버리기", danger: true }))) return;
-        setEditing(false);
-    };
-    const saveEdit = () => {
-        setHwSaving(true);
-        setTimeout(() => {
-            setHwContent(draftContent);
-            setHwEndDate(draftEndDate);
-            setHwSaving(false);
-            setEditing(false);
-            toast.success("과제를 수정했습니다. (예시)");
-        }, 800);
-    };
-    const deleteHomework = async () => {
-        if (await confirm({ title: "과제 삭제", message: `${HOMEWORK.subject}을(를) 삭제할까요?\n댓글도 함께 지워집니다.`, confirmText: "삭제", danger: true })) {
-            toast.success("삭제했습니다. (예시)");
-        }
-    };
-    const pickRandom = () => {
-        const n = Math.min(Number(pickCount) || 0, SUBMITTED.length);
-        setPickedNames([...SUBMITTED].sort(() => Math.random() - 0.5).slice(0, n));
-    };
-
-    /* 설문 편집기 */
-    const surveyGroupId = useId();
-    const [surveyGroup, setSurveyGroup] = useState("pre");
-    const [surveys, setSurveys] = useState(() => [
-        { id: "sv1", subject: "강의 내용에 얼마나 만족하나요?", type: "radio", items: [newListItem("매우 만족"), newListItem("만족"), newListItem("불만족")] },
-        { id: "sv2", subject: "더 배우고 싶은 내용을 적어 주세요.", type: "text", items: [] },
-    ]);
-    const updateSurvey = (id, patch) => setSurveys((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
-    const removeSurvey = async (survey, index) => {
-        if (await confirm({ message: `${index + 1}번 문항을 지울까요?`, confirmText: "지우기", danger: true })) {
-            setSurveys((prev) => prev.filter((s) => s.id !== survey.id));
-        }
-    };
-
     return (
-        <div>
-            <p className={styles.standardIntro}>
-                admin/course · survey 화면을 표준 부품으로 만든 예시와, 그 화면에만 필요했던 새 부품(두 목록 사이 옮기기 · 반복 입력 행). 스타일 원본: styles/content.css · nav.css(팝업)
-            </p>
-
-            <GroupTitle>새 부품</GroupTitle>
-            <Variants>
-                <Variant
-                    name="TransferList: 두 목록 사이 옮기기"
-                    source="styles/content.css · common/ui/TransferList.jsx"
-                    note={"ExamQuestionPicker(Grid 둘 + 클릭으로 이동)의 표준. 체크한 뒤 가운데 버튼으로 옮기고, 두 번 누르면 바로 옮김.\n머리 체크박스는 그 목록 모두 체크. filter를 주면 왼쪽에 검색 칸"}
-                    code={`
-<TransferList
-  items={questions}
-  selectedKeys={picked}
-  onChange={setPicked}
-  renderItem={(q) => q.question}
-  filter={(q, text) => q.question.includes(text)}
-/>`}
-                >
-                    <div style={{ width: "100%" }}>
-                        <TransferList
-                            items={QUESTIONS.slice(0, 4)}
-                            selectedKeys={demoPicked}
-                            onChange={setDemoPicked}
-                            renderItem={(q) => q.question}
-                            height={150}
-                        />
-                    </div>
-                </Variant>
-                <Variant
-                    name="ListEditor: 반복 입력 행"
-                    source="styles/content.css · common/ui/ListEditor.jsx"
-                    note={"Survey 보기 입력(입력 + 삭제 · 추가 버튼)의 표준. 줄에서 Enter → 아래에 새 줄, 빈 줄에서 Backspace → 그 줄 지움.\nmin · max로 줄 수 제한. 새 줄은 newListItem()"}
-                    code={`
-import { newListItem } from "../common/ui/listEditorItem";
-
-const [options, setOptions] = useState([newListItem(), newListItem()]);
-<ListEditor label="보기" items={options} onChange={setOptions} min={2} max={6} addLabel="보기 추가" />`}
-                >
-                    <div style={{ width: "100%" }}>
-                        <ListEditor label="보기" items={demoOptions} onChange={setDemoOptions} min={2} max={6} addLabel="보기 추가" placeholder="보기 내용" />
-                    </div>
-                </Variant>
-            </Variants>
-
+        <>
             <GroupTitle>화면 예시: 과정</GroupTitle>
             <Variants wide>
                 <Variant
@@ -345,7 +508,28 @@ const [options, setOptions] = useState([newListItem(), newListItem()]);
                     </TabPanel>
                 </Variant>
             </Variants>
+        </>
+    );
+};
 
+const ExamScreens = () => {
+    const toast = useToast();
+
+    /* 시험 문제 고르기 */
+    const [examTitle, setExamTitle] = useState("Java 기초 중간 평가");
+    const [examPublic, setExamPublic] = useState(false);
+    const [picked, setPicked] = useState(["q1", "q3"]);
+    const totalPoint = picked.reduce((sum, id) => sum + (QUESTIONS.find((q) => q.id === id)?.pointAlloc ?? 0), 0);
+
+    /* 채점 */
+    const gradeTabsId = useId();
+    const [gradeOpen, setGradeOpen] = useState(false);
+    const [gradeStudent, setGradeStudent] = useState("s1");
+    const [grades, setGrades] = useState({ "s1-g1": "Y" });
+    const gradedCount = Object.keys(grades).filter((k) => k.startsWith(`${gradeStudent}-`)).length;
+
+    return (
+        <>
             <GroupTitle>화면 예시: 시험</GroupTitle>
             <Variants wide>
                 <Variant
@@ -485,7 +669,62 @@ const [options, setOptions] = useState([newListItem(), newListItem()]);
                     </Modal>
                 </Variant>
             </Variants>
+        </>
+    );
+};
 
+const HomeworkScreen = () => {
+    const toast = useToast();
+    const confirm = useConfirm();
+
+    /* 과제 상세 */
+    const [editing, setEditing] = useState(false);
+    const [hwContent, setHwContent] = useState(HOMEWORK.content);
+    const [hwEndDate, setHwEndDate] = useState(HOMEWORK.endDate);
+    const [draftContent, setDraftContent] = useState(HOMEWORK.content);
+    const [draftEndDate, setDraftEndDate] = useState(HOMEWORK.endDate);
+    const [hwSaving, setHwSaving] = useState(false);
+    const [deadlinePassed, setDeadlinePassed] = useState(false);
+    const [reply, setReply] = useState("");
+    const [pickCount, setPickCount] = useState("2");
+    const [pickedNames, setPickedNames] = useState([]);
+    const dirty = draftContent !== hwContent || draftEndDate !== hwEndDate;
+
+    const startEdit = () => {
+        setDraftContent(hwContent);
+        setDraftEndDate(hwEndDate);
+        setEditing(true);
+    };
+
+    const cancelEdit = async () => {
+        if (dirty && !(await confirm({ message: "고친 내용을 버리고 나갈까요?", confirmText: "버리기", danger: true }))) return;
+        setEditing(false);
+    };
+
+    const saveEdit = () => {
+        setHwSaving(true);
+        setTimeout(() => {
+            setHwContent(draftContent);
+            setHwEndDate(draftEndDate);
+            setHwSaving(false);
+            setEditing(false);
+            toast.success("과제를 수정했습니다. (예시)");
+        }, 800);
+    };
+
+    const deleteHomework = async () => {
+        if (await confirm({ title: "과제 삭제", message: `${HOMEWORK.subject}을(를) 삭제할까요?\n댓글도 함께 지워집니다.`, confirmText: "삭제", danger: true })) {
+            toast.success("삭제했습니다. (예시)");
+        }
+    };
+
+    const pickRandom = () => {
+        const n = Math.min(Number(pickCount) || 0, SUBMITTED.length);
+        setPickedNames([...SUBMITTED].sort(() => Math.random() - 0.5).slice(0, n));
+    };
+
+    return (
+        <>
             <GroupTitle>화면 예시: 과제</GroupTitle>
             <Variants wide>
                 <Variant
@@ -632,7 +871,31 @@ const [options, setOptions] = useState([newListItem(), newListItem()]);
                     </div>
                 </Variant>
             </Variants>
+        </>
+    );
+};
 
+const SurveyScreen = () => {
+    const confirm = useConfirm();
+
+    /* 설문 편집기 */
+    const surveyGroupId = useId();
+    const [surveyGroup, setSurveyGroup] = useState("pre");
+
+    const [surveys, setSurveys] = useState(() => [
+        { id: "sv1", subject: "강의 내용에 얼마나 만족하나요?", type: "radio", items: [newListItem("매우 만족"), newListItem("만족"), newListItem("불만족")] },
+        { id: "sv2", subject: "더 배우고 싶은 내용을 적어 주세요.", type: "text", items: [] },
+    ]);
+    const updateSurvey = (id, patch) => setSurveys((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+
+    const removeSurvey = async (survey, index) => {
+        if (await confirm({ message: `${index + 1}번 문항을 지울까요?`, confirmText: "지우기", danger: true })) {
+            setSurveys((prev) => prev.filter((s) => s.id !== survey.id));
+        }
+    };
+
+    return (
+        <>
             <GroupTitle>화면 예시: 설문</GroupTitle>
             <Variants wide>
                 <Variant
@@ -745,49 +1008,18 @@ const [options, setOptions] = useState([newListItem(), newListItem()]);
                     </TabPanel>
                 </Variant>
             </Variants>
-
-            <GroupTitle>팝업 창 화면</GroupTitle>
-            <Variants wide>
-                <Variant
-                    name="popup-page (사이드바 없는 화면 틀)"
-                    source="styles/nav.css"
-                    note={"HomeWorkList가 window.open으로 연 /popup/homework처럼 사이드바 없이 뜨는 화면의 틀. 머리(제목 + 버튼 · 닫기)는 위에 붙고 본문만 스크롤.\n먼저 모달(Modal lg) · 같은 창의 상세 화면으로 될지 검토 (팝업은 차단 · 권한 조회 · 뒤로 가기 문제가 있음)"}
-                    block
-                    code={`
-<div className="popup-page">
-  <header className="popup-header">
-    <h1 className="popup-title">1주차 과제</h1>
-    <div className="popup-actions"><Button onClick={() => window.close()}>닫기</Button></div>
-  </header>
-  <main className="popup-body">…</main>
-</div>`}
-                >
-                    <div style={{ height: "260px", overflow: "auto", border: "1px solid var(--color-border)", borderRadius: "var(--radius-lg)" }}>
-                        <div className="popup-page" style={{ minHeight: "100%" }}>
-                            <header className="popup-header">
-                                <h1 className="popup-title">{HOMEWORK.subject}</h1>
-                                <div className="popup-actions">
-                                    <Button size="sm" icon={icons.refresh} aria-label="새로고침" />
-                                    <Button size="sm" onClick={() => toast.show("팝업이면 window.close()로 닫습니다. (예시)")}>
-                                        닫기
-                                    </Button>
-                                </div>
-                            </header>
-                            <main className="popup-body">
-                                <Table
-                                    ariaLabel="제출 현황 (팝업 예시)"
-                                    size="sm"
-                                    columns={[
-                                        { key: "name", title: "이름" },
-                                        { key: "state", title: "제출", width: "30%", align: "center", render: (r) => <Badge tone={r.done ? "success" : "neutral"}>{r.done ? "제출" : "미제출"}</Badge> },
-                                    ]}
-                                    rows={[...SUBMITTED, ...NOT_SUBMITTED].map((name) => ({ id: name, name, done: SUBMITTED.includes(name) }))}
-                                />
-                            </main>
-                        </div>
-                    </div>
-                </Variant>
-            </Variants>
-        </div>
+        </>
     );
 };
+
+export const StandardScreenCatalog = () => (
+    <div>
+        <p className={styles.standardIntro}>부품을 조합한 화면 예시. 기존 화면(admin/course · survey 등)을 표준 부품으로 바꾸면 이런 모양이 됩니다.</p>
+        <ListDetailScreen />
+        <DetailScreens />
+        <CourseScreens />
+        <ExamScreens />
+        <HomeworkScreen />
+        <SurveyScreen />
+    </div>
+);

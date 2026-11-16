@@ -9,7 +9,7 @@ import { icons } from "../input/icons.js";
 
 /*
  * admin/course · survey 화면의 현재 모양 (비교용). 원본의 인라인 스타일 · 클래스를 그대로 옮김.
- * 표준으로 만든 모양은 표준 탭 "표준 UI 5"에 있다.
+ * 표준으로 만든 모양은 표준 탭 "화면 예시"에 있다.
  */
 
 const QUESTION_HEADER = [
@@ -55,7 +55,7 @@ export const CourseLegacyCatalog = () => {
     return (
         <div>
             <p className={styles.note}>
-                admin/course · survey 화면의 지금 모양입니다. 표준으로 바꾼 모양은 표준 탭 &quot;표준 UI 5&quot;에 있습니다.
+                admin/course · survey 화면의 지금 모양입니다. 표준으로 바꾼 모양은 표준 탭 &quot;화면 예시&quot;에 있습니다.
             </p>
             <Variants wide>
                 <Variant
