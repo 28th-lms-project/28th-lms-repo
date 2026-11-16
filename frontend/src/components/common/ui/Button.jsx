@@ -19,6 +19,7 @@ const VARIANT_CLASS = {
  * @param {boolean} [props.block]        전체 폭
  * @param {string}  [props.icon]         icons.js의 path (예: icons.add)
  * @param {boolean} [props.loading]      true면 돌아가는 아이콘 + 비활성 (문구는 "저장 중..."처럼 직접 바꿈)
+ * icon이 icons.refresh(새로고침 · 다시 시도)면 올렸을 때 아이콘이 한 바퀴 돈다 (btn-icon-rotate, 다른 아이콘도 className으로 붙일 수 있음).
  * 아이콘만 있는 버튼은 aria-label을 꼭 넘긴다. 나머지 props(onClick, type, aria-*, title …)는 <button>에 그대로 전달.
  */
 export default function Button({
@@ -40,6 +41,7 @@ export default function Button({
     size === "sm" ? "btn-sm" : "",
     block ? "btn-block" : "",
     iconOnly ? "btn-icon" : "",
+    !loading && icon === icons.refresh ? "btn-icon-rotate" : "",
     className,
   ]
     .filter(Boolean)
