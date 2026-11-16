@@ -25,6 +25,9 @@ import TransferList from "../../common/ui/TransferList.jsx";
 import ListEditor from "../../common/ui/ListEditor.jsx";
 import QuestionBlock from "../../common/ui/QuestionBlock.jsx";
 import { newListItem } from "../../common/ui/listEditorItem.js";
+import { ScreenSystemCatalog } from "./ScreenSystemCatalog.jsx";
+import { ScreenStudyCatalog } from "./ScreenStudyCatalog.jsx";
+import { ScreenMyCatalog } from "./ScreenMyCatalog.jsx";
 
 /*
  * 표준 UI: 부품을 조합한 화면 예시.
@@ -1299,13 +1302,16 @@ const SurveyScreen = () => {
 
 export const StandardScreenCatalog = () => (
     <div>
-        <p className={styles.standardIntro}>부품을 조합한 화면 예시. 기존 화면(admin/course · test · survey 등)을 표준 부품으로 바꾸면 이런 모양이 됩니다.</p>
+        <p className={styles.standardIntro}>부품을 조합한 화면 예시. 기존 화면(admin/course · test · survey · system, my, login 등)을 표준 부품으로 바꾸면 이런 모양이 됩니다.</p>
         <ListDetailScreen />
         <DetailScreens />
         <CourseScreens />
         <ExamScreens />
         <QuestionBankScreen />
+        <ScreenStudyCatalog />
         <HomeworkScreen />
         <SurveyScreen />
+        <ScreenSystemCatalog />
+        <ScreenMyCatalog />
     </div>
 );

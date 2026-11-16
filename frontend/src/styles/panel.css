@@ -5,7 +5,7 @@
  *   card · card-grid · card-clickable · card-accent / stat-card                          React: common/ui/StatCard.jsx
  *   callout + callout-{info · success · warning · danger}
  *   desc-list (dl 키-값) · list-group + list-item · timeline
- *   toolbar · layout-split · layout-3col
+ *   toolbar · layout-split (layout-split-start: 좁은 쪽이 왼쪽) · layout-3col
  */
 
 /* ───── 패널: 화면의 주요 구역 ───── */
@@ -412,6 +412,11 @@ button.list-item:focus-visible {
   align-items: start;
 }
 
+/* 좁은 목록이 왼쪽 (역할 목록 | 내용처럼 고르는 쪽이 먼저일 때) */
+.layout-split-start {
+  grid-template-columns: var(--layout-aside-width, 240px) minmax(0, 1fr);
+}
+
 /* 3단 (대 > 중 > 소, 역할 · 허용 · 전체) */
 .layout-3col {
   display: grid;
@@ -422,6 +427,7 @@ button.list-item:focus-visible {
 
 @media screen and (max-width: 1024px) {
   .layout-split,
+  .layout-split-start,
   .layout-3col {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -52,7 +52,7 @@ const STANDARD = [
     { id: "standard-data", label: "데이터", title: "데이터 (표 · 페이지 이동 · 표 확장 · 두 목록 옮기기)", Component: StandardDataCatalog },
     { id: "standard-layout", label: "배치 · 탐색", title: "배치 · 탐색 (화면 머리 · 사이드 메뉴 · 탭 · 패널 · 카드 · 배치 · 팝업 창 틀)", Component: StandardLayoutCatalog },
     { id: "standard-content", label: "내용", title: "내용 (시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 내용 블록)", Component: StandardContentCatalog },
-    { id: "standard-screen", label: "화면 예시", title: "화면 예시 (목록 | 상세 · 상세 · 대시보드 · 오류 · 과정 · 시험 · 문제 은행 · 과제 · 설문)", Component: StandardScreenCatalog },
+    { id: "standard-screen", label: "화면 예시", title: "화면 예시 (목록 | 상세 · 상세 · 대시보드 · 오류 · 과정 · 시험 · 문제 은행 · 강의실 · 과제 · 설문 · 시스템 관리 · 로그인 · 상담)", Component: StandardScreenCatalog },
 ];
 
 /** 통일 전 현재 UI (비교용) */

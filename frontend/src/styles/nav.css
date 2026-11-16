@@ -17,6 +17,9 @@
  *     side-nav-group (<details open>) > side-nav-group-title (<summary>) + side-nav-list
  *     side-nav-item (a · button), 현재 화면은 aria-current="page"
  *
+ *   auth-page > auth-card: 로그인 · 비밀번호 다시 확인처럼 한 가지만 하는 가운데 카드
+ *     auth-title · auth-description · (form-stack) · auth-footer
+ *
  * React: common/ui/PageHeader.jsx · common/ui/SideNav.jsx
  */
 
@@ -253,4 +256,48 @@
 .popup-body {
   flex: 1;
   padding: 20px;
+}
+
+/* ───── 가운데 카드 (로그인 · 비밀번호 다시 확인) ───── */
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 40px 16px;
+  background-color: var(--color-bg-page);
+}
+
+.auth-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 380px;
+  padding: 32px 28px;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.auth-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.auth-description {
+  margin: -12px 0 0;
+  font-size: var(--font-size-sm);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.auth-footer {
+  font-size: var(--font-size-sm);
+  text-align: center;
+  color: var(--color-text-muted);
 }

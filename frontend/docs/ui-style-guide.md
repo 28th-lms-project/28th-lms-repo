@@ -37,7 +37,7 @@
 | **데이터** | 표 · 페이지 이동 · 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · 두 목록 사이 옮기기 | `StandardDataCatalog.jsx` |
 | **배치 · 탐색** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 3단 배치 · 팝업 창 틀 | `StandardLayoutCatalog.jsx` |
 | **내용** | 시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 인용 · 세로 키-값 · 상자 목록 | `StandardContentCatalog.jsx` |
-| **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 문제 은행 문제 추가 · 수정 · 과제 상세(보기 ↔ 수정) · 설문 편집기 | `StandardScreenCatalog.jsx` |
+| **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 문제 은행 문제 추가 · 수정 · 문제 은행 목록 · 시험 응시 · 시험지 보기 · 주간 접속 기록 · 날짜별 시간표 · 목록 위 추가 폼 · 댓글 수정 · 권한 코드 · 역할별 권한 · 공통 코드 · 로그인 · 비밀번호 다시 확인 · 상담 기록 · 과제 상세(보기 ↔ 수정) · 설문 편집기 | `StandardScreenCatalog.jsx` + `ScreenStudyCatalog.jsx` · `ScreenSystemCatalog.jsx` · `ScreenMyCatalog.jsx` |
 | 토큰 (통일 전 값) | **통일 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
@@ -325,11 +325,61 @@
    - ~~5차: 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · react-select 테마 · 시험 문제 · 댓글 · 인용 · 세로 키-값 · 상자 목록 · 오류 화면 + 화면 예시(상세 · 대시보드)~~ → 완료 (8장)
    - ~~6차 (admin/course · survey): 두 목록 사이 옮기기 · 반복 입력 행 · 답안 상자 · 팝업 창 틀 + 화면 예시 7개(과정 등록 · 과정 상세 · 문제 고르기 · 채점 · 과제 상세 · 설문 편집기 · 팝업), 통일 전 탭에 같은 화면의 지금 모양~~ → 완료 (8장)
    - ~~표준 탭 재구성: 만든 차수(표준 UI 1~5)로 나뉘던 섹션을 역할별 일곱 묶음(기초 · 동작 · 입력 · 표시 · 상태 · 데이터 · 배치 · 탐색 · 내용 · 화면 예시)으로~~ → 완료 (1장 · 8장)
+   - ~~8차 (화면 전체 점검): 화면 파일마다 표준 대응을 분류(아래 "화면별 표준 대응")하고, 조합 규칙이 필요하거나 부품이 모자란 화면 13개의 예시와 부품(문항 번호 이동 · 가운데 카드 · 강조 행 · 왼쪽 좁은 배치)을 만듦~~ → 완료 (8장)
    - 표준을 만들지 않기로 한 것: TextField 떠 있는 라벨(라벨은 위), 팝업 창(`window.open`, UI 아님), 기존 샘플 Chart · Poll(샘플 밖에서 안 씀. 차트를 쓰게 되면 그때 색을 토큰으로), 리치 텍스트 `Editor`(외부 에디터, 옮길 때 테두리 · 높이만 맞춤)
    - 다크 모드: 토큰 · 표준 UI는 대응 완료, 샘플 페이지에서만 켬 (9장)
    - 강조색 · 테마 분리: 강조색(primary)은 샘플 페이지 후보 미리 보기(팀 결정용), 테마(brand)는 사이드바 색으로 앱 전체 (7장 "강조색과 테마")
 3. 화면들을 표준으로 옮기면서 카탈로그의 해당 `Variant`를 지웁니다. 카탈로그가 비면 샘플 페이지가 곧 디자인 시스템 페이지가 됩니다.
 4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`으로 옮기고, `Modal`은 `common/`으로 이동합니다.
+
+### 화면별 표준 대응 (2026-11-16)
+
+화면 파일(`components`의 `sample` · `common` 밖)마다 표준으로 옮길 때 무엇을 보면 되는지 분류했습니다. 새 화면을 만들거나 옮길 때 이 표에서 찾고, 표에 없는 화면이 생기면 같은 기준으로 한 줄 추가합니다.
+
+| 분류 | 뜻 | 할 일 |
+| --- | --- | --- |
+| **예시** | 샘플 "화면 예시"에 같은 화면이 있음 | 그 예시를 따라 옮김 |
+| **부품** | 부품만 조합하면 됨 (새로 정할 것 없음) | 메모의 부품을 씀 |
+| **예시 (8차)** | 조합할 때 정할 것이 있어 이번에 예시를 만듦 | 그 예시를 따라 옮김 |
+| **부품 + 예시 (8차)** | 표준 부품이 모자라 부품도 새로 만듦 | 새 부품 + 예시 |
+| 보류 · 제외 | 이유 참고 | - |
+
+| 화면 | 분류 | 메모 |
+| --- | --- | --- |
+| `admin/course/add/CourseAdd` · `list/CourseItem` | 예시 | 과정 등록 · 과정 상세 |
+| `admin/course/CourseMain` | 부품 | 과정 목록: `list-group`(현재 과정 `aria-current`) + 머리 [추가] |
+| `CourseTableComponent/ExamPage` · `ExamQuestionPicker` | 예시 | 시험 문제 고르기 |
+| `ExamGradeModal` | 예시 | 채점 |
+| `ExamTakeModal` · `ExamQuestionViewModal` | 부품 + 예시 (8차) | 시험 응시 · 시험지 보기. 새 부품 `question-nav` |
+| `ExamSetTable` · `my/course/MyTest` | 부품 | `Table`. 역할마다 다른 칸은 `columns` 배열을 걸러서 (칸을 숨기는 CSS 아님), 공개 Y/N은 `Badge` + 바꿀 때 `useConfirm` |
+| `HomeworkItem` · `HomeworkSubmitStatus` · `HomeworkDetails` | 예시 | 과제 상세 |
+| `HomeWorkList` · `HomeworkForm` · `CourseStudentList` | 예시 (8차) | 목록 위 추가 폼 |
+| `HomeworkReply` · `ReplyForm` | 예시 (8차) | 댓글 같은 자리 수정 · 권한 · 마감 잠금. 주소 자동 링크는 로직이라 표준 밖 |
+| `StudentConnected` | 예시 (8차) | 주간 접속 기록 |
+| `ConfirmModal` | 부품 | `useConfirm` |
+| `admin/course/selector/*` | 부품 | `SelectBox` (하나 · 여러 개) |
+| `admin/survey/survey/Survey` | 예시 | 설문 편집기 |
+| `admin/test/test/AddTest` · `UpdateTest` | 예시 | 문제 은행 문제 추가 · 수정 |
+| `admin/test/test/Test` | 예시 (8차) | 문제 은행 목록 (문항마다 펼치기 · 출제 통계) |
+| `admin/system/member/*` | 예시 | 목록 \| 상세. 등록 · 수정 · 비밀번호 초기화는 폼 모달, 역할 바꾸기는 `desc-list` 안 select + [역할 변경] + `useConfirm` |
+| `admin/system/role/Role` | 부품 | `input-group`(접두어) + `Table` 순서 바꾸기(잠긴 행) · 칸 편집 + "순서가 변경되었습니다" `Callout` |
+| `role/RoleUserMoveModal` | 부품 | `Modal` + `list-boxed` + `SelectBox` + `Callout`. 결과(일부만 성공 포함)는 토스트 |
+| `admin/system/access/Access` | 예시 (8차) | 권한 코드 관리 (연쇄 선택 · 같은 폼으로 추가 · 수정) |
+| `access-role/AccessRole` | 예시 (8차) | 역할별 권한 (저장 전 변경 표시). 새 클래스 `layout-split-start` |
+| `admin/system/code/*` | 예시 (8차) | 공통 코드 (패널 하나가 보기 · 수정 · 추가) |
+| `admin/system/menu/Menu` · `MenuColumn` | 부품 · 보류 1 | 3단 배치 + 상세 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. **보류**: 목록(`list-group`)을 끌어 순서 바꾸기는 표준 없음 → 필요하면 순서 칸을 `Table onReorder`로 |
+| `my/course/MyCourse` | 부품 | `Tabs` (고른 탭은 주소 `?tab=`에) |
+| `my/course/MyCourseData` | 예시 · 제외 1 | 목록 \| 상세 · 상세 화면. **제외**: 리치 텍스트 `Editor` (6장 "표준을 만들지 않기로 한 것") |
+| `my/course/MyTimetable` | 부품 + 예시 (8차) | 날짜별 시간표 (새 클래스 `tr.is-highlight`). 하루 보기는 `Table bordered`, 업로드는 `FilePicker` |
+| `my/course/MyInterview` | 예시 (8차) | 목록 위 추가 폼 (`datetime-local`) |
+| `my/course/MyCounsel` | 예시 (8차) | 상담 기록 (기본 정보 먼저 · 구역별 수정 · 수준 배지 · 고칠 수 없는 기록) |
+| `my/info/MyInfo` · `MyPassword` · `login/Login` | 부품 + 예시 (8차) | 로그인 · 비밀번호 다시 확인. 새 부품 `auth-page` · `auth-card` |
+| `my/info/MyInfoForm` · `MyPasswordForm` | 부품 | `Field` + `form-stack` + `desc-list`(읽기 전용 값). 성공은 토스트, 비밀번호 규칙(8~20자)은 처음부터 `hint`로 |
+| `main/Main` | 예시 | 대시보드 |
+| `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 · 보류 1 | 사이드바 자체가 기준 (토큰 · 테마 완료). **보류**: 접힌 사이드바(아이콘만)는 `SideNav` 표준에 없음 |
+| `menu/MenuGuard` · `login/IsLogin` | 부품 | 로직. 화면은 `StatusBox` (loading · error · denied) |
+| `Section.jsx` | 부품 | `Panel` |
+| `my/course/MyCourseList` · `MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가 |
 
 ---
 
@@ -680,6 +730,10 @@ const [options, setOptions] = useState([newListItem(), newListItem()]);
 - tone `info` · `success` · `warning` · `danger` · `neutral`. 화면에 **머무는** 안내.
 - 결과 알림은 토스트, 화면을 못 쓰는 상태는 `StatusBox`.
 
+#### 수준 배지 (상 · 중 · 하)
+
+역량 진단처럼 단계가 있는 값은 `Badge` tone을 고정합니다: 상 `success` · 중 `info` · 하 `warning` · 미진단 기본(회색). 위험 빨강(`danger`)은 수준에 쓰지 않습니다 (오류 · 삭제와 헷갈림).
+
 #### 상태 상자
 
 | `type` | 기본 문구 | 아이콘 | 스크린 리더 |
@@ -872,6 +926,14 @@ import Pagination from "../common/ui/Pagination";
 - 시간표: `bordered` + 오늘 열 `className: "col-highlight"` + 쉬는 시간 `rowClassName` → `is-break`. 머리글 파랑 · 오늘 초록 같은 직접 색은 쓰지 않습니다.
 - `Pagination`의 `page`는 **0부터** (API와 같음). 번호는 10개씩, 처음 · 이전 · 다음 · 끝 버튼, 페이지가 1개면 아무것도 그리지 않습니다.
 
+#### 한 묶음이 여러 줄인 표
+
+날짜마다 과목 줄 · 내용 줄처럼 한 묶음이 두 줄 이상이면 `Table` 컴포넌트 대신 같은 클래스의 `<table className="table table-bordered">`를 씁니다.
+
+- 묶음마다 `<tbody>`, 묶음 머리는 `<th scope="rowgroup" rowSpan={줄 수}>`.
+- 강조(오늘)는 묶음의 모든 `tr`에 `is-highlight` (열 강조 `col-highlight`와 같은 색).
+- 예시: 샘플 "화면 예시" → 날짜별 시간표.
+
 #### 두 목록 사이 옮기기 (TransferList)
 
 ```jsx
@@ -977,7 +1039,27 @@ const idBase = useId();
 | `layout-3col` | 3단 (대 > 중 > 소, 역할 · 허용 · 전체) |
 | `form-stack` | 세로로 16px 간격 쌓기 (폼 밖에서도 씀) |
 
+`layout-split layout-split-start`: 좁은 쪽이 **왼쪽** (역할 목록 | 내용처럼 고르는 쪽이 먼저일 때). 폭은 같은 `--layout-aside-width`(기본 240px).
+
 1024px보다 좁으면 `layout-split` · `layout-3col`은 한 줄에 하나씩 쌓입니다. 샘플 "화면 예시"의 첫 예시(목록 | 상세, 회원 관리 화면)가 이 부품들만으로 만든 화면입니다.
+
+#### 가운데 카드 (로그인 · 비밀번호 다시 확인)
+
+```jsx
+<div className="auth-page">
+  <form className="auth-card" onSubmit={submit}>
+    <h2 className="auth-title">LMS 로그인</h2>
+    <p className="auth-description">설명 (선택)</p>
+    {error && <Callout tone="danger" icon={null}>{error}</Callout>}
+    <div className="form-stack">{/* Field들 */}</div>
+    <Button type="submit" variant="primary" block loading={loading}>로그인</Button>
+    <p className="auth-footer">도움말 · 돌아가기</p>
+  </form>
+</div>
+```
+
+- 사이드바 없는 한 가지 일만 하는 화면 (로그인, 개인 정보 앞 비밀번호 다시 확인).
+- 오류는 카드 위 `Callout` 하나 (어느 칸이 틀렸는지 알려 주지 않음). 틀리면 비밀번호만 비움.
 
 #### 팝업 창 틀
 
@@ -1008,6 +1090,19 @@ import QuestionBlock from "../common/ui/QuestionBlock";
 - 보기 전체가 눌리는 칸이고 진짜 `radio` · `checkbox`입니다 (방향키 · 스페이스). 고른 보기는 강조색, `showResult`면 정답 초록 · 고른 오답 빨강이고 고칠 수 없습니다.
 - `onChange`가 없으면 읽기 전용 (문제 미리 보기). 주관식 · 코드 답안은 `children`.
 - 컴포넌트 없이: `question` · `question-head` · `question-no` · `question-title` · `question-score` · `question-body` · `question-code`, 보기는 `option-list > li > label.option`(`is-answer` · `is-wrong`).
+
+#### 문항 번호 이동 (시험 응시)
+
+```jsx
+<nav aria-label="문항 이동">
+  <ol className="question-nav">
+    <li><button type="button" className="question-nav-item is-done" aria-current="step" aria-label="1번 (답함)">1</button></li>
+  </ol>
+</nav>
+```
+
+- 답한 문항은 `is-done`(강조색 옅은 배경), 지금 문항은 `aria-current="step"`(테두리). 누르면 그 문항으로 스크롤.
+- 바닥에 "답함 n / N" + `Progress size="sm"`.
 
 #### 답안 상자
 
@@ -1100,6 +1195,35 @@ import Comment from "../common/ui/Comment";
 - [저장]은 바뀐 것이 있을 때만 켜지고, 저장 중에는 `loading`("저장 중...")입니다.
 - 고친 채로 [취소]하면 `useConfirm`으로 한 번 묻습니다. 바뀐 것이 없으면 바로 돌아갑니다.
 - 수정할 수 없는 상태(마감 후 등)에서는 [수정] 버튼을 숨기고 이유를 안내합니다.
+
+#### 강의실 · 시스템 관리 · 로그인 · 상담 (8차)
+
+샘플 "화면 예시"에 있습니다. 6장 "화면별 표준 대응"에서 **예시 (8차)** · **부품 + 예시 (8차)**인 화면입니다.
+
+| 예시 | 부품 | 대신하는 것 | 정한 것 |
+| --- | --- | --- | --- |
+| 시험 응시 · 시험지 보기 | `Modal size="lg" dismissible={false}` + `question-nav` + `QuestionBlock` + `Progress` · `answer-box` | `ExamTakeModal` · `ExamQuestionViewModal` | 응시는 [제출]로만 닫힘. 안 푼 문항 수를 알려 주고 확인. 유형별 답 칸 (주관식 textarea · 코드 고정폭) |
+| 문제 은행 목록 | `Tabs`(건수) + `card` + `Badge`(유형) + `card-meta` + `QuestionBlock showResult` | `Test` | 통계는 이름 붙인 한 줄 글자 (목록 카드 안에 `StatCard` 안 씀). 펼침은 문항마다 따로 (`aria-expanded`) |
+| 주간 접속 기록 | `toolbar`(지난주 · 기간 · 다음 주 · 이번 주) + `Table bordered` + `col-highlight` + `Badge` | `StudentConnected` | 칸은 첫 접속 시각, 없으면 '결석', 기준 넘으면 '지각', 안 온 날은 흐린 '-' |
+| 날짜별 시간표 | `table.table-bordered`(rowSpan) + `tr.is-highlight` + `Panel`(접기) | `MyTimetable` | 위 "한 묶음이 여러 줄인 표" |
+| 목록 위 추가 폼 | `toolbar` + `Panel`(form) + `Field` + `SelectBox` + `datetime-local` + `Table` | `MyInterview` · `HomeWorkList` · `CourseStudentList` | 아래 "목록 위 추가 폼 vs 모달" |
+| 댓글 수정 | `Comment`(actions · badge) + 같은 자리 textarea + `Callout`(마감) | `HomeworkReply` | 아래 "할 수 없는 동작" |
+| 권한 코드 관리 | `Panel`(form) + 연쇄 select(`input-range`) + `Table`(선택 행) | `Access` | 연쇄 선택: 위를 고르기 전 아래 비활성 + 안내, 위를 바꾸면 아래 비움. 표의 [수정] → 위 폼이 수정 모드(제목 · 배지 · 버튼 문구), 못 바꾸는 값은 잠금 + 이유 |
+| 역할별 권한 | `layout-split-start` + `list-group` + 연쇄 select(필터) + `TransferList` + `Callout`(actions) | `AccessRole` | 옮긴 것은 바로 저장하지 않고 "저장하지 않은 변경 +n · -n" + [되돌리기] [저장]. 변경이 있는데 다른 역할을 고르면 확인 |
+| 공통 코드 | `layout-3col` + `list-group` + `Table`(선택 · 흐린 행) + `Panel` + `desc-list` · `Field` · `Switch` | `Code` · `AddCode` · `UpdateCode` · `CodeForm` | 상세 패널 하나가 보기 · 수정 · 추가. [저장]은 바뀐 게 있을 때만. 추가한 뒤 코드(ID)는 못 바꿈 |
+| 로그인 · 비밀번호 다시 확인 | `auth-page` + `auth-card` + `Field` + `Callout` + `Button block` | `Login` · `MyPassword` | 위 "가운데 카드" |
+| 상담 기록 | `Callout`(actions) + `desc-list` + `Panel`(actions) + `card-grid` + `Badge`(수준) + `ChoiceGroup` + `Field count` + `timeline` + `StatCard` | `MyCounsel` | 기본 정보가 없으면 위에 안내 + 아래 구역 잠금(버튼 비활성 + 이유). 구역마다 [수정] → [취소] [저장]. 고칠 수 없는 기록은 등록 전에 확인 |
+
+**목록 위 추가 폼 vs 모달**
+
+- 입력 칸 4개 이하이고 목록을 보면서 넣는 게 편하면 목록 위에 펼치는 폼 (`Panel`). 열리면 [등록] 버튼은 숨기고, 저장하면 닫고 목록에 바로 넣고 토스트.
+- 칸이 많거나, 펼치면 목록이 크게 밀리면 폼 모달 (`Modal size="md"`). 긴 글(에디터)은 별도 화면.
+
+**할 수 없는 동작**
+
+- 권한이 없어서 못 하는 동작(남의 댓글 수정 등)은 버튼을 **숨깁니다**.
+- 순서 · 조건 때문에 지금만 못 하는 동작(기본 정보 등록 전 수정, 저장할 변경 없음)은 버튼을 **비활성**으로 두고 이유를 `hint` · `title` · `Callout`으로 알립니다.
+- 마감처럼 화면 전체가 잠기면 버튼을 숨기고 이유를 위에 한 번만 안내합니다.
 
 ---
 
