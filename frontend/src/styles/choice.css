@@ -1,0 +1,321 @@
+/*
+ * 선택 입력 · 파일 (frontend/docs/ui-style-guide.md 8장)
+ *
+ *   choice-group > label.choice > input[type=radio|checkbox] + span
+ *       pill 모양 선택 (상담 유형 · 분류 필터). 진짜 input을 쓰므로 키보드 · 폼 제출 그대로
+ *   segmented > label.segment > input[type=radio] + span
+ *       붙어 있는 2~4개 전환 (보기 방식 · 기간)
+ *   label.switch > input[type=checkbox] role="switch" + span.switch-track + 글자
+ *       켜짐 / 꺼짐 (바로 적용되는 설정)
+ *   file-picker > input[type=file].visually-hidden + label.btn + span.file-picker-name
+ *   file-list > li.file-chip
+ *   input-range: 시작 ~ 끝 (날짜 · 숫자)
+ *
+ * React: common/ui/ChoiceGroup.jsx · common/ui/Switch.jsx · common/ui/FilePicker.jsx
+ */
+
+/* 화면에서는 숨기고 스크린 리더 · 키보드에는 남김 */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* ───── pill 선택 ───── */
+.choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choice {
+  position: relative;
+  display: inline-flex;
+}
+
+.choice > input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.choice > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--control-height-sm);
+  padding: 0 14px;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.choice > input:not(:disabled) + span:hover {
+  border-color: var(--color-border-strong);
+}
+
+.choice > input:checked + span {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-text);
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+}
+
+.choice > input:focus-visible + span {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.choice > input:disabled + span {
+  color: var(--color-text-disabled);
+  background-color: var(--color-bg-disabled);
+  cursor: not-allowed;
+}
+
+/* ───── 세그먼트 ───── */
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  margin: 0;
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+}
+
+.segment {
+  position: relative;
+  display: inline-flex;
+}
+
+.segment > input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.segment > span {
+  display: inline-flex;
+  align-items: center;
+  height: calc(var(--control-height-md) - 8px);
+  padding: 0 14px;
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+}
+
+.segment > input:not(:checked) + span:hover {
+  color: var(--color-text);
+}
+
+.segment > input:checked + span {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.segment > input:focus-visible + span {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+/* ───── 스위치 ───── */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.switch > input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.switch-track {
+  position: relative;
+  flex-shrink: 0;
+  width: 36px;
+  height: 20px;
+  background-color: var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  transition: background-color 0.15s;
+}
+
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background-color: var(--white);
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s;
+}
+
+.switch > input:checked + .switch-track {
+  background-color: var(--color-primary);
+}
+
+.switch > input:checked + .switch-track::after {
+  transform: translateX(16px);
+}
+
+.switch > input:focus-visible + .switch-track {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.switch:has(> input:disabled) {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.switch > input:disabled + .switch-track {
+  opacity: 0.5;
+}
+
+/* ───── 파일 선택 ───── */
+.file-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.file-picker > input:focus-visible + label {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.file-picker > input:disabled + label {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.file-picker-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.file-picker-name:empty::before {
+  content: "선택한 파일 없음";
+  color: var(--color-text-placeholder);
+}
+
+.file-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  height: 28px;
+  padding: 0 4px 0 10px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+}
+
+.file-chip > a,
+.file-chip > span {
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.file-chip > a:hover {
+  color: var(--color-link);
+  text-decoration: underline;
+}
+
+.file-chip-size {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.file-chip > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--color-text-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.file-chip > button:hover {
+  color: var(--color-danger);
+  background-color: var(--color-danger-bg);
+}
+
+.file-chip > button > svg {
+  fill: currentColor;
+}
+
+/* ───── 범위 (시작 ~ 끝) ───── */
+.input-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.input-range > .form-control {
+  flex: 1;
+}
+
+.input-range-sep {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}

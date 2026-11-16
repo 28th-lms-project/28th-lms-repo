@@ -153,3 +153,18 @@
     animation-duration: 2.4s;
   }
 }
+
+/* ───── 켜고 끄는 버튼 (aria-pressed) ─────
+ *   <button class="btn" aria-pressed="true">정답</button>
+ *   선택형 채점 · 보기 필터처럼 누른 상태가 남는 버튼. 하나만 고르는 묶음이면 segmented(choice.css)
+ */
+.btn[aria-pressed="true"] {
+  color: var(--color-primary-text);
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+}
+
+.btn[aria-pressed="true"]:not(:disabled):hover {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
+}

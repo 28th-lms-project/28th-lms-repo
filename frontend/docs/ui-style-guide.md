@@ -12,10 +12,19 @@
 
 ## 1. 샘플 페이지 구성
 
+페이지는 큰 구역 셋으로 나뉩니다. 구역마다 `PartHeader`(`CatalogParts.jsx`)로 큰 제목과 왼쪽 색 선을 달았고, 목차의 구역 이름을 누르면 그 구역으로 갑니다.
+
+| 구역 | 색 | 내용 |
+| --- | --- | --- |
+| PART 1 **표준** | 강조색 | 새 화면이 쓰는 UI. 다크 모드를 따름 |
+| PART 2 **통일 전 (현재)** | 경고색 | 지금 화면들의 모양 그대로 (비교용). 다크 모드에서도 밝게 고정 |
+| PART 3 **기존 샘플** | 회색 | 처음부터 있던 `sample/` 컴포넌트 예시 |
+
 | 목차 | 내용 | 파일 |
 | --- | --- | --- |
 | **표준 UI** | 버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 확인 창 · 모달의 표준 모양과 사용 코드 (8장). 새 화면은 이것을 씀 | `StandardCatalog.jsx` |
 | **표준 UI 2** | 표 · 페이지 이동 · 탭 · 패널 · 카드 · 안내 상자 · 키-값 목록 · 타임라인 · 선택 목록 · 배치, 화면 조합 예시 (8장) | `StandardLayoutCatalog.jsx` |
+| **표준 UI 3** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · pill 선택 · 세그먼트 · 켜고 끄는 버튼 · 스위치 · 날짜 · 기간 · 파일 · 진행 막대 (8장) | `StandardNavCatalog.jsx` |
 | 토큰 | 표준 토큰(index.css, 7장) + 통일 전 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
@@ -297,6 +306,8 @@
    - ~~1차: 버튼 · 입력 · 배지 · 상태 상자~~ → 완료 (8장)
    - ~~2차: 토스트 · 확인 창 · 모달~~ → 완료 (8장)
    - ~~3차: 표 · 탭 · 패널 · 카드 (+ 페이지 이동 · 안내 상자 · 목록 · 배치)~~ → 완료 (8장)
+   - ~~4차: 화면 머리 · 브레드크럼 · 사이드 메뉴 · 선택(pill · 세그먼트 · 스위치 · 켜고 끄는 버튼) · 날짜 · 파일 · 진행 막대~~ → 완료 (8장)
+   - 남은 것 (표준 없음): react-select 테마, 시간표, 댓글, 시험 문제 블록, 404 화면. 화면을 옮기면서 필요할 때 만듭니다.
    - 다크 모드: 토큰 · 표준 UI는 대응 완료, 샘플 페이지에서만 켬 (9장)
 3. 화면들을 표준으로 옮기면서 카탈로그의 해당 `Variant`를 지웁니다. 카탈로그가 비면 샘플 페이지가 곧 디자인 시스템 페이지가 됩니다.
 4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`으로 옮기고, `Modal`은 `common/`으로 이동합니다.
@@ -399,8 +410,8 @@
 | 층 | 위치 | 역할 |
 | --- | --- | --- |
 | 토큰 | `src/index.css` `:root` | 색 · 크기 값 (7장) |
-| 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` · `table.css` · `tabs.css` · `panel.css` (`index.css`가 `@import`) | **스타일의 원본.** 토큰만 사용 |
-| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
+| 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` · `table.css` · `tabs.css` · `panel.css` · `nav.css` · `choice.css` (`index.css`가 `@import`) | **스타일의 원본.** 토큰만 사용 |
+| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `SideNav` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
 | 훅 | `src/components/common/ui/feedbackContext.js` `useToast` · `useConfirm` | `alert()` · `confirm()` 대신. `main.jsx`의 `FeedbackProvider`가 앱 전체를 감쌈 |
 
 - raw HTML에도 클래스만 붙이면 같은 모양이 됩니다 (`<button className="btn btn-primary">`). 동작이 필요하면 컴포넌트를 씁니다.
@@ -733,6 +744,94 @@ const idBase = useId();
 | `form-stack` | 세로로 16px 간격 쌓기 (폼 밖에서도 씀) |
 
 1024px보다 좁으면 `layout-split` · `layout-3col`은 한 줄에 하나씩 쌓입니다. 샘플 "표준 UI 2"의 마지막 예시(회원 관리 화면)가 이 부품들만으로 만든 화면입니다.
+
+### 화면 머리 · 브레드크럼
+
+```jsx
+<PageHeader
+  crumbs={[{ title: "시스템 관리", to: "/admin/system" }, { title: "회원 관리" }]}
+  title="회원 관리"
+  description="회원 정보 · 역할 · 잠금 상태를 관리합니다."
+  actions={<Button variant="primary" icon={icons.add}>회원 등록</Button>}
+/>
+<Breadcrumb crumbs={[...]} />   {/* 브레드크럼만 */}
+```
+
+- 기존 `common/PageContainer`(`⌂ > 대 > 중`, 22px 제목)를 대신할 모양입니다. `PageContainer`는 아직 그대로이며, 옮길 때 안쪽 머리를 `PageHeader`로 바꾸면 됩니다 (`useBreadcrumbs`의 결과를 `crumbs`로).
+- 브레드크럼은 `<ol>`이고 구분자 `›`는 CSS가 그립니다. 마지막 항목(현재 화면)은 링크 없이 `aria-current="page"`.
+- `actions`에는 화면 전체에 걸리는 동작만 둡니다 (등록 · 내보내기). 목록 위 검색 · 필터는 `toolbar`.
+
+### 사이드 메뉴
+
+```jsx
+<SideNav groups={[{ key, title, items: [{ key, title, icon }] }]} currentKey={current} onSelect={(item) => navigate(item.path)} />
+```
+
+- 색은 `--color-sidebar-*` 토큰 (기존 `menu/SideMenu`와 같은 값). 다크 모드와 상관없이 항상 어둡습니다.
+- 그룹은 `<details open>`이라 제목을 누르면 접힙니다. 현재 화면 항목은 `aria-current="page"` (빨간 글자 + 왼쪽 선).
+- 실제 `menu/SideMenu`는 아직 바꾸지 않았습니다 (다음 단계 3번).
+
+| 비슷한 것 | 쓰는 곳 |
+| --- | --- |
+| `SideNav` | 화면 이동 (앱 왼쪽) |
+| `Tabs` | 화면 안 구역 전환 (회색 탭 바 · 세로 탭 · 폴더 탭 대신) |
+| `list-group` | 목록에서 하나 고르기 (3단 메뉴 · `CourseMain` 세로 탭 대신) |
+| `ChoiceGroup` · `Switch` | 값 고르기 |
+
+### 선택 (pill · 세그먼트 · 켜고 끄는 버튼 · 스위치)
+
+```jsx
+<ChoiceGroup name="counsel-type" legend="상담 유형" options={[{ value: "study", label: "학습" }]} value={type} onChange={setType} />
+<ChoiceGroup multiple name="filter" legend="분류" options={options} value={filters} onChange={setFilters} />
+<ChoiceGroup variant="segmented" name="period" legend="기간" options={options} value={period} onChange={setPeriod} />
+
+<Button aria-pressed={grade === "Y"} onClick={() => setGrade("Y")}>정답</Button>
+<Switch checked={onlyMine} onChange={setOnlyMine}>내 과정만 보기</Switch>
+```
+
+| 무엇 | 쓰는 곳 | 메모 |
+| --- | --- | --- |
+| `ChoiceGroup` (pill) | 상담 유형 · 분류 필터 (`MyCounsel` `.typeGroup` 대신) | 진짜 `radio` · `checkbox`라 키보드 · 폼 제출이 그대로. `multiple`이면 `value`가 배열. `name`은 화면에서 고유하게 |
+| `ChoiceGroup variant="segmented"` | 보기 방식 · 기간 | 항상 하나가 골라진 2~4개 |
+| `btn` + `aria-pressed` | 선택형 채점 (`ExamGradeModal`) | 눌린 버튼은 강조 배경. 결과 색(정답 초록 · 오답 빨강)은 버튼이 아니라 `Badge`로 |
+| `Switch` | 바로 적용되는 설정 | 저장 버튼을 눌러야 적용되는 값은 체크박스(`form-check`) |
+
+### 날짜 · 숫자 · 기간
+
+- `date` · `time` · `number` · `search` 입력도 `.form-control` 하나로 씁니다 (`CourseAdd` · `HomeworkSubmitStatus`의 스타일 없는 입력 대신). 달력 아이콘 색은 다크 모드를 따릅니다.
+- 기간은 `input-range`로 묶습니다.
+
+```jsx
+<Field label="수강 기간" htmlFor="period-start" required error={rangeError}>
+  <div className="input-range">
+    <input id="period-start" type="date" className="form-control" aria-invalid={!!rangeError} aria-describedby="period-start-msg" />
+    <span className="input-range-sep">~</span>
+    <input type="date" className="form-control" aria-label="종료일" />
+  </div>
+</Field>
+```
+
+### 파일
+
+```jsx
+<FilePicker accept=".xlsx" onSelect={([file]) => setFile(file)} fileName={file?.name} />
+<FilePicker multiple label="첨부 추가" onSelect={addFiles} />
+<FileList files={[{ key, name, size, href }]} onRemove={removeFile} />
+```
+
+- 숨긴 `input[type=file]`(`visually-hidden`) + 버튼 모양 label입니다. Tab으로 오면 버튼에 포커스 테두리가 생깁니다. `common/input`의 `FileField` · `MyTimetable` 파일 상자를 대신합니다.
+- `onSelect`는 `File[]`을 줍니다. 같은 파일을 다시 골라도 불리도록 고른 뒤 input 값을 비웁니다.
+- `FileList`: `href`가 있으면 이름이 내려받기 링크(`MyCourseData` 첨부 칩 대신), `onRemove`가 있으면 지우기 버튼. 크기는 `size`(바이트)를 KB · MB로 보여 줍니다.
+
+### 진행 막대
+
+```jsx
+<Progress label="진도율" value={42} showValue />
+<Progress label="제출률" value={18} max={20} tone="success" showValue />
+```
+
+- `tone`: 기본(강조색) · `success`(완료) · `warning` · `danger`(마감 임박). `size="sm"`은 4px.
+- `label`은 화면에 안 보이는 이름입니다 (`role="progressbar"`). 과정 카드 안에서 쓰는 예시는 샘플 "표준 UI 3"에 있습니다.
 
 ---
 

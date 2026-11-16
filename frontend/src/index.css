@@ -18,6 +18,8 @@
 @import "./styles/table.css";
 @import "./styles/tabs.css";
 @import "./styles/panel.css";
+@import "./styles/nav.css";
+@import "./styles/choice.css";
 
 :root {
   /* ───── 팔레트 (Open Color) ───── */

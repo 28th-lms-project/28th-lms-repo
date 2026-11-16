@@ -24,6 +24,7 @@ import { LayoutCatalog } from "./catalog/LayoutCatalog.jsx";
 import { OverlayCatalog } from "./catalog/OverlayCatalog.jsx";
 import { StandardCatalog } from "./catalog/StandardCatalog.jsx";
 import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
+import { StandardNavCatalog } from "./catalog/StandardNavCatalog.jsx";
 import { PartHeader } from "./catalog/CatalogParts.jsx";
 import UiButton from "../common/ui/Button.jsx";
 
@@ -37,6 +38,7 @@ import UiButton from "../common/ui/Button.jsx";
 const STANDARD = [
     { id: "standard-ui", title: "표준 UI (버튼 · 입력 · 배지 · 상태 상자 · 토스트 · 모달)", Component: StandardCatalog },
     { id: "standard-layout", title: "표준 UI (표 · 탭 · 패널 · 카드 · 안내 · 목록 · 배치)", Component: StandardLayoutCatalog },
+    { id: "standard-nav", title: "표준 UI (화면 머리 · 메뉴 · 선택 · 날짜 · 파일 · 진행 막대)", Component: StandardNavCatalog },
     { id: "catalog-tokens", title: "토큰 (표준 토큰 · 통일 전 값)", Component: TokenCatalog },
 ];
 

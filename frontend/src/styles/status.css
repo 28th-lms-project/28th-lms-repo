@@ -67,3 +67,57 @@
   font-weight: var(--font-weight-regular);
   color: var(--color-text-muted);
 }
+
+/* ───── 진행 막대 ─────
+ *   <div class="progress" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"
+ *        aria-label="진도율" style="--progress: 40%"><span></span></div>
+ *   progress-success · progress-warning · progress-danger: 색 / progress-sm: 4px
+ * React: common/ui/Progress.jsx
+ */
+.progress {
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  background-color: var(--color-bg-subtle);
+  border-radius: var(--radius-pill);
+}
+
+.progress > span {
+  display: block;
+  width: var(--progress, 0%);
+  height: 100%;
+  background-color: var(--progress-color, var(--color-primary));
+  border-radius: inherit;
+  transition: width 0.3s;
+}
+
+.progress-success {
+  --progress-color: var(--color-success);
+}
+
+.progress-warning {
+  --progress-color: var(--color-warning);
+}
+
+.progress-danger {
+  --progress-color: var(--color-danger);
+}
+
+.progress-sm {
+  height: 4px;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.progress-row > .progress-value {
+  flex-shrink: 0;
+  min-width: 3em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
