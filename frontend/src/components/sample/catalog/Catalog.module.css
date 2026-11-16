@@ -2320,6 +2320,92 @@
   border-top: 1px solid #e5e5e5;
 }
 
+/* ───────── 과정 · 설문 (admin/survey/survey/Survey.module.css 값 그대로. 원본은 전역 body 규칙이 있어 직접 import하지 않음) ───────── */
+.legacySurveyContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #aaa;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+}
+
+.legacySurveyHeader {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+}
+
+.legacySurveyHeader > li {
+  flex-shrink: 0;
+  padding: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.legacySurveyHeader > li.legacySurveyActive,
+.legacySurveyList > ul > li.legacySurveyActive {
+  background-color: #fff;
+}
+
+.legacySurveyBody {
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+}
+
+.legacySurveyList {
+  width: 100%;
+  border: 1px solid #aaa;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+}
+
+.legacySurveyList > ul {
+  display: flex;
+  justify-content: space-around;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background-color: #ccc;
+  cursor: pointer;
+}
+
+.legacySurveyList > ul > li {
+  padding: 10px 50px;
+}
+
+.legacySurvey {
+  border: 1px solid #aaa;
+}
+
+.legacySurveyForm {
+  padding: 10px 5px;
+}
+
+.legacySurveyForm > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.legacySurveyForm > div > label {
+  margin-right: 1rem;
+}
+
+.legacySurveyInput {
+  width: 30%;
+  height: 30px;
+  margin: 0 5px;
+}
+
 /* ───────── 반응형 ───────── */
 @media screen and (max-width: 768px) {
   .variants {

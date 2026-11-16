@@ -376,3 +376,203 @@
 .list-boxed > li::marker {
   color: var(--color-text-placeholder);
 }
+
+/* ───── 두 목록 사이 옮기기 (TransferList) ─────
+ *   transfer > transfer-list(왼쪽) + transfer-actions(가운데 버튼) + transfer-list(오른쪽)
+ *   transfer-head(모두 체크 · 제목 · 건수) · transfer-search · transfer-items > li > label.transfer-item
+ */
+.transfer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.transfer-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+}
+
+.transfer-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: var(--font-size-md);
+  background-color: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.transfer-title {
+  color: var(--color-text);
+}
+
+.transfer-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.transfer-summary {
+  margin-left: auto;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.transfer-search {
+  padding: 8px 12px 0;
+}
+
+.transfer-items {
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.transfer-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 8px;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+}
+
+.transfer-item:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.transfer-item:has(> input:checked) {
+  background-color: var(--color-primary-light);
+}
+
+.transfer-item > input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: var(--color-primary);
+}
+
+.transfer-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.transfer-empty {
+  padding: 24px 8px;
+  font-size: var(--font-size-md);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.transfer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .transfer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .transfer-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+/* ───── 반복 입력 행 (ListEditor) ───── */
+.list-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.list-editor-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.list-editor-row > .form-control {
+  flex: 1;
+}
+
+.list-editor-no {
+  flex-shrink: 0;
+  min-width: 18px;
+  font-size: var(--font-size-sm);
+  text-align: right;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───── 답안 상자 (채점 · 문제 보기) ─────
+ *   <div class="answer-box answer-box-model"><span class="answer-box-label">모범 답안</span>…</div>
+ *   answer-box-model: 정답 · 모범 답안 (초록) · answer-box-empty: 미제출 (점선 · 흐림)
+ */
+.answer-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+}
+
+.answer-box-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  white-space: normal;
+}
+
+.answer-box-model {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success-border);
+}
+
+.answer-box-model .answer-box-label {
+  color: var(--color-success);
+}
+
+.answer-box-empty {
+  color: var(--color-text-muted);
+  background-color: transparent;
+  border-style: dashed;
+}
+
+.answer-box-code {
+  font-family: var(--font-mono);
+}

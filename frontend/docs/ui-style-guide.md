@@ -26,6 +26,7 @@
 | **표준 UI 2** | 표 · 페이지 이동 · 탭 · 패널 · 카드 · 안내 상자 · 키-값 목록 · 타임라인 · 선택 목록 · 배치, 화면 조합 예시 (8장) | `StandardLayoutCatalog.jsx` |
 | **표준 UI 3** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · pill 선택 · 세그먼트 · 켜고 끄는 버튼 · 스위치 · 날짜 · 기간 · 파일 · 진행 막대 (8장) | `StandardNavCatalog.jsx` |
 | **표준 UI 4** | 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · 검색 셀렉트 · 시험 문제 · 댓글 · 인용 · 세로 키-값 · 상자 목록, 화면 예시(상세 · 대시보드 · 오류 화면) (8장) | `StandardDataCatalog.jsx` |
+| **표준 UI 5** | 두 목록 사이 옮기기(`TransferList`) · 반복 입력 행(`ListEditor`), 화면 예시: 과정 등록 폼 · 과정 상세 · 시험 문제 고르기 · 채점 · 과제 상세(보기 ↔ 수정) · 설문 편집기 · 팝업 창 (8장) | `StandardScreenCatalog.jsx` |
 | 토큰 | 표준 토큰(index.css, 7장). 실제 값을 index.css에서 읽어 표시 | `TokenCatalog.jsx` (`TokenCatalog`) |
 | 토큰 (통일 전 값) | **통일 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
@@ -35,6 +36,7 @@
 | 피드백 | 배지 · 태그, 안내 · 빈 상태 · 로딩, 오류 · 성공 · 힌트 문구, 경고 상자, 토스트, 오류 화면 | `FeedbackCatalog.jsx` |
 | 레이아웃 | 패널 · 카드 6종, 화면 배치 (목록 \| 상세, 3패널) | `LayoutCatalog.jsx` |
 | 오버레이 | 폼 모달, 확인 모달, 큰 내용 모달 (열어 볼 수 있음) | `OverlayCatalog.jsx` |
+| 과정 · 시험 · 과제 · 설문 화면 | admin/course · survey의 과정 머리 · 탭, 등록 폼, 문제 고르기(Grid 둘), 과제 상세, 설문 편집 | `CourseLegacyCatalog.jsx` |
 | 기존 샘플 | 원래 있던 Buttons · Modals · FileInput · Grids · Paginator · Chart · Poll | `Sample.jsx` 아래쪽 |
 
 카탈로그의 칸 하나는 `Variant`입니다. 칸 머리 오른쪽 회색 글자가 **원본 파일**(`src/components` 기준)이고, 클래스 이름은 `Catalog.module.css`의 주석에 원본 CSS 위치가 적혀 있습니다.
@@ -310,6 +312,7 @@
    - ~~3차: 표 · 탭 · 패널 · 카드 (+ 페이지 이동 · 안내 상자 · 목록 · 배치)~~ → 완료 (8장)
    - ~~4차: 화면 머리 · 브레드크럼 · 사이드 메뉴 · 선택(pill · 세그먼트 · 스위치 · 켜고 끄는 버튼) · 날짜 · 파일 · 진행 막대~~ → 완료 (8장)
    - ~~5차: 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · react-select 테마 · 시험 문제 · 댓글 · 인용 · 세로 키-값 · 상자 목록 · 오류 화면 + 화면 예시(상세 · 대시보드)~~ → 완료 (8장)
+   - ~~6차 (admin/course · survey): 두 목록 사이 옮기기 · 반복 입력 행 · 답안 상자 · 팝업 창 틀 + 화면 예시 7개(과정 등록 · 과정 상세 · 문제 고르기 · 채점 · 과제 상세 · 설문 편집기 · 팝업), 통일 전 탭에 같은 화면의 지금 모양~~ → 완료 (8장)
    - 표준을 만들지 않기로 한 것: TextField 떠 있는 라벨(라벨은 위), 팝업 창(`window.open`, UI 아님), 기존 샘플 Chart · Poll(샘플 밖에서 안 씀. 차트를 쓰게 되면 그때 색을 토큰으로), 리치 텍스트 `Editor`(외부 에디터, 옮길 때 테두리 · 높이만 맞춤)
    - 다크 모드: 토큰 · 표준 UI는 대응 완료, 샘플 페이지에서만 켬 (9장)
    - 강조색 · 테마 분리: 강조색(primary)은 샘플 페이지 후보 미리 보기(팀 결정용), 테마(brand)는 사이드바 색으로 앱 전체 (7장 "강조색과 테마")
@@ -480,7 +483,7 @@
 | --- | --- | --- |
 | 토큰 | `src/index.css` `:root` | 색 · 크기 값 (7장) |
 | 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` · `table.css` · `tabs.css` · `panel.css` · `nav.css` · `choice.css` · `content.css` (`index.css`가 `@import`). react-select만 `common/ui/selectStyles.js` (라이브러리가 CSS 대신 styles 객체를 받음) | **스타일의 원본.** 토큰만 사용 |
-| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `SideNav` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` · `SelectBox` · `QuestionBlock` · `Comment` · `SwatchPicker` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
+| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `SideNav` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` · `SelectBox` · `QuestionBlock` · `Comment` · `SwatchPicker` · `TransferList` · `ListEditor` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
 | 훅 | `src/components/common/ui/feedbackContext.js` `useToast` · `useConfirm` | `alert()` · `confirm()` 대신. `main.jsx`의 `FeedbackProvider`가 앱 전체를 감쌈 |
 
 - raw HTML에도 클래스만 붙이면 같은 모양이 됩니다 (`<button className="btn btn-primary">`). 동작이 필요하면 컴포넌트를 씁니다.
@@ -977,6 +980,73 @@ import Comment from "../common/ui/Comment";
 | 상세 화면 | `PageHeader`(브레드크럼 + 수정 · 삭제) + `Panel`(제목 · 태그) + `card-meta` + `card-body` + `FileList` | `MyCourseData` 상세 머리 · 메타 · 첨부 칩 |
 | 대시보드 | `card-grid` + `StatCard` → 과정 `card` + `Progress` → `Panel flush` + `list-group` | `main/Main` 대시보드 카드 |
 | 오류 화면 | `StatusBox type="notFound" size="lg"` · `StatusBox type="error" size="lg" code="500"` | `common/error/*` 404 · 라우트 오류 상자 |
+
+### 두 목록 사이 옮기기 (TransferList)
+
+```jsx
+import TransferList from "../common/ui/TransferList";
+
+<TransferList
+  items={questions}                 // 전체
+  selectedKeys={picked}             // 고른 것 (오른쪽, 이 순서로 보임)
+  onChange={setPicked}
+  leftTitle="Java 문제"
+  rightTitle="시험 문제"
+  rightSummary={`총 ${total}점`}
+  filter={(q, text) => q.question.includes(text)}   // 있으면 왼쪽 검색 칸
+  renderItem={(q) => q.question}
+/>
+```
+
+- `ExamQuestionPicker`(Grid 둘, 행을 누르면 바로 옮겨짐)를 대신합니다. 체크한 뒤 가운데 [추가 →] · [← 빼기]로 옮기고, 두 번 누르면 바로 옮깁니다. 머리 체크박스는 그 목록 모두 체크입니다.
+- 체크박스라서 키보드(Tab · 스페이스)로도 고를 수 있습니다. 768px 이하에서는 위아래로 쌓입니다.
+- 과정 수강생 추가(`CourseStudentList`)처럼 "전체 중 일부를 고르는" 곳에도 씁니다. 고를 것이 수백 개면 왼쪽을 검색 + `Table` 체크 선택으로 바꾸는 편이 낫습니다.
+
+### 반복 입력 행 (ListEditor)
+
+```jsx
+import ListEditor from "../common/ui/ListEditor";
+import { newListItem } from "../common/ui/listEditorItem";
+
+const [options, setOptions] = useState([newListItem(), newListItem()]);
+<ListEditor label="보기" items={options} onChange={setOptions} min={2} max={8} addLabel="보기 추가" />
+// 저장할 때: options.map((o) => o.value)
+```
+
+- `Survey`의 보기 입력(입력 + 삭제 · 추가 버튼)을 대신합니다. 줄에서 Enter → 바로 아래에 새 줄, 빈 줄에서 Backspace → 그 줄을 지웁니다 (한글 입력 중 Enter는 무시).
+- 줄마다 `id`가 있어야 지우거나 끼워 넣어도 입력이 섞이지 않습니다. 새 줄은 `newListItem()`, 서버에서 받은 값은 `{ id: 서버 id, value }`로 바꿔 넣습니다.
+
+### 답안 상자 · 팝업 창 틀
+
+| 클래스 | 쓰는 곳 | 메모 |
+| --- | --- | --- |
+| `answer-box` | 채점 · 문제 보기의 학생 답안 | `answer-box-label`(이름 + 결과 배지), `answer-box-code`(코드 답안 고정폭) |
+| `answer-box-model` | 모범 답안 · 정답 | 초록 상자 |
+| `answer-box-empty` | 미제출 | 점선 · 흐린 글자. 이때 채점 버튼은 비활성 |
+| `popup-page` · `popup-header` · `popup-title` · `popup-actions` · `popup-body` | `window.open`으로 연 창 (`/popup/homework`) | 사이드바 없는 화면 틀. 머리는 위에 붙고 본문만 스크롤 |
+
+팝업 창은 차단 · 권한 조회(MainLayout 밖) · 뒤로 가기 문제가 있어서, 새로 만들 때는 먼저 큰 모달(`Modal size="lg"`)이나 같은 창의 상세 화면으로 될지 검토합니다.
+
+### 화면 예시: 과정 · 시험 · 과제 · 설문 (admin/course · survey)
+
+샘플 "표준 UI 5"에 있습니다. 통일 전 탭 "과정 · 시험 · 과제 · 설문 화면"에 같은 화면의 지금 모양이 있어 나란히 비교할 수 있습니다.
+
+| 예시 | 부품 | 대신하는 것 | 메모 |
+| --- | --- | --- | --- |
+| 과정 등록 폼 | `form` + `Panel`(바닥 버튼) + `Field` · `form-row` + `SelectBox` + `input-range` + `FilePicker` | `CourseAdd` (h3 라벨 · 스타일 없는 입력) | 빈 채로 제출하면 오류, 저장 중 `loading` |
+| 과정 상세 | `PageHeader` + `card`(`desc-list-stacked` + `Progress`) + `Tabs` 9개 | `CourseItem` (글자 진행률 · IconButton 탭) | 탭이 많으면 탭 줄이 가로 스크롤. 상태는 `Badge tone="info"` (강조색 아님) |
+| 시험 문제 고르기 | `Panel` + `Field` + `Switch`(공개) + `TransferList` | `ExamPage` 추가 화면 · `ExamQuestionPicker` | 유형은 `Badge`, 총 배점은 `rightSummary` |
+| 채점 | `Modal size="lg"` + `Tabs`(수강생, 건수 = 채점한 문항) + `question` + `answer-box` + `btn[aria-pressed]` + `Badge` | `ExamGradeModal` | 미제출이면 채점 버튼 비활성 |
+| 과제 상세 | `PageHeader`(보기: 수정 · 삭제 / 수정: 취소 · 저장) + `toolbar`(미제출 · 랜덤 뽑기) + `layout-split`(본문 \| 댓글 `Panel`, 바닥에 입력) | `HomeworkItem` · `HomeworkSubmitStatus` | 고친 채로 취소하면 `useConfirm`. 마감 후에는 [수정] · 입력 대신 `Callout tone="warning"` |
+| 설문 편집기 | `Tabs`(사전 · 사후) + `layout-split`(문항 `Panel` 목록 \| 미리 보기 `Panel`) + `ChoiceGroup variant="segmented"`(답하는 방식) + `ListEditor`(보기) | `Survey` | 미리 보기가 입력을 바로 따라감. 문항 삭제는 확인 창 |
+| 팝업 창 | `popup-page` + `Table` | `/popup/homework` | 위 메모 참고 |
+
+**보기 ↔ 수정 전환 규칙** (과제 상세 예시):
+
+- 같은 자리에서 바꿉니다. 제목 줄의 값(마감일)과 본문이 입력 칸으로 바뀌고, 머리 버튼이 [수정 · 삭제] → [취소 · 저장]으로 바뀝니다.
+- [저장]은 바뀐 것이 있을 때만 켜지고, 저장 중에는 `loading`("저장 중...")입니다.
+- 고친 채로 [취소]하면 `useConfirm`으로 한 번 묻습니다. 바뀐 것이 없으면 바로 돌아갑니다.
+- 수정할 수 없는 상태(마감 후 등)에서는 [수정] 버튼을 숨기고 이유를 안내합니다.
 
 ---
 

@@ -208,3 +208,49 @@
   background-color: var(--color-sidebar-active-bg);
   border-left-color: var(--color-sidebar-active);
 }
+
+/* ───── 팝업 창 화면 (사이드바 없는 화면 틀) ─────
+ *   <div class="popup-page">
+ *     <header class="popup-header"><h1 class="popup-title">…</h1><div class="popup-actions">버튼 · 닫기</div></header>
+ *     <main class="popup-body">…</main>
+ *   </div>
+ *   window.open으로 연 창 · 인쇄용 화면. 머리는 위에 붙어 있고 본문만 스크롤
+ */
+.popup-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  color: var(--color-text);
+  background-color: var(--color-bg-page);
+}
+
+.popup-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 20px;
+  background-color: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.popup-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.popup-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.popup-body {
+  flex: 1;
+  padding: 20px;
+}

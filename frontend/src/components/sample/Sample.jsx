@@ -23,10 +23,12 @@ import { NavigationCatalog } from "./catalog/NavigationCatalog.jsx";
 import { FeedbackCatalog } from "./catalog/FeedbackCatalog.jsx";
 import { LayoutCatalog } from "./catalog/LayoutCatalog.jsx";
 import { OverlayCatalog } from "./catalog/OverlayCatalog.jsx";
+import { CourseLegacyCatalog } from "./catalog/CourseLegacyCatalog.jsx";
 import { StandardCatalog } from "./catalog/StandardCatalog.jsx";
 import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
 import { StandardNavCatalog } from "./catalog/StandardNavCatalog.jsx";
 import { StandardDataCatalog } from "./catalog/StandardDataCatalog.jsx";
+import { StandardScreenCatalog } from "./catalog/StandardScreenCatalog.jsx";
 import { PartHeader } from "./catalog/CatalogParts.jsx";
 import UiButton from "../common/ui/Button.jsx";
 import { Tabs, TabPanel } from "../common/ui/Tabs.jsx";
@@ -44,6 +46,7 @@ const STANDARD = [
     { id: "standard-layout", title: "표준 UI (표 · 탭 · 패널 · 카드 · 안내 · 목록 · 배치)", Component: StandardLayoutCatalog },
     { id: "standard-nav", title: "표준 UI (화면 머리 · 메뉴 · 선택 · 날짜 · 파일 · 진행 막대)", Component: StandardNavCatalog },
     { id: "standard-data", title: "표준 UI (표 확장 · 검색 셀렉트 · 시험 문제 · 댓글 · 내용 블록 · 화면 예시)", Component: StandardDataCatalog },
+    { id: "standard-screen", title: "표준 UI (화면 예시: 과정 · 시험 · 과제 · 설문 · 팝업)", Component: StandardScreenCatalog },
     { id: "catalog-tokens", title: "토큰 (index.css)", Component: TokenCatalog },
 ];
 
@@ -57,6 +60,7 @@ const CATALOG = [
     { id: "catalog-feedback", title: "피드백 (배지 · 안내 · 오류 · 토스트)", Component: FeedbackCatalog },
     { id: "catalog-layout", title: "레이아웃 (패널 · 카드 · 배치)", Component: LayoutCatalog },
     { id: "catalog-overlays", title: "오버레이 (모달 · 팝업)", Component: OverlayCatalog },
+    { id: "catalog-course", title: "과정 · 시험 · 과제 · 설문 화면 (admin/course · survey)", Component: CourseLegacyCatalog },
 ];
 
 /** 원래 있던 샘플 섹션 (sample/ 컴포넌트 사용) */
@@ -81,7 +85,7 @@ const PART_TABS = [
 const TOC = {
     standard: STANDARD.map(({ id, title }) => ({
         id,
-        label: title.includes("표 · 탭") ? "표준 UI 2" : title.includes("화면 머리") ? "표준 UI 3" : title.includes("표 확장") ? "표준 UI 4" : title.split(" (")[0],
+        label: title.includes("표 · 탭") ? "표준 UI 2" : title.includes("화면 머리") ? "표준 UI 3" : title.includes("표 확장") ? "표준 UI 4" : title.includes("화면 예시: 과정") ? "표준 UI 5" : title.split(" (")[0],
     })),
     legacy: CATALOG.map(({ id, title }) => ({ id, label: title.split(" (")[0] })),
     old: LEGACY.map(({ id, title }) => ({ id, label: title })),
