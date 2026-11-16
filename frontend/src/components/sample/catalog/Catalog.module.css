@@ -11,10 +11,9 @@
   top: -24px;
   z-index: var(--z-sticky);
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 12px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 12px 10px;
   color: var(--color-text);
   background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border-light);
@@ -40,16 +39,28 @@
   margin-left: auto;
 }
 
+/* 한 줄: 구역 탭 + 다크 모드 버튼 / 이 구역 목차 */
+.tocRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 구역 탭: 목차 상자 안에서 크게 */
+.partTabs {
+  flex: 1;
+  border-bottom: 0;
+}
+
+.partTabs :global(.tab) {
+  height: 46px;
+  font-size: var(--font-size-lg);
+}
+
 /* 목차 버튼으로 이동할 때 sticky 목차에 가리지 않도록 */
 .anchor {
   scroll-margin-top: 60px;
-}
-
-.tocGroup {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  align-self: center;
-  margin-left: 6px;
 }
 
 /* 다크 모드를 따르는 영역: 공통 Section(흰 배경 고정)도 토큰 색으로 */
@@ -60,24 +71,9 @@
 }
 
 /* 목차의 구역 이름 (누르면 구역 머리로 이동) */
-.toc button.tocGroup {
-  padding: 4px 6px;
-  font-family: inherit;
-  font-weight: var(--font-weight-bold);
-  background: none;
-  border: 0;
-  border-radius: var(--radius);
-  cursor: pointer;
-}
-
-.toc button.tocGroup:hover {
-  color: var(--color-text);
-  background-color: var(--color-bg-hover);
-}
-
 /* ───── 큰 구역 머리 (표준 / 통일 전 / 기존 샘플) ───── */
 .partHeader {
-  margin: 40px 0 8px;
+  margin: 8px 0 8px;
   padding: 24px 28px;
   color: var(--color-text);
   background-color: var(--color-bg-surface);

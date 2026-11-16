@@ -5,7 +5,8 @@ import { chartData } from "../../assets/mocks/chart.json.js";
 import { pollData } from "../../assets/mocks/poll.json.js";
 import { Grid } from "./Grid.jsx";
 import { gridData } from "../../assets/mocks/grid.json.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Alert, Confirm } from "./Modal.jsx";
 import { Button, FileField } from "./input/Input.jsx";
 import { Paginator } from "./Paginator.jsx";
@@ -27,6 +28,7 @@ import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
 import { StandardNavCatalog } from "./catalog/StandardNavCatalog.jsx";
 import { PartHeader } from "./catalog/CatalogParts.jsx";
 import UiButton from "../common/ui/Button.jsx";
+import { Tabs, TabPanel } from "../common/ui/Tabs.jsx";
 
 /*
  * 디자인 시스템 페이지
@@ -63,6 +65,23 @@ const LEGACY = [
     { id: "sample-chart", title: "Chart" },
     { id: "sample-poll", title: "Poll" },
 ];
+
+/** 구역 탭. 선택은 주소(?part=)에 남아서 새로고침 · 링크 공유해도 그대로 */
+const PART_TABS = [
+    { id: "standard", label: "표준" },
+    { id: "legacy", label: "통일 전 (현재)" },
+    { id: "old", label: "기존 샘플" },
+];
+
+/** 탭별 목차 */
+const TOC = {
+    standard: STANDARD.map(({ id, title }) => ({
+        id,
+        label: title.includes("표 · 탭") ? "표준 UI 2" : title.includes("화면 머리") ? "표준 UI 3" : title.split(" (")[0],
+    })),
+    legacy: CATALOG.map(({ id, title }) => ({ id, label: title.split(" (")[0] })),
+    old: LEGACY.map(({ id, title }) => ({ id, label: title })),
+};
 
 const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -113,6 +132,15 @@ const SampleDashboard = () => {
         setScheme(next);
     };
 
+    /* 구역 탭 */
+    const tabsId = useId();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const part = TOC[searchParams.get("part")] ? searchParams.get("part") : "standard";
+    const tocItems = TOC[part];
+    const changePart = (next) => {
+        setSearchParams(next === "standard" ? {} : { part: next }, { replace: true });
+    };
+
     const [activePage, setActivePage] = useState(0);
 
     const normalGridRef = useRef();
@@ -136,33 +164,27 @@ const SampleDashboard = () => {
     };
     return (
         <PageContainer>
-            <nav className={catalogStyles.toc} aria-label="샘플 목차">
-                <button type="button" className={catalogStyles.tocGroup} onClick={() => scrollTo("part-standard")}>표준</button>
-                {STANDARD.map(({ id, title }) => (
-                    <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
-                        {title.includes("표 · 탭") ? "표준 UI 2" : title.split(" (")[0]}
-                    </button>
-                ))}
-                <button type="button" className={catalogStyles.tocGroup} onClick={() => scrollTo("part-legacy")}>통일 전 (현재)</button>
-                {CATALOG.map(({ id, title }) => (
-                    <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
-                        {title.split(" (")[0]}
-                    </button>
-                ))}
-                <button type="button" className={catalogStyles.tocGroup} onClick={() => scrollTo("part-old")}>기존 샘플</button>
-                {LEGACY.map(({ id, title }) => (
-                    <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
-                        {title}
-                    </button>
-                ))}
-                <span className={catalogStyles.tocEnd}>
-                    <UiButton size="sm" aria-pressed={scheme === "dark"} onClick={toggleScheme}>
-                        {scheme === "dark" ? "☀ 밝은 모드" : "☾ 다크 모드"}
-                    </UiButton>
-                </span>
-            </nav>
+            <div className={catalogStyles.toc}>
+                <div className={catalogStyles.tocRow}>
+                    <Tabs idBase={tabsId} items={PART_TABS} value={part} onChange={changePart} ariaLabel="샘플 구역" className={catalogStyles.partTabs} />
+                    <span className={catalogStyles.tocEnd}>
+                        <UiButton size="sm" aria-pressed={scheme === "dark"} onClick={toggleScheme}>
+                            {scheme === "dark" ? "☀ 밝은 모드" : "☾ 다크 모드"}
+                        </UiButton>
+                    </span>
+                </div>
+                <nav className={catalogStyles.tocRow} aria-label="이 구역 목차">
+                    {tocItems.map(({ id, label }) => (
+                        <button key={id} type="button" className={catalogStyles.tocLink} onClick={() => scrollTo(id)}>
+                            {label}
+                        </button>
+                    ))}
+                </nav>
+            </div>
 
+            <TabPanel idBase={tabsId} tabId={part}>
             {/* 표준: 토큰을 쓰므로 다크 모드를 따름 */}
+            {part === "standard" && (
             <div className={catalogStyles.themed}>
                 <PartHeader id="part-standard" part="PART 1" title="표준" tone="standard">
                     {"새 화면은 이 구역의 토큰 · 공통 클래스(src/styles) · 컴포넌트(common/ui)를 씁니다.\n다크 모드를 지원합니다."}
@@ -175,8 +197,10 @@ const SampleDashboard = () => {
                     </div>
                 ))}
             </div>
+            )}
 
             {/* 통일 전 · 기존 샘플: hex를 직접 써서 다크 모드에서도 밝게 고정 */}
+            {part === "legacy" && (
             <div data-color-scheme="light">
             <PartHeader id="part-legacy" part="PART 2" title="통일 전 (현재)" tone="legacy">
                 {"지금 각 화면에 흩어져 있는 UI를 모양 그대로 모은 비교용입니다. 새 코드에서 따라 쓰지 마세요.\n색을 직접 적어서(토큰 미사용) 다크 모드에서도 밝게 보입니다."}
@@ -188,7 +212,11 @@ const SampleDashboard = () => {
                     </Section>
                 </div>
             ))}
+            </div>
+            )}
 
+            {part === "old" && (
+            <div data-color-scheme="light">
             <PartHeader id="part-old" part="PART 3" title="기존 샘플" tone="old">
                 {"처음부터 있던 sample/ 컴포넌트 예시 (IconButton · Alert/Confirm · Grid · Paginator · Chart · Poll).\n일부 화면이 아직 이 컴포넌트를 씁니다."}
             </PartHeader>
@@ -463,6 +491,8 @@ const SampleDashboard = () => {
                 </Section>
             </div>
             </div>
+            )}
+            </TabPanel>
         </PageContainer>
     );
 };
