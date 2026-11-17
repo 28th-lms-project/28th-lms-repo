@@ -37,7 +37,7 @@
 | **데이터** | 표 · 페이지 이동 · 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · 두 목록 사이 옮기기 | `StandardDataCatalog.jsx` |
 | **배치 · 탐색** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 3단 배치 · 팝업 창 틀 | `StandardLayoutCatalog.jsx` |
 | **내용** | 시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 인용 · 세로 키-값 · 상자 목록 | `StandardContentCatalog.jsx` |
-| **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 문제 은행 문제 추가 · 수정 · 문제 은행 목록 · 시험 응시 · 시험지 보기 · 주간 접속 기록 · 날짜별 시간표 · 목록 위 추가 폼 · 댓글 수정 · 메뉴 관리(순서 바꾸기) · 권한 코드 · 역할별 권한 · 공통 코드 · 설문 결과(집계) · 로그인 · 비밀번호 다시 확인 · 상담 기록 · 과제 상세(보기 ↔ 수정) · 설문 편집기 | `StandardScreenCatalog.jsx` + `ScreenStudyCatalog.jsx` · `ScreenSystemCatalog.jsx` · `ScreenMyCatalog.jsx` |
+| **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 문제 은행 문제 추가 · 수정 · 문제 은행 목록 · 시험 응시 · 시험지 보기 · 주간 접속 기록 · 날짜별 시간표 · 목록 위 추가 폼 · 댓글 수정 · 메뉴 관리(순서 바꾸기) · 접근 관리 · 권한별 접근 권한 관리 · 환경 변수 관리 · 설문 결과(집계) · 로그인 · 비밀번호 다시 확인 · 상담 기록 · 과제 상세(보기 ↔ 수정) · 설문 편집기 | `StandardScreenCatalog.jsx` + `ScreenStudyCatalog.jsx` · `ScreenSystemCatalog.jsx` · `ScreenMyCatalog.jsx` |
 | 토큰 (통일 전 값) | **통일 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
@@ -448,9 +448,9 @@
 | `admin/system/member/*` | 예시 | 목록 \| 상세. 등록 · 수정 · 비밀번호 초기화는 폼 모달, 역할 바꾸기는 `desc-list` 안 select + [역할 변경] + `useConfirm` |
 | `admin/system/role/Role` | 부품 | `input-group`(접두어) + `Table` 순서 바꾸기(잠긴 행) · 칸 편집 + "순서가 변경되었습니다" `Callout` |
 | `role/RoleUserMoveModal` | 부품 | `Modal` + `list-boxed` + `SelectBox` + `Callout`. 결과(일부만 성공 포함)는 토스트 |
-| `admin/system/access/Access` | 예시 (8차) | 권한 코드 관리 (연쇄 선택 · 같은 폼으로 추가 · 수정) |
-| `access-role/AccessRole` | 예시 (8차) | 역할별 권한 (저장 전 변경 표시). 새 클래스 `layout-split-start` |
-| `admin/system/code/*` | 예시 (8차) | 공통 코드 (패널 하나가 보기 · 수정 · 추가). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
+| `admin/system/access/Access` | 예시 (8차) | 접근 관리 (연쇄 선택 · 같은 폼으로 추가 · 수정) |
+| `access-role/AccessRole` | 예시 (8차) | 권한별 접근 권한 관리 (저장 전 변경 표시). 새 클래스 `layout-split-start` |
+| `admin/system/code/*` | 예시 (8차) | 환경 변수 관리 (패널 하나가 보기 · 수정 · 추가). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
 | `admin/system/menu/Menu` · `MenuColumn` | 예시 (10차) | 메뉴 관리 (3단 `Table` + 순서 바꾸기 + 순서 저장 바). 상세는 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. 지금 화면의 "놓자마자 저장" 대신 저장 바로 한 번에 (역할 관리와 같게), 키보드(↑ ↓)로도 옮길 수 있게 됨 |
 | `my/course/MyCourse` | 부품 | `Tabs` (고른 탭은 주소 `?tab=`에) |
 | `my/course/MyCourseData` | 예시 · 제외 1 | 목록 \| 상세 · 상세 화면. **제외**: 리치 텍스트 `Editor` (6장 "표준을 만들지 않기로 한 것") |
@@ -1221,7 +1221,7 @@ const idBase = useId();
 | --- | --- |
 | `toolbar` | 화면 위 검색 · 필터 줄 (왼쪽 `form-row`, 오른쪽 주 동작 버튼) |
 | `layout-split` | 목록 \| 상세 (오른쪽 폭 `--layout-aside-width`, 기본 380px) |
-| `layout-3col` | 3단 (대 > 중 > 소, 역할 · 허용 · 전체) |
+| `layout-3col` | 3단 (앞 단을 고르면 다음 단이 바뀜). 부품 예시는 과정 › 과제 › 제출 현황, 실제 3단 화면은 "화면 예시"의 메뉴 관리 · 환경 변수 관리를 따름 |
 | `form-stack` | 세로로 16px 간격 쌓기 (폼 밖에서도 씀) |
 
 `layout-split layout-split-start`: 좁은 쪽이 **왼쪽** (역할 목록 | 내용처럼 고르는 쪽이 먼저일 때). 폭은 같은 `--layout-aside-width`(기본 240px).
@@ -1335,7 +1335,7 @@ import Comment from "../common/ui/Comment";
 | 무엇 | 메모 |
 | --- | --- |
 | `desc-list` | 키-값. 라벨 폭은 `--desc-label-width`(기본 120px), 회색 상자는 `desc-list-boxed` |
-| `list-group` · `list-item` | 선택 목록 (메뉴 관리 3단 등). 선택은 `aria-current="true"`, 미사용은 `is-muted`, 오른쪽 내용은 `list-item-end` |
+| `list-group` · `list-item` | **고르기만 하는** 선택 목록 (과정 · 역할 · 코드 그룹 등). 순서를 바꿔야 하면 `list-group` 대신 작은 `Table`(`onReorder`, 화면 예시 › 메뉴 관리). 선택은 `aria-current="true"`, 미사용은 `is-muted`, 오른쪽 내용은 `list-item-end` |
 | `timeline` | 상담 기록처럼 날짜순 기록 |
 
 #### 인용 · 세로 키-값 · 상자 목록
@@ -1395,9 +1395,9 @@ import Comment from "../common/ui/Comment";
 | 목록 위 추가 폼 | `toolbar` + `Panel`(form) + `Field` + `SelectBox` + `datetime-local` + `Table` | `MyInterview` · `HomeWorkList` · `CourseStudentList` | 아래 "목록 위 추가 폼 vs 모달" |
 | 댓글 수정 | `Comment`(actions · badge) + 같은 자리 textarea + `Callout`(마감) | `HomeworkReply` | 아래 "할 수 없는 동작" |
 | 메뉴 관리 | `layout-3col` + `Panel`(flush) + `Table`(`onReorder` · `isRowLocked` · `selectedKey` · `isRowMuted`) + `Callout`(actions) | `Menu` · `MenuColumn` | 각 단은 작은 `Table`: 행을 누르면 선택, 손잡이를 끌거나 ↑ ↓ 키로 순서. 여러 단 · 여러 번 옮긴 뒤 "순서가 변경되었습니다: 바뀐 목록 이름" 바에서 한 번에 저장. 옮길 수 없는 메뉴는 `isRowLocked`(고정) |
-| 권한 코드 관리 | `Panel`(form) + 연쇄 select(`input-range`) + `form-row`(도메인 · 권한 · 이름) + `Table`(선택 행) | `Access` | 연쇄 선택: 위를 고르기 전 아래 비활성 + 안내, 위를 바꾸면 아래 비움. 권한은 원래 화면처럼 서버가 준 목록에서 "설명 (동작)"으로 고르고(등록된 것은 비활성), 고르면 이름을 채움. 결과 코드는 권한 칸 힌트로 (사이 기호 · 따로 상자 없음). 표의 [수정] → 위 폼이 수정 모드(제목 · 배지 · 버튼 문구), 못 바꾸는 값은 잠금 + 이유 |
-| 역할별 권한 | `layout-split-start` + `list-group` + 연쇄 select(필터) + `TransferList`(`leftTone` · `rightTone`) + `Callout`(actions) | `AccessRole` | 미허용 붉은색 · 허용 초록색. 옮긴 것은 바로 저장하지 않고 "저장하지 않은 변경 +n · -n" + [되돌리기] [저장]. 변경이 있는데 다른 역할을 고르면 확인 |
-| 공통 코드 | `layout-3col` + `list-group` + `Table`(선택 · 흐린 행) + `Panel` + `desc-list` · `Field` · `form-check`(사용) | `Code` · `AddCode` · `UpdateCode` · `CodeForm` | 상세 패널 하나가 보기 · 수정 · 추가. [저장]은 바뀐 게 있을 때만. 추가한 뒤 코드(ID)는 못 바꿈 |
+| 접근 관리 | `Panel`(form) + 연쇄 select(`input-range`) + `form-row`(도메인 · 권한 · 이름) + `Table`(선택 행) | `Access` | 연쇄 선택: 위를 고르기 전 아래 비활성 + 안내, 위를 바꾸면 아래 비움. 권한은 원래 화면처럼 서버가 준 목록에서 "설명 (동작)"으로 고르고(등록된 것은 비활성), 고르면 이름을 채움. 결과 코드는 권한 칸 힌트로 (사이 기호 · 따로 상자 없음). 표의 [수정] → 위 폼이 수정 모드(제목 · 배지 · 버튼 문구), 못 바꾸는 값은 잠금 + 이유 |
+| 권한별 접근 권한 관리 | `layout-split-start` + `list-group` + 연쇄 select(필터) + `TransferList`(`leftTone` · `rightTone`) + `Callout`(actions) | `AccessRole` | 미허용 붉은색 · 허용 초록색. 옮긴 것은 바로 저장하지 않고 "저장하지 않은 변경 +n · -n" + [되돌리기] [저장]. 변경이 있는데 다른 역할을 고르면 확인 |
+| 환경 변수 관리 | `layout-3col` + `list-group` + `Table`(선택 · 흐린 행) + `Panel` + `desc-list` · `Field` · `form-check`(사용) | `Code` · `AddCode` · `UpdateCode` · `CodeForm` | 상세 패널 하나가 보기 · 수정 · 추가. [저장]은 바뀐 게 있을 때만. 추가한 뒤 코드(ID)는 못 바꿈 |
 | 로그인 · 비밀번호 다시 확인 | `auth-page` + `auth-card` + `Field` + `Callout` + `Button block` | `Login` · `MyPassword` | 위 "가운데 카드" |
 | 상담 기록 | `Callout`(actions) + `desc-list` + `Panel`(actions) + `card-grid` + `Badge`(수준) + `ChoiceGroup` + `Field count` + `timeline` + `StatCard` | `MyCounsel` | 기본 정보가 없으면 위에 안내 + 아래 구역 잠금(버튼 비활성 + 이유). 구역마다 [수정] → [취소] [저장]. 고칠 수 없는 기록은 등록 전에 확인 |
 | 설문 결과 (집계) | `popup-page` + 응답률(`progress-row` + `Progress`) + `Tabs`(문항별 집계 · 학생별 응답) + `Panel` + `Table`(보기 · 비율 막대 · 응답 수) · `list-boxed`(주관식) / `layout-split-start` + `list-group` + 읽기 전용 `QuestionBlock` · `answer-box` | `CourseSurveyResult` (+ 담당자가 만들 집계) | 객관식은 보기마다 응답 수 + 비율 막대. 여러 개 고르기는 응답자 기준이라 합이 100%를 넘는다고 안내. 주관식은 빈 답을 빼고 목록. 학생별은 응답자 목록 | 그 학생의 답 (빈 답은 `answer-box-empty`) |

@@ -17,7 +17,7 @@ import { icons } from "../../common/input/icons.js";
 
 /* 대 · 중 · 소 메뉴 (연쇄 선택용) */
 const MENUS = {
-    "시스템 관리": { "회원 관리": ["회원 목록", "회원 등록"], "역할 관리": ["역할 목록"], "코드 관리": ["공통 코드"] },
+    "시스템 관리": { "회원 관리": ["회원 목록", "회원 등록"], "역할 관리": ["역할 목록", "접근 관리", "권한별 접근 권한 관리"], "환경 설정": ["환경 변수 관리"] },
     "과정 관리": { "과정 목록": ["과정 상세", "과정 등록"], "시험 관리": ["문제 은행", "시험 만들기"] },
     "내 강의실": { "시간표": ["오늘 시간표"], 자료실: ["자료 목록"] },
 };
@@ -72,7 +72,7 @@ const INITIAL_ACCESS = [
     { id: 5, code: "COURSE_READ", name: "과정 조회", top: "과정 관리", mid: "과정 목록", low: "과정 상세" },
 ];
 
-/* ───── 권한 코드 관리 (Access) ───── */
+/* ───── 접근 관리 (Access) ───── */
 const AccessScreen = () => {
     const toast = useToast();
     const [rows, setRows] = useState(INITIAL_ACCESS);
@@ -161,7 +161,7 @@ const AccessScreen = () => {
 
     return (
         <Variant
-            name="권한 코드 관리: 연쇄 선택 + 같은 폼으로 추가 · 수정"
+            name="접근 관리: 연쇄 선택 + 같은 폼으로 추가 · 수정"
             source="Panel · Field · input-range(메뉴 select 셋) · form-row(도메인 · 권한 · 이름) · Table · Badge"
             note={
                 "Access(대 · 중 · 소 select + 도메인 · 권한 select + 이름 + [추가] / 표의 [수정]을 누르면 위 폼이 수정 모드)를 표준으로.\n" +
@@ -253,7 +253,7 @@ const AccessScreen = () => {
     );
 };
 
-/* ───── 역할별 권한 (AccessRole) ───── */
+/* ───── 권한별 접근 권한 관리 (AccessRole) ───── */
 const ROLES = [
     { id: "ROLE_ADMIN", name: "관리자" },
     { id: "ROLE_TUTOR", name: "강사" },
@@ -293,7 +293,7 @@ const AccessRoleScreen = () => {
 
     return (
         <Variant
-            name="역할별 권한: 역할 목록 | 두 목록 옮기기 + 저장 전 변경 표시"
+            name="권한별 접근 권한 관리: 역할 목록 | 두 목록 옮기기 + 저장 전 변경 표시"
             source="layout-split · list-group · TransferList · Callout(actions) · 연쇄 선택(필터)"
             note={
                 "AccessRole(역할 목록 | 허용 목록 | 미허용 목록, 각 목록에 필터, 누르면 바로 옮겨지고 [저장]으로 반영)을 표준으로.\n" +
@@ -365,7 +365,7 @@ const AccessRoleScreen = () => {
     );
 };
 
-/* ───── 공통 코드 (Code): 패널 하나가 보기 · 수정 · 추가 ───── */
+/* ───── 환경 변수 관리 (Code): 패널 하나가 보기 · 수정 · 추가 ───── */
 const INITIAL_CODES = {
     TEST_ANSWER_TYPE: [
         { id: "ANSWER_SELECT", name: "객관식-단항", order: 1, used: true, crtDt: "2026-03-02", mdfDt: "2026-09-14" },
@@ -455,7 +455,7 @@ const CodeScreen = () => {
 
     return (
         <Variant
-            name="공통 코드: 그룹 | 코드 표 | 상세 패널 (보기 · 수정 · 추가)"
+            name="환경 변수 관리: 그룹 | 코드 표 | 상세 패널 (보기 · 수정 · 추가)"
             source="layout-3col · list-group · Table(선택 행 · 흐린 행) · Panel · Field · form-check · desc-list"
             note={
                 "Code(대 · 중 · 소 분류마다 표 + 그 아래 폼, 폼이 보기 · 수정 · 추가로 바뀜)를 표준으로.\n" +
@@ -567,7 +567,7 @@ const MENU_ITEMS = {
     member: { title: "회원 관리" },
     role: { title: "역할 관리" },
     menu: { title: "메뉴 관리" },
-    code: { title: "코드 관리", unused: true },
+    code: { title: "환경 설정", unused: true },
     courseList: { title: "과정 목록" },
     exam: { title: "시험 관리" },
     timetable: { title: "시간표" },
@@ -575,9 +575,9 @@ const MENU_ITEMS = {
     memberList: { title: "회원 목록" },
     memberAdd: { title: "회원 등록" },
     roleList: { title: "역할 목록" },
-    accessRole: { title: "역할별 권한" },
+    accessRole: { title: "권한별 접근 권한 관리" },
     menuList: { title: "메뉴 목록" },
-    commonCode: { title: "공통 코드" },
+    commonCode: { title: "환경 변수 관리" },
     courseDetail: { title: "과정 상세" },
     courseAdd: { title: "과정 등록" },
     bank: { title: "문제 은행" },
@@ -716,7 +716,7 @@ const MenuOrderScreen = () => {
 
 export const ScreenSystemCatalog = () => (
     <>
-        <GroupTitle>화면 예시: 시스템 관리 (메뉴 · 권한 · 코드)</GroupTitle>
+        <GroupTitle>화면 예시: 시스템 관리 (메뉴 관리 · 접근 관리 · 권한별 접근 권한 관리 · 환경 변수 관리)</GroupTitle>
         <Variants wide>
             <MenuOrderScreen />
             <AccessScreen />

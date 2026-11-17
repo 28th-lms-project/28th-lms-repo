@@ -41,9 +41,21 @@ const NAV_GROUPS = [
 ];
 
 /* ───── 예시 데이터 ───── */
-const MENU_TREE = {
-    top: ["시스템 관리", "과정 관리", "내 강의실"],
-    mid: { "시스템 관리": ["회원 관리", "역할 관리", "메뉴 관리", "코드 관리"], "과정 관리": ["과정 목록", "시험 관리"], "내 강의실": ["시간표", "자료실"] },
+/* 선택 목록 · 3단 배치: 과정 › 과제 › 제출 현황 (고르기만 하는 목록. 메뉴처럼 순서를 바꾸는 목록은 화면 예시 › 메뉴 관리) */
+const COURSES = [
+    { id: "fullstack", name: "풀스택 개발자 28기" },
+    { id: "backend", name: "백엔드 개발자 27기" },
+    { id: "data", name: "데이터 분석 5기" },
+];
+const COURSE_STUDENTS = ["홍길동", "김철수", "이영희", "박민수", "최지우"];
+const COURSE_HOMEWORKS = {
+    fullstack: [
+        { id: "hw1", title: "1주차: 배열 뒤집기", endDate: "11-06", closed: true, submitted: ["홍길동", "김철수", "이영희", "박민수", "최지우"] },
+        { id: "hw2", title: "2주차: 컬렉션 정렬", endDate: "11-20", submitted: ["홍길동", "이영희", "최지우"] },
+        { id: "hw3", title: "3주차: 스트림 실습", endDate: "11-27", submitted: [] },
+    ],
+    backend: [{ id: "hw4", title: "1주차: REST 설계", endDate: "11-21", submitted: ["김철수"] }],
+    data: [],
 };
 
 const HOMEWORK = {
@@ -356,70 +368,96 @@ const CardGroup = () => {
 };
 
 const ListLayoutGroup = () => {
-    const [top, setTop] = useState("시스템 관리");
-    const [mid, setMid] = useState("회원 관리");
+    const [course, setCourse] = useState("fullstack");
+    const [homework, setHomework] = useState("hw2");
+    const homeworks = COURSE_HOMEWORKS[course];
+    const current = homeworks.find((h) => h.id === homework);
 
     return (
         <>
             <GroupTitle>선택 목록 · 3단 배치</GroupTitle>
             <Variants wide>
                 <Variant
-                    name="layout-3col + flush Panel + list-group"
-                    source="styles/panel.css (메뉴 관리 · 코드 관리 · 권한 화면의 3단)"
-                    note="선택 항목: <button className='list-item' aria-current='true'>. 미사용은 is-muted"
+                    name="layout-3col + flush Panel + list-group (고르면 다음 단이 바뀜)"
+                    source="styles/panel.css"
+                    note={
+                        "고르기만 하는 목록: <button className='list-item' aria-current='true'>, 끝난 · 안 쓰는 항목은 is-muted, 오른쪽 정보는 list-item-end. 고를 것이 없는 줄은 <li className='list-item'>.\n" +
+                        "앞 단을 고르면 뒤 단이 바뀌고, 뒤 단 선택은 첫 항목으로. 비면 StatusBox size=sm.\n" +
+                        "순서를 바꿔야 하는 목록은 list-group 대신 작은 Table (화면 예시 › 메뉴 관리). 실제 3단 화면은 화면 예시의 메뉴 관리 · 환경 변수 관리 · 권한별 접근 권한 관리를 따름"
+                    }
                     block
                     code={`
 <div className="layout-3col">
-  <Panel title="대메뉴" flush actions={<Button size="sm" icon={icons.add}>추가</Button>}>
+  <Panel title="과정" flush>
     <ul className="list-group">
-      <li><button type="button" className="list-item" aria-current={selected || undefined}>...</button></li>
+      <li><button type="button" className="list-item" aria-current={selected || undefined}>
+        풀스택 28기 <span className="list-item-end"><Badge>3</Badge></span>
+      </button></li>
     </ul>
   </Panel>
   ...
 </div>`}
                 >
                     <div className="layout-3col">
-                        <Panel title="대메뉴" flush actions={<Button size="sm" icon={icons.add}>추가</Button>}>
+                        <Panel title="과정" flush>
                             <ul className="list-group">
-                                {MENU_TREE.top.map((name) => (
-                                    <li key={name}>
+                                {COURSES.map((c) => (
+                                    <li key={c.id}>
                                         <button
                                             type="button"
                                             className="list-item"
-                                            aria-current={top === name || undefined}
+                                            aria-current={course === c.id || undefined}
                                             onClick={() => {
-                                                setTop(name);
-                                                setMid(MENU_TREE.mid[name][0]);
+                                                setCourse(c.id);
+                                                setHomework(COURSE_HOMEWORKS[c.id][0]?.id ?? null);
                                             }}
                                         >
-                                            {name}
+                                            {c.name}
                                             <span className="list-item-end">
-                                                <Badge>{MENU_TREE.mid[name].length}</Badge>
+                                                <Badge>{COURSE_HOMEWORKS[c.id].length}</Badge>
                                             </span>
                                         </button>
                                     </li>
                                 ))}
                             </ul>
                         </Panel>
-                        <Panel title="중메뉴" flush actions={<Button size="sm" icon={icons.add}>추가</Button>}>
-                            <ul className="list-group">
-                                {MENU_TREE.mid[top].map((name) => (
-                                    <li key={name}>
-                                        <button
-                                            type="button"
-                                            className={`list-item ${name === "코드 관리" ? "is-muted" : ""}`}
-                                            aria-current={mid === name || undefined}
-                                            onClick={() => setMid(name)}
-                                        >
-                                            {name}
-                                            {name === "코드 관리" && <span className="list-item-end">(미사용)</span>}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
+                        <Panel title="과제" subtitle={COURSES.find((c) => c.id === course).name} flush>
+                            {homeworks.length ? (
+                                <ul className="list-group">
+                                    {homeworks.map((h) => (
+                                        <li key={h.id}>
+                                            <button
+                                                type="button"
+                                                className={`list-item ${h.closed ? "is-muted" : ""}`}
+                                                aria-current={homework === h.id || undefined}
+                                                onClick={() => setHomework(h.id)}
+                                            >
+                                                {h.title}
+                                                <span className="list-item-end">{h.closed ? "마감" : `~${h.endDate}`}</span>
+                                            </button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <StatusBox type="empty" size="sm" title="이 과정에 과제가 없습니다." />
+                            )}
                         </Panel>
-                        <Panel title="소메뉴" flush>
-                            <StatusBox type="empty" size="sm" title={`"${mid}" 아래 소메뉴가 없습니다.`} />
+                        <Panel title="제출 현황" subtitle={current ? `${current.submitted.length} / ${COURSE_STUDENTS.length}명` : undefined} flush>
+                            {current ? (
+                                <ul className="list-group">
+                                    {COURSE_STUDENTS.map((name) => {
+                                        const done = current.submitted.includes(name);
+                                        return (
+                                            <li key={name} className={`list-item ${done ? "" : "is-muted"}`}>
+                                                {name}
+                                                <span className="list-item-end">{done ? <Badge tone="success">제출</Badge> : <Badge>미제출</Badge>}</span>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            ) : (
+                                <StatusBox type="empty" size="sm" title="과제를 고르세요." />
+                            )}
                         </Panel>
                     </div>
                 </Variant>
