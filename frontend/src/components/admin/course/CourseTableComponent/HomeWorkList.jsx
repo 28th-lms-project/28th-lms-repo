@@ -7,12 +7,17 @@ import { icons } from "../../../sample/input/icons";
 import HomeworkForm from "./HomeworkForm";
 import { getHomeworks } from "../../../../api/admin/course/courseApi";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
+import usePermission from "../../../../hooks/usePermission";
 
 export default function HomeWorkList() {
   const { homeworks } = useSelector((store) => store.courses);
   const { id: courseId } = useParams();
   const dispatch = useDispatch();
   const [addHomework, setAddHomework] = useState(false);
+
+  // 과제 등록 API(COURSE_HOMEWORK_CREATE) 권한이 있을 때만 [추가] 버튼 · 등록 폼 표시 (수강생에게는 숨김)
+  const { can } = usePermission();
+  const canCreateHomework = can("COURSE_HOMEWORK_CREATE");
 
   // [추가] 버튼: 등록 폼 열기 / 닫기
   const onClickAddHomework = () => {
@@ -64,10 +69,16 @@ export default function HomeWorkList() {
   return (
     <>
       <div onClick={onRowClick}>
-        <IconButton color="#666" icon={icons.add} onClick={onClickAddHomework}>
-          추가
-        </IconButton>
-        {addHomework && (
+        {canCreateHomework && (
+          <IconButton
+            color="#666"
+            icon={icons.add}
+            onClick={onClickAddHomework}
+          >
+            추가
+          </IconButton>
+        )}
+        {canCreateHomework && addHomework && (
           <HomeworkForm
             onCancel={onClickAddHomework}
             onSuccess={onSuccessAddHomework}
