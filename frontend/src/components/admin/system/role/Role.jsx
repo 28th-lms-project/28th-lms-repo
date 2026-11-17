@@ -386,7 +386,8 @@ function RoleManagement({ isSuperAdmin, canReadUsers, canMoveUsers }) {
       ? [
           {
             key: "actions",
-            title: "작업",
+            // 머리글은 비워 두고, 스크린 리더에만 칸 이름을 읽힘
+            title: <span className="visually-hidden">작업</span>,
             width: "170px",
             align: "actions",
             render: (role) =>
