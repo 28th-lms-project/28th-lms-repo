@@ -2,11 +2,13 @@ package com.learningworks.course.service;
 
 import java.util.List;
 
+import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
@@ -48,6 +50,12 @@ public interface CourseService {
 	String deleteHomeworkReply(String courseId, String homeworkId, String replyId);
 
 	List<CourseMemberVO> addCourseMember(String courseId, List<String> studentId);
+
+	List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO);
+
+	String updateCourse(String courseId, ModifyCourseVO modifyCourseVO);
+
+	String deleteCourse(String courseId);
 
 	
 
