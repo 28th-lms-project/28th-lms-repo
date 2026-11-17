@@ -1,7 +1,5 @@
 import styles from "./Catalog.module.css";
-import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
-import SwatchPicker from "../../common/ui/SwatchPicker.jsx";
-import { BRANDS, useBrandTheme } from "../../../theme/brandTheme.js";
+import { GroupTitle } from "./CatalogParts.jsx";
 
 /*
  * 현재 화면들에서 쓰는 색 · 글자 크기 · 모서리 · 컨트롤 높이 (2026-11 기준 집계).
@@ -311,36 +309,9 @@ const StandardTokens = () => (
     </div>
 );
 
-/** 테마: 사이드바 색. 사용자가 고르고 앱 전체에 적용 */
-const ThemeGroup = ({ brand, setBrand }) => (
-    <>
-        <GroupTitle>테마 (사이드바 색)</GroupTitle>
-        <Variants>
-            <Variant
-                name="테마: 사이드바 색 (앱 전체)"
-                source="theme/brandTheme.js · common/ui/SwatchPicker.jsx · index.css --brand-*"
-                note={"사용자가 고르는 색. 사이드바 배경과 현재 메뉴 색만 바뀌고 버튼 · 입력 · 상태색은 그대로 (그건 팀이 정하는 강조색).\n여기서 고르면 실제 사이드바도 바로 바뀌고 이 브라우저에 기억됨. 사이드바 프로필 아래에도 같은 견본이 있음.\n어두운 배경만 써서 사이드바 글자 · 현재 메뉴가 모든 테마에서 4.5:1 이상"}
-                code={`
-import { BRANDS, useBrandTheme } from "../theme/brandTheme";
 
-const [brand, setBrand] = useBrandTheme();
-<SwatchPicker name="brand" legend="사이드바 테마" options={BRANDS} value={brand} onChange={setBrand} />`}
-            >
-                <div className="form-stack" style={{ gap: "10px" }}>
-                    <SwatchPicker name="sample-brand" legend="사이드바 테마" options={BRANDS} value={brand} onChange={setBrand} />
-                    <span className="field-hint">지금: {BRANDS.find((b) => b.id === brand)?.label}</span>
-                </div>
-            </Variant>
-        </Variants>
-    </>
-);
-
-/**
- * 표준 탭 첫 섹션 "기초": 토큰 · 테마.
- * 테마(brand)가 바뀌면 다시 그려서 사이드바 토큰 값을 새로 읽음
- */
+/** 표준 탭 첫 섹션 "기초": 토큰. 강조색은 인디고 · 테마(사이드바)는 네이비로 확정 (고르는 기능 없음) */
 export const TokenCatalog = () => {
-    const [brand, setBrand] = useBrandTheme();
     return (
         <div>
             <p className={styles.standardIntro}>
@@ -349,7 +320,7 @@ export const TokenCatalog = () => {
             </p>
             <GroupTitle>표준 토큰 (index.css)</GroupTitle>
             <StandardTokens />
-            <ThemeGroup brand={brand} setBrand={setBrand} />
+            <p className={styles.note}>강조색(primary)은 인디고, 테마(사이드바 색)는 네이비로 확정했습니다 (2026-11-17). 바꿀 때는 index.css의 --primary-* · --brand-* 값만 고칩니다.</p>
         </div>
     );
 };

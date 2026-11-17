@@ -51,7 +51,7 @@ export function Tabs({ idBase, items, value, onChange, variant = "line", ariaLab
             role="tab"
             className="tab"
             aria-selected={selected}
-            aria-controls={`${idBase}-panel-${item.id}`}
+            aria-controls={selected ? `${idBase}-panel-${item.id}` : undefined} // 그려진 패널(선택된 탭)만 가리킴
             tabIndex={selected ? 0 : -1}
             disabled={item.disabled}
             onClick={() => onChange(item.id)}

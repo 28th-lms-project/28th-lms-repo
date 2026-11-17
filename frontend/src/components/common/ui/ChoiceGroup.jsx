@@ -4,7 +4,8 @@
  *
  * @param {object} props
  * @param {string} props.name             input name (화면에서 고유하게)
- * @param {string} props.legend           묶음 이름 (화면에는 숨김, 스크린 리더용)
+ * @param {string} [props.legend]         묶음 이름 (화면에는 숨김, 스크린 리더용).
+ *                                       <Field group label="…"> 안에서는 생략 (Field 라벨이 묶음 이름이 됨, 두 번 읽히지 않게)
  * @param {{ value: string, label: React.ReactNode, disabled?: boolean }[]} props.options
  * @param {string|string[]} props.value   multiple이면 배열
  * @param {(value: any) => void} props.onChange
@@ -22,7 +23,7 @@ export default function ChoiceGroup({ name, legend, options, value, onChange, mu
 
   return (
     <fieldset className={segmented ? "segmented" : "choice-group"}>
-      <legend className="visually-hidden">{legend}</legend>
+      {legend && <legend className="visually-hidden">{legend}</legend>}
       {options.map((option) => (
         <label key={option.value} className={segmented ? "segment" : "choice"}>
           <input

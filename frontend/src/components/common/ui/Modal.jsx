@@ -9,6 +9,8 @@ const FOCUSABLE = [
   'input:not([disabled]):not([type="hidden"])',
   "select:not([disabled])",
   "textarea:not([disabled])",
+  "summary",
+  '[contenteditable]:not([contenteditable="false"])',
   '[tabindex]:not([tabindex="-1"])',
 ].join(", ");
 
@@ -21,8 +23,10 @@ const getFocusable = (root) =>
 /**
  * 모달. 스타일은 styles/modal.css. document.body에 portal로 그린다.
  *
- * 닫기 규칙: Esc · 닫기(X) 버튼은 항상, 바깥 클릭은 closeOnBackdrop일 때만 (폼 모달은 입력이 날아가므로 false).
- * 저장 중처럼 닫히면 안 될 때는 dismissible={false} (Esc · X · 바깥 클릭 모두 막힘).
+ * 닫기 규칙: 기본은 Esc · 닫기(X) 버튼으로 닫힘, 바깥 클릭은 closeOnBackdrop일 때만 (폼 모달은 입력이 날아가므로 false).
+ * 예외: 저장 중처럼 잠깐 닫히면 안 될 때는 dismissible={false} (Esc · X · 바깥 클릭 모두 막힘),
+ *       시험 응시처럼 [제출]로만 닫혀야 하면 onClose를 넘기지 않음 (X 버튼도 없음).
+ * 모달 안의 셀렉트 목록 등이 Esc를 먼저 처리했으면(preventDefault) 모달은 닫지 않는다.
  * 열리면 본문의 첫 입력(또는 initialFocusRef)에 포커스, Tab은 모달 안에서만 돌고, 닫히면 연 버튼으로 포커스가 돌아간다.
  *
  * @param {object} props
@@ -79,6 +83,7 @@ function ModalDialog({
       if (openStack.at(-1) !== token) return;
 
       if (event.key === "Escape") {
+        if (event.defaultPrevented) return; // 셀렉트 목록 닫기 등 안쪽에서 이미 처리한 Esc
         const { onClose: close, dismissible: canClose } = latest.current;
         if (close && canClose) {
           event.stopPropagation();
@@ -96,6 +101,12 @@ function ModalDialog({
         }
         const first = items[0];
         const last = items[items.length - 1];
+        // 포커스가 모달 밖에 있으면(저장 중 버튼이 비활성되어 body로 빠진 경우 등) 모달 안으로 되돌림
+        if (!dialog.contains(document.activeElement)) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus();
+          return;
+        }
         if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
           event.preventDefault();
           last.focus();

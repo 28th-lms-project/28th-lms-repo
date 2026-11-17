@@ -9,7 +9,9 @@ import { buildBreadcrumbs } from "../router/breadcrumbUtils";
  * 메뉴 화면은 DB 메뉴 이름을 따르므로, 메뉴 관리에서 이름을 바꾸거나 옮기면 바로 반영된다.
  * 규칙: frontend/docs/design/menu-page-design.md 7-3
  *
- * @returns {{ key: string, title: string }[]}
+ * 표준 PageHeader · Breadcrumb에 그대로 넘기면 URL이 있는 메뉴만 링크가 된다 (기존 common/Breadcrumb은 to를 쓰지 않음).
+ *
+ * @returns {{ key: string, title: string, to?: string }[]}
  */
 export default function useBreadcrumbs() {
   const matches = useMatches();

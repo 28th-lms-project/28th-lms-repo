@@ -85,11 +85,13 @@
   color: var(--color-text-placeholder);
 }
 
+/* 링크 항목(열 수 있는 화면)은 평소에도 글자 항목보다 진하게 → 올리기 전에도 누를 수 있는 것이 보임.
+   URL이 없는 대 · 중메뉴는 <a> 없이 글자라 올려도 반응 없음 */
 .breadcrumb a {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: inherit;
+  color: var(--color-text-secondary);
   text-decoration: none;
   border-radius: 2px;
 }

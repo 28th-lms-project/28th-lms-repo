@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import Select from "react-select";
 import styles from "./Catalog.module.css";
 import { Variant, Variants } from "./CatalogParts.jsx";
@@ -6,6 +6,7 @@ import { Grid } from "../Grid.jsx";
 import { IconButton } from "../input/IconButton.jsx";
 import { FileField } from "../input/Input.jsx";
 import { icons } from "../input/icons.js";
+import { PollItem } from "../Poll.jsx";
 
 /*
  * admin/course · test · survey 화면의 현재 모양 (비교용). 원본의 인라인 스타일 · 클래스를 그대로 옮김.
@@ -39,10 +40,88 @@ const NO_CHOICE_TYPES = ["ANSWER_WRITE", "ANSWER_CODE", "ANSWER_CHECK"];
 const COURSE_TABS = ["수강생", "접속시간", "시간표", "과제", "시험", "면접일정", "교육자료", "설문", "상담목록"];
 const SURVEY_SUBJECTS = ["수강", "Java", "Spring", "React", "SQL"];
 const SURVEY_TYPES = [
-    { value: "radio", label: "radio" },
-    { value: "checkBox", label: "checkBox" },
-    { value: "text", label: "text" },
+    { value: "radio", label: "단일 선택" },
+    { value: "checkBox", label: "다중 선택" },
+    { value: "text", label: "직접 입력" },
 ];
+const SURVEY_QUESTIONS = [
+    {
+        id: "q1",
+        subject: "강의 내용에 얼마나 만족하나요?",
+        type: "radio",
+        surveyDataList: [
+            { id: "q1-1", data: "매우 만족" },
+            { id: "q1-2", data: "만족" },
+            { id: "q1-3", data: "보통" },
+        ],
+    },
+    {
+        id: "q2",
+        subject: "도움이 된 수업을 모두 고르세요.",
+        type: "checkBox",
+        surveyDataList: [
+            { id: "q2-1", data: "실습" },
+            { id: "q2-2", data: "이론" },
+        ],
+    },
+    { id: "q3", subject: "하고 싶은 말을 적어 주세요.", type: "text", surveyDataList: [] },
+];
+
+// Survey.jsx의 toPollItem 그대로 (미리보기는 sample PollItem)
+const toPollItem = (survey, index) => {
+    const pollType = survey.type === "checkBox" ? "checkbox" : survey.type;
+    const answers =
+        pollType === "text"
+            ? [{ id: `${survey.id}-text`, name: survey.id, title: "", value: "" }]
+            : survey.surveyDataList.map((data) => ({ id: data.id, name: survey.id, title: data.data, value: data.data }));
+    return { id: survey.id, number: index + 1, title: survey.subject, type: pollType, required: false, answers };
+};
+
+const COURSE_SURVEY_HEADER = [
+    { id: "no", title: "번호" },
+    { id: "title", title: "설문 명" },
+    { id: "surveySubject", title: "과목 명" },
+    { id: "surveyType", title: "설문 유형" },
+    { id: "count", title: "항목 수" },
+    { id: "participation", title: "참여 수" },
+    { id: "result", title: "결과" },
+    { id: "delete", title: "삭제" },
+];
+const COURSE_SURVEYS = [
+    { id: 1, title: "28기 Java 사전 설문", surveySubject: "Java", surveyType: "사전 설문", count: 3, answerCount: 12, studentCount: 20 },
+    { id: 2, title: "28기 Java 사후 설문", surveySubject: "Java", surveyType: "사후 설문", count: 3, answerCount: 0, studentCount: 20 },
+];
+const courseSurveyContent = COURSE_SURVEYS.map((survey, index) => {
+    const values = {
+        no: index + 1,
+        title: <div>{survey.title}</div>,
+        surveySubject: survey.surveySubject,
+        surveyType: survey.surveyType,
+        count: survey.count,
+        participation: `${survey.answerCount} / ${survey.studentCount}`,
+        result: <div>결과보기</div>,
+        delete: <div>삭제</div>,
+    };
+    return COURSE_SURVEY_HEADER.map((col) => ({ id: `cs-${survey.id}-${col.id}`, value: values[col.id] }));
+});
+// CourseSurveyForm의 toGroupOptions 그대로 (과목 × 사전/사후)
+const COURSE_SURVEY_GROUPS = ["Java", "Spring", "React"].flatMap((name) =>
+    [
+        { value: "pre", label: "사전 설문" },
+        { value: "post", label: "사후 설문" },
+    ].map((g) => ({ value: `${name}_${g.value}`, label: `${name} ${g.label}`, subjectName: name, typeLabel: g.label })),
+);
+const RESPONDENTS = [
+    { id: "s1", name: "홍길동" },
+    { id: "s2", name: "김영희" },
+    { id: "s3", name: "박민수" },
+];
+// 학생별 답변: 문항 id → 고른 보기 id 목록 또는 글자
+const RESPONDENT_ANSWERS = {
+    s1: { q1: ["q1-1"], q2: ["q2-1", "q2-2"], q3: "실습 시간이 더 있었으면 좋겠습니다." },
+    s2: { q1: ["q1-2"], q2: ["q2-1"], q3: "" },
+    s3: { q1: ["q1-3"], q2: ["q2-2"], q3: "좋았습니다." },
+};
 
 export const CourseLegacyCatalog = () => {
     const [tab, setTab] = useState(0);
@@ -50,6 +129,11 @@ export const CourseLegacyCatalog = () => {
     const [right, setRight] = useState(QUESTIONS.slice(0, 1));
     const [subject, setSubject] = useState("수강");
     const [group, setGroup] = useState("pre");
+    const [surveyQuestions, setSurveyQuestions] = useState(SURVEY_QUESTIONS);
+    const [surveyAdding, setSurveyAdding] = useState(false);
+    const [surveyGroup, setSurveyGroup] = useState(null);
+    const [surveySubject, setSurveySubject] = useState("");
+    const [respondent, setRespondent] = useState("s1");
     const [answerType, setAnswerType] = useState("");
     const [answerCnt, setAnswerCnt] = useState(4);
     const noChoices = NO_CHOICE_TYPES.includes(answerType);
@@ -73,7 +157,7 @@ export const CourseLegacyCatalog = () => {
                 <Variant
                     name="과정 상세 머리 + 탭 (IconButton 9개)"
                     source="admin/course/list/CourseItem.jsx"
-                    note={"제목 h3 + 기간 span + 진행률 글자 + 강사 이름. 탭은 IconButton에 className=\"active\"를 주지만 전역 .active가 없어 선택 표시가 안 보임 (pageList 클래스도 정의 없음)"}
+                    note={"제목 h3 + 기간 span + 진행률 글자 + 강사 이름. 탭은 IconButton에 className=\"active\"를 주지만 전역 .active가 없어 선택 표시가 안 보임 (pageList 클래스도 정의 없음).\n'설문' 탭은 이제 자리표시 글자 대신 과정 설문 목록(CourseSurvey, 아래 예시)을 보여 줌"}
                     block
                 >
                     <div className="section" style={{ padding: "1rem" }}>
@@ -255,19 +339,21 @@ export const CourseLegacyCatalog = () => {
                 </Variant>
 
                 <Variant
-                    name="설문 편집 (회색 탭 바 + 인라인 입력 + 미리보기)"
+                    name="설문 편집 (회색 탭 바 + 문항별 인라인 입력 + PollItem 미리보기)"
                     source="admin/survey/survey/Survey.jsx · Survey.module.css"
-                    note="과목 탭 · 사전/사후 탭은 li에 active 클래스, 문항은 입력 30% + 삭제 버튼, 보기마다 입력 + 삭제, 미리보기는 스타일 없음 (surveyPreview 클래스 정의 없음)"
+                    note={"과목 탭은 고른 li만 흰 배경. 사전/사후 탭은 원본 CSS의 &.active가 ul에 붙어 있어 골라도 표시가 없음.\n[추가] IconButton 아래 문항마다: 질문 입력(30%) + 삭제, '설문 종류' 라벨 + react-select(단일 선택 · 다중 선택 · 직접 입력, 30%), 보기 입력(각 30%) + 삭제를 이어 붙이고 끝에 추가 (직접 입력이면 보기 줄이 사라짐).\n그 아래 '미리보기' 글자 + sample PollItem(번호. 질문 + 라디오 · 체크박스 · 텍스트). 문항 사이 구분선 · 간격이 없고, 글자를 칠 때마다 서버에 바로 저장되며 저장 표시가 없음. 슈퍼 관리자가 아니면 회색 테두리 상자 안내(권한 없음)만 보임"}
                     block
                 >
                     <div className={styles.legacySurveyContainer}>
-                        <ul className={styles.legacySurveyHeader}>
-                            {SURVEY_SUBJECTS.map((s) => (
-                                <li key={s} className={subject === s ? styles.legacySurveyActive : undefined} onClick={() => setSubject(s)}>
-                                    {s}
-                                </li>
-                            ))}
-                        </ul>
+                        <div className={styles.legacySurveyHeader}>
+                            <ul className={styles.legacySurveyCourseList}>
+                                {SURVEY_SUBJECTS.map((s) => (
+                                    <li key={s} className={subject === s ? styles.legacySurveyActive : undefined} onClick={() => setSubject(s)}>
+                                        {s}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                         <div className={styles.legacySurveyBody}>
                             <div className={styles.legacySurveyList}>
                                 <ul>
@@ -280,42 +366,190 @@ export const CourseLegacyCatalog = () => {
                                 </ul>
                             </div>
                             <div className={styles.legacySurvey}>
-                                <div>추가</div>
-                                <div className={styles.legacySurveyForm}>
-                                    <div>
-                                        <input type="text" className={styles.legacySurveyInput} defaultValue="강의 내용에 얼마나 만족하나요?" />
-                                        <IconButton>삭제</IconButton>
-                                    </div>
-                                    <div>
-                                        <label>설문 종류</label>
-                                        <div style={{ width: "30%" }}>
-                                            <Select options={SURVEY_TYPES} defaultValue={SURVEY_TYPES[0]} isSearchable />
+                                <ul>
+                                    <IconButton>추가</IconButton>
+                                    {surveyQuestions.map((survey, index) => (
+                                        <div key={survey.id}>
+                                            <li>
+                                                <div className={styles.legacySurveyForm}>
+                                                    <div>
+                                                        <input type="text" className={styles.legacySurveySubject} defaultValue={survey.subject} />
+                                                        <IconButton>삭제</IconButton>
+                                                    </div>
+                                                    <div>
+                                                        <label>설문 종류</label>
+                                                        <Select
+                                                            className={styles.legacySurveyType}
+                                                            options={SURVEY_TYPES}
+                                                            defaultValue={SURVEY_TYPES.find((option) => option.value === survey.type)}
+                                                            isSearchable
+                                                            onChange={(option) =>
+                                                                setSurveyQuestions((prev) =>
+                                                                    prev.map((q) => (q.id === survey.id ? { ...q, type: option.value } : q)),
+                                                                )
+                                                            }
+                                                        />
+                                                    </div>
+                                                    {survey.type !== "text" && (
+                                                        <div>
+                                                            {survey.surveyDataList.map((data) => (
+                                                                <Fragment key={data.id}>
+                                                                    <input type="text" defaultValue={data.data} className={styles.legacySurveyData} />
+                                                                    <IconButton>삭제</IconButton>
+                                                                </Fragment>
+                                                            ))}
+                                                            <IconButton> 추가 </IconButton>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className={styles.legacySurveyPreview}>
+                                                    미리보기
+                                                    <ul>
+                                                        <PollItem
+                                                            key={`${survey.id}-${survey.type}-${survey.surveyDataList.length}`}
+                                                            item={toPollItem(survey, index)}
+                                                        />
+                                                    </ul>
+                                                </div>
+                                            </li>
                                         </div>
-                                    </div>
-                                    <div>
-                                        {["매우 만족", "만족"].map((v) => (
-                                            <span key={v}>
-                                                <input type="text" defaultValue={v} className={styles.legacySurveyInput} />
-                                                <IconButton>삭제</IconButton>
-                                            </span>
-                                        ))}
-                                        <IconButton> 추가 </IconButton>
-                                    </div>
-                                </div>
-                                <div>
-                                    미리보기
-                                    <div>
-                                        <label>
-                                            <input name="legacy-preview" type="radio" />
-                                            매우 만족
-                                        </label>
-                                        <label>
-                                            <input name="legacy-preview" type="radio" />
-                                            만족
-                                        </label>
-                                    </div>
-                                </div>
+                                    ))}
+                                </ul>
                             </div>
+                        </div>
+                    </div>
+                </Variant>
+
+                <Variant
+                    name="과정 설문 목록 + 추가 폼 (CourseSurvey · CourseSurveyForm)"
+                    source="admin/course/CourseTableComponent/CourseSurvey.jsx · CourseSurveyForm.jsx · CourseSurveyForm.module.css"
+                    note={"과정 상세의 '설문' 탭. [설문 추가] IconButton을 누르면 버튼이 [취소]로 바뀌고 버튼과 표 사이에 폼이 열림.\n폼은 라벨 없이 placeholder만 있는 전체 폭 입력 4줄(설문 제목 · 설문 항목 react-select · 과목 명 · 설문 유형 읽기 전용 회색)과 오른쪽 [등록]. 항목을 고르면 과목 명 · 유형이 채워짐. 오류는 alert.\n표는 Grid 8열. 설문 명 · 결과보기 · 삭제는 그냥 글자(div onClick)라 누를 수 있는지 보이지 않음. 설문 명은 응답 팝업, 결과보기는 결과 팝업(1620×1080 새 창)을 열고, 삭제는 confirm"}
+                    block
+                >
+                    <IconButton icon={surveyAdding ? icons.close : icons.add} onClick={() => setSurveyAdding((prev) => !prev)}>
+                        {surveyAdding ? "취소" : "설문 추가"}
+                    </IconButton>
+                    {surveyAdding && (
+                        <div className={styles.legacyCourseSurveyForm}>
+                            <input type="text" className={styles.legacyCourseSurveyInput} placeholder="설문 제목" />
+                            <Select
+                                options={COURSE_SURVEY_GROUPS}
+                                value={surveyGroup}
+                                onChange={(option) => {
+                                    setSurveyGroup(option);
+                                    setSurveySubject(option.subjectName);
+                                }}
+                                placeholder="설문 항목을 선택하세요."
+                                isSearchable
+                            />
+                            <input
+                                type="text"
+                                className={styles.legacyCourseSurveyInput}
+                                value={surveySubject}
+                                onChange={(e) => setSurveySubject(e.target.value)}
+                                placeholder="과목 명"
+                            />
+                            <input
+                                type="text"
+                                className={`${styles.legacyCourseSurveyInput} ${styles.legacyCourseSurveyReadOnly}`}
+                                value={surveyGroup ? surveyGroup.typeLabel : ""}
+                                placeholder="설문 유형"
+                                readOnly
+                            />
+                            <div className={styles.legacyCourseSurveyButtons}>
+                                <IconButton>등록</IconButton>
+                            </div>
+                        </div>
+                    )}
+                    <Grid header={COURSE_SURVEY_HEADER} content={courseSurveyContent} columnStyle="80px 5fr 120px 120px 80px 100px 90px 70px" />
+                </Variant>
+
+                <Variant
+                    name="설문 응답 팝업 (CourseSurveyAns)"
+                    source="admin/course/CourseTableComponent/CourseSurveyAns.jsx · CourseSurveyAns.module.css"
+                    note={"레이아웃 · 메뉴 가드 밖의 새 창(/survey/answer/...). h2 제목 + '과목 · 유형' 글자 + 번호 목록(ol)에 문항 글자와 브라우저 기본 라디오 · 체크박스 · 텍스트 입력. 보기 라벨 사이 간격 · 문항 구분이 없음.\n맨 아래 [저장] IconButton. 빠진 문항 · 이미 참여 · 제출 완료는 모두 alert, 제출하면 창이 닫힘. 불러오는 동안은 '불러오는 중...' 글자만"}
+                    block
+                >
+                    <div className={styles.legacyCourseSurveyAns}>
+                        <h2>28기 Java 사전 설문</h2>
+                        <p>Java · 사전 설문</p>
+                        <ol>
+                            {SURVEY_QUESTIONS.map((question) => (
+                                <li key={question.id}>
+                                    <div>{question.subject}</div>
+                                    {question.type === "text" ? (
+                                        <input type="text" name={`legacy-ans-${question.id}`} />
+                                    ) : (
+                                        <div>
+                                            {question.surveyDataList.map((data) => (
+                                                <label key={data.id}>
+                                                    <input
+                                                        type={question.type === "checkBox" ? "checkbox" : "radio"}
+                                                        name={`legacy-ans-${question.id}`}
+                                                        value={data.id}
+                                                    />
+                                                    {data.data}
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
+                                </li>
+                            ))}
+                        </ol>
+                        <div>
+                            <IconButton>저장</IconButton>
+                        </div>
+                    </div>
+                </Variant>
+
+                <Variant
+                    name="설문 결과 (CourseSurveyResult)"
+                    source="admin/course/CourseTableComponent/CourseSurveyResult.jsx · CourseSurveyAns.module.css"
+                    note={"응답 팝업과 같은 새 창 모양(/survey/result/...). h2 제목 + '과목 · 유형 · 응답 N명' 글자, 그 아래 flex(gap 24px)로 응답한 학생 이름 목록 | 문항 번호 목록.\n고른 학생은 굵은 글씨만 다르고, 이름이 링크 · 버튼처럼 보이지 않음. 답변은 disabled 라디오 · 체크박스와 readOnly 텍스트 입력으로 보여 줌. 집계(보기별 수 · 비율)는 없고 한 학생씩만 볼 수 있음. 응답이 없으면 '아직 응답한 학생이 없습니다.' 글자"}
+                    block
+                >
+                    <div className={styles.legacyCourseSurveyAns}>
+                        <h2>28기 Java 사전 설문</h2>
+                        <p>Java · 사전 설문 · 응답 {RESPONDENTS.length}명</p>
+                        <div style={{ display: "flex", gap: "24px" }}>
+                            <ul>
+                                {RESPONDENTS.map((student) => (
+                                    <li
+                                        key={student.id}
+                                        style={{ cursor: "pointer", fontWeight: student.id === respondent ? "bold" : "normal" }}
+                                        onClick={() => setRespondent(student.id)}
+                                    >
+                                        {student.name}
+                                    </li>
+                                ))}
+                            </ul>
+                            <ol>
+                                {SURVEY_QUESTIONS.map((question) => {
+                                    const answer = RESPONDENT_ANSWERS[respondent][question.id];
+                                    return (
+                                        <li key={question.id}>
+                                            <div>{question.subject}</div>
+                                            {question.type === "text" ? (
+                                                <input type="text" value={answer} readOnly />
+                                            ) : (
+                                                <div>
+                                                    {question.surveyDataList.map((data) => (
+                                                        <label key={data.id}>
+                                                            <input
+                                                                type={question.type === "checkBox" ? "checkbox" : "radio"}
+                                                                checked={answer.includes(data.id)}
+                                                                disabled
+                                                                readOnly
+                                                            />
+                                                            {data.data}
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </li>
+                                    );
+                                })}
+                            </ol>
                         </div>
                     </div>
                 </Variant>

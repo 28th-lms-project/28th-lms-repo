@@ -36,7 +36,7 @@ const BadgeGroup = () => {
 <span className="badge badge-warning">채점 중</span>`}
                 >
                     <Badge>미진단</Badge>
-                    <Badge tone="primary">진행 중</Badge>
+                    <Badge tone="info">진행 중</Badge>
                     <Badge tone="success">정상</Badge>
                     <Badge tone="danger">계정 잠김</Badge>
                     <Badge tone="warning">채점 중</Badge>
@@ -45,14 +45,14 @@ const BadgeGroup = () => {
                 <Variant
                     name="같은 의미 = 같은 tone"
                     source="MemberDetail · MyCounsel · ExamGradeModal (옮길 때)"
-                    note="등급 · 채점 결과도 따로 색을 만들지 않고 tone으로 맞춤"
+                    note="등급 · 채점 결과도 따로 색을 만들지 않고 tone으로 맞춤. 수준(상 · 중 · 하)에는 danger를 쓰지 않음 (오답 · 오류와 헷갈림). 상태(진행 중)는 info, primary는 선택 · 역할 표시에만"
                 >
                     <Badge tone="success">상</Badge>
-                    <Badge tone="warning">중</Badge>
-                    <Badge tone="danger">하</Badge>
+                    <Badge tone="info">중</Badge>
+                    <Badge tone="warning">하</Badge>
                     <Badge tone="success">정답</Badge>
                     <Badge tone="danger">오답</Badge>
-                    <Badge tone="info">부분정답</Badge>
+                    <Badge tone="info">부분 정답</Badge>
                 </Variant>
                 <Variant
                     name="태그 (분류 칩)"
@@ -77,7 +77,7 @@ const CalloutGroup = () => {
             <GroupTitle>안내 상자 (Callout)</GroupTitle>
             <Variants>
                 <Variant
-                    name="tone 4가지"
+                    name="tone 5가지"
                     source="styles/panel.css · common/ui/Callout.jsx"
                     note="화면에 머무는 안내. 결과 알림은 토스트, 화면을 못 쓰는 상태는 StatusBox"
                     block
@@ -93,6 +93,7 @@ const CalloutGroup = () => {
                             이 역할을 빼면 지금 계정이 메뉴 관리에 들어올 수 없습니다.
                         </Callout>
                         <Callout tone="danger">마감이 지났습니다. 제출하면 지각으로 기록됩니다.</Callout>
+                        <Callout tone="neutral">제출이 마감되어 댓글을 쓰거나 고칠 수 없습니다.</Callout>
                     </div>
                 </Variant>
                 <Variant
@@ -103,7 +104,7 @@ const CalloutGroup = () => {
                     code={`
 <Callout tone="info" actions={<>
   <Button size="sm">되돌리기</Button>
-  <Button size="sm" variant="primary">저장</Button>
+  <Button size="sm" variant="primary">순서 저장</Button>
 </>}>순서가 변경되었습니다.</Callout>`}
                 >
                     {orderChanged ? (
@@ -120,7 +121,7 @@ const CalloutGroup = () => {
                                             toast.success("순서를 저장했습니다.");
                                         }}
                                     >
-                                        저장
+                                        순서 저장
                                     </Button>
                                 </>
                             }
@@ -181,10 +182,10 @@ const StatusGroup = () => {
                     source="common/ui/StatusBox.jsx"
                     note="테두리 없이. 3단 컬럼 리스트 · 표의 빈 행 등"
                     block
-                    code={`<StatusBox type="empty" size="sm" title="중메뉴를 선택하세요." />`}
+                    code={`<StatusBox type="empty" size="sm" title="중메뉴를 고르세요." />`}
                 >
                     <div className="form-stack">
-                        <StatusBox type="empty" size="sm" title="중메뉴를 선택하세요." />
+                        <StatusBox type="empty" size="sm" title="중메뉴를 고르세요." />
                         <StatusBox type="loading" size="sm" />
                     </div>
                 </Variant>
@@ -217,7 +218,7 @@ const ProgressGroup = () => {
                     <div className="card" style={{ width: "100%" }}>
                         <div className="card-header">
                             <strong className="card-title">풀스택 개발자 과정</strong>
-                            <Badge tone="primary">진행 중</Badge>
+                            <Badge tone="info">진행 중</Badge>
                         </div>
                         <p className="card-meta">2026-03-02 ~ 2026-08-28 · 120일 중 52일</p>
                         <Progress label="과정 진행" value={52} max={120} showValue />
@@ -419,7 +420,7 @@ const ok = await confirm({
                         <div key={q.no} className="card">
                             <div className="card-header">
                                 <h3 className="card-title">{q.title}</h3>
-                                <Badge>객관식 · 10점</Badge>
+                                <span className="tag">객관식 (하나) · 10점</span>
                             </div>
                             <p className="card-body">{q.body}</p>
                             <div className="form-check-group">

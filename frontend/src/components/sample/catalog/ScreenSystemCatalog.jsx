@@ -6,7 +6,6 @@ import Field from "../../common/ui/Field.jsx";
 import Panel from "../../common/ui/Panel.jsx";
 import Callout from "../../common/ui/Callout.jsx";
 import Table from "../../common/ui/Table.jsx";
-import Switch from "../../common/ui/Switch.jsx";
 import TransferList from "../../common/ui/TransferList.jsx";
 import { useConfirm, useToast } from "../../common/ui/feedbackContext.js";
 import { icons } from "../../common/input/icons.js";
@@ -18,12 +17,18 @@ import { icons } from "../../common/input/icons.js";
 
 /* 대 · 중 · 소 메뉴 (연쇄 선택용) */
 const MENUS = {
-    "시스템 관리": { "회원 관리": ["회원 목록", "회원 등록"], "역할 관리": ["역할 목록"], "코드 관리": ["공통 코드"] },
+    "시스템 관리": { "회원 관리": ["회원 목록", "회원 등록"], "역할 관리": ["역할 목록", "접근 관리", "권한별 접근 권한 관리"], "환경 설정": ["환경 변수 관리"] },
     "과정 관리": { "과정 목록": ["과정 상세", "과정 등록"], "시험 관리": ["문제 은행", "시험 만들기"] },
     "내 강의실": { "시간표": ["오늘 시간표"], 자료실: ["자료 목록"] },
 };
-const DOMAINS = ["MEMBER", "ROLE", "CODE", "COURSE", "EXAM"];
-const ACTIONS = ["READ", "CREATE", "UPDATE", "DELETE"];
+/** 도메인별 권한 (서버 GET /action-codes 의 domainList 모양: 권한마다 설명이 있음) */
+const ACTION_DOMAINS = [
+    { domain: "MEMBER", actions: [["READ", "회원 조회"], ["CREATE", "회원 등록"], ["UPDATE", "회원 수정"], ["DELETE", "회원 삭제"]] },
+    { domain: "ROLE", actions: [["READ", "역할 조회"], ["UPDATE", "역할 수정"]] },
+    { domain: "EXAM", actions: [["READ", "시험 조회"], ["CREATE", "시험 만들기"], ["GRADE", "채점"]] },
+    { domain: "COURSE", actions: [["READ", "과정 조회"], ["CREATE", "과정 등록"]] },
+].map((d) => ({ ...d, actions: d.actions.map(([action, description]) => ({ code: `${d.domain}_${action}`, action, description })) }));
+const domainOfCode = (code) => ACTION_DOMAINS.find((d) => d.actions.some((a) => a.code === code))?.domain ?? "";
 
 /** 대 → 중 → 소. 위를 고르기 전에는 아래가 비활성, 위를 바꾸면 아래는 비움 */
 const MenuCascade = ({ idBase, value, onChange, disabled = false, compact = false }) => {
@@ -67,24 +72,37 @@ const INITIAL_ACCESS = [
     { id: 5, code: "COURSE_READ", name: "과정 조회", top: "과정 관리", mid: "과정 목록", low: "과정 상세" },
 ];
 
-/* ───── 권한 코드 관리 (Access) ───── */
+/* ───── 접근 관리 (Access) ───── */
 const AccessScreen = () => {
     const toast = useToast();
     const [rows, setRows] = useState(INITIAL_ACCESS);
     const [editingId, setEditingId] = useState(null);
     const [menu, setMenu] = useState(EMPTY_MENU);
     const [domain, setDomain] = useState("");
-    const [action, setAction] = useState("");
+    const [code, setCode] = useState("");
     const [name, setName] = useState("");
+    const [nameEdited, setNameEdited] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const editing = editingId != null;
-    const code = domain && action ? `${domain}_${action}` : "";
-    const taken = rows.some((r) => r.code === code && r.id !== editingId);
+    const actions = ACTION_DOMAINS.find((d) => d.domain === domain)?.actions ?? [];
+    const isTaken = (c) => rows.some((r) => r.code === c && r.id !== editingId);
+    const taken = isTaken(code);
+
+    const changeDomain = (next) => {
+        setDomain(next);
+        setCode("");
+        if (!nameEdited) setName("");
+    };
+    // 권한을 고르면 이름을 설명으로 채움 (직접 고친 뒤에는 그대로)
+    const changeCode = (next) => {
+        setCode(next);
+        if (!nameEdited) setName(actions.find((a) => a.code === next)?.description ?? "");
+    };
 
     const errors = submitted
         ? {
               menu: !menu.low ? "소메뉴까지 고르세요." : "",
-              code: !code ? "도메인과 동작을 고르세요." : taken ? "이미 등록된 권한 코드입니다." : "",
+              code: !code ? "도메인과 권한을 고르세요." : taken ? "이미 등록된 권한 코드입니다." : "",
               name: !name.trim() ? "권한 이름을 입력하세요." : "",
           }
         : {};
@@ -93,18 +111,19 @@ const AccessScreen = () => {
         setEditingId(null);
         setMenu(EMPTY_MENU);
         setDomain("");
-        setAction("");
+        setCode("");
         setName("");
+        setNameEdited(false);
         setSubmitted(false);
     };
 
     const startEdit = (row) => {
-        const [d, ...rest] = row.code.split("_");
         setEditingId(row.id);
         setMenu({ top: row.top, mid: row.mid, low: row.low });
-        setDomain(d);
-        setAction(rest.join("_"));
+        setDomain(domainOfCode(row.code));
+        setCode(row.code);
         setName(row.name);
+        setNameEdited(true);
         setSubmitted(false);
     };
 
@@ -114,10 +133,10 @@ const AccessScreen = () => {
         if (!menu.low || !code || taken || !name.trim()) return;
         if (editing) {
             setRows((prev) => prev.map((r) => (r.id === editingId ? { ...r, ...menu, name: name.trim() } : r)));
-            toast.success("수정했습니다. (예시)");
+            toast.success("저장했습니다.");
         } else {
             setRows((prev) => [...prev, { id: Math.max(...prev.map((r) => r.id)) + 1, code, name: name.trim(), ...menu }]);
-            toast.success(`${code}를 추가했습니다. (예시)`);
+            toast.success(`${code}를 등록했습니다.`);
         }
         reset();
     };
@@ -142,10 +161,11 @@ const AccessScreen = () => {
 
     return (
         <Variant
-            name="권한 코드 관리: 연쇄 선택 + 같은 폼으로 추가 · 수정"
-            source="Panel · Field · input-range(select 셋) · Table · Badge"
+            name="접근 관리: 연쇄 선택 + 같은 폼으로 등록 · 수정"
+            source="Panel · Field · input-range(메뉴 select 셋) · form-row(도메인 · 권한 · 이름) · Table · Badge"
             note={
-                "Access(대 · 중 · 소 select + 도메인 · 코드 select + 이름 + [추가] / 표의 [수정]을 누르면 위 폼이 수정 모드)를 표준으로.\n" +
+                "Access(대 · 중 · 소 select + 도메인 · 권한 select + 이름 + [등록] / 표의 [수정]을 누르면 위 폼이 수정 모드)를 표준으로.\n" +
+                "도메인 · 권한은 원래 화면처럼 서버가 준 목록에서 고름 (권한마다 '설명 (동작)', 등록된 것은 비활성 · 등록됨). 고르면 이름을 설명으로 채움. 결과 코드는 따로 상자 대신 권한 칸 힌트로.\n" +
                 "연쇄 선택: 위를 고르기 전에는 아래가 비활성(안내 문구), 위를 바꾸면 아래는 비움.\n" +
                 "수정 모드: 폼 제목 · 배지 · 버튼 문구가 바뀌고, 바꿀 수 없는 값(권한 코드)은 잠금 + 이유 힌트. 수정 중인 행은 표에서 선택 표시"
             }
@@ -154,13 +174,13 @@ const AccessScreen = () => {
             <div className="form-stack" style={{ width: "100%" }}>
                 <form onSubmit={submit} noValidate>
                     <Panel
-                        title={editing ? "권한 코드 수정" : "권한 코드 추가"}
+                        title={editing ? "접근 권한 수정" : "접근 권한 등록"}
                         badge={editing ? <Badge tone="warning">수정 중</Badge> : undefined}
                         footer={
                             <>
                                 {editing && <Button onClick={reset}>취소</Button>}
-                                <Button type="submit" variant="primary" icon={editing ? undefined : icons.add}>
-                                    {editing ? "수정 반영" : "추가"}
+                                <Button type="submit" variant="primary">
+                                    {editing ? "저장" : "등록"}
                                 </Button>
                             </>
                         }
@@ -170,40 +190,52 @@ const AccessScreen = () => {
                                 <MenuCascade idBase="std-access-menu" value={menu} onChange={setMenu} />
                             </Field>
                             <div className="form-row">
-                                <Field
-                                    label="권한 코드"
-                                    htmlFor="std-access-domain"
-                                    required
-                                    error={errors.code}
-                                    hint={editing ? "권한 코드는 바꿀 수 없습니다 (화면 코드가 이 값으로 권한을 확인함)." : code ? `만들어질 코드: ${code}` : "도메인 + 동작"}
-                                >
-                                    <div className="input-range">
-                                        <select id="std-access-domain" className="form-control" value={domain} disabled={editing} onChange={(e) => setDomain(e.target.value)} aria-describedby="std-access-domain-msg">
-                                            <option value="">도메인</option>
-                                            {DOMAINS.map((d) => (
-                                                <option key={d}>{d}</option>
-                                            ))}
-                                        </select>
-                                        <span className="input-range-sep">_</span>
-                                        <select className="form-control" value={action} disabled={editing} onChange={(e) => setAction(e.target.value)} aria-label="동작">
-                                            <option value="">동작</option>
-                                            {ACTIONS.map((a) => (
-                                                <option key={a} disabled={rows.some((r) => r.code === `${domain}_${a}` && r.id !== editingId)}>
-                                                    {a}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                <Field label="도메인" htmlFor="std-access-domain" required error={errors.code && !domain ? errors.code : ""} hint={editing ? "수정할 때는 바꿀 수 없습니다." : undefined}>
+                                    <select
+                                        id="std-access-domain"
+                                        className="form-control"
+                                        value={domain}
+                                        disabled={editing}
+                                        onChange={(e) => changeDomain(e.target.value)}
+                                    >
+                                        <option value="">도메인 선택</option>
+                                        {ACTION_DOMAINS.map((d) => (
+                                            <option key={d.domain}>{d.domain}</option>
+                                        ))}
+                                    </select>
                                 </Field>
-                                <Field label="권한 이름" htmlFor="std-access-name" required error={errors.name}>
+                                <Field
+                                    label="권한"
+                                    htmlFor="std-access-code"
+                                    required
+                                    error={errors.code && domain ? errors.code : ""}
+                                    hint={code ? `권한 코드: ${code}` : domain ? "등록된 권한은 고를 수 없습니다." : "도메인을 먼저 고르세요."}
+                                >
+                                    <select
+                                        id="std-access-code"
+                                        className="form-control"
+                                        value={code}
+                                        disabled={editing || !domain}
+                                        onChange={(e) => changeCode(e.target.value)}
+                                    >
+                                        <option value="">{domain ? "권한 선택" : "도메인을 먼저"}</option>
+                                        {actions.map((a) => (
+                                            <option key={a.code} value={a.code} disabled={isTaken(a.code)}>
+                                                {`${a.description} (${a.action})${isTaken(a.code) ? " · 등록됨" : ""}`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </Field>
+                                <Field label="권한 이름" htmlFor="std-access-name" required error={errors.name} hint="권한을 고르면 설명으로 채워짐 (고칠 수 있음)">
                                     <input
                                         id="std-access-name"
                                         className="form-control"
                                         placeholder="예: 회원 조회"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        aria-invalid={!!errors.name}
-                                        aria-describedby="std-access-name-msg"
+                                        onChange={(e) => {
+                                            setName(e.target.value);
+                                            setNameEdited(true);
+                                        }}
                                     />
                                 </Field>
                             </div>
@@ -216,7 +248,7 @@ const AccessScreen = () => {
     );
 };
 
-/* ───── 역할별 권한 (AccessRole) ───── */
+/* ───── 권한별 접근 권한 관리 (AccessRole) ───── */
 const ROLES = [
     { id: "ROLE_ADMIN", name: "관리자" },
     { id: "ROLE_TUTOR", name: "강사" },
@@ -251,17 +283,17 @@ const AccessRoleScreen = () => {
 
     const save = () => {
         setSaved((prev) => ({ ...prev, [role]: draft.map(Number) }));
-        toast.success("권한을 저장했습니다. (예시)");
+        toast.success("권한을 저장했습니다.");
     };
 
     return (
         <Variant
-            name="역할별 권한: 역할 목록 | 두 목록 옮기기 + 저장 전 변경 표시"
-            source="layout-split · list-group · TransferList · Callout(actions) · 연쇄 선택(필터)"
+            name="권한별 접근 권한 관리: 역할 목록 | 두 목록 옮기기 + 저장 전 변경 표시"
+            source="layout-split-start · list-group · TransferList · Callout(actions) · 연쇄 선택(필터)"
             note={
                 "AccessRole(역할 목록 | 허용 목록 | 미허용 목록, 각 목록에 필터, 누르면 바로 옮겨지고 [저장]으로 반영)을 표준으로.\n" +
                 "옮기기는 TransferList(체크 후 옮기기 · 두 번 눌러 바로). 메뉴 필터는 위에 하나만 두고 미허용 후보를 좁힘 (허용 목록은 늘 전부 보임).\n" +
-                "옮긴 것은 바로 저장하지 않고 '저장하지 않은 변경 +n · -n' 안내 + [되돌리기] [저장]. 변경이 있는데 다른 역할을 고르면 확인"
+                "양쪽 뜻이 반대라 색으로 구분: 미허용 = 붉은 머리 + 흐린 글자(leftTone=danger), 허용 = 초록 머리(rightTone=success).\n옮긴 것은 바로 저장하지 않고 '저장하지 않은 변경 +n · -n' 안내 + [되돌리기] [저장]. 변경이 있는데 다른 역할을 고르면 확인"
             }
             block
         >
@@ -291,7 +323,7 @@ const AccessRoleScreen = () => {
                     </div>
                     {dirty && (
                         <Callout
-                            tone="warning"
+                            tone="info"
                             actions={
                                 <>
                                     <Button size="sm" onClick={() => setDraft(savedKeys)}>
@@ -317,6 +349,8 @@ const AccessRoleScreen = () => {
                             </span>
                         )}
                         leftTitle="미허용"
+                        leftTone="danger"
+                        rightTone="success"
                         rightTitle={`허용 (${ROLES.find((r) => r.id === role).name})`}
                         height={200}
                     />
@@ -326,10 +360,10 @@ const AccessRoleScreen = () => {
     );
 };
 
-/* ───── 공통 코드 (Code): 패널 하나가 보기 · 수정 · 추가 ───── */
+/* ───── 환경 변수 관리 (Code): 패널 하나가 보기 · 수정 · 추가 ───── */
 const INITIAL_CODES = {
     TEST_ANSWER_TYPE: [
-        { id: "ANSWER_SELECT", name: "객관식-단항", order: 1, used: true, crtDt: "2026-03-02", mdfDt: "2026-09-14" },
+        { id: "ANSWER_SELECT", name: "객관식 (하나)", order: 1, used: true, crtDt: "2026-03-02", mdfDt: "2026-09-14" },
         { id: "ANSWER_CHECK", name: "O/X", order: 2, used: true, crtDt: "2026-03-02", mdfDt: "2026-03-02" },
         { id: "ANSWER_ESSAY", name: "서술형 (안 씀)", order: 3, used: false, crtDt: "2026-03-02", mdfDt: "2026-10-01" },
     ],
@@ -391,7 +425,7 @@ const CodeScreen = () => {
         setSelectedId(item.id);
         setMode("view");
         setSubmitted(false);
-        toast.success(mode === "add" ? "코드를 추가했습니다. (예시)" : "저장했습니다. (예시)");
+        toast.success(mode === "add" ? "코드를 등록했습니다." : "저장했습니다.");
     };
 
     const columns = [
@@ -409,15 +443,15 @@ const CodeScreen = () => {
             <>
                 <Button onClick={() => open("view")}>취소</Button>
                 <Button type="submit" variant="primary" disabled={!dirty}>
-                    {mode === "add" ? "추가" : "저장"}
+                    {mode === "add" ? "등록" : "저장"}
                 </Button>
             </>
         );
 
     return (
         <Variant
-            name="공통 코드: 그룹 | 코드 표 | 상세 패널 (보기 · 수정 · 추가)"
-            source="layout-3col · list-group · Table(선택 행 · 흐린 행) · Panel · Field · Switch · desc-list"
+            name="환경 변수 관리: 그룹 | 코드 표 | 상세 패널 (보기 · 수정 · 추가)"
+            source="layout-3col · list-group · Table(선택 행 · 흐린 행) · Panel · Field · form-check · desc-list"
             note={
                 "Code(대 · 중 · 소 분류마다 표 + 그 아래 폼, 폼이 보기 · 수정 · 추가로 바뀜)를 표준으로.\n" +
                 "상세 패널 하나가 세 상태: 보기(desc-list + [수정]) · 수정(입력 + [취소] [저장]) · 추가(빈 입력, 코드도 입력). 머리의 [추가]는 언제나 같은 자리.\n" +
@@ -463,7 +497,7 @@ const CodeScreen = () => {
                     </Panel>
                     <Panel
                         title={mode === "add" ? "새 코드" : selected?.name ?? "코드"}
-                        badge={mode === "view" ? (selected?.used ? <Badge tone="success">사용</Badge> : <Badge>안 씀</Badge>) : <Badge tone="warning">{mode === "add" ? "추가 중" : "수정 중"}</Badge>}
+                        badge={mode === "view" ? (selected?.used ? <Badge tone="success">사용</Badge> : <Badge>안 씀</Badge>) : <Badge tone="warning">{mode === "add" ? "등록 중" : "수정 중"}</Badge>}
                         footer={footer}
                     >
                         {mode === "view" ? (
@@ -490,8 +524,6 @@ const CodeScreen = () => {
                                         value={draft.id}
                                         readOnly={mode === "edit"}
                                         onChange={(e) => setDraft({ ...draft, id: e.target.value.toUpperCase() })}
-                                        aria-invalid={!!errors.id}
-                                        aria-describedby="std-code-id-msg"
                                     />
                                 </Field>
                                 <Field label="이름" htmlFor="std-code-name" required error={errors.name}>
@@ -500,16 +532,14 @@ const CodeScreen = () => {
                                         className="form-control"
                                         value={draft.name}
                                         onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                                        aria-invalid={!!errors.name}
-                                        aria-describedby="std-code-name-msg"
                                     />
                                 </Field>
                                 <Field label="순서" htmlFor="std-code-order">
                                     <input id="std-code-order" type="number" min={1} className="form-control" style={{ width: "96px" }} value={draft.order} onChange={(e) => setDraft({ ...draft, order: e.target.value })} />
                                 </Field>
-                                <Switch checked={draft.used} onChange={(used) => setDraft({ ...draft, used })}>
-                                    사용
-                                </Switch>
+                                <label className="form-check">
+                                    <input type="checkbox" checked={draft.used} onChange={(e) => setDraft({ ...draft, used: e.target.checked })} /> 사용
+                                </label>
                             </div>
                         )}
                     </Panel>
@@ -519,10 +549,167 @@ const CodeScreen = () => {
     );
 };
 
+/* ───── 메뉴 관리: 3단 + 순서 바꾸기 (Menu · MenuColumn) ───── */
+const MENU_ITEMS = {
+    home: { title: "대시보드", fixed: true },
+    sys: { title: "시스템 관리" },
+    course: { title: "과정 관리" },
+    my: { title: "내 강의실" },
+    member: { title: "회원 관리" },
+    role: { title: "역할 관리" },
+    menu: { title: "메뉴 관리" },
+    code: { title: "환경 설정", unused: true },
+    courseList: { title: "과정 목록" },
+    exam: { title: "시험 관리" },
+    timetable: { title: "시간표" },
+    data: { title: "자료실" },
+    memberList: { title: "회원 목록" },
+    memberAdd: { title: "회원 등록" },
+    roleList: { title: "역할 목록" },
+    accessRole: { title: "권한별 접근 권한 관리" },
+    menuList: { title: "메뉴 목록" },
+    commonCode: { title: "환경 변수 관리" },
+    courseDetail: { title: "과정 상세" },
+    courseAdd: { title: "과정 등록" },
+    bank: { title: "문제 은행" },
+    examAdd: { title: "시험 만들기" },
+    today: { title: "오늘 시간표" },
+    dataList: { title: "자료 목록" },
+};
+/** 부모 id → 자식 id 순서 (ROOT = 대메뉴) */
+const MENU_ORDER = {
+    ROOT: ["home", "sys", "course", "my"],
+    home: [],
+    sys: ["member", "role", "menu", "code"],
+    course: ["courseList", "exam"],
+    my: ["timetable", "data"],
+    member: ["memberList", "memberAdd"],
+    role: ["roleList", "accessRole"],
+    menu: ["menuList"],
+    code: ["commonCode"],
+    courseList: ["courseDetail", "courseAdd"],
+    exam: ["bank", "examAdd"],
+    timetable: ["today"],
+    data: ["dataList"],
+};
+const LEVEL_NAMES = ["대메뉴", "중메뉴", "소메뉴"];
+const sameOrder = (a, b) => a.length === b.length && a.every((id, i) => id === b[i]);
+
+const MenuOrderScreen = () => {
+    const toast = useToast();
+    const [saved, setSaved] = useState(MENU_ORDER);
+    const [draft, setDraft] = useState(MENU_ORDER);
+    const [top, setTop] = useState("sys");
+    const [mid, setMid] = useState("member");
+
+    const parents = ["ROOT", top, mid];
+    const changed = Object.keys(draft).filter((p) => !sameOrder(draft[p], saved[p]));
+    const changedNames = changed.map((p) => (p === "ROOT" ? "대메뉴" : MENU_ITEMS[p].title));
+
+    const reorder = (parent) => (from, to) =>
+        setDraft((prev) => {
+            const next = [...prev[parent]];
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved);
+            return { ...prev, [parent]: next };
+        });
+
+    const select = (level, id) => {
+        if (level === 0) {
+            setTop(id);
+            setMid(draft[id][0] ?? "");
+        } else if (level === 1) setMid(id);
+    };
+
+    const save = () => {
+        setSaved(draft);
+        toast.success("순서를 저장했습니다.");
+    };
+
+    const columnsFor = (level) => [
+        {
+            key: "title",
+            title: LEVEL_NAMES[level],
+            render: (r) => (
+                <>
+                    {r.title}
+                    {r.unused && <span className="field-hint"> (미사용)</span>}
+                </>
+            ),
+        },
+        ...(level < 2 ? [{ key: "count", title: "하위", width: "56px", align: "num", render: (r) => draft[r.id]?.length ?? 0 }] : []),
+    ];
+
+    return (
+        <Variant
+            name="메뉴 관리: 3단 + 순서 바꾸기 (끌기 · 키보드) + 순서 저장 바"
+            source="layout-3col · Panel(flush) · Table(onReorder · isRowLocked · selectedKey · isRowMuted) · Callout(actions)"
+            note={
+                "Menu · MenuColumn(목록을 끌어 놓으면 바로 저장)을 표준으로. 각 단은 작은 Table: 행을 누르면 선택, 손잡이(⠿)를 끌거나 손잡이에서 ↑ ↓ 키로 순서 바꾸기.\n" +
+                "여러 단 · 여러 번 옮긴 뒤 위 '순서가 변경되었습니다' 바에서 한 번에 [순서 저장] (역할 관리와 같은 규칙). 바뀐 목록 이름을 바에 적고, [되돌리기]는 저장된 순서로.\n" +
+                "옮길 수 없는 메뉴(대시보드)는 isRowLocked: 손잡이 대신 '고정', 그 자리로 놓거나 건너뛸 수 없음. 미사용은 흐리게"
+            }
+            block
+        >
+            <div className="form-stack" style={{ width: "100%" }}>
+                {changed.length > 0 && (
+                    <Callout
+                        tone="info"
+                        actions={
+                            <>
+                                <Button size="sm" onClick={() => setDraft(saved)}>
+                                    되돌리기
+                                </Button>
+                                <Button size="sm" variant="primary" onClick={save}>
+                                    순서 저장
+                                </Button>
+                            </>
+                        }
+                    >
+                        순서가 변경되었습니다: {changedNames.join(" · ")}
+                    </Callout>
+                )}
+                <div className="layout-3col">
+                    {parents.map((parent, level) => {
+                        const rows = (parent ? draft[parent] ?? [] : []).map((id) => ({ id, ...MENU_ITEMS[id] }));
+                        const title = level === 0 ? "대메뉴" : `${LEVEL_NAMES[level]} · ${MENU_ITEMS[parent]?.title ?? ""}`;
+                        return (
+                            <Panel
+                                key={level}
+                                title={title}
+                                flush
+                                actions={
+                                    <Button size="sm" icon={icons.add}>
+                                        추가
+                                    </Button>
+                                }
+                            >
+                                <Table
+                                    columns={columnsFor(level)}
+                                    rows={rows}
+                                    size="sm"
+                                    selectedKey={level === 0 ? top : level === 1 ? mid : undefined}
+                                    onRowClick={level < 2 ? (r) => select(level, r.id) : undefined}
+                                    isRowMuted={(r) => !!r.unused}
+                                    onReorder={reorder(parent)}
+                                    isRowLocked={(r) => !!r.fixed}
+                                    emptyText="하위 메뉴가 없습니다."
+                                    ariaLabel={`${title} (예시)`}
+                                />
+                            </Panel>
+                        );
+                    })}
+                </div>
+            </div>
+        </Variant>
+    );
+};
+
 export const ScreenSystemCatalog = () => (
     <>
-        <GroupTitle>화면 예시: 시스템 관리 (권한 · 코드)</GroupTitle>
+        <GroupTitle>화면 예시: 시스템 관리 (메뉴 관리 · 접근 관리 · 권한별 접근 권한 관리 · 환경 변수 관리)</GroupTitle>
         <Variants wide>
+            <MenuOrderScreen />
             <AccessScreen />
             <AccessRoleScreen />
             <CodeScreen />

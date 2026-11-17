@@ -12,3 +12,16 @@
   padding: 24px 32px;
   box-sizing: border-box;
 }
+
+/* 768px 이하: 사이드바는 서랍(SideMenu)이라 자리를 차지하지 않음. 왼쪽 위 [☰ 메뉴] 버튼 아래부터 본문 */
+@media screen and (max-width: 768px) {
+  .content {
+    padding: 64px 16px 24px;
+  }
+}
+
+/* 다크 모드인데 아직 표준으로 옮기지 않은 화면: 예전 밝은 모양 그대로 (밝은 섬 = 밝은 토큰 + 예전 글자색) */
+.content[data-color-scheme="light"] {
+  background-color: var(--color-bg-page);
+  color: #333;
+}
