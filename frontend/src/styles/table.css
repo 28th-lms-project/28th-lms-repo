@@ -12,6 +12,7 @@
  *   col-num(오른쪽 · 고정폭 숫자) · col-center · col-actions(오른쪽 버튼 칸) · cell-mono
  *   tr.is-clickable · tr.is-selected · tr.is-muted
  *   table-bordered: 세로 칸선 (시간표) · col-highlight: 강조 열 (오늘) · tr.is-highlight: 강조 행 · tr.is-break: 쉬는 시간 행
+ *   쉬는 날 (휴강 · 공휴일): 행이면 tr.is-off(한 줄로 합쳐 사유), 열이면 col-off(열 전체 회색 + 칸은 '쉼')
  *   col-check: 체크박스 칸 · col-handle + table-handle: 순서 손잡이 (끌기는 손잡이에서만 시작, tr.is-dragging · is-drop-before · is-drop-after)
  *   tr.is-added · is-modified · is-deleted: 편집 표 변경 상태 · cell-input: 칸 안 입력
  *   table-wrap-scroll: 높이 제한 + 머리글 고정
@@ -46,14 +47,15 @@
   color: var(--color-text);
 }
 
-.table th,
-.table td {
+/* 칸 기본값은 :where()로 우선순위 0 → 화면 CSS module 클래스(Table columns의 className)로 여백 · 정렬을 바꿀 수 있음 */
+:where(.table) th,
+:where(.table) td {
   padding: 0 12px;
   text-align: left;
   vertical-align: middle;
 }
 
-.table th {
+:where(.table) th {
   height: var(--table-header-height);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
@@ -62,7 +64,7 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-.table td {
+:where(.table) td {
   height: var(--table-row-height);
   border-bottom: 1px solid var(--color-border-light);
 }
@@ -71,11 +73,15 @@
   border-bottom: 0;
 }
 
-.table-hover tbody tr:not(.table-empty):hover {
+/*
+ * 올림 · 줄무늬는 :where()로 우선순위를 0으로 낮춤 → 선택(is-selected) · 편집 상태(is-added 등) 색이 항상 이김.
+ * 화면 CSS module이 행 배경을 바꿀 때도 클래스 하나로 이길 수 있음
+ */
+:where(.table-hover tbody tr:not(.table-empty)):hover {
   background-color: var(--color-bg-hover);
 }
 
-.table-striped tbody tr:nth-child(even) {
+:where(.table-striped tbody tr:nth-child(even)) {
   background-color: var(--color-bg-subtle);
 }
 
@@ -262,6 +268,24 @@ th[aria-sort] .table-sort-icon {
   color: var(--color-text-muted);
   text-align: center;
   background-color: var(--color-bg-subtle);
+}
+
+/* 쉬는 날: 빗금 배경 + 흐린 글자. 빈 칸('-') · 쉬는 시간(is-break)과 구별 */
+.table tr.is-off td,
+.table .col-off {
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-subtle);
+  background-image: repeating-linear-gradient(-45deg, transparent 0 6px, var(--color-border-light) 6px 7px);
+}
+
+.table tr.is-off td {
+  height: 36px;
+  text-align: center;
+}
+
+.table tr.is-off th,
+.table th.col-off {
+  color: var(--color-text-muted);
 }
 
 /* 강조 행 (오늘 날짜처럼 여러 줄이 한 묶음일 때는 묶음의 모든 tr에) */

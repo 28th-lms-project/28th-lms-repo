@@ -15,6 +15,8 @@ import { useId, useState } from "react";
  * @param {string} [props.leftTitle="선택 가능"]
  * @param {string} [props.rightTitle="선택됨"]
  * @param {React.ReactNode} [props.rightSummary]       오른쪽 머리 옆 요약 (총 배점 등)
+ * @param {"danger"|"success"} [props.leftTone]       왼쪽 목록 색 (권한 미허용 = danger: 붉은 머리 · 흐린 글자)
+ * @param {"danger"|"success"} [props.rightTone]      오른쪽 목록 색 (허용 = success: 초록 머리)
  * @param {string|number} [props.height=280]           목록 높이 (넘으면 스크롤)
  */
 export default function TransferList({
@@ -27,6 +29,8 @@ export default function TransferList({
   leftTitle = "선택 가능",
   rightTitle = "선택됨",
   rightSummary,
+  leftTone,
+  rightTone,
   height = 280,
 }) {
   const baseId = useId();
@@ -61,8 +65,9 @@ export default function TransferList({
     const listChecked = side === "left" ? leftChecked : rightChecked;
     const allChecked = list.length > 0 && listChecked.length === list.length;
     const titleId = `${baseId}-${side}`;
+    const tone = side === "left" ? leftTone : rightTone;
     return (
-      <section className="transfer-list" aria-labelledby={titleId}>
+      <section className={`transfer-list${tone ? ` transfer-list-${tone}` : ""}`} aria-labelledby={titleId}>
         <header className="transfer-head">
           <label className="form-check">
             <input
@@ -134,18 +139,16 @@ export default function TransferList({
           className="btn btn-sm"
           disabled={!leftChecked.length}
           onClick={() => add(leftChecked)}
-          aria-label={`체크한 ${leftChecked.length}개 ${rightTitle}(으)로 옮기기`}
         >
-          추가 →
+          추가 →<span className="visually-hidden"> (체크한 {leftChecked.length}개를 {rightTitle}(으)로)</span>
         </button>
         <button
           type="button"
           className="btn btn-sm"
           disabled={!rightChecked.length}
           onClick={() => remove(rightChecked)}
-          aria-label={`체크한 ${rightChecked.length}개 빼기`}
         >
-          ← 빼기
+          ← 빼기<span className="visually-hidden"> (체크한 {rightChecked.length}개)</span>
         </button>
       </div>
       {renderList("right", right, rightTitle, right.length, rightSummary && <span className="transfer-summary">{rightSummary}</span>)}

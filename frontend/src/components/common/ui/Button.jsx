@@ -18,7 +18,8 @@ const VARIANT_CLASS = {
  * @param {"md"|"sm"} [props.size="md"]  md 36px, sm 30px (표 행 안 등)
  * @param {boolean} [props.block]        전체 폭
  * @param {string}  [props.icon]         icons.js의 path (예: icons.add)
- * @param {boolean} [props.loading]      true면 돌아가는 아이콘 + 비활성 (문구는 "저장 중..."처럼 직접 바꿈)
+ * @param {boolean} [props.loading]      true면 돌아가는 아이콘 + 누를 수 없음 (문구는 "저장 중..."처럼 직접 바꿈).
+ *                                       disabled 대신 aria-disabled라 누른 버튼의 포커스가 그대로 남음 (모달 Tab 가두기 · 키보드 사용)
  * icon이 icons.refresh(새로고침 · 다시 시도)면 올렸을 때 아이콘이 한 바퀴 돈다 (btn-icon-rotate, 다른 아이콘도 className으로 붙일 수 있음).
  * 아이콘만 있는 버튼은 aria-label을 꼭 넘긴다. 나머지 props(onClick, type, aria-*, title …)는 <button>에 그대로 전달.
  */
@@ -32,6 +33,7 @@ export default function Button({
   disabled = false,
   className = "",
   children,
+  onClick,
   ...rest
 }) {
   const iconOnly = !children && (icon || loading);
@@ -53,9 +55,15 @@ export default function Button({
     <button
       type={type}
       className={classes}
-      disabled={disabled || loading}
+      disabled={disabled}
+      aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
       {...rest}
+      onClick={(event) => {
+        // 저장 중: 다시 눌러도 (submit 포함) 아무 일도 없음
+        if (loading) return event.preventDefault();
+        onClick?.(event);
+      }}
     >
       {loading ? (
         <SvgIcon path={icons.progress} size={iconSize} className="spin" />

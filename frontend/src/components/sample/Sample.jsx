@@ -5,7 +5,7 @@ import { chartData } from "../../assets/mocks/chart.json.js";
 import { pollData } from "../../assets/mocks/poll.json.js";
 import { Grid } from "./Grid.jsx";
 import { gridData } from "../../assets/mocks/grid.json.js";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Alert, Confirm } from "./Modal.jsx";
 import { Button, FileField } from "./input/Input.jsx";
@@ -33,7 +33,7 @@ import { StandardScreenCatalog } from "./catalog/StandardScreenCatalog.jsx";
 import { PartHeader } from "./catalog/CatalogParts.jsx";
 import UiButton from "../common/ui/Button.jsx";
 import { Tabs, TabPanel } from "../common/ui/Tabs.jsx";
-import SwatchPicker from "../common/ui/SwatchPicker.jsx";
+import { useColorScheme } from "../../theme/colorScheme.js";
 
 /*
  * 디자인 시스템 페이지
@@ -47,12 +47,12 @@ import SwatchPicker from "../common/ui/SwatchPicker.jsx";
  */
 const STANDARD = [
     { id: "standard-foundation", label: "기초", title: "기초 (토큰 · 테마)", Component: TokenCatalog },
-    { id: "standard-input", label: "동작 · 입력", title: "동작 · 입력 (버튼 · 입력 · 셀렉트 · 선택 · 날짜 · 파일 · 반복 입력 행)", Component: StandardInputCatalog },
-    { id: "standard-feedback", label: "표시 · 상태", title: "표시 · 상태 (배지 · 안내 상자 · 상태 상자 · 진행 막대 · 토스트 · 모달)", Component: StandardFeedbackCatalog },
-    { id: "standard-data", label: "데이터", title: "데이터 (표 · 페이지 이동 · 표 확장 · 두 목록 옮기기)", Component: StandardDataCatalog },
-    { id: "standard-layout", label: "배치 · 탐색", title: "배치 · 탐색 (화면 머리 · 사이드 메뉴 · 탭 · 패널 · 카드 · 배치 · 팝업 창 틀)", Component: StandardLayoutCatalog },
-    { id: "standard-content", label: "내용", title: "내용 (시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 내용 블록)", Component: StandardContentCatalog },
-    { id: "standard-screen", label: "화면 예시", title: "화면 예시 (목록 | 상세 · 상세 · 대시보드 · 오류 · 과정 · 시험 · 문제 은행 · 강의실 · 과제 · 설문 · 시스템 관리 · 로그인 · 상담)", Component: StandardScreenCatalog },
+    { id: "standard-input", label: "동작 · 입력", title: "동작 · 입력 (버튼 · 입력 · 폼 · 검색 셀렉트 · 선택 · 날짜 · 숫자 · 기간 · 검색 · 파일 · 반복 입력 행)", Component: StandardInputCatalog },
+    { id: "standard-feedback", label: "표시 · 상태", title: "표시 · 상태 (배지 · 태그 · 안내 상자 · 상태 상자 · 진행 막대 · 토스트 · 확인 창 · 모달)", Component: StandardFeedbackCatalog },
+    { id: "standard-data", label: "데이터", title: "데이터 (표 · 페이지 이동 · 표 확장 · 두 목록 사이 옮기기)", Component: StandardDataCatalog },
+    { id: "standard-layout", label: "배치 · 탐색", title: "배치 · 탐색 (화면 머리 · 브레드크럼 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 3단 배치 · 팝업 창 틀)", Component: StandardLayoutCatalog },
+    { id: "standard-content", label: "내용", title: "내용 (시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 인용 · 세로 키-값 · 상자 목록)", Component: StandardContentCatalog },
+    { id: "standard-screen", label: "화면 예시", title: "화면 예시 (목록 | 상세 · 상세 · 대시보드 · 오류 · 과정 · 시험 · 시험 응시 · 문제 은행 · 과제 · 강의실 · 설문 · 시스템 관리 · 로그인 · 상담)", Component: StandardScreenCatalog },
 ];
 
 /** 통일 전 현재 UI (비교용) */
@@ -102,80 +102,15 @@ const scrollToSection = (id, tocEl) => {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
-/*
- * 다크 모드 (샘플 페이지에서만): <html data-color-scheme="dark">를 이 페이지에 있는 동안만 붙인다.
- * 페이지를 떠나면 지워서 다른 화면은 항상 밝은 모드. 선택은 이 브라우저에만 기억.
- */
-const SCHEME_KEY = "sample-color-scheme";
 
-const readScheme = () => {
-    try {
-        return localStorage.getItem(SCHEME_KEY) === "dark" ? "dark" : "light";
-    } catch {
-        return "light";
-    }
-};
-
-const applyScheme = (scheme) => {
-    if (scheme === "dark") document.documentElement.dataset.colorScheme = "dark";
-    else delete document.documentElement.dataset.colorScheme;
-};
-
-/*
- * 강조색(primary) 후보 미리 보기 (샘플 페이지에서만): <html data-primary-preview="...">.
- * 팀이 강조색을 정할 때 비교용. 저장하지 않고, 페이지를 떠나면 지운다 (다른 화면은 항상 확정된 강조색).
- * 정해지면 index.css의 --primary-* 기본값을 그 색으로 바꾼다. swatch는 --primary-fill과 같은 값.
- * 상태색(위험 빨강 · 성공 초록 · 경고 노랑)과 헷갈리는 붉은 · 초록 · 노랑 계열은 후보에 넣지 않는다.
- */
-const PRIMARY_CANDIDATES = [
-    { id: "indigo", label: "인디고 (지금 값)", swatch: "#3b5bdb" },
-    { id: "violet", label: "바이올렛", swatch: "#7048e8" },
-    { id: "grape", label: "그레이프", swatch: "#ae3ec9" },
-    { id: "cyan", label: "사이언", swatch: "#0b7285" },
-];
-
-const applyPrimaryPreview = (id) => {
-    if (id && id !== "indigo") document.documentElement.dataset.primaryPreview = id;
-    else delete document.documentElement.dataset.primaryPreview;
-};
 
 const SampleDashboard = () => {
     title("DashBoard!");
 
-    // 첫 렌더 전에 속성을 붙여야 토큰 값 표시(TokenCatalog)가 맞음
-    const [scheme, setScheme] = useState(() => {
-        const saved = readScheme();
-        applyScheme(saved);
-        return saved;
-    });
+    // 다크 모드는 앱 전체 (사이드바 버튼과 같은 값). 여기 버튼은 샘플을 보며 바로 바꾸기용
+    const [scheme, setColorScheme] = useColorScheme();
+    const toggleScheme = () => setColorScheme(scheme === "dark" ? "light" : "dark");
 
-    useEffect(() => {
-        applyScheme(scheme);
-        return () => applyScheme("light");
-    }, [scheme]);
-
-    const toggleScheme = () => {
-        const next = scheme === "dark" ? "light" : "dark";
-        applyScheme(next); // 다시 그리기 전에 적용 (토큰 값 표시)
-        try {
-            localStorage.setItem(SCHEME_KEY, next);
-        } catch {
-            /* 저장 못 해도 지금 화면에는 적용됨 */
-        }
-        setScheme(next);
-    };
-
-    const [primaryPreview, setPrimaryPreview] = useState("indigo");
-
-    useEffect(() => {
-        applyPrimaryPreview(primaryPreview);
-        return () => applyPrimaryPreview("indigo");
-    }, [primaryPreview]);
-
-    const changePrimaryPreview = (next) => {
-        applyPrimaryPreview(next); // 다시 그리기 전에 적용 (토큰 값 표시)
-        setPrimaryPreview(next);
-    };
 
     /* 구역 탭 */
     const tabsId = useId();
@@ -214,16 +149,6 @@ const SampleDashboard = () => {
                 <div className={catalogStyles.tocRow}>
                     <Tabs idBase={tabsId} items={PART_TABS} value={part} onChange={changePart} ariaLabel="샘플 구역" className={catalogStyles.partTabs} />
                     <span className={catalogStyles.tocEnd}>
-                        <span className={catalogStyles.tocLabel} aria-hidden="true">
-                            강조색 후보
-                        </span>
-                        <SwatchPicker
-                            name="sample-primary-preview"
-                            legend="강조색 후보 (이 페이지에서만 미리 보기)"
-                            options={PRIMARY_CANDIDATES}
-                            value={primaryPreview}
-                            onChange={changePrimaryPreview}
-                        />
                         <UiButton size="sm" aria-pressed={scheme === "dark"} onClick={toggleScheme}>
                             {scheme === "dark" ? "☀ 밝은 모드" : "☾ 다크 모드"}
                         </UiButton>

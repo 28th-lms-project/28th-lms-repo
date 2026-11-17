@@ -26,7 +26,7 @@ import ListEditor from "../../common/ui/ListEditor.jsx";
 import QuestionBlock from "../../common/ui/QuestionBlock.jsx";
 import { newListItem } from "../../common/ui/listEditorItem.js";
 import { ScreenSystemCatalog } from "./ScreenSystemCatalog.jsx";
-import { ScreenStudyCatalog } from "./ScreenStudyCatalog.jsx";
+import { ScreenClassroomCatalog, ScreenExamTakeCatalog, ScreenSurveyResultCatalog } from "./ScreenStudyCatalog.jsx";
 import { ScreenMyCatalog } from "./ScreenMyCatalog.jsx";
 
 /*
@@ -74,16 +74,14 @@ const COURSE_TABS = ["수강생", "접속시간", "시간표", "과제", "시험
 }));
 
 const QUESTIONS = [
-    { id: "q1", question: "Java의 기본형이 아닌 것은?", answerType: "객관식-단항", pointAlloc: 5 },
+    { id: "q1", question: "Java의 기본형이 아닌 것은?", answerType: "객관식 (하나)", pointAlloc: 5 },
     { id: "q2", question: "JVM이 하는 일을 설명하세요.", answerType: "주관식", pointAlloc: 10 },
     { id: "q3", question: "String은 불변 객체이다.", answerType: "O/X", pointAlloc: 5 },
-    { id: "q4", question: "배열을 뒤집는 메서드를 작성하세요.", answerType: "코드작성", pointAlloc: 20 },
-    { id: "q5", question: "접근 제한자를 모두 고르세요.", answerType: "객관식-다항", pointAlloc: 10 },
+    { id: "q4", question: "배열을 뒤집는 메서드를 작성하세요.", answerType: "코드 작성", pointAlloc: 20 },
+    { id: "q5", question: "접근 제한자를 모두 고르세요.", answerType: "객관식 (여러 개)", pointAlloc: 10 },
     { id: "q6", question: "오버로딩과 오버라이딩의 차이는?", answerType: "주관식", pointAlloc: 10 },
     { id: "q7", question: "인터페이스는 다중 구현이 가능하다.", answerType: "O/X", pointAlloc: 5 },
 ];
-
-const TYPE_TONE = { "객관식-단항": "primary", "객관식-다항": "primary", "O/X": "neutral", 주관식: "info", 코드작성: "warning" };
 
 const GRADE_STUDENTS = ["홍길동", "김철수", "이영희", "박민수", "최지우", "정해인", "윤아름", "임수정", "한지민", "오세훈", "서지수", "강다니엘"].map(
     (name, i) => ({ id: `s${i + 1}`, label: name }),
@@ -92,7 +90,7 @@ const GRADE_STUDENTS = ["홍길동", "김철수", "이영희", "박민수", "최
 const GRADE_QUESTIONS = [
     { id: "g1", no: 1, title: "String은 불변 객체이다.", type: "O/X", point: 5, model: "O", answer: "O" },
     { id: "g2", no: 2, title: "JVM이 하는 일을 설명하세요.", type: "주관식", point: 10, model: "바이트코드를 기계어로 바꿔 실행하고 메모리(GC)를 관리한다.", answer: "자바 코드를 실행해 준다." },
-    { id: "g3", no: 3, title: "배열을 뒤집는 메서드를 작성하세요.", type: "코드작성", point: 20, model: "", answer: "" },
+    { id: "g3", no: 3, title: "배열을 뒤집는 메서드를 작성하세요.", type: "코드 작성", point: 20, model: "", answer: "" },
 ];
 
 const GRADES = [
@@ -180,7 +178,7 @@ const ListDetailScreen = () => {
                                     <input id="std-split-q" type="search" className="form-control" placeholder="검색어" />
                                 </Field>
                                 <div className="btn-group">
-                                    <Button variant="primary">검색</Button>
+                                    <Button>검색</Button>
                                     <Button>초기화</Button>
                                 </div>
                             </div>
@@ -207,7 +205,7 @@ const ListDetailScreen = () => {
                                     badge={selected.locked ? <Badge tone="danger">잠김</Badge> : <Badge tone="success">정상</Badge>}
                                     footer={
                                         <>
-                                            <Button variant="danger">{selected.locked ? "잠금 해제" : "잠금"}</Button>
+                                            <Button variant="danger" className="btn-start">{selected.locked ? "잠금 해제" : "잠금"}</Button>
                                             <Button variant="primary">저장</Button>
                                         </>
                                     }
@@ -224,7 +222,7 @@ const ListDetailScreen = () => {
                                     </dl>
                                 </Panel>
                             ) : (
-                                <StatusBox type="empty" title="회원을 선택하세요." />
+                                <StatusBox type="empty" title="회원을 고르세요." />
                             )}
                         </div>
                     </div>
@@ -248,7 +246,7 @@ const DetailScreens = () => {
                     block
                 >
                     <PageHeader
-                        crumbs={[{ title: "내 강의실", to: "/sample" }, { title: "자료실", to: "/sample" }, { title: "1주차 강의자료" }]}
+                        crumbs={[{ title: "내 강의실" }, { title: "자료실", to: "/sample" }, { title: "1주차 강의자료" }]}
                         title="1주차 강의자료"
                         actions={
                             <>
@@ -296,7 +294,7 @@ const DetailScreens = () => {
                             <div className="card">
                                 <div className="card-header">
                                     <strong className="card-title">풀스택 개발자 과정</strong>
-                                    <Badge tone="primary">진행 중</Badge>
+                                    <Badge tone="info">진행 중</Badge>
                                 </div>
                                 <p className="card-meta">2026-03-02 ~ 2026-08-28</p>
                                 <Progress label="풀스택 과정 진행" value={52} max={120} showValue />
@@ -355,7 +353,7 @@ const DetailScreens = () => {
                             code="500"
                             title="화면을 그리지 못했습니다."
                             detail="TypeError: Cannot read properties of undefined (개발 환경에서만 표시)"
-                            onRetry={() => toast.show("다시 불러옵니다. (예시)")}
+                            onRetry={() => toast.show("다시 불러옵니다.")}
                         />
                     </div>
                 </Variant>
@@ -387,7 +385,7 @@ const CourseScreens = () => {
         setCourseSaving(true);
         setTimeout(() => {
             setCourseSaving(false);
-            toast.success("과정을 등록했습니다. (예시)");
+            toast.success("과정을 등록했습니다.");
         }, 900);
     };
 
@@ -411,7 +409,7 @@ const CourseScreens = () => {
                             footer={
                                 <>
                                     <Button>취소</Button>
-                                    <Button type="submit" variant="primary" icon={icons.add} loading={courseSaving}>
+                                    <Button type="submit" variant="primary" loading={courseSaving}>
                                         {courseSaving ? "등록 중..." : "등록"}
                                     </Button>
                                 </>
@@ -426,8 +424,6 @@ const CourseScreens = () => {
                                             placeholder="예: 풀스택 개발자 과정"
                                             value={courseName}
                                             onChange={(e) => setCourseName(e.target.value)}
-                                            aria-invalid={!!nameError}
-                                            aria-describedby="std-course-name-msg"
                                         />
                                     </Field>
                                     <Field label="기수" htmlFor="std-course-count" hint="숫자만">
@@ -436,7 +432,7 @@ const CourseScreens = () => {
                                 </div>
                                 <div className="form-row">
                                     <Field label="담당 강사" htmlFor="std-course-tutor" required error={tutorError}>
-                                        <SelectBox inputId="std-course-tutor" options={TUTORS} value={tutor} onChange={setTutor} isClearable aria-invalid={!!tutorError} />
+                                        <SelectBox inputId="std-course-tutor" options={TUTORS} value={tutor} onChange={setTutor} isClearable />
                                     </Field>
                                     <Field label="과정 기간" htmlFor="std-course-start" required error={rangeError}>
                                         <div className="input-range">
@@ -479,7 +475,7 @@ const CourseScreens = () => {
                     block
                 >
                     <PageHeader
-                        crumbs={[{ title: "과정 관리", to: "/sample" }, { title: "풀스택 개발자 과정 28기" }]}
+                        crumbs={[{ title: "과정 관리" }, { title: "과정 목록", to: "/sample" }, { title: "풀스택 개발자 과정 28기" }]}
                         title="풀스택 개발자 과정 28기"
                         actions={<Button icon={icons.edit}>과정 수정</Button>}
                     />
@@ -538,8 +534,8 @@ const ExamScreens = () => {
             <Variants wide>
                 <Variant
                     name="시험 만들기: 문제 고르기"
-                    source="Field · Switch · TransferList"
-                    note={"ExamPage 추가 화면(제목 입력 + 공개 체크 + ExamQuestionPicker)의 표준. 고른 문제의 총 배점은 오른쪽 머리에.\n문제 유형은 Badge (같은 유형 = 같은 tone)"}
+                    source="Field · form-check(공개) · TransferList"
+                    note={"ExamPage 추가 화면(제목 입력 + 공개 체크 + ExamQuestionPicker)의 표준. 고른 문제의 총 배점은 오른쪽 머리에.\n문제 유형은 분류라 tag"}
                     block
                 >
                     <Panel
@@ -547,8 +543,8 @@ const ExamScreens = () => {
                         footer={
                             <>
                                 <Button>취소</Button>
-                                <Button variant="primary" disabled={!picked.length || !examTitle.trim()} onClick={() => toast.success(`문제 ${picked.length}개로 시험을 만들었습니다. (예시)`)}>
-                                    시험 만들기
+                                <Button variant="primary" disabled={!picked.length || !examTitle.trim()} onClick={() => toast.success("시험을 등록했습니다.")}>
+                                    시험 등록
                                 </Button>
                             </>
                         }
@@ -558,11 +554,9 @@ const ExamScreens = () => {
                                 <Field label="시험 제목" htmlFor="std-exam-title" required>
                                     <input id="std-exam-title" className="form-control" value={examTitle} onChange={(e) => setExamTitle(e.target.value)} />
                                 </Field>
-                                <div style={{ flex: "0 0 auto", paddingTop: "20px" }}>
-                                    <Switch checked={examPublic} onChange={setExamPublic}>
-                                        수강생에게 공개
-                                    </Switch>
-                                </div>
+                                <label className="form-check">
+                                    <input type="checkbox" checked={examPublic} onChange={(e) => setExamPublic(e.target.checked)} /> 수강생에게 공개
+                                </label>
                             </div>
                             <TransferList
                                 items={QUESTIONS}
@@ -576,7 +570,7 @@ const ExamScreens = () => {
                                     <span style={{ display: "flex", gap: "8px", alignItems: "center", justifyContent: "space-between" }}>
                                         <span>{q.question}</span>
                                         <span style={{ display: "flex", gap: "6px", alignItems: "center", flexShrink: 0 }}>
-                                            <Badge tone={TYPE_TONE[q.answerType]}>{q.answerType}</Badge>
+                                            <span className="tag">{q.answerType}</span>
                                             <span className="field-hint">{q.pointAlloc}점</span>
                                         </span>
                                     </span>
@@ -644,7 +638,7 @@ const ExamScreens = () => {
                                             </div>
                                         )}
                                         {q.answer ? (
-                                            <div className={`answer-box ${q.type === "코드작성" ? "answer-box-code" : ""}`}>
+                                            <div className={`answer-box ${q.type === "코드 작성" ? "answer-box-code" : ""}`}>
                                                 <span className="answer-box-label">
                                                     {studentName} 답안 {grade && <Badge tone={grade.tone}>{grade.label}</Badge>}
                                                 </span>
@@ -775,14 +769,14 @@ const QuestionBankScreen = () => {
         setTimeout(() => {
             setSaving(false);
             setSubmitted(false);
-            toast.success(editing ? "문제를 저장했습니다. (예시)" : "문제를 등록했습니다. (예시)");
+            toast.success(editing ? "문제를 저장했습니다." : "문제를 등록했습니다.");
             if (!editing) setQ(emptyQuestion());
         }, 900);
     };
 
     const remove = async () => {
         const ok = await confirm({ message: "이 문제를 삭제할까요?\n시험에 이미 쓰인 문제는 시험에서도 빠집니다.", confirmText: "삭제", danger: true });
-        if (ok) toast.success("삭제했습니다. (예시)");
+        if (ok) toast.success("삭제했습니다.");
     };
 
     const previewOptions = isChoice
@@ -797,7 +791,7 @@ const QuestionBankScreen = () => {
 
     return (
         <>
-            <GroupTitle>화면 예시: 문제 은행</GroupTitle>
+            <GroupTitle>화면 예시: 문제 은행 (추가 · 수정)</GroupTitle>
             <Variants wide>
                 <Variant
                     name="문제 추가 · 수정 폼 (+ 미리 보기)"
@@ -819,20 +813,20 @@ const QuestionBankScreen = () => {
                                     footer={
                                         <>
                                             {editing && (
-                                                <Button variant="danger" icon={icons.delete} onClick={remove} style={{ marginRight: "auto" }}>
+                                                <Button variant="danger" icon={icons.delete} onClick={remove} className="btn-start">
                                                     삭제
                                                 </Button>
                                             )}
                                             <Button onClick={() => changeMode(mode)}>취소</Button>
-                                            <Button type="submit" variant="primary" icon={editing ? undefined : icons.add} loading={saving}>
-                                                {saving ? "저장 중..." : editing ? "저장" : "등록"}
+                                            <Button type="submit" variant="primary" loading={saving}>
+                                                {saving ? (editing ? "저장 중..." : "등록 중...") : editing ? "저장" : "등록"}
                                             </Button>
                                         </>
                                     }
                                 >
                                     <div className="form-stack">
-                                        <Field label="문제 유형" required error={errors.type}>
-                                            <ChoiceGroup name={`${formId}-type`} legend="문제 유형" options={QB_TYPES} value={q.type} onChange={changeType} />
+                                        <Field group label="문제 유형" required error={errors.type}>
+                                            <ChoiceGroup name={`${formId}-type`} options={QB_TYPES} value={q.type} onChange={changeType} />
                                         </Field>
                                         <Field label="문제" htmlFor={`${formId}-question`} required error={errors.question}>
                                             <textarea
@@ -842,8 +836,6 @@ const QuestionBankScreen = () => {
                                                 placeholder="예: Java의 기본형이 아닌 것은?"
                                                 value={q.question}
                                                 onChange={(e) => update({ question: e.target.value })}
-                                                aria-invalid={!!errors.question}
-                                                aria-describedby={`${formId}-question-msg`}
                                             />
                                         </Field>
                                         <Field
@@ -857,7 +849,6 @@ const QuestionBankScreen = () => {
                                                 rows={isCode ? 5 : 3}
                                                 value={q.subQuestion}
                                                 onChange={(e) => update({ subQuestion: e.target.value })}
-                                                aria-describedby={`${formId}-sub-msg`}
                                             />
                                         </Field>
                                         <Field label="배점" htmlFor={`${formId}-point`} required error={errors.point} hint="1~4점">
@@ -870,13 +861,12 @@ const QuestionBankScreen = () => {
                                                 style={{ width: "120px" }}
                                                 value={q.point}
                                                 onChange={(e) => update({ point: e.target.value })}
-                                                aria-invalid={!!errors.point}
-                                                aria-describedby={`${formId}-point-msg`}
                                             />
                                         </Field>
 
                                         {isChoice && (
                                             <Field
+                                                group
                                                 label="보기 · 정답"
                                                 required
                                                 error={errors.items}
@@ -905,11 +895,10 @@ const QuestionBankScreen = () => {
                                             </Field>
                                         )}
                                         {q.type === "ANSWER_CHECK" && (
-                                            <Field label="정답" required error={errors.ox}>
+                                            <Field group label="정답" required error={errors.ox}>
                                                 <ChoiceGroup
                                                     variant="segmented"
                                                     name={`${formId}-ox`}
-                                                    legend="정답"
                                                     options={[
                                                         { value: "O", label: "O" },
                                                         { value: "X", label: "X" },
@@ -996,13 +985,13 @@ const HomeworkScreen = () => {
             setHwEndDate(draftEndDate);
             setHwSaving(false);
             setEditing(false);
-            toast.success("과제를 수정했습니다. (예시)");
+            toast.success("과제를 저장했습니다.");
         }, 800);
     };
 
     const deleteHomework = async () => {
         if (await confirm({ title: "과제 삭제", message: `${HOMEWORK.subject}을(를) 삭제할까요?\n댓글도 함께 지워집니다.`, confirmText: "삭제", danger: true })) {
-            toast.success("삭제했습니다. (예시)");
+            toast.success("삭제했습니다.");
         }
     };
 
@@ -1072,90 +1061,91 @@ const HomeworkScreen = () => {
                             )
                         }
                     />
-                    <div className="toolbar" style={{ marginBottom: "16px", alignItems: "center" }}>
-                        <span>
-                            <strong>{NOT_SUBMITTED.length}명 미제출</strong>
-                            <span className="field-hint"> · {NOT_SUBMITTED.join(", ")}</span>
-                        </span>
-                        <div className="btn-group" style={{ alignItems: "center" }}>
-                            <input
-                                type="number"
-                                className="form-control form-control-sm"
-                                style={{ width: "72px" }}
-                                min={1}
-                                max={SUBMITTED.length}
-                                aria-label="뽑을 인원"
-                                value={pickCount}
-                                onChange={(e) => setPickCount(e.target.value)}
-                            />
-                            <Button size="sm" onClick={pickRandom}>
-                                제출자 랜덤 뽑기
-                            </Button>
-                            {pickedNames.map((name) => (
-                                <span key={name} className="tag">
-                                    {name}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="layout-split" style={{ "--layout-aside-width": "360px" }}>
-                        <Panel title="과제 내용">
-                            {editing ? (
-                                <textarea
-                                    className="form-control"
-                                    aria-label="과제 내용"
-                                    style={{ minHeight: "240px" }}
-                                    value={draftContent}
-                                    onChange={(e) => setDraftContent(e.target.value)}
+                    <div className="form-stack">
+                        <div className="toolbar" style={{ alignItems: "center" }}>
+                            <span>
+                                <strong>{NOT_SUBMITTED.length}명 미제출</strong>
+                                <span className="field-hint"> · {NOT_SUBMITTED.join(", ")}</span>
+                            </span>
+                            <div className="btn-group" style={{ alignItems: "center" }}>
+                                <input
+                                    type="number"
+                                    className="form-control form-control-sm"
+                                    style={{ width: "72px" }}
+                                    min={1}
+                                    max={SUBMITTED.length}
+                                    aria-label="뽑을 인원"
+                                    value={pickCount}
+                                    onChange={(e) => setPickCount(e.target.value)}
                                 />
-                            ) : (
-                                <p className="card-body" style={{ whiteSpace: "pre-wrap", minHeight: "240px" }}>
-                                    {hwContent}
-                                </p>
-                            )}
-                        </Panel>
-                        <Panel
-                            title="제출 (댓글)"
-                            subtitle={`${SUBMITTED.length}건`}
-                            actions={<Button size="sm" icon={icons.refresh} aria-label="댓글 새로고침" />}
-                            footer={
-                                deadlinePassed ? (
-                                    <div style={{ width: "100%" }}>
-                                        <Callout tone="warning">과제 마감일이 지났습니다. 더 이상 제출할 수 없습니다.</Callout>
-                                    </div>
+                                <Button size="sm" onClick={pickRandom}>
+                                    제출자 랜덤 뽑기
+                                </Button>
+                                {pickedNames.map((name) => (
+                                    <span key={name} className="tag">
+                                        {name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="layout-split" style={{ "--layout-aside-width": "360px" }}>
+                            <Panel title="과제 내용">
+                                {editing ? (
+                                    <textarea
+                                        className="form-control"
+                                        aria-label="과제 내용"
+                                        style={{ minHeight: "240px" }}
+                                        value={draftContent}
+                                        onChange={(e) => setDraftContent(e.target.value)}
+                                    />
                                 ) : (
-                                    <div className="form-stack" style={{ gap: "8px", width: "100%" }}>
-                                        <textarea
-                                            className="form-control"
-                                            aria-label="제출 내용"
-                                            placeholder="제출 내용 · 링크를 입력하세요."
-                                            style={{ minHeight: "64px" }}
-                                            value={reply}
-                                            onChange={(e) => setReply(e.target.value)}
-                                        />
-                                        <div className="btn-group btn-group-end">
-                                            <Button
-                                                size="sm"
-                                                variant="primary"
-                                                disabled={!reply.trim()}
-                                                onClick={() => {
-                                                    toast.success("제출했습니다. (예시)");
-                                                    setReply("");
-                                                }}
-                                            >
-                                                제출
-                                            </Button>
+                                    <p className="card-body" style={{ whiteSpace: "pre-wrap", minHeight: "240px" }}>
+                                        {hwContent}
+                                    </p>
+                                )}
+                            </Panel>
+                            <Panel
+                                title="제출 (댓글)"
+                                subtitle={`${SUBMITTED.length}건`}
+                                actions={<Button size="sm" icon={icons.refresh} aria-label="댓글 새로고침" />}
+                                footer={
+                                    deadlinePassed ? (
+                                        <div style={{ width: "100%" }}>
+                                            <Callout tone="warning">과제 마감일이 지났습니다. 더 이상 제출할 수 없습니다.</Callout>
                                         </div>
-                                    </div>
-                                )
-                            }
-                        >
-                            <ul className="comment-list" style={{ maxHeight: "220px", overflowY: "auto" }}>
-                                <Comment author="홍길동" time="2026-11-15 21:04" body="github.com/hong/week1 제출합니다." />
-                                <Comment author="김철수" time="2026-11-16 09:12" body="캡처 첨부했습니다." />
-                                <Comment author="이영희" time="2026-11-16 10:30" body="원래 배열을 복사한 뒤 뒤집었습니다." />
-                            </ul>
-                        </Panel>
+                                    ) : (
+                                        <div className="comment-form">
+                                            <textarea
+                                                className="form-control"
+                                                aria-label="제출 내용"
+                                                placeholder="제출 내용 · 링크를 입력하세요."
+                                                value={reply}
+                                                onChange={(e) => setReply(e.target.value)}
+                                            />
+                                            <div className="btn-group btn-group-end">
+                                                <Button
+                                                    size="sm"
+                                                    variant="primary"
+                                                    disabled={!reply.trim()}
+                                                    onClick={() => {
+                                                        toast.success("제출했습니다.");
+                                                        setReply("");
+                                                    }}
+                                                >
+                                                    제출
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    )
+                                }
+                            >
+                                <ul className="comment-list" style={{ maxHeight: "220px", overflowY: "auto" }}>
+                                    <Comment author="홍길동" time="2026-11-15 21:04" body="github.com/hong/week1 제출합니다." />
+                                    <Comment author="김철수" time="2026-11-16 09:12" body="캡처 첨부했습니다." />
+                                    <Comment author="이영희" time="2026-11-16 10:30" body="원래 배열을 복사한 뒤 뒤집었습니다." />
+                                </ul>
+                            </Panel>
+                        </div>
                     </div>
                 </Variant>
             </Variants>
@@ -1177,14 +1167,14 @@ const SurveyScreen = () => {
     const updateSurvey = (id, patch) => setSurveys((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
 
     const removeSurvey = async (survey, index) => {
-        if (await confirm({ message: `${index + 1}번 문항을 지울까요?`, confirmText: "지우기", danger: true })) {
+        if (await confirm({ message: `${index + 1}번 문항을 삭제할까요?`, confirmText: "삭제", danger: true })) {
             setSurveys((prev) => prev.filter((s) => s.id !== survey.id));
         }
     };
 
     return (
         <>
-            <GroupTitle>화면 예시: 설문</GroupTitle>
+            <GroupTitle>화면 예시: 설문 편집기</GroupTitle>
             <Variants wide>
                 <Variant
                     name="설문 문항 편집기 (편집 | 미리 보기)"
@@ -1225,12 +1215,10 @@ const SurveyScreen = () => {
                                                     onChange={(e) => updateSurvey(survey.id, { subject: e.target.value })}
                                                 />
                                             </Field>
-                                            <div className="field">
-                                                <span className="field-label">답하는 방식</span>
+                                            <Field group label="답하는 방식">
                                                 <ChoiceGroup
                                                     variant="segmented"
                                                     name={`${survey.id}-type`}
-                                                    legend={`문항 ${index + 1} 답하는 방식`}
                                                     options={SURVEY_TYPES}
                                                     value={survey.type}
                                                     onChange={(type) =>
@@ -1240,10 +1228,9 @@ const SurveyScreen = () => {
                                                         })
                                                     }
                                                 />
-                                            </div>
+                                            </Field>
                                             {survey.type !== "text" && (
-                                                <div className="field">
-                                                    <span className="field-label">보기</span>
+                                                <Field group label="보기">
                                                     <ListEditor
                                                         label={`문항 ${index + 1} 보기`}
                                                         items={survey.items}
@@ -1253,7 +1240,7 @@ const SurveyScreen = () => {
                                                         placeholder="보기 내용"
                                                         addLabel="보기 추가"
                                                     />
-                                                </div>
+                                                </Field>
                                             )}
                                         </div>
                                     </Panel>
@@ -1307,10 +1294,12 @@ export const StandardScreenCatalog = () => (
         <DetailScreens />
         <CourseScreens />
         <ExamScreens />
+        <ScreenExamTakeCatalog />
         <QuestionBankScreen />
-        <ScreenStudyCatalog />
         <HomeworkScreen />
+        <ScreenClassroomCatalog />
         <SurveyScreen />
+        <ScreenSurveyResultCatalog />
         <ScreenSystemCatalog />
         <ScreenMyCatalog />
     </div>

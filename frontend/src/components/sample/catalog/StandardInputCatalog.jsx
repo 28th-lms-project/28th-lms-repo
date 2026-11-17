@@ -92,7 +92,7 @@ const ButtonGroup = () => {
                 <Variant
                     name="size · 아이콘"
                     source="common/ui/Button.jsx"
-                    note="sm(30px)은 표 행 안처럼 좁은 곳. 아이콘만 있는 버튼은 aria-label 필수"
+                    note={"sm(30px)은 표 행 안처럼 좁은 곳. 아이콘만 있는 버튼은 aria-label 필수.\n아이콘은 무언가를 여는 버튼(추가 · 등록)과 수정 · 삭제 · 새로고침에만. 폼 제출(저장 · 등록) 버튼에는 붙이지 않음"}
                     code={`
 <Button icon={icons.add}>추가</Button>
 <Button size="sm" icon={icons.edit}>수정</Button>
@@ -100,7 +100,7 @@ const ButtonGroup = () => {
 <Button size="sm" variant="danger" icon={icons.delete} aria-label="삭제" />`}
                 >
                     <Button icon={icons.add}>추가</Button>
-                    <Button variant="primary" icon={icons.ok}>저장</Button>
+                    <Button variant="primary">저장</Button>
                     <Button size="sm" icon={icons.edit}>수정</Button>
                     <Button size="sm" variant="primary">저장</Button>
                     <Button icon={icons.refresh} aria-label="새로고침" title="새로고침" />
@@ -158,30 +158,26 @@ const FormGroup = () => {
                 <Variant
                     name="필드 (라벨 · 필수 · 힌트 · 오류)"
                     source="styles/form.css · common/ui/Field.jsx"
-                    note="오류가 있으면 힌트 대신 오류만. 입력에 aria-invalid · aria-describedby를 붙임"
+                    note={"오류가 있으면 힌트 대신 오류만. 입력의 id를 htmlFor와 같게 하면 aria-invalid · aria-describedby는 Field가 자동으로 붙임.\ninput-range · input-group 안처럼 입력이 Field 바로 아래에 없으면 직접 붙임"}
                     block
                     code={`
 <Field label="아이디" htmlFor="userId" required
-       hint="영문 · 숫자 4 ~ 20자" error={userIdError}>
+       hint="영문 · 숫자 4~20자" error={userIdError}>
   <input id="userId" className="form-control"
-         value={userId} onChange={...}
-         aria-invalid={!!userIdError}
-         aria-describedby="userId-msg" />
+         value={userId} onChange={...} />
 </Field>`}
                 >
                     <div className="form-stack">
-                        <Field label="아이디" htmlFor="std-user-id" required hint="영문 · 숫자 4 ~ 20자" error={userIdError}>
+                        <Field label="아이디" htmlFor="std-user-id" required hint="영문 · 숫자 4~20자" error={userIdError}>
                             <input
                                 id="std-user-id"
                                 className="form-control"
                                 value={userId}
                                 onChange={(e) => setUserId(e.target.value)}
-                                aria-invalid={!!userIdError}
-                                aria-describedby="std-user-id-msg"
                             />
                         </Field>
                         <Field label="이메일" htmlFor="std-email" hint="비밀번호 찾기에 씁니다.">
-                            <input id="std-email" type="email" className="form-control" placeholder="name@example.com" aria-describedby="std-email-msg" />
+                            <input id="std-email" type="email" className="form-control" placeholder="name@example.com" />
                         </Field>
                     </div>
                 </Variant>
@@ -203,7 +199,7 @@ const FormGroup = () => {
                     <div className="form-stack">
                         <Field label="과목" htmlFor="std-subject">
                             <select id="std-subject" className="form-control" defaultValue="">
-                                <option value="" disabled>선택하세요</option>
+                                <option value="" disabled>고르세요</option>
                                 <option>Java</option>
                                 <option>Spring</option>
                             </select>
@@ -283,7 +279,7 @@ const FormGroup = () => {
                 <Variant
                     name="한 줄 폼 (검색 툴바)"
                     source="styles/form.css"
-                    note="form-row: 필드가 한 줄에 놓이고 좁으면 줄바꿈. 버튼은 입력 아래쪽에 맞춰 정렬"
+                    note="form-row: 필드가 한 줄에 놓이고 좁으면 줄바꿈. 필드는 위(라벨)에 맞춤, 옆 버튼은 라벨 높이만큼 내려 입력 칸과 같은 줄"
                     block
                     code={`
 <div className="form-row">
@@ -321,7 +317,7 @@ const SelectGroup = () => {
     const [tutor, setTutor] = useState(null);
     const [students, setStudents] = useState(STUDENT_OPTIONS.slice(0, 2));
     const [tutorTouched, setTutorTouched] = useState(false);
-    const tutorError = tutorTouched && !tutor ? "강사를 선택하세요." : "";
+    const tutorError = tutorTouched && !tutor ? "강사를 고르세요." : "";
 
     return (
         <>
@@ -334,7 +330,7 @@ const SelectGroup = () => {
                     code={`
 <Field label="담당 강사" htmlFor="tutor" required error={error}>
   <SelectBox inputId="tutor" options={tutors} value={tutor} onChange={setTutor}
-             isClearable aria-invalid={!!error} />
+             isClearable />
 </Field>`}
                 >
                     <div style={{ width: "100%" }}>
@@ -347,7 +343,6 @@ const SelectGroup = () => {
                                 onBlur={() => setTutorTouched(true)}
                                 isClearable
                                 placeholder="강사 선택"
-                                aria-invalid={!!tutorError}
                             />
                         </Field>
                     </div>
@@ -496,7 +491,7 @@ const DateGroup = () => {
 
     return (
         <>
-            <GroupTitle>날짜 · 숫자 · 검색 · 범위</GroupTitle>
+            <GroupTitle>날짜 · 숫자 · 기간 · 검색</GroupTitle>
             <Variants>
                 <Variant
                     name="type별 입력"
@@ -512,7 +507,7 @@ const DateGroup = () => {
                         <Field label="시간" htmlFor="std-time">
                             <input id="std-time" type="time" className="form-control" defaultValue="09:00" />
                         </Field>
-                        <Field label="배점" htmlFor="std-number" hint="0 ~ 100">
+                        <Field label="배점" htmlFor="std-number" hint="0~100">
                             <input id="std-number" type="number" className="form-control" min={0} max={100} defaultValue={10} />
                         </Field>
                         <Field label="검색" htmlFor="std-search">
