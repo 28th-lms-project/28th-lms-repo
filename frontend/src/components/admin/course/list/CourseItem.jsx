@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 
+import CourseScore from "../CourseTableComponent/CourseScore.jsx";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useSearchParams } from "react-router-dom";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
@@ -29,6 +30,7 @@ const TABS = [
   { label: "교육자료", Component: <MyCourseData /> }, //<EducationMaterialsList/>
   { label: "설문", Component: <CourseSurvey /> }, //<Survey/>
   { label: "상담목록", Component: <MyCounsel /> }, //<ConsultationList/>
+  { label: "성적", Component: <CourseScore /> }, //<CourseScore/>
 ];
 export default function CourseItem() {
   const { showCourse } = useSelector((store) => store.courses);
