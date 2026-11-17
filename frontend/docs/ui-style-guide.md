@@ -1141,7 +1141,7 @@ import TransferList from "../common/ui/TransferList";
 
 ```jsx
 <PageHeader
-  crumbs={[{ title: "시스템 관리", to: "/admin/system" }, { title: "회원 관리" }]}
+  crumbs={[{ title: "시스템 관리" }, { title: "회원 관리" }]}   // 실제 화면은 crumbs={useBreadcrumbs()}
   title="회원 관리"
   description="회원 정보 · 역할 · 잠금 상태를 관리합니다."
   actions={<Button variant="primary" icon={icons.add}>회원 등록</Button>}
@@ -1151,6 +1151,8 @@ import TransferList from "../common/ui/TransferList";
 
 - 기존 `common/PageContainer`(`⌂ > 대 > 중`, 22px 제목)를 대신할 모양입니다. `PageContainer`는 아직 그대로이며, 옮길 때 안쪽 머리를 `PageHeader`로 바꾸면 됩니다 (`useBreadcrumbs`의 결과를 `crumbs`로).
 - 브레드크럼은 `<ol>`이고 구분자 `›`는 CSS가 그립니다. 마지막 항목(현재 화면)은 링크 없이 `aria-current="page"`.
+- **`to`는 실제로 열 수 있는 화면에만** 넘깁니다 (URL이 있는 소메뉴 · 상세 화면의 목록). URL이 없는 대 · 중메뉴는 `to` 없이 글자라 마우스를 올려도 반응하지 않습니다. 링크 항목은 평소에도 글자 항목보다 조금 진합니다(`--color-text-secondary`).
+- `useBreadcrumbs()`는 이 규칙대로 URL이 있는 메뉴에만 `to`를 붙여 줍니다. 그대로 `crumbs`에 넘기면 됩니다. 라우트로만 만든 항목(메뉴에 없는 화면의 중간 단계)은 열 수 있는 화면인지 알 수 없어 `to`를 붙이지 않습니다. 기존 `common/Breadcrumb`은 `to`를 쓰지 않으므로 지금 화면은 그대로입니다.
 - `actions`에는 화면 전체에 걸리는 동작만 둡니다 (등록 · 내보내기). 목록 위 검색 · 필터는 `toolbar`.
 
 #### 사이드 메뉴

@@ -64,13 +64,13 @@ const PageHeaderGroup = () => {
                 <Variant
                     name="PageHeader (브레드크럼 + 제목 + 설명 + 버튼)"
                     source="styles/nav.css · common/ui/PageHeader.jsx"
-                    note={"기존 PageContainer 머리(⌂ > 대 > 중, 22px 제목)를 대신할 모양. 마지막 항목은 현재 화면이라 링크 없이 굵게.\n버튼은 화면 전체에 걸리는 동작만 (등록 · 내보내기). 목록 위 검색은 toolbar"}
+                    note={"기존 PageContainer 머리(⌂ > 대 > 중, 22px 제목)를 대신할 모양. 마지막 항목은 현재 화면이라 링크 없이 굵게.\nto는 실제로 열 수 있는 화면(URL이 있는 메뉴 · 목록)에만. URL이 없는 대 · 중메뉴는 to 없이 글자 (올려도 반응 없음). crumbs는 useBreadcrumbs() 결과를 그대로 넘기면 이 규칙대로 들어옴.\n버튼은 화면 전체에 걸리는 동작만 (등록 · 내보내기). 목록 위 검색은 toolbar"}
                     block
                     code={`
 <PageHeader
   crumbs={[
-    { title: "시스템 관리", to: "/admin/system" },
-    { title: "회원 관리" },
+    { title: "시스템 관리" },            // 대메뉴: URL 없음 → to 없이 글자
+    { title: "회원 관리" },              // 현재 화면
   ]}
   title="회원 관리"
   description="회원 정보 · 역할 · 잠금 상태를 관리합니다."
@@ -78,7 +78,7 @@ const PageHeaderGroup = () => {
 />`}
                 >
                     <PageHeader
-                        crumbs={[{ title: "시스템 관리", to: "/sample" }, { title: "회원 관리" }]}
+                        crumbs={[{ title: "시스템 관리" }, { title: "회원 관리" }]}
                         title="회원 관리"
                         description="회원 정보 · 역할 · 잠금 상태를 관리합니다."
                         actions={
@@ -96,10 +96,11 @@ const PageHeaderGroup = () => {
                     source="common/ui/PageHeader.jsx (Breadcrumb)"
                     note="상세 · 작성 화면처럼 깊은 곳. crumbs를 비우면 제목만"
                     block
-                    code={`<Breadcrumb crumbs={[{ title: "내 강의실", to: "/my" }, { title: "자료실", to: "/my/data" }, { title: "1주차 강의자료" }]} />
+                    code={`// 내 강의실(대메뉴, URL 없음) → 글자 / 자료실(소메뉴, URL 있음) → 링크 / 마지막은 현재 화면
+<Breadcrumb crumbs={[{ title: "내 강의실" }, { title: "자료실", to: "/my/data" }, { title: "1주차 강의자료" }]} />
 <PageHeader title="대시보드" />`}
                 >
-                    <Breadcrumb crumbs={[{ title: "내 강의실", to: "/sample" }, { title: "자료실", to: "/sample" }, { title: "1주차 강의자료" }]} />
+                    <Breadcrumb crumbs={[{ title: "내 강의실" }, { title: "자료실", to: "/sample" }, { title: "1주차 강의자료" }]} />
                     <div style={{ marginTop: "20px" }}>
                         <PageHeader title="대시보드" />
                     </div>

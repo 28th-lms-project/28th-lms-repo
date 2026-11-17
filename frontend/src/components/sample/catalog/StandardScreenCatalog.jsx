@@ -248,7 +248,7 @@ const DetailScreens = () => {
                     block
                 >
                     <PageHeader
-                        crumbs={[{ title: "내 강의실", to: "/sample" }, { title: "자료실", to: "/sample" }, { title: "1주차 강의자료" }]}
+                        crumbs={[{ title: "내 강의실" }, { title: "자료실", to: "/sample" }, { title: "1주차 강의자료" }]}
                         title="1주차 강의자료"
                         actions={
                             <>
@@ -479,7 +479,7 @@ const CourseScreens = () => {
                     block
                 >
                     <PageHeader
-                        crumbs={[{ title: "과정 관리", to: "/sample" }, { title: "풀스택 개발자 과정 28기" }]}
+                        crumbs={[{ title: "과정 관리" }, { title: "과정 목록", to: "/sample" }, { title: "풀스택 개발자 과정 28기" }]}
                         title="풀스택 개발자 과정 28기"
                         actions={<Button icon={icons.edit}>과정 수정</Button>}
                     />
