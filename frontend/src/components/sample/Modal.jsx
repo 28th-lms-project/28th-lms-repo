@@ -83,7 +83,8 @@ export const Alert = ({
     }));
 
     return createPortal(
-        <div className={styles.modalWrapper} style={style}>
+        // 다크 모드(샘플 페이지)에서도 밝게: 색을 직접 적은 모달이라 토큰을 따르지 않음
+        <div className={styles.modalWrapper} style={style} data-color-scheme="light">
             <div
                 className={`${styles.alert} ${full ? styles.fullAlert : ""}`}
                 ref={alertRef}
@@ -197,7 +198,8 @@ export const Confirm = ({
     }));
 
     return createPortal(
-        <div className={styles.modalWrapper} style={style}>
+        // 다크 모드(샘플 페이지)에서도 밝게: 색을 직접 적은 모달이라 토큰을 따르지 않음
+        <div className={styles.modalWrapper} style={style} data-color-scheme="light">
             <div
                 className={`${styles.alert}`}
                 ref={alertRef}
