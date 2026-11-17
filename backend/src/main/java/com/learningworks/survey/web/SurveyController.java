@@ -111,7 +111,7 @@ public class SurveyController {
 	}
 	
 	/** 설문 답변 팝업용: 과정 설문 정보 + 문항/보기 (이 과정의 수강생만) */
-	@LoginRequired
+	@RequireAction(domain = "COURSE_SURVEY", action = "ANSWER", description = "과정 설문 응답")
 	@GetMapping("/survey/{courseId}/{courseSurveyId}")
 	public ApiResponse<CourseSurveyQuestionVO> getCourseSurveyQuestions(@PathVariable String courseId,
 			@PathVariable String courseSurveyId, Authentication authentication) {
@@ -120,7 +120,7 @@ public class SurveyController {
 		return ApiResponse.OK(result);
 	}
 
-	@LoginRequired
+	@RequireAction(domain = "COURSE_SURVEY", action = "ANSWER", description = "과정 설문 응답")
 	@PostMapping("/survey/{courseId}/{courseSurveyId}/response")
 	public ApiResponse<String> createCourseSurveyAnswers(@PathVariable String courseId,
 			@PathVariable String courseSurveyId, @Valid @RequestBody RegistCourseSurveyAnswerListVO answer,
@@ -130,7 +130,7 @@ public class SurveyController {
 		return ApiResponse.OK("답변 제출");
 	}
 	
-	@LoginRequired
+	@RequireAction(domain = "COURSE_SURVEY", action = "ANSWER", description = "과정 설문 응답")
 	@GetMapping("/survey/{courseId}/{courseSurveyId}/response")
 	public ApiResponse<Boolean> getMySurveyAnswer(@PathVariable String courseId, @PathVariable String courseSurveyId
 			, Authentication authentication){
