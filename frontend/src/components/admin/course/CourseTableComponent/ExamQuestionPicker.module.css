@@ -1,0 +1,14 @@
+/* 문제 한 줄: 왼쪽 문제 글 | 오른쪽 유형 · 배점 */
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}

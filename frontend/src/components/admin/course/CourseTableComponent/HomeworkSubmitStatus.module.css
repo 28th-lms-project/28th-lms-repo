@@ -1,0 +1,10 @@
+/* 랜덤 뽑기 명수 칸 폭 */
+.countInput {
+  width: 72px;
+}
+
+/* 숫자 칸 · 버튼 · 결과를 한 줄 가운데 맞춤 */
+.pickRow {
+  align-items: center;
+  flex-wrap: wrap;
+}

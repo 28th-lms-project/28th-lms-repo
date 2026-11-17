@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useDispatch } from "react-redux";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
 import {
@@ -6,92 +6,38 @@ import {
   updateCourse,
 } from "../../../../api/admin/course/courseApi";
 
-const overlayStyle = {
-  position: "fixed",
-  inset: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.4)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-
-const boxStyle = {
-  width: "420px",
-  maxWidth: "90vw",
-  padding: "24px",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
-};
-
-const titleStyle = {
-  margin: "0 0 16px",
-  fontSize: "18px",
-  color: "#333",
-};
-
-const labelStyle = {
-  display: "block",
-  margin: "12px 0 4px",
-  fontSize: "14px",
-  fontWeight: "bold",
-  color: "#333",
-};
-
-const inputStyle = {
-  width: "100%",
-  padding: "8px",
-  fontSize: "14px",
-  border: "1px solid #ccc",
-  borderRadius: "4px",
-  boxSizing: "border-box",
-};
-
-const dateRowStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-};
-
-const buttonAreaStyle = {
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: "8px",
-  marginTop: "20px",
-};
-
-const buttonStyle = {
-  minWidth: "72px",
-  padding: "8px 16px",
-  fontSize: "14px",
-  borderRadius: "4px",
-  cursor: "pointer",
-};
-
-const saveButtonStyle = {
-  ...buttonStyle,
-  border: "1px solid #333",
-  backgroundColor: "#333",
-  color: "#fff",
-};
-
-const cancelButtonStyle = {
-  ...buttonStyle,
-  border: "1px solid #ccc",
-  backgroundColor: "#fff",
-  color: "#333",
-};
+import Button from "../../../common/ui/Button";
+import Field from "../../../common/ui/Field";
+import Modal from "../../../common/ui/Modal";
+import { useToast } from "../../../common/ui/feedbackContext";
 
 /** "2026-11-16 00:00:00" 같은 값도 <input type="date"> 형식(yyyy-MM-dd)으로 자른다 */
 const toDateInputValue = (value) => (value ? String(value).slice(0, 10) : "");
+
+/** 입력값 검사. 칸 이름 → 오류 문구 (일정 오류는 startDate 칸에 표시) */
+const validate = (form) => {
+  const errors = {};
+  if (!form.courseName.trim()) {
+    errors.courseName = "과정 명을 입력하세요.";
+  }
+  // COURSE.NO 는 NUMBER 컬럼이라 숫자만 허용
+  if (!/^\d+$/.test(String(form.no).trim())) {
+    errors.no = "과정 기수는 숫자로 입력하세요.";
+  }
+  if (!form.startDate || !form.endDated) {
+    errors.startDate = "과정 일정을 입력하세요.";
+  } else if (form.startDate > form.endDated) {
+    errors.startDate = "종료일은 시작일 이후여야 합니다.";
+  }
+  return errors;
+};
 
 /**
  * 과정 수정 모달 (과정 명 / 기수 / 시작일 / 종료일).
  * 항목은 백엔드 ModifyCourseVO 에 맞춘다.
  *
  * @param course 수정할 과정 (showCourse)
- * @param onClose [취소] 또는 바깥 클릭
+ * @param onClose [취소] · Esc · 닫기(X)
  */
 export default function CourseEditModal({ course, onClose }) {
   const [form, setForm] = useState({
@@ -100,6 +46,12 @@ export default function CourseEditModal({ course, onClose }) {
     startDate: toDateInputValue(course.startDate),
     endDated: toDateInputValue(course.endDated),
   });
+  const [errors, setErrors] = useState({});
+
+  const baseId = useId();
+  const nameId = `${baseId}-name`;
+  const noId = `${baseId}-no`;
+  const startId = `${baseId}-start`;
 
   const onChangeField = (event) => {
     const { name, value } = event.target;
@@ -107,27 +59,17 @@ export default function CourseEditModal({ course, onClose }) {
   };
 
   const dispatch = useDispatch();
+  const toast = useToast();
   const [saving, setSaving] = useState(false);
 
-  const onClickSave = async () => {
+  const onSubmitSave = async (event) => {
+    event.preventDefault();
     if (saving) {
       return;
     }
-    if (!form.courseName.trim()) {
-      alert("과정 명을 입력해주세요.");
-      return;
-    }
-    // COURSE.NO 는 NUMBER 컬럼이라 숫자만 허용
-    if (!/^\d+$/.test(String(form.no).trim())) {
-      alert("과정 기수는 숫자로 입력해주세요.");
-      return;
-    }
-    if (!form.startDate || !form.endDated) {
-      alert("과정 일정을 입력해주세요.");
-      return;
-    }
-    if (form.startDate > form.endDated) {
-      alert("종료일은 시작일 이후여야 합니다.");
+    const nextErrors = validate(form);
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
@@ -146,14 +88,15 @@ export default function CourseEditModal({ course, onClose }) {
       // 과정 버튼 목록(CourseMain)의 과정 명도 갱신
       const courses = await getCourses();
       dispatch(courseActions.load(courses));
+      toast.success("과정을 저장했습니다.");
       onClose();
     } catch (error) {
       // 입력값 검증 실패면 필드별 메시지를 함께 보여준다
       const validationMessages = Object.values(error.validations ?? {}).flat();
-      alert(
+      toast.error(
         validationMessages.length > 0
-          ? validationMessages.join("\n")
-          : error.message || "과정 수정에 실패했습니다.",
+          ? `과정을 저장하지 못했습니다.\n${validationMessages.join("\n")}`
+          : `과정을 저장하지 못했습니다. ${error.message ?? ""}`.trim(),
       );
     } finally {
       setSaving(false);
@@ -161,70 +104,88 @@ export default function CourseEditModal({ course, onClose }) {
   };
 
   return (
-    <div style={overlayStyle} onClick={onClose}>
-      <div style={boxStyle} onClick={(event) => event.stopPropagation()}>
-        <h3 style={titleStyle}>과정 수정</h3>
-
-        <label style={labelStyle} htmlFor="courseEditName">
-          과정 명
-        </label>
-        <input
-          id="courseEditName"
-          type="text"
-          name="courseName"
-          value={form.courseName}
-          onChange={onChangeField}
-          placeholder="과정 명"
-          style={inputStyle}
-        />
-
-        <label style={labelStyle} htmlFor="courseEditNo">
-          과정 기수
-        </label>
-        <input
-          id="courseEditNo"
-          type="text"
-          inputMode="numeric"
-          name="no"
-          value={form.no}
-          onChange={onChangeField}
-          placeholder="과정 기수 (숫자)"
-          style={inputStyle}
-        />
-
-        <label style={labelStyle}>과정 일정</label>
-        <div style={dateRowStyle}>
-          <input
-            type="date"
-            name="startDate"
-            value={form.startDate}
-            onChange={onChangeField}
-            style={inputStyle}
-          />
-          ~
-          <input
-            type="date"
-            name="endDated"
-            value={form.endDated}
-            onChange={onChangeField}
-            style={inputStyle}
-          />
-        </div>
-
-        <div style={buttonAreaStyle}>
-          <button
-            type="button"
-            style={saveButtonStyle}
-            onClick={onClickSave}
-            disabled={saving}
-          >
-            {saving ? "저장 중..." : "저장"}
-          </button>
-          <button type="button" style={cancelButtonStyle} onClick={onClose}>
+    <Modal
+      open
+      onClose={onClose}
+      title="과정 수정"
+      onSubmit={onSubmitSave}
+      dismissible={!saving}
+      footer={
+        <>
+          <Button onClick={onClose} disabled={saving}>
             취소
-          </button>
-        </div>
+          </Button>
+          <Button type="submit" variant="primary" loading={saving}>
+            {saving ? "저장 중..." : "저장"}
+          </Button>
+        </>
+      }
+    >
+      <div className="form-stack">
+        <Field
+          label="과정 명"
+          htmlFor={nameId}
+          required
+          error={errors.courseName}
+        >
+          <input
+            id={nameId}
+            type="text"
+            name="courseName"
+            className="form-control"
+            value={form.courseName}
+            onChange={onChangeField}
+          />
+        </Field>
+
+        <Field
+          label="과정 기수"
+          htmlFor={noId}
+          required
+          hint="숫자만"
+          error={errors.no}
+        >
+          <input
+            id={noId}
+            type="text"
+            inputMode="numeric"
+            name="no"
+            className="form-control"
+            value={form.no}
+            onChange={onChangeField}
+          />
+        </Field>
+
+        <Field
+          label="과정 일정"
+          htmlFor={startId}
+          required
+          error={errors.startDate}
+        >
+          <div className="input-range">
+            <input
+              id={startId}
+              type="date"
+              name="startDate"
+              className="form-control"
+              value={form.startDate}
+              onChange={onChangeField}
+              aria-invalid={!!errors.startDate}
+              aria-describedby={`${startId}-msg`}
+            />
+            <span className="input-range-sep">~</span>
+            <input
+              type="date"
+              name="endDated"
+              className="form-control"
+              aria-label="종료일"
+              value={form.endDated}
+              onChange={onChangeField}
+              aria-invalid={!!errors.startDate}
+            />
+          </div>
+        </Field>
       </div>
-    </div>
+    </Modal>
   );
 }

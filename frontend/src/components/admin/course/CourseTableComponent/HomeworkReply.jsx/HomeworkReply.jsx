@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { selectUser } from "../../../../../store/slices/loginSliceStore";
@@ -7,42 +7,62 @@ import {
   updateHomeworkReply,
 } from "../../../../../api/admin/course/courseApi";
 import { decodeToken, getToken } from "../../../../../utils/tokenStorage";
-import { IconButton } from "../../../../sample/input/IconButton";
+
+import Badge from "../../../../common/ui/Badge";
+import Button from "../../../../common/ui/Button";
+import Comment from "../../../../common/ui/Comment";
+import StatusBox from "../../../../common/ui/StatusBox";
+import { useConfirm, useToast } from "../../../../common/ui/feedbackContext";
+import styles from "./HomeworkReply.module.css";
 
 /** 다른 사람 댓글도 삭제할 수 있는 역할 */
 const REPLY_MANAGER_ROLES = ["ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ROLE_TUTOR"];
 
 /** http:// 또는 https:// 로 시작하는 주소 (공백 전까지) */
 const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+/** 주소가 들어 있는지 (g 플래그 없이 검사) */
+const HAS_URL = /https?:\/\/[^\s]+/;
 
 /**
  * 댓글 내용 속 URL을 클릭 가능한 링크로 바꾼다.
  * - http/https 주소만 링크로 만들어 javascript: 같은 주소는 링크가 되지 않는다.
- * - 링크를 눌러도 댓글이 접히지 않도록 클릭 이벤트 전파를 막는다.
+ * - 주소가 없으면 글자 그대로 돌려준다 (Comment 가 긴 글을 접을 수 있도록)
  */
 const linkify = (text) =>
-  text.split(URL_PATTERN).map((part, index) =>
-    // split 에 캡처 그룹을 쓰면 홀수 번째 요소가 URL
-    index % 2 === 1 ? (
-      <a
-        key={index}
-        href={part}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        style={{ color: "#1a73e8", wordBreak: "break-all" }}
-      >
-        {part}
-      </a>
-    ) : (
-      part
-    ),
-  );
+  HAS_URL.test(text)
+    ? text.split(URL_PATTERN).map((part, index) =>
+        // split 에 캡처 그룹을 쓰면 홀수 번째 요소가 URL
+        index % 2 === 1 ? (
+          <a
+            key={index}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.link}
+          >
+            {part}
+          </a>
+        ) : (
+          part
+        ),
+      )
+    : text;
+
+/** "2026-11-16 14:20:33" → "2026-11-16 14:20" */
+const toTimeText = (value) => (value ? String(value).slice(0, 16) : "");
+
+/** 오류 토스트 문구: 입력값 검증 실패면 필드별 메시지를 함께 보여준다. */
+const failText = (prefix, error) => {
+  const validationMessages = Object.values(error?.validations ?? {}).flat();
+  return validationMessages.length > 0
+    ? `${prefix}\n${validationMessages.join("\n")}`
+    : `${prefix} ${error?.message ?? ""}`.trim();
+};
 
 /**
  * 과제 댓글 목록
- * @param {Function} onUpdated 댓글 수정 성공 시 호출 (목록 새로고침)
- * @param {boolean} deadlinePassed 제출마감일이 지났으면 true → [수정] 버튼 숨김
+ * @param {Function} onUpdated 댓글 수정 · 삭제 성공 시 호출 (목록 새로고침)
+ * @param {boolean} deadlinePassed 제출마감일이 지났으면 true → [수정] · [삭제] 버튼 숨김
  */
 export default function HomeworkReply({
   onUpdated = () => {},
@@ -52,27 +72,35 @@ export default function HomeworkReply({
   // 로그인 사용자 ID (토큰의 sub). 본인 댓글에만 [수정] 버튼을 보여준다.
   const loginUserId = useSelector(selectUser)?.id;
   const { courseId, homeworkId } = useParams();
-  const [openId, setOpenId] = useState(null);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   // 수정 중인 댓글
   const [editId, setEditId] = useState(null);
   const [editContent, setEditContent] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const onClickReply = (id) => {
-    // 수정 중에는 댓글이 접히지 않게 한다.
-    if (editId) {
-      return;
-    }
-    setOpenId((prev) => (prev === id ? null : id));
-  };
+  // id 가 없는 항목(빈 댓글)은 그리지 않는다.
+  const replies = (homeworkReplies ?? []).filter((reply) => reply?.id);
 
   const onClickEditReply = (reply) => {
     setEditId(reply.id);
     setEditContent(reply.content ?? "");
   };
 
-  const onClickCancelEdit = () => {
+  // [취소]: 고친 것이 있으면 한 번 묻는다
+  const onClickCancelEdit = async () => {
+    const original = replies.find((reply) => reply.id === editId)?.content;
+    if (
+      editContent !== (original ?? "") &&
+      !(await confirm({
+        message: "고친 내용을 버릴까요?",
+        confirmText: "버리기",
+        danger: true,
+      }))
+    ) {
+      return;
+    }
     setEditId(null);
   };
 
@@ -87,30 +115,35 @@ export default function HomeworkReply({
     REPLY_MANAGER_ROLES.includes(role),
   );
 
-  // [삭제]: DEL_YN = 'Y' 로 표시 → 목록 새로고침
+  // [삭제]: 확인 → DEL_YN = 'Y' 로 표시 → 목록 새로고침
   const [deletingId, setDeletingId] = useState(null);
-  const onClickDeleteReply = async (replyId) => {
-    if (deletingId || !window.confirm("댓글을 삭제하시겠습니까?")) {
+  const onClickDeleteReply = async (reply) => {
+    if (deletingId) {
       return;
     }
-    setDeletingId(replyId);
+    const ok = await confirm({
+      title: "댓글 삭제",
+      message: `${reply.writer?.name ?? ""}님의 댓글을 삭제할까요?`,
+      confirmText: "삭제",
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
+    setDeletingId(reply.id);
     try {
-      await deleteHomeworkReply(courseId, homeworkId, replyId);
-      setOpenId(null);
+      await deleteHomeworkReply(courseId, homeworkId, reply.id);
+      toast.success("댓글을 삭제했습니다.");
       onUpdated();
     } catch (error) {
-      alert(error.message);
+      toast.error(failText("댓글을 삭제하지 못했습니다.", error));
     } finally {
       setDeletingId(null);
     }
   };
 
   const onClickSaveReply = async () => {
-    if (saving) {
-      return;
-    }
-    if (!editContent.trim()) {
-      alert("댓글 내용을 입력해주세요.");
+    if (saving || !editContent.trim()) {
       return;
     }
 
@@ -120,133 +153,104 @@ export default function HomeworkReply({
         content: editContent,
       });
       setEditId(null);
+      toast.success("댓글을 저장했습니다.");
       onUpdated();
     } catch (error) {
-      // 입력값 검증 실패면 필드별 메시지를 함께 보여준다.
-      const validationMessages = Object.values(error.validations ?? {}).flat();
-      alert(
-        validationMessages.length > 0
-          ? validationMessages.join("\n")
-          : error.message,
-      );
+      toast.error(failText("댓글을 저장하지 못했습니다.", error));
     } finally {
       setSaving(false);
     }
   };
 
+  if (replies.length === 0) {
+    return (
+      <StatusBox type="empty" size="sm" title="아직 제출한 댓글이 없습니다." />
+    );
+  }
+
   return (
-    <Fragment>
-      <div>
-        {homeworkReplies &&
-          homeworkReplies
-            // id 가 없는 항목(빈 댓글)은 그리지 않는다.
-            .filter((homework) => homework?.id)
-            .map((homework) => {
-              return (
-                <div
-                  key={homework.id}
-                  style={{ fontSize: "12px", width: "100%", cursor: "pointer" }}
-                  onClick={() => onClickReply(homework.id)}
+    <ul className="comment-list">
+      {replies.map((reply) => {
+        const mine = isWriter(reply);
+        const edited = Boolean(reply.mdfyDt) && reply.mdfyDt !== reply.crtDt;
+        // 제출마감일 전까지만 버튼을 보여준다.
+        // [수정]: 작성자 본인만 / [삭제]: 작성자 본인 + 관리자 · 강사
+        const canEdit = !deadlinePassed && mine;
+        const canDelete = !deadlinePassed && (mine || canDeleteOthers);
+
+        if (editId === reply.id) {
+          return (
+            <li key={reply.id} className="comment">
+              <div className="comment-head">
+                <span className="comment-author">{reply.writer?.name}</span>
+                <Badge tone="warning">수정 중</Badge>
+              </div>
+              <textarea
+                className="form-control"
+                rows={3}
+                aria-label="댓글 수정"
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+              />
+              <div className="comment-actions">
+                <Button
+                  size="sm"
+                  variant="text"
+                  onClick={onClickCancelEdit}
+                  disabled={saving}
                 >
-                  {homework.writer?.name}
-                  <div
-                    style={{
-                      fontSize: "10px",
-                      borderBottom: "0.1px solid #333 ",
-                    }}
-                  >
-                    <div>등록일 : {homework.crtDt}</div>
-                    <div>수정일 : {homework.mdfyDt}</div>
-                    {openId === homework.id &&
-                      (editId === homework.id ? (
-                        // 수정 모드: 클릭해도 댓글이 접히지 않도록 이벤트 전파를 막는다.
-                        <div
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ cursor: "default", padding: "3px 0" }}
-                        >
-                          <textarea
-                            rows={3}
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            style={{
-                              width: "100%",
-                              resize: "none",
-                              fontSize: "12px",
-                              padding: "5px",
-                              boxSizing: "border-box",
-                            }}
-                          />
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "flex-end",
-                              gap: "5px",
-                            }}
-                          >
-                            <IconButton
-                              onClick={onClickSaveReply}
-                              disabled={saving}
-                            >
-                              {saving ? "저장 중..." : "저장"}
-                            </IconButton>
-                            <IconButton
-                              onClick={onClickCancelEdit}
-                              disabled={saving}
-                            >
-                              취소
-                            </IconButton>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          {homework.content && (
-                            <div
-                              style={{
-                                fontSize: "10px",
-                                whiteSpace: "pre-wrap",
-                                wordBreak: "break-word",
-                              }}
-                            >
-                              {linkify(homework.content)}
-                            </div>
-                          )}
-                          {/* 제출마감일 전까지만 버튼을 보여준다.
-                              [수정]: 작성자 본인만 / [삭제]: 작성자 본인 + 관리자 · 강사 */}
-                          {!deadlinePassed &&
-                            (isWriter(homework) || canDeleteOthers) && (
-                              <div
-                                onClick={(e) => e.stopPropagation()}
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "flex-end",
-                                  gap: "5px",
-                                  padding: "3px 0",
-                                }}
-                              >
-                                {isWriter(homework) && (
-                                  <IconButton
-                                    onClick={() => onClickEditReply(homework)}
-                                  >
-                                    수정
-                                  </IconButton>
-                                )}
-                                <IconButton
-                                  onClick={() => onClickDeleteReply(homework.id)}
-                                  disabled={deletingId === homework.id}
-                                >
-                                  {deletingId === homework.id
-                                    ? "삭제 중..."
-                                    : "삭제"}
-                                </IconButton>
-                              </div>
-                            )}
-                        </>
-                      ))}
-                  </div>
-                </div>
-              );
-            })}
-      </div>
-    </Fragment>
+                  취소
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  loading={saving}
+                  disabled={!editContent.trim()}
+                  onClick={onClickSaveReply}
+                >
+                  {saving ? "저장 중..." : "저장"}
+                </Button>
+              </div>
+            </li>
+          );
+        }
+
+        return (
+          <Comment
+            key={reply.id}
+            author={reply.writer?.name}
+            badge={mine ? <Badge>내 글</Badge> : undefined}
+            time={`${toTimeText(reply.crtDt)}${edited ? " (수정됨)" : ""}`}
+            body={linkify(reply.content ?? "")}
+            actions={
+              (canEdit || canDelete) && (
+                <>
+                  {canEdit && (
+                    <Button
+                      size="sm"
+                      variant="text"
+                      onClick={() => onClickEditReply(reply)}
+                      disabled={Boolean(editId)}
+                    >
+                      수정
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      size="sm"
+                      variant="text"
+                      loading={deletingId === reply.id}
+                      onClick={() => onClickDeleteReply(reply)}
+                    >
+                      {deletingId === reply.id ? "삭제 중..." : "삭제"}
+                    </Button>
+                  )}
+                </>
+              )
+            }
+          />
+        );
+      })}
+    </ul>
   );
 }

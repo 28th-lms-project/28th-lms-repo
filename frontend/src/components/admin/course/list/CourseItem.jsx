@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -8,7 +8,6 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
-import { IconButton } from "../../../sample/input/IconButton";
 import CourseStudentList from "../CourseTableComponent/CourseStudentList";
 import StudentConnected from "../CourseTableComponent/StudentConnected";
 import {
@@ -27,11 +26,18 @@ import MyCourseData from "../../../my/course/MyCourseData.jsx";
 import MyCounsel from "../../../my/course/MyCounsel.jsx";
 
 import CourseEditModal from "./CourseEditModal";
-import ConfirmModal from "../CourseTableComponent/ConfirmModal";
-import PeriodBar from "../CourseTableComponent/PeriodBar";
 import usePermission from "../../../../hooks/usePermission";
 
 import CourseSurvey from "../CourseTableComponent/CourseSurvey.jsx";
+
+import Badge from "../../../common/ui/Badge";
+import Button from "../../../common/ui/Button";
+import Panel from "../../../common/ui/Panel";
+import Progress from "../../../common/ui/Progress";
+import StatusBox from "../../../common/ui/StatusBox";
+import { Tabs, TabPanel } from "../../../common/ui/Tabs";
+import { useConfirm, useToast } from "../../../common/ui/feedbackContext";
+import { icons } from "../../../common/input/icons";
 
 const TABS = [
   { label: "수강생", Component: <CourseStudentList /> }, // <CourseStudentList/>
@@ -49,6 +55,22 @@ const TABS = [
     permission: "COURSE_COUNSEL_READ",
   }, //<ConsultationList/>
 ];
+
+/** 시작일 ~ 종료일 중 오늘까지 지난 비율 (0 ~ 100, 날짜 기준) */
+const getDateProgress = (courseStartDate, courseEndDated) => {
+  const today = new Date();
+  const startDate = new Date(courseStartDate);
+  const endDate = new Date(courseEndDated);
+
+  today.setHours(0, 0, 0, 0);
+
+  const totalDay = endDate - startDate;
+  const elapsedDays = today - startDate;
+
+  const progress = Math.min(100, Math.max(0, (elapsedDays / totalDay) * 100));
+  return Number.isFinite(progress) ? progress : 0;
+};
+
 export default function CourseItem() {
   const { showCourse, attendanceSummary } = useSelector(
     (store) => store.courses,
@@ -56,6 +78,9 @@ export default function CourseItem() {
   const { id } = useParams();
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
+  const tabsId = useId();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   // 버튼 · 조회 권한 (백엔드 @RequireAction 의 권한 코드)
   const { can } = usePermission();
@@ -70,31 +95,47 @@ export default function CourseItem() {
   const tab = isTabVisible(tabParam) ? tabParam : 0;
 
   const { Component } = TABS[tab];
+  const tabItems = TABS.map(({ label }, index) => ({
+    id: String(index),
+    label,
+  })).filter((_, index) => isTabVisible(index));
+
   const canReadStudents = can("COURSE_STUDENT_READ");
   const canReadAttendance = can("COURSE_ATTENDANCE_READ");
   const canUpdateCourse = can("COURSE_UPDATE");
   // 수정: 강사 · 관리자 (강사는 담당 과정만 — 서버가 검사), 삭제: 관리자에게만 부여
   const canDeleteCourse = can("COURSE_DELETE");
 
-  // 과정 수정 모달 / 삭제 확인창 열림 여부
+  // 과정 수정 모달 열림 여부
   const [showEditCourse, setShowEditCourse] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  // 과정 정보를 불러오지 못했을 때의 오류 (과정 정보 자리에 StatusBox로 보여 줌)
+  const [loadError, setLoadError] = useState(null);
 
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  // 삭제 확인창 [확인]: DEL_YN = 'Y' 로 삭제 → 과정 목록으로 이동 (첫 번째 과정으로 다시 이동됨)
-  const onConfirmDeleteCourse = async () => {
-    setShowDeleteConfirm(false);
+  // [삭제] → 확인 창 → DEL_YN = 'Y' 로 삭제 → 과정 목록으로 이동 (첫 번째 과정으로 다시 이동됨)
+  const onClickDeleteCourse = async () => {
+    const ok = await confirm({
+      title: "과정 삭제",
+      message: `${showCourse.courseName} 과정을 삭제할까요?`,
+      confirmText: "삭제",
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
     try {
       await deleteCourse(id);
-      alert("과정이 삭제되었습니다.");
+      toast.success("과정을 삭제했습니다.");
       // 수강 과정(/my/...) 화면에서 열었으면 그 목록으로, 아니면 과정 관리 목록으로
       navigate(
         pathname.startsWith("/my/") ? "/my/course/list" : "/admin/course/list",
       );
     } catch (error) {
-      alert(error.message || "과정 삭제에 실패했습니다.");
+      toast.error(
+        `과정을 삭제하지 못했습니다. ${error.message ?? ""}`.trim(),
+      );
     }
   };
 
@@ -114,9 +155,10 @@ export default function CourseItem() {
         dispatch(courseActions.loadShowCourse(course));
         dispatch(courseActions.loadhomeworks(homeworks));
         dispatch(courseActions.finishLoading());
+        setLoadError(null);
       } catch (error) {
         if (error.name !== "AbortError") {
-          alert(error.message);
+          setLoadError(error);
         }
       }
     })();
@@ -160,96 +202,118 @@ export default function CourseItem() {
     return () => controller.abort();
   }, [id, dispatch, canReadAttendance]);
 
-  const finishCourse = (courseStartDate, courseEndDated) => {
-    const today = new Date();
-    const startDate = new Date(courseStartDate);
-    const endDate = new Date(courseEndDated);
+  let courseInfo;
+  if (loadError) {
+    courseInfo = (
+      <StatusBox
+        type="error"
+        title="과정 정보를 불러오지 못했습니다."
+        detail={loadError.message}
+      />
+    );
+  } else if (!showCourse) {
+    courseInfo = <StatusBox type="loading" />;
+  } else {
+    const dateProgress = getDateProgress(
+      showCourse.startDate,
+      showCourse.endDated,
+    );
+    const finished = dateProgress >= 100;
 
-    today.setHours(0, 0, 0, 0);
-
-    const totalDay = endDate - startDate;
-    const elapsedDays = today - startDate;
-
-    const progress = Math.min(100, Math.max(0, (elapsedDays / totalDay) * 100));
-
-    if (progress >= 100) {
-      return "이미 완료된 과정입니다 ";
-    } else {
-      return `${Math.round(progress)}% 진행중 `;
-    }
-  };
+    courseInfo = (
+      <Panel
+        title={showCourse.courseName}
+        actions={
+          (canUpdateCourse || canDeleteCourse) && (
+            <>
+              {canUpdateCourse && (
+                <Button
+                  size="sm"
+                  icon={icons.edit}
+                  onClick={() => setShowEditCourse(true)}
+                >
+                  수정
+                </Button>
+              )}
+              {canDeleteCourse && (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  icon={icons.delete}
+                  onClick={onClickDeleteCourse}
+                >
+                  삭제
+                </Button>
+              )}
+            </>
+          )
+        }
+      >
+        <div className="form-stack">
+          <dl className="desc-list-stacked">
+            <div>
+              <dt>기간</dt>
+              <dd>
+                {showCourse.startDate} ~ {showCourse.endDated}
+              </dd>
+            </div>
+            <div>
+              <dt>담당 강사</dt>
+              <dd>{showCourse.name}</dd>
+            </div>
+            <div>
+              <dt>상태</dt>
+              <dd>
+                {finished ? (
+                  <Badge>완료</Badge>
+                ) : (
+                  <Badge tone="info">진행 중</Badge>
+                )}
+              </dd>
+            </div>
+          </dl>
+          {/* 출석률 요약이 있으면 수업일 기준 진행률, 없으면 날짜 기준 진행률 */}
+          {attendanceSummary ? (
+            <div>
+              <Progress
+                label="과정 진행률"
+                value={attendanceSummary.progressRate}
+                showValue
+              />
+              <p className="field-hint">
+                {attendanceSummary.passedClassDays} /{" "}
+                {attendanceSummary.totalClassDays} 수업일 (어제 기준)
+              </p>
+            </div>
+          ) : (
+            <Progress label="과정 진행률" value={dateProgress} showValue />
+          )}
+        </div>
+      </Panel>
+    );
+  }
 
   return (
-    <>
-      <div className="section">
-        {!showCourse && <div>..로딩중입니다.</div>}
-        {showCourse && (
-          <>
-            <h3>{showCourse.courseName}</h3>
-
-            <span>
-              {showCourse.startDate} ~ {showCourse.endDated}
-            </span>
-
-            {/* 출석률 요약이 있으면 수업일 기준 막대, 없으면 기존 날짜 기준 문구 */}
-            {attendanceSummary ? (
-              <div style={{ maxWidth: "480px", margin: "8px 0" }}>
-                <PeriodBar
-                  label="과정 진행률"
-                  progressRate={attendanceSummary.progressRate}
-                />
-                <div style={{ fontSize: "12px", color: "#888" }}>
-                  {attendanceSummary.passedClassDays} /{" "}
-                  {attendanceSummary.totalClassDays} 수업일 (어제 기준)
-                </div>
-              </div>
-            ) : (
-              <div>
-                {finishCourse(showCourse.startDate, showCourse.endDated)}
-              </div>
-            )}
-            <div>{showCourse.name}</div>
-            {canUpdateCourse && (
-              <button type="button" onClick={() => setShowEditCourse(true)}>
-                수정
-              </button>
-            )}
-            {canDeleteCourse && (
-              <button type="button" onClick={() => setShowDeleteConfirm(true)}>
-                삭제
-              </button>
-            )}
-            {showEditCourse && (
-              <CourseEditModal
-                course={showCourse}
-                onClose={() => setShowEditCourse(false)}
-              />
-            )}
-            {showDeleteConfirm && (
-              <ConfirmModal
-                message="과정을 삭제하시겠습니까?"
-                onConfirm={onConfirmDeleteCourse}
-                onCancel={() => setShowDeleteConfirm(false)}
-              />
-            )}
-          </>
-        )}
-        <ul className="pageList">
-          {TABS.map(({ label }, index) =>
-            !isTabVisible(index) ? null : (
-              <li key={label} style={{ display: "inline-block" }}>
-                <IconButton
-                  className={index === tab ? "active" : undefined}
-                  onClick={() => setSearchParams({ tab: String(index) })}
-                >
-                  {label}
-                </IconButton>
-              </li>
-            ),
-          )}
-        </ul>
-        {Component}
+    <div className="form-stack">
+      {courseInfo}
+      {showCourse && showEditCourse && (
+        <CourseEditModal
+          course={showCourse}
+          onClose={() => setShowEditCourse(false)}
+        />
+      )}
+      <div>
+        <Tabs
+          idBase={tabsId}
+          items={tabItems}
+          value={String(tab)}
+          onChange={(tabId) => setSearchParams({ tab: tabId })}
+          ariaLabel="과정 메뉴"
+        />
+        <TabPanel idBase={tabsId} tabId={String(tab)}>
+          {Component}
+        </TabPanel>
       </div>
-    </>
+    </div>
   );
 }

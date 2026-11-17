@@ -1,125 +1,17 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { testActions } from "../../../../store/slices/testSliceStore";
 import { createTestAnswers } from "../../../../api/admin/system/test/testApi";
 
-const overlayStyle = {
-  position: "fixed",
-  inset: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.4)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
+import Button from "../../../common/ui/Button";
+import Modal from "../../../common/ui/Modal";
+import Progress from "../../../common/ui/Progress";
+import QuestionBlock from "../../../common/ui/QuestionBlock";
+import StatusBox from "../../../common/ui/StatusBox";
+import { useConfirm, useToast } from "../../../common/ui/feedbackContext";
+import styles from "./ExamTakeModal.module.css";
 
-const boxStyle = {
-  width: "800px",
-  maxWidth: "92vw",
-  maxHeight: "88vh",
-  display: "flex",
-  flexDirection: "column",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
-  overflow: "hidden",
-};
-
-const headerStyle = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "16px 24px",
-  borderBottom: "1px solid #e5e5e5",
-};
-
-const titleStyle = { margin: 0, fontSize: "18px", color: "#222" };
-
-const summaryStyle = { fontSize: "13px", color: "#666" };
-
-const bodyStyle = {
-  padding: "8px 24px 24px",
-  overflowY: "auto",
-};
-
-const questionStyle = {
-  padding: "20px 0",
-  borderBottom: "1px dashed #e5e5e5",
-};
-
-const questionTitleStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "12px",
-  margin: "0 0 12px",
-  fontSize: "15px",
-  fontWeight: "bold",
-  color: "#222",
-  lineHeight: 1.5,
-};
-
-const metaStyle = {
-  flexShrink: 0,
-  fontSize: "13px",
-  fontWeight: "normal",
-  color: "#666",
-};
-
-const subQuestionStyle = {
-  margin: "0 0 12px",
-  padding: "12px",
-  backgroundColor: "#f7f7f7",
-  border: "1px solid #e5e5e5",
-  borderRadius: "4px",
-  fontSize: "14px",
-  whiteSpace: "pre-wrap",
-};
-
-const choiceStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  padding: "6px 4px",
-  fontSize: "14px",
-  cursor: "pointer",
-};
-
-const textInputStyle = {
-  width: "100%",
-  padding: "8px",
-  fontSize: "14px",
-  border: "1px solid #ccc",
-  borderRadius: "4px",
-  boxSizing: "border-box",
-};
-
-const codeInputStyle = {
-  ...textInputStyle,
-  minHeight: "160px",
-  fontFamily: "Consolas, 'Courier New', monospace",
-  resize: "vertical",
-};
-
-const footerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "12px 24px",
-  borderTop: "1px solid #e5e5e5",
-};
-
-const submitButtonStyle = {
-  minWidth: "72px",
-  padding: "8px 16px",
-  fontSize: "14px",
-  borderRadius: "4px",
-  cursor: "pointer",
-  border: "1px solid #333",
-  backgroundColor: "#333",
-  color: "#fff",
-};
-
-/** answerSheet1~5 중 내용이 있는 선택지만 { no: "1", text } 로 */
+/** answerSheet1~5 중 내용이 있는 선택지만 QuestionBlock 보기 { value: "1", label } 로 */
 const choicesOf = (question) =>
   [
     question.answerSheet1,
@@ -128,24 +20,33 @@ const choicesOf = (question) =>
     question.answerSheet4,
     question.answerSheet5,
   ]
-    .map((text, index) => ({ no: String(index + 1), text }))
-    .filter((choice) => choice.text);
+    .map((text, index) => ({ value: String(index + 1), label: text }))
+    .filter((choice) => choice.label);
+
+const OX_OPTIONS = [
+  { value: "O", label: "O" },
+  { value: "X", label: "X" },
+];
 
 /** 답을 입력(선택)했는지 */
 const isAnswered = (value) =>
   Array.isArray(value) ? value.length > 0 : Boolean(value?.trim?.() ?? value);
 
 /**
- * 시험 응시 화면 (문제 보기 모달과 같은 모양).
+ * 시험 응시 모달 (Modal lg).
  * 정답은 표시하지 않고, 객관식은 선택 / 주관식 · 코드작성은 입력할 수 있다.
- * [닫기] 버튼과 바깥 클릭 닫기는 없고, [제출]로만 닫힌다.
- * 아직 제출 API가 없어 [제출]은 입력한 답안을 console.log로 찍고 닫는다.
+ * X · Esc · 바깥 클릭으로는 닫히지 않고, [제출]로만 닫힌다 (답안이 사라지지 않도록).
  *
  * 표시할 내용은 testSlice.takeExam { testSetId, title, questions } 에서 읽고,
  * 닫을 때는 closeTakeExam 을 dispatch 한다.
+ *
+ * @param {(testSetId: string) => void} [onSubmitted] 제출 성공 시 호출 (목록에 "응시 완료" 표시용)
  */
-export default function ExamTakeModal() {
+export default function ExamTakeModal({ onSubmitted = () => {} }) {
   const dispatch = useDispatch();
+  const toast = useToast();
+  const confirm = useConfirm();
+  const baseId = useId();
   const {
     testSetId,
     title,
@@ -155,6 +56,8 @@ export default function ExamTakeModal() {
 
   // key: 문제 ID, value: 답안 (다항은 선택한 번호 배열)
   const [answers, setAnswers] = useState({});
+  // 지금 보고 있는 문항 (문항 번호 막대의 aria-current)
+  const [currentId, setCurrentId] = useState(questions[0]?.id ?? null);
 
   const totalPoint = questions.reduce(
     (sum, question) => sum + (Number(question.pointAlloc) || 0),
@@ -168,14 +71,13 @@ export default function ExamTakeModal() {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
-  const toggleMultiAnswer = (questionId, no) => {
-    setAnswers((prev) => {
-      const selected = prev[questionId] ?? [];
-      const next = selected.includes(no)
-        ? selected.filter((value) => value !== no)
-        : [...selected, no];
-      return { ...prev, [questionId]: next };
-    });
+  const questionDomId = (question) => `${baseId}-q-${question.id}`;
+  // 문항 번호를 누르면 그 문항으로 스크롤
+  const goToQuestion = (question) => {
+    setCurrentId(question.id);
+    document
+      .getElementById(questionDomId(question))
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   // 제출 중이면 버튼을 다시 누를 수 없게 (중복 제출 방지)
@@ -191,14 +93,17 @@ export default function ExamTakeModal() {
       onClose();
       return;
     }
-    if (answeredCount < questions.length) {
-      if (
-        !confirm(
-          `답하지 않은 문제가 ${questions.length - answeredCount}개 있습니다. 제출하시겠습니까?`,
-        )
-      ) {
-        return;
-      }
+    // 제출하면 고칠 수 없으므로 항상 한 번 묻는다 (안 푼 문항이 있으면 개수도 알림)
+    const left = questions.length - answeredCount;
+    const ok = await confirm({
+      title: "답안 제출",
+      message: left
+        ? `답하지 않은 문항이 ${left}개 있습니다. 그래도 제출할까요?\n제출하면 고칠 수 없습니다.`
+        : "제출하면 고칠 수 없습니다. 제출할까요?",
+      confirmText: "제출",
+    });
+    if (!ok) {
+      return;
     }
     // 다항은 "1,3" 처럼 오름차순 문자열로 (서버 정답 형식과 맞춤)
     const submitAnswers = questions.map((question) => {
@@ -213,139 +118,137 @@ export default function ExamTakeModal() {
     setSubmitting(true);
     try {
       await createTestAnswers(testSetId, submitAnswers);
-      alert("답안이 제출되었습니다.");
+      toast.success("답안을 제출했습니다.");
+      onSubmitted(testSetId);
       onClose();
     } catch (error) {
-      // 예: 이미 제출한 시험(400), 비공개 시험(403) — 서버 메시지를 그대로 보여주고 창은 유지
-      alert(error.message || "답안 제출에 실패했습니다.");
+      // 예: 이미 제출한 시험(400), 비공개 시험(403) — 서버 메시지를 보여주고 창은 유지
+      toast.error(
+        `답안을 제출하지 못했습니다. ${error.message ?? ""}`.trim(),
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  /** 객관식(단항/다항) 선택지 */
-  const renderChoices = (question, multiple) => {
-    const selected = answers[question.id];
-    return choicesOf(question).map((choice) => (
-      <label key={choice.no} style={choiceStyle}>
-        <input
-          type={multiple ? "checkbox" : "radio"}
-          name={`take-${question.id}`}
-          checked={
-            multiple
-              ? (selected ?? []).includes(choice.no)
-              : selected === choice.no
-          }
-          onChange={() =>
-            multiple
-              ? toggleMultiAnswer(question.id, choice.no)
-              : setAnswer(question.id, choice.no)
-          }
-        />
-        {choice.no}. {choice.text}
-      </label>
-    ));
-  };
-
-  /** O/X 선택지 */
-  const renderOx = (question) =>
-    ["O", "X"].map((value) => (
-      <label key={value} style={choiceStyle}>
-        <input
-          type="radio"
-          name={`take-${question.id}`}
-          checked={answers[question.id] === value}
-          onChange={() => setAnswer(question.id, value)}
-        />
-        {value}
-      </label>
-    ));
-
-  /** 주관식 / 코드작성 입력칸 */
-  const renderTextAnswer = (question, isCode) =>
-    isCode ? (
-      <textarea
-        style={codeInputStyle}
-        value={answers[question.id] ?? ""}
-        onChange={(event) => setAnswer(question.id, event.target.value)}
-        placeholder="코드를 작성하세요"
-        spellCheck={false}
-      />
-    ) : (
-      <input
-        type="text"
-        style={textInputStyle}
-        value={answers[question.id] ?? ""}
-        onChange={(event) => setAnswer(question.id, event.target.value)}
-        placeholder="답을 입력하세요"
-      />
-    );
-
-  const renderAnswerArea = (question) => {
+  /** 유형별 보기 · 답 칸 (QuestionBlock props + children) */
+  const answerPropsOf = (question) => {
+    const value = answers[question.id];
+    const onChange = (next) => setAnswer(question.id, next);
     switch (question.answerType) {
       case "객관식-단항":
-        return renderChoices(question, false);
+        return { options: choicesOf(question), value: value ?? "", onChange };
       case "객관식-다항":
-        return renderChoices(question, true);
+        return {
+          options: choicesOf(question),
+          multiple: true,
+          value: value ?? [],
+          onChange,
+        };
       case "O/X":
-        return renderOx(question);
+        return { options: OX_OPTIONS, value: value ?? "", onChange };
       case "코드작성":
-        return renderTextAnswer(question, true);
       case "주관식":
-      default:
-        return renderTextAnswer(question, false);
+      default: {
+        const isCode = question.answerType === "코드작성";
+        return {
+          children: (
+            <textarea
+              className={`form-control${isCode ? " form-control-mono" : ""}`}
+              rows={isCode ? 6 : 3}
+              aria-label={`${questions.indexOf(question) + 1}번 답안`}
+              value={value ?? ""}
+              onChange={(event) => setAnswer(question.id, event.target.value)}
+              placeholder={isCode ? "코드를 작성하세요." : "답을 입력하세요."}
+              spellCheck={isCode ? false : undefined}
+            />
+          ),
+        };
+      }
     }
   };
 
-  // 바깥 클릭으로 닫히면 답안이 사라지므로, 응시 화면은 바깥 클릭으로 닫지 않는다
   return (
-    <div style={overlayStyle}>
-      <div style={boxStyle}>
-        <div style={headerStyle}>
-          <h3 style={titleStyle}>{title}</h3>
-          <span style={summaryStyle}>
-            총 {questions.length}문항 · {totalPoint}점
-          </span>
-        </div>
-
-        <div style={bodyStyle}>
-          {questions.length === 0 && (
-            <p style={{ padding: "20px 0", textAlign: "center" }}>
-              등록된 문제가 없습니다.
-            </p>
-          )}
-          {questions.map((question, index) => (
-            <div key={question.id} style={questionStyle}>
-              <p style={questionTitleStyle}>
-                <span style={{ whiteSpace: "pre-wrap" }}>
-                  {index + 1}. {question.question}
-                </span>
-                <span style={metaStyle}>
-                  {question.answerType} · {question.pointAlloc ?? 0}점
-                </span>
-              </p>
-              {question.subQuestion && (
-                <div style={subQuestionStyle}>{question.subQuestion}</div>
-              )}
-              {renderAnswerArea(question)}
+    <Modal
+      open
+      dismissible={false}
+      size="lg"
+      title={title}
+      summary={`문제 ${questions.length}개 · 총 ${totalPoint}점`}
+      footer={
+        <>
+          {questions.length > 0 && (
+            <div className={`progress-row ${styles.progress}`}>
+              <span className={`field-hint ${styles.progressText}`}>
+                답함 {answeredCount} / {questions.length}
+              </span>
+              <Progress
+                value={answeredCount}
+                max={questions.length}
+                size="sm"
+                label="답한 문항"
+              />
             </div>
-          ))}
-        </div>
-
-        <div style={footerStyle}>
-          <span style={summaryStyle}>
-            답한 문제 {answeredCount} / {questions.length}
-          </span>
-          <button
-            type="button"
-            style={submitButtonStyle}
-            onClick={onClickSubmit}
-            disabled={submitting}
-          >
+          )}
+          <Button variant="primary" loading={submitting} onClick={onClickSubmit}>
             {submitting ? "제출 중..." : "제출"}
-          </button>
+          </Button>
+        </>
+      }
+    >
+      {questions.length === 0 ? (
+        <StatusBox type="empty" size="sm" title="등록된 문제가 없습니다." />
+      ) : (
+        <div className="form-stack">
+          <nav className="question-nav-bar" aria-label="문항 이동">
+            <ol className="question-nav">
+              {questions.map((question, index) => {
+                const done = isAnswered(answers[question.id]);
+                return (
+                  <li key={question.id}>
+                    <button
+                      type="button"
+                      className={`question-nav-item${done ? " is-done" : ""}`}
+                      aria-current={
+                        currentId === question.id ? "step" : undefined
+                      }
+                      aria-label={`${index + 1}번 (${done ? "답함" : "안 함"})`}
+                      onClick={() => goToQuestion(question)}
+                    >
+                      {index + 1}
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+          {questions.map((question, index) => {
+            const isCode = question.answerType === "코드작성";
+            return (
+              <div
+                key={question.id}
+                id={questionDomId(question)}
+                className={styles.question}
+                onFocus={() => setCurrentId(question.id)}
+              >
+                <QuestionBlock
+                  no={index + 1}
+                  title={
+                    <>
+                      {question.question}{" "}
+                      <span className="tag">{question.answerType}</span>
+                    </>
+                  }
+                  score={Number(question.pointAlloc) || 0}
+                  body={!isCode ? question.subQuestion || undefined : undefined}
+                  code={isCode ? question.subQuestion || undefined : undefined}
+                  {...answerPropsOf(question)}
+                />
+              </div>
+            );
+          })}
         </div>
-      </div>
-    </div>
+      )}
+    </Modal>
   );
 }
