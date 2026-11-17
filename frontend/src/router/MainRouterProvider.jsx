@@ -30,6 +30,8 @@ import CourseMain from "../components/admin/course/CourseMain.jsx";
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 import { getCourses } from "../api/admin/course/courseApi";
 import HomeworkDetails from "../components/admin/course/CourseTableComponent/HomeworkDetails.jsx";
+import CourseSurveyAns from "../components/admin/course/CourseTableComponent/CourseSurveyAns.jsx";
+import CourseSurveyResult from "../components/admin/course/CourseTableComponent/CourseSurveyResult.jsx";
 
 /**
  * 라우트 목록. 메뉴 관리 화면이 메뉴 URL 선택지를 만드는 데 사용한다 (routeUtils.getMenuUrlOptions).
@@ -49,6 +51,14 @@ export const routes = [
     ),
     handle: { guardAs: "/admin/course/list" },
     errorElement: <RouteError />,
+  },
+  {
+    path: "/survey/answer/:courseId/:courseSurveyId",
+    element: <CourseSurveyAns />,
+  },
+  {
+    path: "/survey/result/:courseId/:courseSurveyId",
+    element: <CourseSurveyResult />,
   },
   {
     path: "/",

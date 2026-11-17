@@ -5,6 +5,7 @@ import style from "./Code.module.css";
 import { getCodeList } from "../../../../api/admin/system/code/codeApi";
 import AddCode from "./AddCode";
 import UpdateCode from "./UpdateCode";
+import usePermission from "../../../../hooks/usePermission";
 
 const CODE_HEADER = [
   { id: "id", title: "ID" },
@@ -30,6 +31,27 @@ const toFormKey = (code) => {
 };
 
 export default function Code() {
+  const { isSuperAdmin, status } = usePermission();
+
+  if (status === "loaded" && isSuperAdmin) return <CodeManagement />;
+
+  // idle: 비로그인(조회하지 않음) → 표시 없음
+  let content = null;
+  if (status === "loading") {
+    content = <p className={style.notice}>권한 확인 중...</p>;
+  } else if (status === "failed") {
+    content = (
+      <p className={style.notice}>
+        권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
+      </p>
+    );
+  } else if (status === "loaded") {
+    content = <p className={style.notice}>권한이 없습니다.</p>;
+  }
+  return <PageContainer>{content}</PageContainer>;
+}
+
+function CodeManagement() {
   //환경 변수들을 저장할 state
   const [topCodes, setTopCodes] = useState([]);
   const [midCodes, setMidCodes] = useState([]);
