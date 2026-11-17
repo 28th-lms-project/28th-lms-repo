@@ -2,61 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import Chart from "../../common/Chart.jsx";
 import { getMyScoreList } from "../../../api/my/course/scoreApi.js";
 import styles from "./MyScore.module.css";
+import {
+  formatAveragePoint,
+  formatPoint,
+  formatTestType,
+  getScoreStatus,
+  hasScoreValue,
+  toPercent,
+} from "../../../utils/scoreFormat.js";
 
-function getScoreStatus(row) {
-  if (row.score === null || row.score === undefined) {
-    return {
-      label: "미응시",
-      className: styles.statusUnsubmitted,
-    };
-  }
-  if (row.pendingCount > 0) {
-    return {
-      label: `채점 중 (${row.pendingCount}문항)`,
-      className: styles.statusPending,
-    };
-  }
-  return {
-    label: "채점 완료",
-    className: styles.statusDone,
-  };
-}
-
-function formatPoint(value, totalPoint) {
-  let total = 0;
-  if (totalPoint !== null && totalPoint !== undefined) {
-    total = totalPoint;
-  }
-  if (value === null || value === undefined) {
-    return `- / ${total}점`;
-  }
-  return `${value} / ${total}점`;
-}
-
-function formatAveragePoint(averageScore, totalPoint) {
-  if (averageScore === null || averageScore === undefined) {
-    return "-";
-  }
-  return formatPoint(averageScore, totalPoint);
-}
-
-function toPercent(value, totalPoint) {
-  if (value === null || value === undefined || !(totalPoint > 0)) {
-    return null;
-  }
-  return Math.round((value / totalPoint) * 1000) / 10;
-}
-
-function hasScoreValue(value) {
-  return value !== null && value !== undefined;
-}
-
-function formatTestType(testType) {
-  if (testType) {
-    return testType;
-  }
-  return "-";
-}
+const STATUS_CLASS = {
+  unsubmitted: styles.statusUnsubmitted,
+  pending: styles.statusPending,
+  done: styles.statusDone,
+};
 
 function getRowClassName(index) {
   if (index % 2 === 0) {
@@ -172,7 +131,7 @@ export default function MyScore({ courseId }) {
                     </td>
                     <td className={styles.cellCenter}>
                       <span
-                        className={`${styles.badge} ${scoreStatus.className}`}
+                        className={`${styles.badge} ${STATUS_CLASS[scoreStatus.key]}`}
                       >
                         {scoreStatus.label}
                       </span>
