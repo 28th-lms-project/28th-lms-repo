@@ -15,11 +15,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.learningworks.common.action.RequireAction;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.course.service.CourseService;
+import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
@@ -235,5 +237,40 @@ public class CourseController {
 		List<CourseMemberVO> memberList = this.courseService.addCourseMember(courseId,studentId);
 		return ApiResponse.OK(null);
 	}
-	
+
+	/**
+	 * 과정 목록 검색 (관리자 과정 목록 화면, 삭제되지 않은 과정만)
+	 * 비어 있는 조건은 조회 조건에서 제외한다.
+	 * @param searchCourseVO no, courseName, startDate, endDated
+	 * @return List<CourseVO> (id, no, courseName, startDate, endDated)
+	 */
+	@RequireAction(domain = "COURSE", action = "READ", description = "강의 조회")
+	@GetMapping("/admin/course/list")
+	public ApiResponse<List<CourseVO>> searchCourseList(@Valid @ModelAttribute SearchCourseVO searchCourseVO) {
+		return ApiResponse.OK(this.courseService.searchCourseList(searchCourseVO));
+	}
+
+	/**
+	 * 과정 정보 수정 (기수 · 과정명 · 시작일 · 종료일)
+	 * @param courseId, modifyCourseVO(no, courseName, startDate, endDated)
+	 * @return ApiResponse.OK(수정된 과정 ID)
+	 */
+	@RequireAction(domain = "COURSE", action = "UPDATE", description = "강의 수정")
+	@PutMapping("/admin/course/{courseId}")
+	public ApiResponse<String> updateCourse(@PathVariable String courseId,
+			@Valid @RequestBody ModifyCourseVO modifyCourseVO) {
+		return ApiResponse.OK(this.courseService.updateCourse(courseId, modifyCourseVO));
+	}
+
+	/**
+	 * 과정 삭제 (DEL_YN = 'Y')
+	 * @param courseId
+	 * @return ApiResponse.OK(삭제된 과정 ID)
+	 */
+	@RequireAction(domain = "COURSE", action = "DELETE", description = "강의 삭제")
+	@DeleteMapping("/admin/course/{courseId}")
+	public ApiResponse<String> deleteCourse(@PathVariable String courseId) {
+		return ApiResponse.OK(this.courseService.deleteCourse(courseId));
+	}
+
 }

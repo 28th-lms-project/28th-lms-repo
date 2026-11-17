@@ -159,6 +159,39 @@ export const createHomeworkReply = (courseId, homeworkId, data) =>
   );
 
 /**
+ * 과정 목록 검색 (관리자 과정 목록, 삭제되지 않은 과정만)
+ * 백엔드: CourseController#searchCourseList → GET /admin/course/list
+ * @param {{ no?: string, courseName?: string, startDate?: string, endDated?: string }} params
+ *   빈 값은 쿼리스트링에서 빠짐. 날짜는 "YYYY-MM-DD"
+ * @param {{ signal?: AbortSignal }} [options] 요청 취소용 signal
+ * @returns {Promise<{ id: string, no: string, courseName: string, startDate: string, endDated: string }[]>}
+ * errorCode: GLOBAL_INVALID_PARAMETER(validations)
+ */
+export const searchCourses = (params, options) =>
+  api.get("/admin/course/list", params, options);
+
+/**
+ * 과정 정보 수정
+ * 백엔드: CourseController#updateCourse → PUT /admin/course/{courseId}
+ * @param {string} courseId 과정 ID
+ * @param {{ no: string, courseName: string, startDate: string, endDated: string }} data 날짜는 "YYYY-MM-DD"
+ * @returns {Promise<string>} 수정된 과정 ID
+ * errorCode: GLOBAL_INVALID_PARAMETER(validations), COURSE_NOT_EXISTS
+ */
+export const updateCourse = (courseId, data) =>
+  api.put(`/admin/course/${encode(courseId)}`, data);
+
+/**
+ * 과정 삭제 (DEL_YN = 'Y')
+ * 백엔드: CourseController#deleteCourse → DELETE /admin/course/{courseId}
+ * @param {string} courseId 과정 ID
+ * @returns {Promise<string>} 삭제된 과정 ID
+ * errorCode: COURSE_NOT_EXISTS
+ */
+export const deleteCourse = (courseId) =>
+  api.delete(`/admin/course/${encode(courseId)}`);
+
+/**
  * 과정 진행중 수강생 추가 api
  */
 export const addCourseStudent = (courseId, studentIds) =>

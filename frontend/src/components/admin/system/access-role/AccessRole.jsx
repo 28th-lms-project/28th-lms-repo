@@ -1,9 +1,15 @@
 /** @format */
 
 import {useEffect, useMemo, useState} from "react";
-import PageContainer from "../../../common/PageContainer";
-import {Grid} from "../../../common/Grid";
+import useBreadcrumbs from "../../../../hooks/useBreadcrumbs";
 import usePermission from "../../../../hooks/usePermission";
+import Button from "../../../common/ui/Button.jsx";
+import Callout from "../../../common/ui/Callout.jsx";
+import PageHeader from "../../../common/ui/PageHeader.jsx";
+import Panel from "../../../common/ui/Panel.jsx";
+import StatusBox from "../../../common/ui/StatusBox.jsx";
+import TransferList from "../../../common/ui/TransferList.jsx";
+import {useConfirm, useToast} from "../../../common/ui/feedbackContext.js";
 
 import {
     getAllowedPermissionList,
@@ -16,10 +22,6 @@ import {SUPER_ADMIN_ROLE_ID} from "../role/roleUtils";
 import styles from "./AccessRole.module.css";
 
 // 입력값 검증 실패면 필드별 메시지를, 아니면 서버 에러 메시지를 반환
-const ROLE_GRID_HEADER = [{id: "roleDisplayName", title: "Role Display Name"}];
-const ALLOWED_GRID_HEADER = [{id: "allowedActionName", title: "허용된 권한"}];
-const DENIED_GRID_HEADER = [{id: "deniedActionName", title: "접근 권한 명"}];
-
 const getErrorMessage = (error) =>
     error.validations
         ? Object.values(error.validations).flat().join("\n")
@@ -32,27 +34,38 @@ const getErrorMessage = (error) =>
  */
 export default function AccessRole() {
     const {isSuperAdmin, status} = usePermission();
-
-    if (status === "loaded" && isSuperAdmin) return <AccessRoleManagement />;
+    const crumbs = useBreadcrumbs();
 
     // idle: 비로그인(조회하지 않음) → 표시 없음
     let content = null;
-    if (status === "loading") {
-        content = <p className={styles.notice}>권한 확인 중...</p>;
+    if (status === "loaded" && isSuperAdmin) {
+        content = <AccessRoleManagement />;
+    } else if (status === "loading") {
+        content = <StatusBox type="loading" title="권한 확인 중..." />;
     } else if (status === "failed") {
         content = (
-            <p className={styles.notice}>
-                권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
-            </p>
+            <StatusBox
+                type="error"
+                title="권한 정보를 불러오지 못했습니다."
+                detail="새로고침한 뒤 다시 시도하세요."
+            />
         );
     } else if (status === "loaded") {
-        content = <p className={styles.notice}>권한이 없습니다.</p>;
+        content = <StatusBox type="denied" />;
     }
 
-    return <PageContainer>{content}</PageContainer>;
+    return (
+        <>
+            <PageHeader crumbs={crumbs} title={crumbs.at(-1)?.title} />
+            {content}
+        </>
+    );
 }
 
 function AccessRoleManagement() {
+    const toast = useToast();
+    const confirm = useConfirm();
+
     const [roleList, setRoleList] = useState([]);
     const [allowedList, setAllowedList] = useState([]);
     const [deniedList, setDeniedList] = useState([]);
@@ -70,8 +83,6 @@ function AccessRoleManagement() {
     const [selectedLvl2, setSelectedLvl2] = useState("");
     const [selectedLvl3, setSelectedLvl3] = useState("");
 
-    const [selectedPermissionIds, setSelectedPermissionIds] = useState([]);
-
     // 역할 목록 조회
     const fetchRoleList = async () => {
         try {
@@ -85,7 +96,7 @@ function AccessRoleManagement() {
             );
         } catch (error) {
             console.error("역할 목록 조회 실패", error);
-            alert(getErrorMessage(error));
+            toast.error(getErrorMessage(error));
         }
     };
 
@@ -115,7 +126,7 @@ function AccessRoleManagement() {
             setRolePermissions(permissionIds);
         } catch (error) {
             console.error("권한 목록 조회 실패", error);
-            alert(getErrorMessage(error));
+            toast.error(getErrorMessage(error));
         }
     };
 
@@ -137,7 +148,6 @@ function AccessRoleManagement() {
         setSelectedLvl1(value);
         setSelectedLvl2("");
         setSelectedLvl3("");
-        setSelectedPermissionIds([]);
     };
 
     const lvl2Options = useMemo(
@@ -157,7 +167,6 @@ function AccessRoleManagement() {
     const lvl2ChangeHandler = (value) => {
         setSelectedLvl2(value);
         setSelectedLvl3("");
-        setSelectedPermissionIds([]);
     };
 
     const lvl3Options = useMemo(
@@ -175,36 +184,50 @@ function AccessRoleManagement() {
         [permissionList, selectedLvl1, selectedLvl2]
     );
 
-    const filteredPermissions = useMemo(
-        () =>
-            permissionList.filter(
-                (item) =>
-                    (!selectedLvl1 || item.lvl1 === selectedLvl1) &&
-                    (!selectedLvl2 || item.lvl2 === selectedLvl2) &&
-                    (!selectedLvl3 || item.lvl3 === selectedLvl3)
-            ),
-        [permissionList, selectedLvl1, selectedLvl2, selectedLvl3]
-    );
-
-    const currentAllowedIds = rolePermissions;
-
-    const allowedPermissions = filteredPermissions.filter((item) =>
-        currentAllowedIds.includes(item.actionId)
-    );
-
-    const deniedPermissions = filteredPermissions.filter(
-        (item) => !currentAllowedIds.includes(item.actionId)
-    );
-
-    // 역할 선택
-    const roleClickHandler = async (roleId) => {
-        setSelectedRole(roleId);
-
-        setSelectedPermissionIds([]);
-
+    const clearFilter = () => {
         setSelectedLvl1("");
         setSelectedLvl2("");
         setSelectedLvl3("");
+    };
+
+    // 메뉴 필터는 미허용 후보만 좁힌다 (허용 목록은 늘 전부 보임)
+    const transferItems = useMemo(
+        () =>
+            permissionList.filter(
+                (item) =>
+                    rolePermissions.includes(item.actionId) ||
+                    ((!selectedLvl1 || item.lvl1 === selectedLvl1) &&
+                        (!selectedLvl2 || item.lvl2 === selectedLvl2) &&
+                        (!selectedLvl3 || item.lvl3 === selectedLvl3))
+            ),
+        [permissionList, rolePermissions, selectedLvl1, selectedLvl2, selectedLvl3]
+    );
+
+    // 저장 전 변경 (허용 +n · 해제 -n)
+    const addedCount = rolePermissions.filter(
+        (id) => !savedPermissions.includes(id)
+    ).length;
+    const removedCount = savedPermissions.filter(
+        (id) => !rolePermissions.includes(id)
+    ).length;
+    const isDirty = addedCount + removedCount > 0;
+
+    // 역할 선택 (저장하지 않은 변경이 있으면 확인)
+    const roleClickHandler = async (roleId) => {
+        if (roleId === selectedRole) return;
+        if (
+            isDirty &&
+            !(await confirm({
+                message: "저장하지 않은 변경이 있습니다. 버리고 다른 역할로 갈까요?",
+                confirmText: "버리고 이동",
+                danger: true,
+            }))
+        )
+            return;
+
+        setSelectedRole(roleId);
+
+        clearFilter();
 
         setAllowedList([]);
         setDeniedList([]);
@@ -213,53 +236,6 @@ function AccessRoleManagement() {
         setRolePermissions([]);
 
         await fetchPermissionList(roleId);
-    };
-
-    // 허용되지 않은 권한 클릭 -> 권한 부여
-    const grantPermissionHandler = (permissionId) => {
-        setRolePermissions((prev) =>
-            [...new Set([...prev, permissionId])]
-        );
-
-        setSelectedPermissionIds((prev) =>
-            prev.filter((id) => id !== permissionId)
-        );
-    };
-
-    // 허용된 권한 클릭 -> 권한 해제
-    const revokePermissionHandler = (permissionId) => {
-        setRolePermissions((prev) =>
-            prev.filter((id) => id !== permissionId)
-        );
-    };
-
-    // 전체 선택 체크
-    const isAllSelected =
-        deniedPermissions.length > 0 &&
-        deniedPermissions.every((item) =>
-            selectedPermissionIds.includes(item.actionId)
-        );
-
-    // 전체 선택 / 해제
-    const checkAllHandler = () => {
-        if (isAllSelected) {
-            setSelectedPermissionIds([]);
-        } else {
-            setSelectedPermissionIds(
-                deniedPermissions.map((item) => item.actionId)
-            );
-        }
-    };
-
-    // 선택한 권한 일괄 부여
-    const grantSelectedHandler = () => {
-        if (selectedPermissionIds.length === 0) return;
-
-        setRolePermissions((prev) =>
-            [...new Set([...prev, ...selectedPermissionIds])]
-        );
-
-        setSelectedPermissionIds([]);
     };
 
     // 권한 저장
@@ -274,14 +250,12 @@ function AccessRoleManagement() {
 
             await saveRolePermission(params);
 
-            alert("권한이 저장되었습니다.");
+            toast.success("권한을 저장했습니다.");
 
             await fetchPermissionList(selectedRole);
-
-            setSelectedPermissionIds([]);
         } catch (error) {
             console.error("권한 저장 실패", error);
-            alert(getErrorMessage(error));
+            toast.error(getErrorMessage(error));
         }
     };
 
@@ -290,259 +264,135 @@ function AccessRoleManagement() {
         if (!selectedRole) return;
 
         setRolePermissions([...savedPermissions]);
-        setSelectedPermissionIds([]);
     };
 
-    const roleGridContent = roleList.map((role) => [
-        {id: role.roleId, value: role.roleDisplayName},
-    ]);
+    const selectedRoleName =
+        roleList.find((role) => role.roleId === selectedRole)?.roleDisplayName ??
+        "";
 
-    // 선택 행 배경색 표시용 rowIndex
-    const activeRoleRows = roleList
-        .map((role, index) => (role.roleId === selectedRole ? index : -1))
-        .filter((index) => index >= 0);
-
-    const activeDeniedRows = deniedPermissions
-        .map((item, index) =>
-            selectedPermissionIds.includes(item.actionId) ? index : -1
-        )
-        .filter((index) => index >= 0);
-
-    const allowedGridContent = allowedPermissions.map((item) => [
-        {id: item.actionId, value: item.actionName},
-    ]);
-
-    const deniedGridContent = deniedPermissions.map((item) => [
-        {id: item.actionId, value: item.actionName},
-    ]);
+    const hasFilter = Boolean(selectedLvl1 || selectedLvl2 || selectedLvl3);
 
     return (
-        <PageContainer>
-            <div style={{width: "100%"}}>
-                <div
-                    className="access-role-layout"
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: selectedRole
-                            ? "1fr 1.1fr 1.1fr"
-                            : "1fr",
-                        gap: "15px",
-                        minHeight: "calc(100vh - 135px)",
-                    }}
-                >
-                    {/* 첫 번째 영역: 권한 목록 */}
-                    <section className={styles.panel}>
-                        <h3 className={styles.panelTitle}>권한 목록</h3>
+        <div className={`layout-split layout-split-start ${styles.layout}`}>
+            {/* 역할 목록 */}
+            <Panel title="역할" flush>
+                <ul className="list-group">
+                    {roleList.map((role) => (
+                        <li key={role.roleId}>
+                            <button
+                                type="button"
+                                className="list-item"
+                                aria-current={role.roleId === selectedRole || undefined}
+                                onClick={() => roleClickHandler(role.roleId)}
+                            >
+                                {role.roleDisplayName}
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </Panel>
 
-                        <div className={styles.roleList}>
-                            <Grid
-                                title=""
-                                header={ROLE_GRID_HEADER}
-                                content={roleGridContent}
-                                columnStyle="1fr"
-                                activeRows={activeRoleRows}
-                                clickableColumn={{
-                                    0: (_value, rowIndex) =>
-                                        roleClickHandler(roleList[rowIndex].roleId),
-                                }}
-                            />
+            {/* 역할을 선택했을 때만 권한 옮기기 표시 */}
+            {!selectedRole ? (
+                <StatusBox
+                    type="empty"
+                    title="역할을 고르세요."
+                    detail="왼쪽에서 역할을 고르면 허용 · 미허용 권한을 바꿀 수 있습니다."
+                />
+            ) : (
+                <div className="form-stack">
+                    {/* 메뉴 필터 (대 › 중 › 소) */}
+                    <div className="toolbar">
+                        <div className="input-range" role="group" aria-label="메뉴 필터">
+                            <select
+                                value={selectedLvl1}
+                                onChange={(e) => lvl1ChangeHandler(e.target.value)}
+                                className="form-control form-control-sm"
+                                aria-label="대 메뉴"
+                            >
+                                <option value="">대 메뉴 전체</option>
+                                {lvl1Options.map((item) => (
+                                    <option key={item} value={item}>
+                                        {item}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="input-range-sep">›</span>
+                            <select
+                                value={selectedLvl2}
+                                onChange={(e) => lvl2ChangeHandler(e.target.value)}
+                                disabled={!selectedLvl1}
+                                className="form-control form-control-sm"
+                                aria-label="중 메뉴"
+                            >
+                                <option value="">
+                                    {selectedLvl1 ? "중 메뉴 전체" : "대 메뉴를 먼저"}
+                                </option>
+                                {lvl2Options.map((item) => (
+                                    <option key={item} value={item}>
+                                        {item}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="input-range-sep">›</span>
+                            <select
+                                value={selectedLvl3}
+                                onChange={(e) => setSelectedLvl3(e.target.value)}
+                                disabled={!selectedLvl2}
+                                className="form-control form-control-sm"
+                                aria-label="소 메뉴"
+                            >
+                                <option value="">
+                                    {selectedLvl2 ? "소 메뉴 전체" : "중 메뉴를 먼저"}
+                                </option>
+                                {lvl3Options.map((item) => (
+                                    <option key={item} value={item}>
+                                        {item}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
-                    </section>
+                        {hasFilter && (
+                            <Button size="sm" variant="text" onClick={clearFilter}>
+                                필터 지우기
+                            </Button>
+                        )}
+                    </div>
 
-                    {/* 역할을 선택했을 때만 나머지 영역 표시 */}
-                    {selectedRole && (
-                        <>
-                            {/* 두 번째 영역: 허용된 권한 */}
-                            <section className={styles.panel}>
-                                <div className={styles.filterArea}>
-                                    <select
-                                        value={selectedLvl1}
-                                        onChange={(e) => lvl1ChangeHandler(e.target.value)}
-                                        className={styles.select}
-                                    >
-                                        <option value="">대 메뉴 선택</option>
-                                        {lvl1Options.map((item) => (
-                                            <option key={item} value={item}>
-                                                {item}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        value={selectedLvl2}
-                                        onChange={(e) => lvl2ChangeHandler(e.target.value)}
-                                        disabled={!selectedLvl1}
-                                        className={styles.select}
-                                    >
-                                        <option value="">중 메뉴 선택</option>
-                                        {lvl2Options.map((item) => (
-                                            <option key={item} value={item}>
-                                                {item}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        value={selectedLvl3}
-                                        onChange={(e) => {
-                                            setSelectedLvl3(e.target.value);
-                                            setSelectedPermissionIds([]);
-                                        }}
-                                        disabled={!selectedLvl2}
-                                        className={styles.select}
-                                    >
-                                        <option value="">소 메뉴 선택</option>
-                                        {lvl3Options.map((item) => (
-                                            <option key={item} value={item}>
-                                                {item}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className={styles.buttonArea}>
-                                    <button
-                                        type="button"
-                                        onClick={saveHandler}
-                                        className={styles.button}
-                                    >
-                                        ✓ 저장
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={rollbackHandler}
-                                        className={styles.button}
-                                    >
-                                        ✓ 변경 취소
-                                    </button>
-                                </div>
-
-                                <div className={styles.permissionList}>
-                                    <Grid
-                                        title=""
-                                        header={ALLOWED_GRID_HEADER}
-                                        content={allowedGridContent}
-                                        columnStyle="1fr"
-                                        clickableColumn={{
-                                            0: (_value, rowIndex) =>
-                                                revokePermissionHandler(
-                                                    allowedPermissions[rowIndex].actionId
-                                                ),
-                                        }}
-                                    />
-                                    {allowedPermissions.length === 0 && (
-                                        <div className={styles.empty}>
-                                            허용된 권한이 없습니다.
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className={styles.count}>
-                                    허용 권한 {allowedPermissions.length}건
-                                </div>
-                            </section>
-
-                            {/* 세 번째 영역: 허용되지 않은 권한 */}
-                            <section className={styles.panel}>
-                                <div className={styles.filterArea}>
-                                    <select
-                                        value={selectedLvl1}
-                                        onChange={(e) => lvl1ChangeHandler(e.target.value)}
-                                        className={styles.select}
-                                    >
-                                        <option value="">대 메뉴 선택</option>
-                                        {lvl1Options.map((item) => (
-                                            <option key={item} value={item}>
-                                                {item}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        value={selectedLvl2}
-                                        onChange={(e) => lvl2ChangeHandler(e.target.value)}
-                                        disabled={!selectedLvl1}
-                                        className={styles.select}
-                                    >
-                                        <option value="">중 메뉴 선택</option>
-                                        {lvl2Options.map((item) => (
-                                            <option key={item} value={item}>
-                                                {item}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        value={selectedLvl3}
-                                        onChange={(e) => {
-                                            setSelectedLvl3(e.target.value);
-                                            setSelectedPermissionIds([]);
-                                        }}
-                                        disabled={!selectedLvl2}
-                                        className={styles.select}
-                                    >
-                                        <option value="">소 메뉴 선택</option>
-                                        {lvl3Options.map((item) => (
-                                            <option key={item} value={item}>
-                                                {item}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className={styles.buttonArea}>
-                                    <button
-                                        type="button"
-                                        onClick={checkAllHandler}
-                                        className={styles.button}
-                                    >
-                                        ✓ {isAllSelected ? "선택 해제" : "전체 선택"}
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        onClick={grantSelectedHandler}
-                                        disabled={
-                                            selectedPermissionIds.length === 0
-                                        }
-                                        className={styles.button}
-                                    >
-                                        ✓ 선택 권한 부여
-                                    </button>
-                                </div>
-
-                                <div className={styles.permissionList}>
-                                    <Grid
-                                        title=""
-                                        header={DENIED_GRID_HEADER}
-                                        content={deniedGridContent}
-                                        columnStyle="1fr"
-                                        activeRows={activeDeniedRows}
-                                        clickableColumn={{
-                                            0: (_value, rowIndex) =>
-                                                grantPermissionHandler(
-                                                    deniedPermissions[rowIndex].actionId
-                                                ),
-                                        }}
-                                    />
-                                    {deniedPermissions.length === 0 && (
-                                        <div className={styles.empty}>
-                                            미허용 권한이 없습니다.
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className={styles.count}>
-                                    미허용 권한 {deniedPermissions.length}건
-                                    {selectedPermissionIds.length > 0 &&
-                                        ` / ${selectedPermissionIds.length}건 선택`}
-                                </div>
-                            </section>
-                        </>
+                    {/* 저장 전 변경 안내 */}
+                    {isDirty && (
+                        <Callout
+                            tone="info"
+                            actions={
+                                <>
+                                    <Button size="sm" onClick={rollbackHandler}>
+                                        되돌리기
+                                    </Button>
+                                    <Button size="sm" variant="primary" onClick={saveHandler}>
+                                        저장
+                                    </Button>
+                                </>
+                            }
+                        >
+                            저장하지 않은 변경: 허용 +{addedCount} · 해제 -{removedCount}
+                        </Callout>
                     )}
+
+                    {/* 미허용 ↔ 허용 옮기기 (체크 후 버튼, 두 번 누르면 바로) */}
+                    <TransferList
+                        key={selectedRole}
+                        items={transferItems}
+                        selectedKeys={rolePermissions}
+                        onChange={setRolePermissions}
+                        rowKey="actionId"
+                        renderItem={(item) => item.actionName}
+                        leftTitle="미허용"
+                        leftTone="danger"
+                        rightTitle={`허용 (${selectedRoleName})`}
+                        rightTone="success"
+                    />
                 </div>
-            </div>
-        </PageContainer>
+            )}
+        </div>
     );
 }
