@@ -31,7 +31,7 @@
 
 | 목차 | 내용 | 파일 |
 | --- | --- | --- |
-| **기초** | 표준 토큰(index.css, 7장. 실제 값을 index.css에서 읽어 표시) · 테마(사이드바 색, 7장). 표준 탭 사용법 안내 | `TokenCatalog.jsx` (`TokenCatalog`) |
+| **기초** | 표준 토큰(index.css, 7장. 실제 값을 index.css에서 읽어 표시) · 확정한 강조색(인디고) · 테마(네이비, 7장). 표준 탭 사용법 안내 | `TokenCatalog.jsx` (`TokenCatalog`) |
 | **동작 · 입력** | 버튼 · 입력 · 폼 · 검색 셀렉트 · 선택(pill · 세그먼트 · 켜고 끄는 버튼 · 스위치) · 날짜 · 숫자 · 기간 · 검색 · 파일 · 반복 입력 행 | `StandardInputCatalog.jsx` |
 | **표시 · 상태** | 배지 · 태그 · 안내 상자 · 상태 상자 · 진행 막대 · 토스트 · 확인 창 · 모달 | `StandardFeedbackCatalog.jsx` |
 | **데이터** | 표 · 페이지 이동 · 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · 두 목록 사이 옮기기 | `StandardDataCatalog.jsx` |
@@ -339,17 +339,17 @@
 
 - 표준을 만들지 않기로 한 것: TextField 떠 있는 라벨(라벨은 위), 팝업 창(`window.open`, UI 아님), 기존 샘플 Chart · Poll(샘플 밖에서 안 씀. 차트를 쓰게 되면 그때 색을 토큰으로), 리치 텍스트 `Editor`(외부 에디터, 옮길 때 테두리 · 높이만 맞춤)
 - 다크 모드: 토큰 · 표준 UI는 대응 완료, 샘플 페이지에서만 켬 (9장)
-- 강조색(primary)과 테마(brand) 분리: 강조색은 샘플 페이지 후보 미리 보기(팀 결정용), 테마는 사이드바 색으로 앱 전체 (7장 "강조색 (primary) 과 테마 (brand)")
+- 강조색(primary)과 테마(brand): 강조색은 **인디고**, 테마(사이드바 색)는 **네이비**로 확정 (2026-11-17). 고르는 기능(샘플 페이지 강조색 후보 · 사이드바 테마 견본)은 지움 (7장 "강조색 (primary) 과 테마 (brand)")
 
 ### 팀이 정할 것
 
-1. **강조색 확정**: 7장 후보 중 하나를 고릅니다. 정하면 `:root`의 `--primary-*` 기본값만 바꿉니다.
-2. **다크 모드를 앱 전체로 켜는 시점**: 화면을 다 옮긴 뒤로 할지, 시스템 설정(`prefers-color-scheme`)을 따를지 (9장 "앱 전체로 넓히려면").
-3. **테마(brand) 저장 위치**: 지금은 브라우저(`localStorage`)만. 서버(회원 설정)에 저장할지.
-4. **새 표준 부품 · 토큰 승인**: 누가 어떻게 승인할지 (예: PR 리뷰 1명 이상 + 8장 · 7장에 추가).
-5. **통일 전 `Variant`를 지우는 시점과 담당**: 제안은 화면을 옮긴 사람이 같은 PR에서 지우는 것.
-6. **옛 컴포넌트를 지우는 시점**: `sample/` 중복 컴포넌트 · `common/input/Input.jsx` · `PageContainer` · `Section`.
-7. **메뉴 아이콘**: 메뉴 데이터에 아이콘을 넣을지. 넣으면 접힌 사이드바를 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿀 수 있습니다 (지금은 접힌 상태에서 메뉴를 표시하지 않음, 8장 "사이드 메뉴").
+정한 것: 강조색 인디고 · 테마(사이드바) 네이비 (2026-11-17, 7장).
+
+1. **다크 모드를 앱 전체로 켜는 시점**: 화면을 다 옮긴 뒤로 할지, 시스템 설정(`prefers-color-scheme`)을 따를지 (9장 "앱 전체로 넓히려면").
+2. **새 표준 부품 · 토큰 승인**: 누가 어떻게 승인할지 (예: PR 리뷰 1명 이상 + 8장 · 7장에 추가).
+3. **통일 전 `Variant`를 지우는 시점과 담당**: 제안은 화면을 옮긴 사람이 같은 PR에서 지우는 것.
+4. **옛 컴포넌트를 지우는 시점**: `sample/` 중복 컴포넌트 · `common/input/Input.jsx` · `PageContainer` · `Section`.
+5. **메뉴 아이콘**: 메뉴 데이터에 아이콘을 넣을지. 넣으면 접힌 사이드바를 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿀 수 있습니다 (지금은 접힌 상태에서 메뉴를 표시하지 않음, 8장 "사이드 메뉴").
 
 ### 화면 옮기는 순서
 
@@ -363,7 +363,7 @@
 6. 불러오는 중 · 빈 목록 · 오류 · 권한 없음 상태를 `StatusBox`로 넣습니다.
 7. 화면 CSS module에서 표준 클래스와 겹치는 규칙을 지웁니다 (8장 "공통 규칙").
 8. 샘플 페이지에서 다크 모드를 켜고 같은 토큰이 쓰였는지 한 번 봅니다 (9장).
-9. 옮긴 화면의 통일 전 `Variant`를 지웁니다 (위 "팀이 정할 것" 5번).
+9. 옮긴 화면의 통일 전 `Variant`를 지웁니다 (위 "팀이 정할 것" 3번).
 
 ### 기존 컴포넌트 → 표준 대응
 
@@ -472,7 +472,7 @@
 - 본문 글꼴이 Pretendard(`--font-sans`, `main.jsx`에서 불러옴)로 바뀌고, 입력 · 버튼도 글꼴을 물려받습니다. 모든 화면의 글자 폭이 조금 바뀝니다.
 - `FeedbackProvider`가 앱 전체를 감쌉니다 (`useToast` · `useConfirm`을 어디서나 쓸 수 있음).
 - 일부 화면 CSS module의 `font-family` 한 줄을 `var(--font-sans)`로 바꿨습니다 (위 "글꼴을 Pretendard로 정한 이유").
-- 사이드바(`menu/SideMenu` · `UserProfile`)는 색을 토큰 · 테마(brand)로 바꿨습니다. 현재 메뉴 빨강이 조금 밝아지고, 프로필 아래에 테마 견본이 생깁니다 (7장).
+- 사이드바(`menu/SideMenu` · `UserProfile`)는 색을 토큰으로 바꾸고, **배경을 차콜(`#212529`)에서 네이비(`#1b2440`)로, 현재 메뉴 색을 빨강에서 연한 파랑(`#91a7ff`)으로** 바꿨습니다 (7장 "테마").
 - 화면 폭 768px 이하에서는 사이드바가 숨고 왼쪽 위 [☰ 메뉴] 버튼으로 여는 서랍이 됩니다. 본문 여백도 그 폭에서 `64px 16px 24px`로 바뀝니다 (`layout/MainLayout.module.css`).
 - 그 밖의 기존 화면 모양은 그대로입니다. 표준 클래스는 새 코드(샘플 페이지)에서만 씁니다.
 
@@ -557,25 +557,23 @@
 
 ### 강조색 (primary) 과 테마 (brand)
 
-색을 바꾸는 기능은 두 층으로 나뉩니다. 둘은 서로 다른 토큰을 쓰고, 어느 쪽도 회색 · 상태색(성공 · 위험 · 경고 · 정보)은 바꾸지 않습니다.
+둘 다 **확정**했습니다 (2026-11-17). 고르는 기능은 없고, 바꿀 때는 `index.css`의 값만 고칩니다. 둘은 서로 다른 토큰을 쓰고, 어느 쪽도 회색 · 상태색(성공 · 위험 · 경고 · 정보)은 바꾸지 않습니다.
 
 | | **강조색 (primary)** | **테마 (brand)** |
 | --- | --- | --- |
-| 누가 정하나 | 팀이 한 번 정함 (디자인 결정) | 사용자 각자 (취향) |
+| 값 | 인디고 (`#3b5bdb`) | 네이비 (배경 `#1b2440` · 현재 메뉴 `#91a7ff`) |
 | 닿는 곳 | 주 버튼 · 선택 행 · 탭 · 체크 · 스위치 · 포커스 · 링크 | **사이드바 배경 · 현재 메뉴만** |
 | 닿지 않는 곳 | 상태 표시 (진행 중 · 오류 등은 의미색) | 버튼 · 입력 · 표 · 배지 · 상태색 전부 |
 | 토큰 | `--primary-*` 8개 → `--color-primary*` · `--color-focus` · `--color-link` | `--brand-bg` · `--brand-accent` → `--color-sidebar-*` |
-| 바꾸는 곳 | 샘플 페이지 목차의 "강조색 후보" (이 페이지에서만, 저장 안 함) | 사이드바 프로필 아래 견본 · 샘플 표준 탭 "기초"의 테마 (앱 전체, 이 브라우저에 기억) |
-| 속성 | `<html data-primary-preview="violet">` | `<html data-brand="navy">` |
 
-테마를 버튼 색에 쓰지 않는 이유: 사용자가 붉은 계열을 고르면 "저장"과 "삭제"가, 초록을 고르면 "저장"과 "완료"가 같은 색이 됩니다. Slack(사이드바 테마) · Jira · Confluence(상단 바 색)처럼 사용자 색은 중요한 동작에서 먼 장식 영역에만 입히고, 동작 · 의미 색은 고정합니다.
+사이드바 색을 버튼 색과 따로 두는 이유: 장식 영역(사이드바 · 나중의 헤더) 색과 동작 · 의미 색을 섞지 않기 위해서입니다. 사이드바 색을 바꿔도 "저장" · "삭제" · "완료"의 색 구분은 그대로입니다.
 
-#### 강조색 (primary): 팀 결정용
+#### 강조색 (primary): 인디고
 
-`--primary-*` 8개만 덮어쓰면 밝은 · 다크 의미 토큰이 따라옵니다 (다크의 반투명 값은 `color-mix`).
+`--primary-*` 8개를 밝은 · 다크 의미 토큰이 읽습니다 (다크의 반투명 값은 `color-mix`).
 
 ```css
-:root {                                 /* 기본값 = 지금 확정된 강조색 (인디고) */
+:root {
   --primary-fill: var(--indigo-7);      /* 채운 배경: 주 버튼 · 현재 페이지 · 스위치 · 체크 (흰 글자 4.5:1 이상) */
   --primary-fill-hover: var(--indigo-8);
   --primary-text: var(--indigo-7);      /* 밝은 모드: 연한 배경 위 글자 (선택 탭 · 배지) */
@@ -585,30 +583,20 @@
   --primary-dark-focus: var(--indigo-4);/* 다크 모드: 포커스 테두리 · 연한 테두리(45%)의 바탕 */
   --primary-dark-tint: var(--indigo-6); /* 다크 모드: 연한 배경(18%)의 바탕 */
 }
-:root[data-primary-preview="violet"] { /* 후보: 같은 8개 */ }
 ```
 
-| 후보 | `data-primary-preview` | 채움 | 메모 |
-| --- | --- | --- | --- |
-| 인디고 (지금 값) | 없음 | `#3b5bdb` | |
-| 바이올렛 | `violet` | `#7048e8` | |
-| 그레이프 | `grape` | `#ae3ec9` | 연한 배경 위 글자는 한 단계 진하게 (`#9c36b5`) |
-| 사이언 | `cyan` | `#0b7285` | Open Color 7단계는 흰 글자 미달이라 9단계. hover는 별도 값 |
-
-- **고른 기준**: 흰 글자 · 연한 배경 위 글자 · 다크 글자가 모두 4.5:1 이상. 상태색과 헷갈리는 계열은 넣지 않습니다: 빨강 · 핑크(위험), 초록 · 틸(성공), 노랑 · 주황(경고, 흰 글자도 불가).
-- **확정하는 법**: 팀이 고르면 `:root`의 `--primary-*` 기본값을 그 색으로 바꾸고, `Sample.jsx`의 `PRIMARY_CANDIDATES`와 후보 블록은 지우거나 비교용으로 남깁니다.
-- 미리 보기는 샘플 페이지를 떠나면 지워지므로 다른 화면은 항상 확정된 강조색입니다.
-- **정보색(info)은 파랑 고정**(blue-8, 다크 blue-3)입니다. 강조색 후보를 바꿔도 안내 상자(`Callout tone="info"`) · `badge-info`의 의미가 같도록 분리했습니다.
+- 흰 글자 · 연한 배경 위 글자 · 다크 글자가 모두 4.5:1 이상입니다.
+- **바꿀 때**: 위 8개 값만 바꿉니다 (같은 명암비 기준 확인). 상태색과 헷갈리는 빨강 · 핑크 · 초록 · 틸 · 노랑 · 주황 계열은 쓰지 않습니다.
+- **정보색(info)은 파랑 고정**(blue-8, 다크 blue-3)입니다. 강조색이 바뀌어도 안내 상자(`Callout tone="info"`) · `badge-info`의 뜻이 같도록 분리했습니다.
 - **상태 표시에 강조색을 쓰지 않습니다.** "진행 중 · 수강 중"처럼 상태를 뜻하는 배지는 `tone="info"` 등 의미색을 씁니다. 강조색은 "누를 수 있는 것 · 고른 것"을 뜻합니다.
 
-#### 테마 (brand): 사용자 선택, 앱 전체
+#### 테마 (brand): 네이비, 사이드바에만
 
 ```css
-:root {                         /* 기본: 차콜 */
-  --brand-bg: var(--gray-9);    /* 사이드바 배경: 어두운 색만 */
-  --brand-accent: #ff6b6b;      /* 현재 메뉴 글자 · 왼쪽 선 */
+:root {
+  --brand-bg: #1b2440;          /* 사이드바 배경: 어두운 색만 */
+  --brand-accent: #91a7ff;      /* 현재 메뉴 글자 · 왼쪽 선 */
 }
-:root[data-brand="navy"] { --brand-bg: #1b2440; --brand-accent: #91a7ff; }
 
 /* 사이드바 토큰: 배경 · 현재 메뉴만 brand를 읽고, 글자 · 선은 어떤 배경에서도 읽히는 회색 · 반투명 흰색 */
 --color-sidebar-bg: var(--brand-bg);
@@ -616,22 +604,10 @@
 --color-sidebar-active-bg: color-mix(in srgb, var(--brand-accent) 10%, transparent);
 ```
 
-| 테마 | `data-brand` | 배경 | 현재 메뉴 |
-| --- | --- | --- | --- |
-| 차콜 (기본) | 없음 | `#212529` | `#ff6b6b` |
-| 네이비 | `navy` | `#1b2440` | `#91a7ff` |
-| 플럼 | `plum` | `#261d3d` | `#b197fc` |
-| 포레스트 | `forest` | `#11271f` | `#63e6be` |
-| 와인 | `wine` | `#33182a` | `#faa2c1` |
-
-- **고른 기준**: 사이드바의 모든 글자 단계(대분류 제목 gray-6까지)와 현재 메뉴 색이, 배경과 현재 메뉴 배경(10%) 위에서 모두 4.5:1 이상. 사이드바에는 위험한 동작이 없어서 붉은 계열도 됩니다.
-- 기본 테마의 현재 메뉴 빨강은 `#ff5252` → `#ff6b6b`로 조금 밝혔습니다 (예전 값은 현재 메뉴 배경 위에서 4.3:1).
-- **코드**: `src/theme/brandTheme.js`의 `useBrandTheme()`가 `[brand, setBrand]`를 줍니다. `setBrand`는 `<html data-brand>`를 바꾸고 `localStorage`(`lms-brand`)에 저장합니다. 사이드바 · 샘플 페이지 견본이 같은 값을 보고, 다른 탭에서 바꿔도 따라갑니다.
-- **깜빡임 방지**: `index.html`의 짧은 스크립트가 React보다 먼저 저장된 값을 `<html>`에 붙입니다. 키 이름을 바꾸면 두 곳을 같이 바꿉니다.
-- **견본 UI**: `common/ui/SwatchPicker.jsx` (`.swatch-group` · `.swatch`, 진짜 radio). 어두운 배경 위에서는 `--swatch-gap` · `--swatch-ring`을 덮어씁니다 (`menu/UserProfile.module.css`).
-- **새 테마 추가**: `index.css`에 `:root[data-brand="이름"]`(2개 값), `brandTheme.js`의 `BRANDS`에 견본을 넣습니다. 위 명암비 기준을 확인합니다.
-- **서버에 저장하려면** (기기를 바꿔도 유지): `setBrand` 안에서 회원 설정 API를 부르고, 로그인 때 받은 값으로 `setBrand`를 한 번 부르면 됩니다.
+- 사이드바의 모든 글자 단계(대분류 제목 gray-6까지)와 현재 메뉴 색이, 배경과 현재 메뉴 배경(10%) 위에서 모두 4.5:1 이상입니다.
+- **바꿀 때**: 위 2개 값만 바꾸고 같은 명암비 기준을 확인합니다. 배경은 어두운 색만 씁니다 (사이드바 글자가 밝은 색이라).
 - **헤더**가 생기면 `--color-sidebar-*`처럼 `--brand-*`를 읽는 헤더 토큰을 만들어 씁니다. 버튼 · 표 · 배지 CSS에서는 `--brand-*`를 읽지 않습니다.
+- 예전에 있던 고르는 기능(사이드바 테마 견본 · 샘플 페이지 강조색 후보, `theme/brandTheme.js` · `SwatchPicker`)은 지웠습니다. 그때 저장된 브라우저 값(`localStorage`의 `lms-brand`)은 더 이상 읽지 않으므로 그대로 두어도 됩니다.
 
 ---
 
@@ -645,7 +621,7 @@
 | --- | --- | --- |
 | 토큰 | `src/index.css` `:root` | 색 · 크기 값 (7장) |
 | 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` · `table.css` · `tabs.css` · `panel.css` · `nav.css` · `choice.css` · `content.css` (`index.css`가 `@import`). react-select만 `common/ui/selectStyles.js` (라이브러리가 CSS 대신 styles 객체를 받음) | **스타일의 원본.** 토큰만 사용 |
-| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `SideNav` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` · `SelectBox` · `QuestionBlock` · `Comment` · `SwatchPicker` · `TransferList` · `ListEditor` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
+| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `SideNav` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` · `SelectBox` · `QuestionBlock` · `Comment` · `TransferList` · `ListEditor` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
 | 훅 | `src/components/common/ui/feedbackContext.js` `useToast` · `useConfirm` | `alert()` · `confirm()` 대신. `main.jsx`의 `FeedbackProvider`가 앱 전체를 감쌈 |
 
 - raw HTML에도 클래스만 붙이면 같은 모양이 됩니다 (`<button className="btn btn-primary">`). 동작이 필요하면 컴포넌트를 씁니다.
@@ -1175,9 +1151,8 @@ import TransferList from "../common/ui/TransferList";
 <SideNav groups={[{ key, title, items: [{ key, title, icon }] }]} currentKey={current} onSelect={(item) => navigate(item.path)} />
 ```
 
-- 색은 `--color-sidebar-*` 토큰입니다. 실제 사이드바(`menu/SideMenu` · `UserProfile`)도 같은 토큰을 씁니다 (2026-11-16, 직접 적은 색 → 토큰). 다크 모드와 상관없이 항상 어둡고, 배경 · 현재 메뉴 색은 테마(7장 "강조색 (primary) 과 테마 (brand)")를 따릅니다.
+- 색은 `--color-sidebar-*` 토큰입니다. 실제 사이드바(`menu/SideMenu` · `UserProfile`)도 같은 토큰을 씁니다 (2026-11-16, 직접 적은 색 → 토큰). 다크 모드와 상관없이 항상 어둡고, 배경 · 현재 메뉴 색은 테마 네이비(7장 "강조색 (primary) 과 테마 (brand)")입니다.
 - 그룹은 `<details open>`이라 제목을 누르면 접힙니다. 현재 화면 항목은 `aria-current="page"` (테마의 현재 메뉴 색 글자 + 왼쪽 선).
-- 사이드바 프로필 아래에 테마 견본(`SwatchPicker`)이 있습니다.
 - **접기 (큰 화면)**: [‹]로 60px까지 접어 본문을 넓힙니다. 접힌 상태에서는 메뉴를 **표시하지 않습니다**. 메뉴에 아이콘이 없어서 약어("회" · "과")나 작은 글자는 겹치거나 잘려 결국 다시 펼쳐야 알 수 있기 때문입니다. 메뉴 데이터에 아이콘이 생기면 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿉니다 (6장 "팀이 정할 것").
 - **서랍 (768px 이하)**: 사이드바를 숨기고 왼쪽 위 [☰ 메뉴] 버튼(`aria-expanded`)으로 화면 위에 덮어 엽니다 (`--z-drawer`, 배경 `--color-overlay`). 배경 누르기 · Esc · 메뉴를 눌러 이동하면 닫히고, 열리면 [×]에, 닫히면 [☰]에 포커스가 갑니다. 이 폭에서는 접기 버튼을 쓰지 않습니다.
 

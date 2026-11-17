@@ -43,11 +43,6 @@
 }
 
 /* 목차 줄의 작은 이름표 (강조색 후보) */
-.tocLabel {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  white-space: nowrap;
-}
 
 /* 한 줄: 구역 탭 + 다크 모드 버튼 / 이 구역 목차 */
 .tocRow {
