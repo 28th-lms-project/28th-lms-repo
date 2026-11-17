@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styles from "./SideMenu.module.css";
@@ -117,11 +117,12 @@ export default function SideMenu() {
     <nav id="side-menu" className={navClass} aria-label="메뉴">
       {/* 상단: 로고 | 다크 모드 · 접기(작은 화면은 닫기) */}
       <div className={styles.header}>
-        <div className={styles.logo}>
+        {/* 로고를 누르면 첫 화면(대시보드). 작은 화면 서랍은 주소가 바뀌면 닫힘 */}
+        <Link to="/" className={styles.logo} title="첫 화면으로">
           Learning
           <br />
           Works
-        </div>
+        </Link>
         <div className={styles.headerActions}>
         <button
           type="button"

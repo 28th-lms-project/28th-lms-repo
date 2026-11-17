@@ -39,6 +39,15 @@
   pointer-events: none;
 }
 
+.logo:hover {
+  color: var(--color-sidebar-text-strong);
+}
+
+.logo:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 /* 접으면 로고 자리를 비우고 버튼을 세로로: [접기] 위, [다크 모드] 아래 */
 .sideMenu.collapsed .header {
   padding-left: 0;
@@ -226,6 +235,9 @@
 }
 
 .logo {
+  display: block;
+  border-radius: var(--radius);
+  text-decoration: none;
   font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.3;
