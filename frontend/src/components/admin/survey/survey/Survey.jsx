@@ -16,9 +16,59 @@ import {
 import { surveyActions } from "../../../../store/slices/surveySliceStore";
 import Select from "react-select";
 import { IconButton } from "../../../sample/input/IconButton";
-import { SUBJECTS } from "../../test/test/subjects";
+import { getCodeOptionList } from "../../../../api/admin/system/code/codeApi";
+import usePermission from "../../../../hooks/usePermission";
+import { PollItem } from "../../../sample/Poll";
+
+function toPollItem(survey, index) {
+  let pollType = survey.type;
+  if (survey.type === "checkBox") {
+    pollType = "checkbox";
+  }
+  let answers = [];
+  if (pollType === "text") {
+    answers = [
+      { id: `${survey.id}-text`, name: survey.id, title: "", value: "" },
+    ];
+  } else {
+    answers = survey.surveyDataList.map((data) => ({
+      id: data.id,
+      name: survey.id,
+      title: data.data,
+      value: data.data,
+    }));
+  }
+  return {
+    id: survey.id,
+    number: index + 1,
+    title: survey.subject,
+    type: pollType,
+    required: false,
+    answers,
+  };
+}
 
 export default function Survey() {
+  const { isSuperAdmin, status } = usePermission();
+
+  if (status === "loaded" && isSuperAdmin) return <SurveyManagement />;
+
+  // idle: 비로그인(조회하지 않음) → 표시 없음
+  let content = null;
+  if (status === "loading") {
+    content = <p className={style.notice}>권한 확인 중...</p>;
+  } else if (status === "failed") {
+    content = (
+      <p className={style.notice}>
+        권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
+      </p>
+    );
+  } else if (status === "loaded") {
+    content = <p className={style.notice}>권한이 없습니다.</p>;
+  }
+  return <PageContainer>{content}</PageContainer>;
+}
+function SurveyManagement() {
   /** 설문 타입에 단일, 다중, 직접입력 3가지가 있어
    *  해당 사항 선택하기 위한 배열
    */
@@ -32,15 +82,39 @@ export default function Survey() {
   const { surveyList } = useSelector((state) => state.survey);
   const dispatch = useDispatch();
 
-  const [selectedSubject, setSelectedSubject] = useState(SUBJECTS[0].value);
+  const [subjectList, setSubjectList] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectGroup, setSelectGroup] = useState("pre");
 
   const currentCourse = selectedSubject;
 
   const surveyRef = useRef();
 
-  const currGroup = currentCourse && `${currentCourse}_${selectGroup}`;
-  console.log(currGroup);
+  let currGroup = null;
+  if (currentCourse) {
+    currGroup = `${currentCourse}_${selectGroup}`;
+  }
+
+  // 환경 변수(TEST_SUBJECT)에서 과목 목록 조회
+  useEffect(() => {
+    let ignoreUpdateState = false;
+    (async () => {
+      try {
+        const codes = await getCodeOptionList("TEST_SUBJECT");
+        if (!ignoreUpdateState) {
+          setSubjectList(codes);
+          if (codes.length > 0) {
+            setSelectedSubject(codes[0].id);
+          }
+        }
+      } catch (e) {
+        alert(e.message);
+      }
+    })();
+    return () => {
+      ignoreUpdateState = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (courseList.length > 0) {
@@ -63,6 +137,10 @@ export default function Survey() {
   }, [dispatch, courseList.length]);
 
   useEffect(() => {
+    if (!currGroup) {
+      // 과목 목록을 받기 전에는 조회하지 않음
+      return;
+    }
     let ignoreUpdateState = false;
     (async () => {
       try {
@@ -82,10 +160,12 @@ export default function Survey() {
   }, [currGroup, dispatch]);
 
   const onInputUpdateHandler = (surveyId, e) => {
-    if (e.target.value === "" || e.target.value === null) {
+    const subject = e.target.value;
+    dispatch(surveyActions.updateSurvey({ id: surveyId, subject }));
+    if (subject === "" || subject === null) {
       return;
     }
-    const modifySurvey = { subject: e.target.value };
+    const modifySurvey = { subject };
     (async () => {
       try {
         const updateResult = await updateSurvey(surveyId, modifySurvey);
@@ -96,10 +176,16 @@ export default function Survey() {
     })();
   };
   const onInputDataHandler = (surveyId, surveyDataId, e) => {
-    if (e.target.value === "" || e.target.value === null) {
+    const data = e.target.value;
+
+    dispatch(
+      surveyActions.updateSurveyData({ surveyId, dataId: surveyDataId, data }),
+    );
+
+    if (data === "" || data === null) {
       return;
     }
-    const updateData = { data: e.target.value };
+    const updateData = { data };
     (async () => {
       try {
         const updateResult = await updateSurveyData(
@@ -195,18 +281,17 @@ export default function Survey() {
             >
               수강
             </li>
-            {SUBJECTS.map((subject) => (
+            {subjectList.map((subject) => (
               <li
-                key={subject.value}
+                key={subject.id}
                 onClick={() => {
-                  setSelectedSubject(subject.label);
+                  setSelectedSubject(subject.id);
                 }}
                 className={
-                  (selectedSubject === subject.label && style.active) ||
-                  undefined
+                  (selectedSubject === subject.id && style.active) || undefined
                 }
               >
-                {subject.label}
+                {subject.name}
               </li>
             ))}
           </ul>
@@ -236,8 +321,10 @@ export default function Survey() {
           </div>
           <div className={style.survey}>
             <ul>
-              <div onClick={() => onClickAddSurveyHandler()}>추가</div>
-              {surveyList.map((survey) => (
+              <IconButton onClick={() => onClickAddSurveyHandler()}>
+                추가
+              </IconButton>
+              {surveyList.map((survey, index) => (
                 <div className={style.surveyQuestion} key={survey.id}>
                   <li>
                     <div className={style.surveyForm}>
@@ -267,7 +354,7 @@ export default function Survey() {
                           onChange={(e) => onTypeChangeHandler(survey, e)}
                         />
                       </div>
-                      {!survey.type !== "text" && (
+                      {survey.type !== "text" && (
                         <div>
                           {survey.surveyDataList.map((data) => (
                             <Fragment key={data.id}>
@@ -301,50 +388,14 @@ export default function Survey() {
                         </div>
                       )}
                     </div>
-                    <div className="surveyPreview">
+                    <div className={style.surveyPreview}>
                       미리보기
-                      <div className="title"></div>
-                      {survey.type === "radio" && (
-                        <>
-                          {survey.surveyDataList.map((data) => (
-                            <label>
-                              <input
-                                name={survey.id}
-                                type="radio"
-                                defaultValue={data.data}
-                              />
-                              {data.data}
-                            </label>
-                          ))}
-                        </>
-                      )}
-                      {survey.type === "checkBox" && (
-                        <>
-                          {survey.surveyDataList.map((data) => (
-                            <label key={data.id}>
-                              <>
-                                <input
-                                  name={survey.id}
-                                  type="checkbox"
-                                  defaultValue={data.data}
-                                />
-                                {data.data}
-                              </>
-                            </label>
-                          ))}
-                        </>
-                      )}
-                      {survey.type === "text" && (
-                        <>
-                          <label>
-                            <input
-                              name={survey.id}
-                              type="text"
-                              placeholder="  "
-                            />
-                          </label>
-                        </>
-                      )}
+                      <ul>
+                        <PollItem
+                          key={`${survey.id}-${survey.type}-${survey.surveyDataList.length}`}
+                          item={toPollItem(survey, index)}
+                        />
+                      </ul>
                     </div>
                   </li>
                 </div>
