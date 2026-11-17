@@ -1,6 +1,5 @@
 import {
   createBrowserRouter,
-  Navigate,
   Outlet,
   redirect,
   RouterProvider,
@@ -26,7 +25,9 @@ import AccessRole from "../components/admin/system/access-role/AccessRole";
 import Code from "../components/admin/system/code/Code";
 import Sample from "../components/sample/Sample.jsx";
 import CourseMain from "../components/admin/course/CourseMain.jsx";
+import CourseHeader from "../components/admin/course/CourseHeader.jsx";
 
+import CourseList from "../components/admin/course/list/CourseList.jsx";
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 import { getCourses } from "../api/admin/course/courseApi";
 import HomeworkDetails from "../components/admin/course/CourseTableComponent/HomeworkDetails.jsx";
@@ -154,10 +155,9 @@ export const routes = [
               {
                 path: "course",
                 handle: { crumb: "과정 관리" },
-                // 과정 버튼 목록(CourseMain)은 과정 관리 화면에서만 표시
                 element: (
                   <>
-                    <CourseMain />
+                    <CourseHeader />
                     <Outlet />
                   </>
                 ),
@@ -166,6 +166,7 @@ export const routes = [
                     path: "list",
                     element: (
                       <>
+                        <CourseList />
                         <Outlet />
                       </>
                     ),
