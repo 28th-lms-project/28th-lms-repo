@@ -125,7 +125,7 @@
 
 1. 경로가 `/` 또는 `/login`이면 통과. 없는 주소(404 라우트, `handle.notFound`)도 통과 (5-6).
 2. 비로그인이면 `/login`으로 이동.
-3. 내 메뉴 상태가 `idle`/`loading`이면 아무것도 그리지 않음. `failed`면 "메뉴 정보를 불러오지 못했습니다. 새로고침해 주세요." 안내.
+3. 내 메뉴 상태가 `idle`/`loading`이면 `StatusBox` loading "메뉴 정보를 불러오는 중...". `failed`면 `StatusBox` error "메뉴 정보를 불러오지 못했습니다." + [다시 시도](사이드바와 같은 `refreshMyMenus`, 2026-11-17).
 4. `superAdmin`이면 통과.
 5. 판정할 URL: 일치한 라우트 중 가장 안쪽의 `handle.guardAs`, 없으면 현재 `pathname`.
 6. `guardUrls`에서 그 URL과 **같거나, 그 URL이 `기준URL + "/"`로 시작하는** 것 중 가장 긴 것을 찾음.
@@ -134,7 +134,7 @@
 7. 찾지 못하면 거부 (SUPER_ADMIN은 4번에서 이미 통과).
 8. 찾았으면 내 메뉴(`menus`)의 `menuUrl`에 그 URL이 있을 때만 통과.
 
-거부되면 "권한이 없습니다"를 화면 전체에 표시합니다. 사이드바는 그대로 보입니다.
+거부되면 `StatusBox type="denied"`("권한이 없습니다.")를 본문에 표시합니다. 사이드바는 그대로 보입니다.
 
 ### 5-4. 배치
 
@@ -383,7 +383,6 @@ src/store/StoreProvider.jsx                     (reducer 등록)
 src/router/routeUtils.js                        (새 파일: getMenuUrlOptions, getGuardTarget, findGuardUrl)
 src/router/MainRouterProvider.jsx               (routes export, handle.menu, guardAs, 팝업 감싸기)
 src/components/menu/MenuGuard.jsx               (새 파일)
-src/components/menu/MenuGuard.module.css        (새 파일: 안내 문구)
 src/components/common/error/NotFound.jsx        (새 파일: 404, 5-6)
 src/router/breadcrumbUtils.js                   (새 파일: 브레드크럼 항목 계산, 7-3)
 src/hooks/useBreadcrumbs.js                     (새 파일, 7-3)
