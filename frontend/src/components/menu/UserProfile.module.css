@@ -9,11 +9,21 @@
 .role {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #adb5bd;
+  color: var(--color-sidebar-muted);
 }
 
 .name {
   font-size: 1.1rem;
-  color: #f1f3f5;
+  color: var(--color-sidebar-text);
   margin-bottom: 0.5rem;
+}
+
+/* 테마 견본: 어두운 사이드바 위라 틈 · 링 색을 사이드바 색으로 */
+.brandPicker {
+  --swatch-size: 16px;
+  --swatch-gap: var(--color-sidebar-bg);
+  --swatch-ring: var(--color-sidebar-text);
+  justify-content: center;
+  gap: 8px;
+  margin-top: 0.75rem;
 }

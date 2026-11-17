@@ -1,0 +1,191 @@
+/*
+ * 버튼 (frontend/docs/ui-style-guide.md 8장)
+ *
+ *   <button class="btn">                     secondary (기본)
+ *   <button class="btn btn-primary">         화면의 주 동작 (한 화면에 하나)
+ *   <button class="btn btn-danger">          위험 (테두리)
+ *   <button class="btn btn-danger-solid">    삭제 확정 (모달 안에서만)
+ *   <button class="btn btn-text">            링크형
+ *   + btn-sm (30px) · btn-block (전체 폭) · btn-icon (아이콘만, aria-label 필수)
+ *
+ * React: common/ui/Button.jsx
+ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--control-height-md);
+  padding: 0 var(--control-padding-x-md);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  vertical-align: middle;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.btn:not(:disabled):hover {
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border-strong);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn > svg {
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+/* ───── variant ───── */
+.btn-primary {
+  color: var(--color-on-primary);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.btn-primary:not(:disabled):hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
+.btn-danger {
+  color: var(--color-danger);
+  background-color: var(--color-bg-surface);
+  border-color: var(--color-danger-border);
+}
+
+.btn-danger:not(:disabled):hover {
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger-border-hover);
+}
+
+.btn-danger-solid {
+  color: var(--color-text-inverse);
+  background-color: var(--color-danger-fill);
+  border-color: var(--color-danger-fill);
+}
+
+.btn-danger-solid:not(:disabled):hover {
+  background-color: var(--color-danger-fill-hover);
+  border-color: var(--color-danger-fill-hover);
+}
+
+.btn-text {
+  padding: 0 4px;
+  color: var(--color-link);
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.btn-text:not(:disabled):hover {
+  background-color: transparent;
+  border-color: transparent;
+  text-decoration: underline;
+}
+
+/* ───── size · 모양 ───── */
+.btn-sm {
+  height: var(--control-height-sm);
+  padding: 0 var(--control-padding-x-sm);
+  font-size: var(--font-size-sm);
+  gap: 4px;
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+.btn-icon {
+  width: var(--control-height-md);
+  padding: 0;
+}
+
+.btn-icon.btn-sm {
+  width: var(--control-height-sm);
+}
+
+/* 버튼 여러 개를 나란히 (모달 바닥 · 툴바) */
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-group-end {
+  justify-content: flex-end;
+}
+
+/* 돌아가는 아이콘 (버튼 로딩 · 상태 상자 로딩 공용)
+ * 기존 IconButton alwaysIconRotate와 같은 움직임: 0.5초에 한 바퀴, ease (돌 때마다 빨라졌다 느려짐) */
+.spin {
+  animation: spin 0.5s ease infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 새로고침 · 다시 시도: 올리면 아이콘이 한 바퀴 (기존 IconButton hoverIconRotate와 같음, 0.4초)
+ * Button은 icon이 icons.refresh면 자동으로 붙음 */
+.btn-icon-rotate > svg {
+  transition: transform 0.4s;
+}
+
+.btn-icon-rotate:not(:disabled):hover > svg,
+.btn-icon-rotate:not(:disabled):focus-visible > svg {
+  transform: rotate(360deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation-duration: 2.4s;
+  }
+
+  .btn-icon-rotate > svg {
+    transition: none;
+  }
+
+  .btn-icon-rotate:not(:disabled):hover > svg,
+  .btn-icon-rotate:not(:disabled):focus-visible > svg {
+    transform: none;
+  }
+}
+
+/* ───── 켜고 끄는 버튼 (aria-pressed) ─────
+ *   <button class="btn" aria-pressed="true">정답</button>
+ *   선택형 채점 · 보기 필터처럼 누른 상태가 남는 버튼. 하나만 고르는 묶음이면 segmented(choice.css)
+ */
+.btn[aria-pressed="true"] {
+  color: var(--color-primary-text);
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+}
+
+.btn[aria-pressed="true"]:not(:disabled):hover {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
