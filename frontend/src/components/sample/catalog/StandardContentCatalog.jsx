@@ -267,7 +267,7 @@ const ContentBlockGroup = () => {
                         <div>
                             <dt>진단</dt>
                             <dd>
-                                <Badge tone="warning">중</Badge>
+                                <Badge tone="info">중</Badge>
                             </dd>
                         </div>
                     </dl>

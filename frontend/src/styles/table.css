@@ -47,14 +47,15 @@
   color: var(--color-text);
 }
 
-.table th,
-.table td {
+/* 칸 기본값은 :where()로 우선순위 0 → 화면 CSS module 클래스(Table columns의 className)로 여백 · 정렬을 바꿀 수 있음 */
+:where(.table) th,
+:where(.table) td {
   padding: 0 12px;
   text-align: left;
   vertical-align: middle;
 }
 
-.table th {
+:where(.table) th {
   height: var(--table-header-height);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-secondary);
@@ -63,7 +64,7 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-.table td {
+:where(.table) td {
   height: var(--table-row-height);
   border-bottom: 1px solid var(--color-border-light);
 }
@@ -72,11 +73,15 @@
   border-bottom: 0;
 }
 
-.table-hover tbody tr:not(.table-empty):hover {
+/*
+ * 올림 · 줄무늬는 :where()로 우선순위를 0으로 낮춤 → 선택(is-selected) · 편집 상태(is-added 등) 색이 항상 이김.
+ * 화면 CSS module이 행 배경을 바꿀 때도 클래스 하나로 이길 수 있음
+ */
+:where(.table-hover tbody tr:not(.table-empty)):hover {
   background-color: var(--color-bg-hover);
 }
 
-.table-striped tbody tr:nth-child(even) {
+:where(.table-striped tbody tr:nth-child(even)) {
   background-color: var(--color-bg-subtle);
 }
 

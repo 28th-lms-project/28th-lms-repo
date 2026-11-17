@@ -6,7 +6,6 @@ import Field from "../../common/ui/Field.jsx";
 import Panel from "../../common/ui/Panel.jsx";
 import Callout from "../../common/ui/Callout.jsx";
 import Table from "../../common/ui/Table.jsx";
-import Switch from "../../common/ui/Switch.jsx";
 import TransferList from "../../common/ui/TransferList.jsx";
 import { useConfirm, useToast } from "../../common/ui/feedbackContext.js";
 import { icons } from "../../common/input/icons.js";
@@ -457,7 +456,7 @@ const CodeScreen = () => {
     return (
         <Variant
             name="공통 코드: 그룹 | 코드 표 | 상세 패널 (보기 · 수정 · 추가)"
-            source="layout-3col · list-group · Table(선택 행 · 흐린 행) · Panel · Field · Switch · desc-list"
+            source="layout-3col · list-group · Table(선택 행 · 흐린 행) · Panel · Field · form-check · desc-list"
             note={
                 "Code(대 · 중 · 소 분류마다 표 + 그 아래 폼, 폼이 보기 · 수정 · 추가로 바뀜)를 표준으로.\n" +
                 "상세 패널 하나가 세 상태: 보기(desc-list + [수정]) · 수정(입력 + [취소] [저장]) · 추가(빈 입력, 코드도 입력). 머리의 [추가]는 언제나 같은 자리.\n" +
@@ -547,9 +546,9 @@ const CodeScreen = () => {
                                 <Field label="순서" htmlFor="std-code-order">
                                     <input id="std-code-order" type="number" min={1} className="form-control" style={{ width: "96px" }} value={draft.order} onChange={(e) => setDraft({ ...draft, order: e.target.value })} />
                                 </Field>
-                                <Switch checked={draft.used} onChange={(used) => setDraft({ ...draft, used })}>
-                                    사용
-                                </Switch>
+                                <label className="form-check">
+                                    <input type="checkbox" checked={draft.used} onChange={(e) => setDraft({ ...draft, used: e.target.checked })} /> 사용
+                                </label>
                             </div>
                         )}
                     </Panel>

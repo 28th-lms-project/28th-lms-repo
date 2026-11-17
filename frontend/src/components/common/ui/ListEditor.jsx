@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { icons } from "../input/icons";
 import SvgIcon from "./SvgIcon";
 import { newListItem } from "./listEditorItem";
@@ -19,7 +19,17 @@ import { newListItem } from "./listEditorItem";
  * @param {(item, index) => React.ReactNode} [props.renderMarker]  입력 칸 앞에 넣을 것 (시험 보기의 정답 표시 등)
  */
 export default function ListEditor({ items, onChange, label, placeholder, min = 1, max, addLabel = "추가", numbered = true, renderMarker }) {
-  const [focusId, setFocusId] = useState(null);
+  // 줄을 더하거나 지운 뒤 포커스할 줄. autoFocus는 처음 그릴 때만 동작해서(지운 뒤 앞 줄은 이미 있음) ref로 직접 옮긴다
+  const pendingFocus = useRef(null);
+  const inputRefs = useRef(new Map());
+  useEffect(() => {
+    if (pendingFocus.current == null) return;
+    inputRefs.current.get(pendingFocus.current)?.focus();
+    pendingFocus.current = null;
+  });
+  const setFocusId = (id) => {
+    pendingFocus.current = id;
+  };
   const canAdd = max === undefined || items.length < max;
   const canRemove = items.length > min;
 
@@ -63,7 +73,10 @@ export default function ListEditor({ items, onChange, label, placeholder, min = 
               aria-label={`${label} ${index + 1}`}
               placeholder={placeholder}
               value={item.value}
-              autoFocus={item.id === focusId}
+              ref={(el) => {
+                if (el) inputRefs.current.set(item.id, el);
+                else inputRefs.current.delete(item.id);
+              }}
               onChange={(e) => onChange(items.map((it) => (it.id === item.id ? { ...it, value: e.target.value } : it)))}
               onKeyDown={(e) => handleKeyDown(e, index)}
             />

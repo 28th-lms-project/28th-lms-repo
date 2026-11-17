@@ -36,7 +36,7 @@
     color 0.15s;
 }
 
-.btn:not(:disabled):hover {
+.btn:not(:disabled):not([aria-disabled="true"]):hover {
   background-color: var(--color-bg-hover);
   border-color: var(--color-border-strong);
 }
@@ -46,7 +46,8 @@
   outline-offset: 2px;
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-disabled="true"] {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -63,7 +64,7 @@
   border-color: var(--color-primary);
 }
 
-.btn-primary:not(:disabled):hover {
+.btn-primary:not(:disabled):not([aria-disabled="true"]):hover {
   background-color: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
 }
@@ -74,7 +75,7 @@
   border-color: var(--color-danger-border);
 }
 
-.btn-danger:not(:disabled):hover {
+.btn-danger:not(:disabled):not([aria-disabled="true"]):hover {
   background-color: var(--color-danger-bg);
   border-color: var(--color-danger-border-hover);
 }
@@ -85,7 +86,7 @@
   border-color: var(--color-danger-fill);
 }
 
-.btn-danger-solid:not(:disabled):hover {
+.btn-danger-solid:not(:disabled):not([aria-disabled="true"]):hover {
   background-color: var(--color-danger-fill-hover);
   border-color: var(--color-danger-fill-hover);
 }
@@ -97,7 +98,7 @@
   border-color: transparent;
 }
 
-.btn-text:not(:disabled):hover {
+.btn-text:not(:disabled):not([aria-disabled="true"]):hover {
   background-color: transparent;
   border-color: transparent;
   text-decoration: underline;
@@ -155,8 +156,8 @@
   transition: transform 0.4s;
 }
 
-.btn-icon-rotate:not(:disabled):hover > svg,
-.btn-icon-rotate:not(:disabled):focus-visible > svg {
+.btn-icon-rotate:not(:disabled):not([aria-disabled="true"]):hover > svg,
+.btn-icon-rotate:not(:disabled):not([aria-disabled="true"]):focus-visible > svg {
   transform: rotate(360deg);
 }
 
@@ -169,8 +170,8 @@
     transition: none;
   }
 
-  .btn-icon-rotate:not(:disabled):hover > svg,
-  .btn-icon-rotate:not(:disabled):focus-visible > svg {
+  .btn-icon-rotate:not(:disabled):not([aria-disabled="true"]):hover > svg,
+  .btn-icon-rotate:not(:disabled):not([aria-disabled="true"]):focus-visible > svg {
     transform: none;
   }
 }
@@ -185,7 +186,7 @@
   border-color: var(--color-primary-border);
 }
 
-.btn[aria-pressed="true"]:not(:disabled):hover {
+.btn[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]):hover {
   background-color: var(--color-primary-light);
   border-color: var(--color-primary);
 }

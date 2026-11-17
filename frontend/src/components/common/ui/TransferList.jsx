@@ -139,18 +139,16 @@ export default function TransferList({
           className="btn btn-sm"
           disabled={!leftChecked.length}
           onClick={() => add(leftChecked)}
-          aria-label={`체크한 ${leftChecked.length}개 ${rightTitle}(으)로 옮기기`}
         >
-          추가 →
+          추가 →<span className="visually-hidden"> (체크한 {leftChecked.length}개를 {rightTitle}(으)로)</span>
         </button>
         <button
           type="button"
           className="btn btn-sm"
           disabled={!rightChecked.length}
           onClick={() => remove(rightChecked)}
-          aria-label={`체크한 ${rightChecked.length}개 빼기`}
         >
-          ← 빼기
+          ← 빼기<span className="visually-hidden"> (체크한 {rightChecked.length}개)</span>
         </button>
       </div>
       {renderList("right", right, rightTitle, right.length, rightSummary && <span className="transfer-summary">{rightSummary}</span>)}

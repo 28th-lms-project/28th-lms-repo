@@ -36,7 +36,7 @@ const BadgeGroup = () => {
 <span className="badge badge-warning">채점 중</span>`}
                 >
                     <Badge>미진단</Badge>
-                    <Badge tone="primary">진행 중</Badge>
+                    <Badge tone="info">진행 중</Badge>
                     <Badge tone="success">정상</Badge>
                     <Badge tone="danger">계정 잠김</Badge>
                     <Badge tone="warning">채점 중</Badge>
@@ -45,11 +45,11 @@ const BadgeGroup = () => {
                 <Variant
                     name="같은 의미 = 같은 tone"
                     source="MemberDetail · MyCounsel · ExamGradeModal (옮길 때)"
-                    note="등급 · 채점 결과도 따로 색을 만들지 않고 tone으로 맞춤"
+                    note="등급 · 채점 결과도 따로 색을 만들지 않고 tone으로 맞춤. 수준(상 · 중 · 하)에는 danger를 쓰지 않음 (오답 · 오류와 헷갈림). 상태(진행 중)는 info, primary는 선택 · 역할 표시에만"
                 >
                     <Badge tone="success">상</Badge>
-                    <Badge tone="warning">중</Badge>
-                    <Badge tone="danger">하</Badge>
+                    <Badge tone="info">중</Badge>
+                    <Badge tone="warning">하</Badge>
                     <Badge tone="success">정답</Badge>
                     <Badge tone="danger">오답</Badge>
                     <Badge tone="info">부분정답</Badge>
@@ -217,7 +217,7 @@ const ProgressGroup = () => {
                     <div className="card" style={{ width: "100%" }}>
                         <div className="card-header">
                             <strong className="card-title">풀스택 개발자 과정</strong>
-                            <Badge tone="primary">진행 중</Badge>
+                            <Badge tone="info">진행 중</Badge>
                         </div>
                         <p className="card-meta">2026-03-02 ~ 2026-08-28 · 120일 중 52일</p>
                         <Progress label="과정 진행" value={52} max={120} showValue />

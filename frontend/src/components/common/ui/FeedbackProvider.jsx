@@ -75,6 +75,17 @@ export default function FeedbackProvider({ children }) {
     setConfirmOptions(null);
   };
 
+  // 토스트 한 개: 아무 데나 눌러도 닫히고, 키보드는 [×] 버튼으로 닫음
+  const renderToast = (item) => (
+    <div key={item.id} className={`toast ${item.type === "error" ? "toast-error" : ""}`.trim()} onClick={() => dismiss(item.id)}>
+      {TOAST_ICON[item.type] && <SvgIcon path={TOAST_ICON[item.type]} size={16} />}
+      <span className="toast-message">{item.message}</span>
+      <button type="button" className="toast-close" aria-label="알림 닫기" onClick={() => dismiss(item.id)}>
+        ×
+      </button>
+    </div>
+  );
+
   return (
     <ToastContext.Provider value={toast}>
       <ConfirmContext.Provider value={confirm}>
@@ -88,19 +99,14 @@ export default function FeedbackProvider({ children }) {
         />
 
         {createPortal(
-          <div className="toast-region" role="status" aria-live="polite">
-            {toasts.map((item) => (
-              <div
-                key={item.id}
-                className={`toast ${item.type === "error" ? "toast-error" : ""}`.trim()}
-                role={item.type === "error" ? "alert" : undefined}
-                title="누르면 닫힙니다"
-                onClick={() => dismiss(item.id)}
-              >
-                {TOAST_ICON[item.type] && <SvgIcon path={TOAST_ICON[item.type]} size={16} />}
-                {item.message}
-              </div>
-            ))}
+          <div className="toast-region">
+            {/* 안내 · 성공은 polite(읽던 것을 끊지 않음), 오류만 alert. 한 영역에 두 역할을 겹치면 오류가 두 번 읽힘 */}
+            <div className="toast-stack" role="status" aria-live="polite">
+              {toasts.filter((item) => item.type !== "error").map(renderToast)}
+            </div>
+            <div className="toast-stack" role="alert">
+              {toasts.filter((item) => item.type === "error").map(renderToast)}
+            </div>
           </div>,
           document.body,
         )}

@@ -316,7 +316,7 @@ const CardGroup = () => {
                     code={`
 <button type="button" className={\`card card-clickable \${selected ? "is-selected" : ""}\`}
         aria-pressed={selected} onClick={...}>
-  <span className="card-header"><span className="card-title">풀스택 28기</span><Badge tone="primary">진행 중</Badge></span>
+  <span className="card-header"><span className="card-title">풀스택 28기</span><Badge tone="info">진행 중</Badge></span>
   <span className="card-meta">2026-03-02 ~ 2026-12-18 · 28명</span>
 </button>
 

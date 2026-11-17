@@ -514,6 +514,11 @@
   gap: 8px;
 }
 
+/* 버튼 안 visually-hidden(체크한 개수) 기준점 */
+.transfer-actions > .btn {
+  position: relative;
+}
+
 @media (max-width: 768px) {
   .transfer {
     grid-template-columns: minmax(0, 1fr);

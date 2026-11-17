@@ -296,7 +296,7 @@ const DetailScreens = () => {
                             <div className="card">
                                 <div className="card-header">
                                     <strong className="card-title">풀스택 개발자 과정</strong>
-                                    <Badge tone="primary">진행 중</Badge>
+                                    <Badge tone="info">진행 중</Badge>
                                 </div>
                                 <p className="card-meta">2026-03-02 ~ 2026-08-28</p>
                                 <Progress label="풀스택 과정 진행" value={52} max={120} showValue />
@@ -538,7 +538,7 @@ const ExamScreens = () => {
             <Variants wide>
                 <Variant
                     name="시험 만들기: 문제 고르기"
-                    source="Field · Switch · TransferList"
+                    source="Field · form-check(공개) · TransferList"
                     note={"ExamPage 추가 화면(제목 입력 + 공개 체크 + ExamQuestionPicker)의 표준. 고른 문제의 총 배점은 오른쪽 머리에.\n문제 유형은 Badge (같은 유형 = 같은 tone)"}
                     block
                 >
@@ -558,11 +558,9 @@ const ExamScreens = () => {
                                 <Field label="시험 제목" htmlFor="std-exam-title" required>
                                     <input id="std-exam-title" className="form-control" value={examTitle} onChange={(e) => setExamTitle(e.target.value)} />
                                 </Field>
-                                <div style={{ flex: "0 0 auto", paddingTop: "20px" }}>
-                                    <Switch checked={examPublic} onChange={setExamPublic}>
-                                        수강생에게 공개
-                                    </Switch>
-                                </div>
+                                <label className="form-check">
+                                    <input type="checkbox" checked={examPublic} onChange={(e) => setExamPublic(e.target.checked)} /> 수강생에게 공개
+                                </label>
                             </div>
                             <TransferList
                                 items={QUESTIONS}

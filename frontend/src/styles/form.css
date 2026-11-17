@@ -204,6 +204,11 @@ select.form-control {
   margin-top: calc(var(--font-size-md) * var(--line-height-base) + 6px);
 }
 
+/* 필드 옆 체크박스(공개 · 사용 등)는 입력 칸 높이에서 가운데 */
+.form-row:has(> .field) > .form-check {
+  min-height: var(--control-height-md);
+}
+
 .form-row > .field {
   flex: 1 1 180px;
 }
