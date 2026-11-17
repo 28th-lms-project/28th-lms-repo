@@ -67,7 +67,7 @@
                        FROM COURSE_STUDENT  
                       WHERE USER_ID IN (SELECT ID 
                                              FROM "USER"
-                                         WHERE ID = #{_parameter}))
+                                         WHERE ID = #{userId}))
 	</select>
 	
 	<select id="courseMemeberList"

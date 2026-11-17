@@ -3,6 +3,7 @@ package com.learningworks.course.web;
 
 import java.util.List;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -82,8 +83,9 @@ public class CourseController {
 	 */
 
 	@GetMapping("/my/course/list/{courseId}")
-	public ApiResponse<CourseVO> readMyCourse(@PathVariable String courseId) {
-		CourseVO course = this.courseService.readMyCourse(courseId);
+	public ApiResponse<CourseVO> readMyCourse(@PathVariable String courseId, Authentication authentication) {
+		
+		CourseVO course = this.courseService.readMyCourse(courseId, authentication.getName());
 		return ApiResponse.OK(course);
 	}
 

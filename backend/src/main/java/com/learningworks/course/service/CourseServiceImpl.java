@@ -97,8 +97,8 @@ public class CourseServiceImpl implements CourseService{
 	}
 
 	@Override
-	public CourseVO readMyCourse(String courseId) {
-		CourseVO result = this.courseDao.readMyCourse(courseId);
+	public CourseVO readMyCourse(String courseId, String userId) {
+		CourseVO result = this.courseDao.readMyCourse(courseId, userId);
 		if (result == null) {
 			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
 		}

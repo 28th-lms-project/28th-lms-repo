@@ -30,7 +30,7 @@ public interface CourseDao {
 
 	CourseVO readOneCourse(String courseId);
 
-	CourseVO readMyCourse(String courseId);
+	CourseVO readMyCourse(String courseId, String userId);
 
 	List<CourseMemberVO> courseMemeberList();
 
