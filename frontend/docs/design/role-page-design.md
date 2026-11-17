@@ -5,7 +5,24 @@
 - 작성일: 2026-11-09
 - 상태: 1단계(화면) 구현 · 수동 테스트 완료. 2단계(8장 내 권한 연동) 구현 · 수동 테스트 완료 (P4 재확인 완료). 서버 권한 검사 켬 (2026-11-10)
 
-이 문서는 프론트 구현을 시작할 때 참고하는 설계입니다. API 호출 규칙은 `frontend/docs/api-client-guide.md`, 권한 체계는 `backend/docs/access-control-guide.md`를 함께 보세요.
+이 문서는 프론트 구현을 시작할 때 참고한 설계입니다. **화면 모양은 2026-11-17에 표준 UI로 옮겼습니다** (아래 "표준 UI로 옮김"). 4장 그림 · 6-4의 드래그 구현 · 7장의 `Role.module.css`는 옮기기 전 기록입니다. API 호출 규칙은 `frontend/docs/api-client-guide.md`, 권한 체계는 `backend/docs/access-control-guide.md`를 함께 보세요.
+
+### 표준 UI로 옮김 (2026-11-17)
+
+`frontend/docs/ui-style-guide.md` 6장 "화면별 표준 대응"의 `Role` · `RoleUserMoveModal` (부품). 동작(API · 권한 · 보호 역할 · 순서는 [순서 저장]으로 한 번에)은 그대로입니다.
+
+| 부분 | 표준 |
+| --- | --- |
+| 화면 틀 | `PageHeader` (순위 안내 문구는 `description`) |
+| 권한 확인 중 · 실패 · 권한 없음, 목록 실패 | `StatusBox` (목록 불러오는 중 · 빈 목록은 `Table`의 `loading` · `emptyText`) |
+| 등록 폼 (SUPER_ADMIN) | `Panel "역할 등록"` + `form-row` + `Field` · `input-group`(`ROLE_` 접두어) + [등록]. 버튼 문구를 [추가] → [등록]으로 (새로 만들기) |
+| 목록 | `Table` (순위 · 역할 ID · 역할 이름 · 작업). 순서는 손잡이 끌기 · ↑ ↓ 키(`onReorder`), 보호 역할은 `isRowLocked`("고정") · `isRowMuted`. 이름을 수정하는 동안에는 손잡이를 숨김 |
+| 이름 변경 | `input.cell-input` (Enter 저장 · Esc 취소) |
+| 순서 저장 바 | 표 **위** `Callout tone="info"` + [되돌리기] [순서 저장] |
+| 회원 이동 모달 | `Modal` + `list-boxed` + `Field` · `SelectBox` + `Callout tone="warning"` + [취소] [이동 후 삭제](`danger-solid`) |
+| 알림 · 확인 | `alert` → 토스트, `window.confirm` → `useConfirm` (삭제는 빨간 [삭제], 저장하지 않은 순서 버리기는 [계속]) |
+
+`Role.module.css`는 삭제했습니다 (모양은 모두 표준 클래스).
 
 ---
 
@@ -228,7 +245,7 @@ const getErrorMessage = (error) =>
 | 파일                                                     | 작업                                                                   |
 | -------------------------------------------------------- | ---------------------------------------------------------------------- |
 | `src/components/admin/system/role/Role.jsx`              | 페이지 (목록 · 생성 · 이름 변경 · 순서 변경 · 삭제)                    |
-| `src/components/admin/system/role/Role.module.css`       | 새로 작성                                                              |
+| `src/components/admin/system/role/Role.module.css`       | 새로 작성 → 2026-11-17 표준 UI로 옮기며 삭제                           |
 | `src/components/admin/system/role/RoleUserMoveModal.jsx` | 새로 작성 (회원 이동 모달)                                             |
 | `src/components/admin/system/role/roleUtils.js`          | 새로 작성 (보호 역할 상수, 오류 메시지, 생성 검증 · 역할 ID 입력 정리) |
 | `src/api/admin/system/role/roleApi.js`                   | 주석 보완만 (3장 끝)                                                   |
