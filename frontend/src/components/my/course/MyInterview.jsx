@@ -2,10 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-import styles from "./MyInterview.module.css";
 import usePermission from "../../../hooks/usePermission";
-import { Grid } from "../../common/Grid";
-import { IconButton } from "../../common/input/IconButton";
+import Button from "../../common/ui/Button.jsx";
+import Field from "../../common/ui/Field.jsx";
+import Panel from "../../common/ui/Panel.jsx";
+import SelectBox from "../../common/ui/SelectBox.jsx";
+import StatusBox from "../../common/ui/StatusBox.jsx";
+import Table from "../../common/ui/Table.jsx";
+import { useToast } from "../../common/ui/feedbackContext.js";
 import { icons } from "../../common/input/icons";
 
 import {
@@ -15,12 +19,6 @@ import {
 } from "../../../api/my/course/interviewApi.js";
 
 const COMPANY_MAX_LENGTH = 200;
-
-const GRID_HEADER = [
-  { id: "studentName", title: "수강생" },
-  { id: "interviewCompany", title: "회사명" },
-  { id: "interviewDateTime", title: "면접일시" },
-];
 
 const EMPTY_FORM = {
   selectedCourseStudentId: "",
@@ -35,11 +33,11 @@ const SERVER_FIELD_TO_ERROR_KEY = {
   interviewCompany: "interviewCompany",
 };
 
-// "2026-11-20 14:30" → "2026.11.20 14:30"
+// "2026-11-20T14:30" → "2026-11-20 14:30" (가이드 8장 날짜 형식)
 function formatDateTime(value) {
   if (!value) return "";
 
-  return value.replaceAll("-", ".");
+  return value.replace("T", " ");
 }
 
 // 입력값 검증. 오류가 없으면 빈 객체 반환
@@ -47,26 +45,39 @@ function validate(form) {
   const errors = {};
 
   if (!form.selectedCourseStudentId) {
-    errors.selectedCourseStudentId = "수강생을 선택해주세요.";
+    errors.selectedCourseStudentId = "수강생을 고르세요.";
   }
 
   // datetime-local 은 날짜와 시간을 모두 입력해야 값이 채워진다 ("yyyy-MM-ddTHH:mm")
   if (!form.interviewDateTime) {
-    errors.interviewDateTime = "면접 날짜와 시간을 모두 선택해주세요.";
+    errors.interviewDateTime = "면접 날짜와 시간을 모두 고르세요.";
   }
 
   const company = form.interviewCompany.trim();
   if (!company) {
-    errors.interviewCompany = "회사명을 입력해주세요.";
+    errors.interviewCompany = "회사명을 입력하세요.";
   } else if (company.length > COMPANY_MAX_LENGTH) {
-    errors.interviewCompany = `회사명은 ${COMPANY_MAX_LENGTH}자 이내로 입력해주세요.`;
+    errors.interviewCompany = `회사명은 ${COMPANY_MAX_LENGTH}자 이내로 입력하세요.`;
   }
 
   return errors;
 }
 
+const COLUMNS = [
+  { key: "studentName", title: "수강생", width: "20%" },
+  { key: "interviewCompany", title: "회사명", ellipsis: true },
+  {
+    key: "interviewDateTime",
+    title: "면접 일시",
+    width: "28%",
+    mono: true,
+    render: (row) => formatDateTime(row.interviewDateTime),
+  },
+];
+
 export default function MyInterview({ courseId: courseIdProp }) {
   const params = useParams();
+  const toast = useToast();
 
   // 부모(MyCourse)에서 받은 courseId 우선, 없으면 URL 파라미터(CourseItem :id) 사용
   const courseId = courseIdProp ?? params?.courseId ?? params?.id;
@@ -169,9 +180,7 @@ export default function MyInterview({ courseId: courseIdProp }) {
   };
 
   // 입력값 변경 시 해당 항목 오류 제거
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-
+  const setField = (name, value) => {
     setForm((previous) => ({ ...previous, [name]: value }));
     setErrors((previous) => {
       if (!previous[name]) return previous;
@@ -182,8 +191,13 @@ export default function MyInterview({ courseId: courseIdProp }) {
     });
   };
 
+  const handleChange = (event) => {
+    setField(event.target.name, event.target.value);
+  };
+
   // 저장
-  const handleSave = async () => {
+  const handleSave = async (event) => {
+    event.preventDefault();
     if (isSaving) return;
 
     const validationErrors = validate(form);
@@ -201,28 +215,34 @@ export default function MyInterview({ courseId: courseIdProp }) {
       });
 
       // 서버 등록 성공 시에만 폼 닫기 · 초기화 · 재조회
-      alert("면접 일정이 등록되었습니다.");
+      toast.success("면접 일정을 등록했습니다.");
       resetForm();
       setIsRegisterOpen(false);
       setIsLoading(true);
       await loadInterviewList();
     } catch (error) {
-      // 실패 시 폼과 입력값 유지, 오류 메시지 표시
+      // 실패 시 폼과 입력값 유지. 칸 오류는 칸 아래, 그 밖의 오류는 토스트
       const serverErrors = {};
+      let globalMessage = "";
 
       Object.entries(error?.validations ?? {}).forEach(([field, messages]) => {
-        const key = SERVER_FIELD_TO_ERROR_KEY[field] ?? "global";
-        serverErrors[key] = messages?.[0];
+        const key = SERVER_FIELD_TO_ERROR_KEY[field];
+        if (key) {
+          serverErrors[key] = messages?.[0];
+        } else if (!globalMessage) {
+          globalMessage = messages?.[0];
+        }
       });
 
-      if (Object.keys(serverErrors).length === 0) {
-        serverErrors.global =
+      if (Object.keys(serverErrors).length === 0 && !globalMessage) {
+        globalMessage =
           error instanceof Error
             ? error.message
             : "면접 일정 등록 중 오류가 발생했습니다.";
       }
 
       setErrors(serverErrors);
+      if (globalMessage) toast.error(globalMessage);
     } finally {
       setIsSaving(false);
     }
@@ -234,147 +254,131 @@ export default function MyInterview({ courseId: courseIdProp }) {
     setIsRegisterOpen(false);
   };
 
-  const gridContent = interviewList.map((interview) => [
-    { id: `${interview.id}_studentName`, value: interview.studentName },
-    {
-      id: `${interview.id}_interviewCompany`,
-      value: interview.interviewCompany,
-    },
-    {
-      id: `${interview.id}_interviewDateTime`,
-      value: formatDateTime(interview.interviewDateTime),
-    },
-  ]);
-
-  const hasInterviews = interviewList.length > 0;
+  const studentOptions = studentList.map((student) => ({
+    value: String(student.courseStudentId),
+    label: student.studentName,
+  }));
+  const selectedStudent =
+    studentOptions.find(
+      (option) => option.value === String(form.selectedCourseStudentId),
+    ) ?? null;
 
   return (
-    <div className={styles.page}>
-      <section className={styles.content}>
-        <div className={styles.header}>
-          {/*<h2 className={styles.title}>면접 일정</h2>*/}
+    <div className="form-stack">
+      <div className="toolbar">
+        {!isLoading && !errorMessage && (
+          <span className="field-hint">
+            면접 일정 {interviewList.length}건
+          </span>
+        )}
 
-          {canCreate && (
-            <IconButton
-              icon={icons.add}
-              disabled={isRegisterOpen}
-              onClick={handleOpenRegister}
-            >
-              일정 등록
-            </IconButton>
-          )}
-        </div>
+        {canCreate && !isRegisterOpen && (
+          <Button
+            variant="primary"
+            icon={icons.add}
+            onClick={handleOpenRegister}
+            className="toolbar-end"
+          >
+            일정 등록
+          </Button>
+        )}
+      </div>
 
-        {/* 일정 등록 폼 */}
-        {canCreate && isRegisterOpen && (
-          <div className={styles.registerForm}>
-            <div className={styles.field}>
-              <label htmlFor="interviewStudent">수강생</label>
-              <select
-                id="interviewStudent"
-                name="selectedCourseStudentId"
-                className={styles.select}
-                value={form.selectedCourseStudentId}
-                onChange={handleChange}
-                disabled={isSaving}
+      {/* 일정 등록 폼 */}
+      {canCreate && isRegisterOpen && (
+        <form onSubmit={handleSave} noValidate>
+          <Panel
+            title="면접 일정 등록"
+            footer={
+              <>
+                <Button onClick={handleCancel} disabled={isSaving}>
+                  취소
+                </Button>
+                <Button type="submit" variant="primary" loading={isSaving}>
+                  {isSaving ? "등록 중..." : "등록"}
+                </Button>
+              </>
+            }
+          >
+            <div className="form-row">
+              <Field
+                label="수강생"
+                htmlFor="interviewStudent"
+                required
+                error={errors.selectedCourseStudentId}
               >
-                <option value="">수강생을 선택하세요.</option>
-                {studentList.map((student) => (
-                  <option
-                    key={student.courseStudentId}
-                    value={student.courseStudentId}
-                  >
-                    {student.studentName}
-                  </option>
-                ))}
-              </select>
-              {errors.selectedCourseStudentId && (
-                <p className={styles.fieldError}>
-                  {errors.selectedCourseStudentId}
-                </p>
-              )}
-            </div>
+                <SelectBox
+                  inputId="interviewStudent"
+                  options={studentOptions}
+                  value={selectedStudent}
+                  onChange={(option) =>
+                    setField("selectedCourseStudentId", option?.value ?? "")
+                  }
+                  placeholder="수강생 선택"
+                  isDisabled={isSaving}
+                  aria-invalid={Boolean(errors.selectedCourseStudentId)}
+                />
+              </Field>
 
-            <div className={styles.field}>
-              <label htmlFor="interviewDateTime">면접일시</label>
-              <input
-                id="interviewDateTime"
-                type="datetime-local"
-                name="interviewDateTime"
-                className={styles.dateTime}
-                value={form.interviewDateTime}
-                onChange={handleChange}
-                disabled={isSaving}
-              />
-              {errors.interviewDateTime && (
-                <p className={styles.fieldError}>{errors.interviewDateTime}</p>
-              )}
-            </div>
-
-            <div className={styles.field}>
-              <label htmlFor="interviewCompany">회사명</label>
-              <input
-                id="interviewCompany"
-                type="text"
-                name="interviewCompany"
-                className={styles.company}
-                placeholder="면접 회사명을 입력하세요."
-                maxLength={COMPANY_MAX_LENGTH}
-                value={form.interviewCompany}
-                onChange={handleChange}
-                disabled={isSaving}
-              />
-              {errors.interviewCompany && (
-                <p className={styles.fieldError}>{errors.interviewCompany}</p>
-              )}
-            </div>
-
-            {errors.global && (
-              <p className={styles.fieldError}>{errors.global}</p>
-            )}
-
-            <div className={styles.buttons}>
-              <IconButton
-                icon={icons.ok}
-                disabled={isSaving}
-                onClick={handleSave}
+              <Field
+                label="면접 일시"
+                htmlFor="interviewDateTime"
+                required
+                error={errors.interviewDateTime}
               >
-                {isSaving ? "저장 중..." : "저장"}
-              </IconButton>
-              <IconButton
-                icon={icons.close}
-                disabled={isSaving}
-                onClick={handleCancel}
+                <input
+                  id="interviewDateTime"
+                  type="datetime-local"
+                  name="interviewDateTime"
+                  className="form-control"
+                  value={form.interviewDateTime}
+                  onChange={handleChange}
+                  disabled={isSaving}
+                />
+              </Field>
+
+              <Field
+                label="회사명"
+                htmlFor="interviewCompany"
+                required
+                error={errors.interviewCompany}
+                count={{
+                  current: form.interviewCompany.length,
+                  max: COMPANY_MAX_LENGTH,
+                }}
               >
-                취소
-              </IconButton>
+                <input
+                  id="interviewCompany"
+                  type="text"
+                  name="interviewCompany"
+                  className="form-control"
+                  placeholder="면접 회사명을 입력하세요."
+                  maxLength={COMPANY_MAX_LENGTH}
+                  value={form.interviewCompany}
+                  onChange={handleChange}
+                  disabled={isSaving}
+                />
+              </Field>
             </div>
-          </div>
-        )}
+          </Panel>
+        </form>
+      )}
 
-        {/* 조회 오류 */}
-        {errorMessage && <p className={styles.error}>{errorMessage}</p>}
-
-        {/* 조회 중 */}
-        {isLoading && (
-          <p className={styles.loading}>면접 일정을 불러오는 중입니다.</p>
-        )}
-
-        {/* 면접 일정 그리드 */}
-        {!isLoading && hasInterviews && (
-          <Grid
-            title=""
-            header={GRID_HEADER}
-            content={gridContent}
-            columnStyle="1fr 2fr 1fr"
-          />
-        )}
-
-        {/* 면접 일정 없음 */}
-        {!isLoading && !hasInterviews && !errorMessage && (
-          <p className={styles.emptyMessage}>등록된 면접 일정이 없습니다.</p>
-        )}
-      </section>
+      {/* 면접 일정 표 (조회 중 · 오류 · 빈 목록 포함) */}
+      {errorMessage ? (
+        <StatusBox type="error" detail={errorMessage} />
+      ) : isLoading ? (
+        <StatusBox type="loading" title="면접 일정을 불러오는 중..." />
+      ) : (
+        <Table
+          columns={COLUMNS}
+          rows={interviewList}
+          rowKey="id"
+          size="sm"
+          ariaLabel="면접 일정"
+          emptyText="등록된 면접 일정이 없습니다."
+        />
+      )}
     </div>
   );
 }
