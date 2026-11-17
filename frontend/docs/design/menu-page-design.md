@@ -359,9 +359,9 @@
 
 ---
 
-### 7-3. 브레드크럼 · 화면 제목 (`PageContainer`)
+### 7-3. 브레드크럼 · 화면 제목 (`PageHeader` · `PageContainer`)
 
-`hooks/useBreadcrumbs.js` → `router/breadcrumbUtils.js`의 `buildBreadcrumbs`가 항목을 만들고, `common/Breadcrumb.jsx`가 "⌂ > 항목 > …"으로 그립니다. 화면 제목(`h2`)은 마지막 항목입니다 (`PageContainer`에 `title`을 넘기면 그 값).
+`hooks/useBreadcrumbs.js` → `router/breadcrumbUtils.js`의 `buildBreadcrumbs`가 항목을 만들고, 표준 `common/ui/PageHeader`의 브레드크럼이 그립니다 (2026-11-17. 이전에는 `common/Breadcrumb.jsx`가 "⌂ > 항목 > …"으로 그렸음). 화면 제목(`h2`)은 마지막 항목입니다 (`PageContainer`에 `title`을 넘기면 그 값).
 
 | 화면 | 항목 | 예 |
 | --- | --- | --- |
@@ -387,7 +387,7 @@ src/components/common/error/NotFound.jsx        (새 파일: 404, 5-6)
 src/router/breadcrumbUtils.js                   (새 파일: 브레드크럼 항목 계산, 7-3)
 src/hooks/useBreadcrumbs.js                     (새 파일, 7-3)
 src/components/common/Breadcrumb.jsx            (항목을 받아 그리기만, 7-3)
-src/components/common/PageContainer.jsx         (제목 = 브레드크럼 마지막 항목, 7-3)
+src/components/common/PageContainer.jsx         (호환용 틀: 안쪽은 표준 PageHeader, 제목 = 브레드크럼 마지막 항목, 7-3)
 src/components/common/error/RouteError.jsx      (새 파일: 라우트 오류 화면, 5-6)
 src/layout/MainLayout.jsx                       (Outlet 감싸기)
 src/components/menu/SideMenu.jsx                (store 사용)
