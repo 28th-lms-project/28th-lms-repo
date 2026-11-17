@@ -19,3 +19,9 @@
     padding: 64px 16px 24px;
   }
 }
+
+/* 다크 모드인데 아직 표준으로 옮기지 않은 화면: 예전 밝은 모양 그대로 (밝은 섬 = 밝은 토큰 + 예전 글자색) */
+.content[data-color-scheme="light"] {
+  background-color: var(--color-bg-page);
+  color: #333;
+}

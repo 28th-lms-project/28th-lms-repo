@@ -5,7 +5,7 @@ import { chartData } from "../../assets/mocks/chart.json.js";
 import { pollData } from "../../assets/mocks/poll.json.js";
 import { Grid } from "./Grid.jsx";
 import { gridData } from "../../assets/mocks/grid.json.js";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Alert, Confirm } from "./Modal.jsx";
 import { Button, FileField } from "./input/Input.jsx";
@@ -33,6 +33,7 @@ import { StandardScreenCatalog } from "./catalog/StandardScreenCatalog.jsx";
 import { PartHeader } from "./catalog/CatalogParts.jsx";
 import UiButton from "../common/ui/Button.jsx";
 import { Tabs, TabPanel } from "../common/ui/Tabs.jsx";
+import { useColorScheme } from "../../theme/colorScheme.js";
 
 /*
  * 디자인 시스템 페이지
@@ -101,51 +102,14 @@ const scrollToSection = (id, tocEl) => {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
 };
 
-/*
- * 다크 모드 (샘플 페이지에서만): <html data-color-scheme="dark">를 이 페이지에 있는 동안만 붙인다.
- * 페이지를 떠나면 지워서 다른 화면은 항상 밝은 모드. 선택은 이 브라우저에만 기억.
- */
-const SCHEME_KEY = "sample-color-scheme";
-
-const readScheme = () => {
-    try {
-        return localStorage.getItem(SCHEME_KEY) === "dark" ? "dark" : "light";
-    } catch {
-        return "light";
-    }
-};
-
-const applyScheme = (scheme) => {
-    if (scheme === "dark") document.documentElement.dataset.colorScheme = "dark";
-    else delete document.documentElement.dataset.colorScheme;
-};
 
 
 const SampleDashboard = () => {
     title("DashBoard!");
 
-    // 첫 렌더 전에 속성을 붙여야 토큰 값 표시(TokenCatalog)가 맞음
-    const [scheme, setScheme] = useState(() => {
-        const saved = readScheme();
-        applyScheme(saved);
-        return saved;
-    });
-
-    useEffect(() => {
-        applyScheme(scheme);
-        return () => applyScheme("light");
-    }, [scheme]);
-
-    const toggleScheme = () => {
-        const next = scheme === "dark" ? "light" : "dark";
-        applyScheme(next); // 다시 그리기 전에 적용 (토큰 값 표시)
-        try {
-            localStorage.setItem(SCHEME_KEY, next);
-        } catch {
-            /* 저장 못 해도 지금 화면에는 적용됨 */
-        }
-        setScheme(next);
-    };
+    // 다크 모드는 앱 전체 (사이드바 버튼과 같은 값). 여기 버튼은 샘플을 보며 바로 바꾸기용
+    const [scheme, setColorScheme] = useColorScheme();
+    const toggleScheme = () => setColorScheme(scheme === "dark" ? "light" : "dark");
 
 
     /* 구역 탭 */

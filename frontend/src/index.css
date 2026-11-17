@@ -8,7 +8,8 @@
  * - 회색 · 상태색(info 포함)은 어느 쪽과도 상관없이 고정.
  * - 다크 모드: 색 토큰만 [data-color-scheme="dark"]에서 바뀐다 (파일 끝).
  *   <html>에 붙이면 전체, 요소에 붙이면 그 안만. [data-color-scheme="light"]는 다크 안의 "밝은 섬".
- *   지금은 샘플 페이지에서만 켠다 (가이드 9장).
+ *   앱 전체: 사이드바의 다크 모드 버튼 (theme/colorScheme.js). 아직 표준으로 옮기지 않은 화면은
+ *   MainLayout이 밝은 섬으로 감싸고, 라우트 handle.darkReady인 화면만 다크를 따른다 (가이드 9장).
  */
 
 /* 공통 UI 클래스 (가이드 8장). @import는 파일 맨 앞에 있어야 함 */
@@ -229,11 +230,17 @@
   box-sizing: border-box;
 }
 
+/* 배경은 토큰(밝은 모드 gray-2 ≒ 예전 #e9e9e9). 글자 #333은 옮기기 전 화면들이 기대는 값이라 밝은 모드에서는 그대로 */
 body {
-  background-color: #e9e9e9;
+  background-color: var(--color-bg-page);
   margin: 0;
   color: #333;
   font-family: var(--font-sans);
+}
+
+/* 다크 모드: 글자도 토큰 (밝은 섬 안의 옮기기 전 화면은 MainLayout이 #333으로 되돌림) */
+:root[data-color-scheme="dark"] body {
+  color: var(--color-text);
 }
 
 /* 입력 · 버튼은 기본적으로 글꼴을 물려받지 않아서 (브라우저 기본 글꼴) 본문 글꼴을 따르게 함. 크기는 각 화면 그대로 */

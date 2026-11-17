@@ -39,24 +39,73 @@
   pointer-events: none;
 }
 
+/* 접으면 로고 자리를 비우고 버튼을 세로로: [접기] 위, [다크 모드] 아래 */
+.sideMenu.collapsed .header {
+  padding-left: 0;
+}
+.sideMenu.collapsed .logo {
+  display: none;
+}
+.sideMenu.collapsed .headerActions {
+  flex-direction: column-reverse;
+  width: 100%;
+}
+
 /* 메뉴 본문 */
 .menuBody {
   transition: opacity 0.15s ease;
 }
 
 /* 접기/펼치기 토글 버튼 */
+/* 머리 오른쪽 버튼 묶음: [다크 모드] [접기] (작은 화면은 [닫기]) */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.headerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--color-sidebar-text-secondary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.headerBtn:hover {
+  color: var(--color-sidebar-text-strong);
+  background-color: var(--color-sidebar-hover);
+}
+
+.headerBtn:focus-visible,
+.collapseBtn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
 .collapseBtn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
   background: none;
   border: none;
+  border-radius: var(--radius);
   color: var(--color-sidebar-text);
   font-size: 1.5rem;
   line-height: 1;
-  padding: 0.25rem;
   cursor: pointer;
-  z-index: 10;
 }
 
 .collapseBtn:hover {
@@ -271,9 +320,6 @@
 
   .drawerClose {
     display: block;
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
     padding: 0.25rem 0.5rem;
     font-size: 1.5rem;
     line-height: 1;

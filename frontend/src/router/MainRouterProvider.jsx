@@ -79,7 +79,7 @@ export const routes = [
           {
             path: "sample",
             element: <Sample />,
-            handle: { crumb: "Sample", menu: true },
+            handle: { crumb: "Sample", menu: true, darkReady: true },
           },
           {
             path: "my",

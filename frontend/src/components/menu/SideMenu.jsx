@@ -10,6 +10,7 @@ import {
   selectMyMenuStatus,
 } from "../../store/slices/menuSliceStore";
 import { buildMenuTree, getCurrentGroupIds, isGroupOpen } from "./sideMenuUtils";
+import { useColorScheme } from "../../theme/colorScheme";
 
 // 미사용 메뉴(SUPER_ADMIN만 받음)는 흐리게 표시하고 이름 뒤에 "(미사용)"
 const titleOf = (menu) => (menu.useYn === "N" ? `${menu.title} (미사용)` : menu.title);
@@ -22,6 +23,7 @@ const titleOf = (menu) => (menu.useYn === "N" ? `${menu.title} (미사용)` : me
  * - 메뉴를 받는 중에는 메뉴 영역을 비워 둔다.
  * - 메뉴 관리에서 저장하면 refreshMyMenus로 다시 받아 바로 반영된다.
  * - 큰 화면: [‹]로 60px까지 접음 (접힌 상태에서는 메뉴를 표시하지 않음, 메뉴 아이콘이 없어서. 가이드 8장 "사이드 메뉴").
+ * - 머리: 로고 | [☾ 다크 모드] [‹ 접기]. 접으면 버튼 둘을 세로로 (다크 모드는 접힌 상태에서도 바로 바꿀 수 있음).
  * - 768px 이하: 사이드바를 숨기고 왼쪽 위 [☰ 메뉴] 버튼으로 화면 위에 덮이는 서랍으로 연다.
  *   배경 누르기 · Esc · 다른 화면으로 이동하면 닫힘. 닫히면 [☰] 버튼으로 포커스가 돌아간다.
  */
@@ -32,6 +34,8 @@ export default function SideMenu() {
   const myMenus = useSelector(selectMyMenus);
 
   const [collapsed, setCollapsed] = useState(false);
+  const [scheme, setColorScheme] = useColorScheme();
+  const dark = scheme === "dark";
   // 작은 화면(768px 이하) 서랍. 큰 화면에서는 CSS가 이 값을 무시한다
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerToggleRef = useRef(null);
@@ -111,13 +115,24 @@ export default function SideMenu() {
     </button>
     {drawerOpen && <div className={styles.drawerBackdrop} onClick={() => setDrawerOpen(false)} aria-hidden="true" />}
     <nav id="side-menu" className={navClass} aria-label="메뉴">
-      {/* 상단 로고 & 접기 버튼 */}
+      {/* 상단: 로고 | 다크 모드 · 접기(작은 화면은 닫기) */}
       <div className={styles.header}>
         <div className={styles.logo}>
           Learning
           <br />
           Works
         </div>
+        <div className={styles.headerActions}>
+        <button
+          type="button"
+          className={styles.headerBtn}
+          aria-pressed={dark}
+          aria-label="다크 모드"
+          title={dark ? "밝은 모드로" : "다크 모드로"}
+          onClick={() => setColorScheme(dark ? "light" : "dark")}
+        >
+          <span aria-hidden="true">{dark ? "☀" : "☾"}</span>
+        </button>
         <button
           type="button"
           className={styles.collapseBtn}
@@ -135,6 +150,7 @@ export default function SideMenu() {
         >
           ×
         </button>
+        </div>
       </div>
 
       <div className={styles.menuBody}>
