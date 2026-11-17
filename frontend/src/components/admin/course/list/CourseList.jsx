@@ -341,7 +341,9 @@ export default function CourseList() {
               type="date"
               className="form-control"
               value={filter.endDated}
-              onChange={(event) => changeFilter("endDated", event.target.value)}
+              onChange={(event) =>
+                changeFilter("endDated", event.target.value)
+              }
             />
           </Field>
           <Button disabled={!hasFilter} onClick={resetFilter}>
@@ -352,11 +354,7 @@ export default function CourseList() {
 
       {/* 조회 오류 · 표 */}
       {loadErrorMessage ? (
-        <StatusBox
-          type="error"
-          detail={loadErrorMessage}
-          onRetry={reloadList}
-        />
+        <StatusBox type="error" detail={loadErrorMessage} onRetry={reloadList} />
       ) : (
         <div>
           <Table
@@ -437,9 +435,7 @@ export default function CourseList() {
                 type="date"
                 className="form-control"
                 value={form.startDate}
-                onChange={(event) =>
-                  changeForm("startDate", event.target.value)
-                }
+                onChange={(event) => changeForm("startDate", event.target.value)}
                 disabled={isSaving}
               />
             </Field>

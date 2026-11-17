@@ -4,8 +4,16 @@ import { useParams } from "react-router-dom";
 import styles from "./MyCounsel.module.css";
 import MyPassword from "../info/MyPassword.jsx";
 import usePermission from "../../../hooks/usePermission";
-import { Grid } from "../../common/Grid.jsx";
-import { IconButton } from "../../common/input/IconButton";
+import Badge from "../../common/ui/Badge.jsx";
+import Button from "../../common/ui/Button.jsx";
+import Callout from "../../common/ui/Callout.jsx";
+import ChoiceGroup from "../../common/ui/ChoiceGroup.jsx";
+import Field from "../../common/ui/Field.jsx";
+import Panel from "../../common/ui/Panel.jsx";
+import StatCard from "../../common/ui/StatCard.jsx";
+import StatusBox from "../../common/ui/StatusBox.jsx";
+import Table from "../../common/ui/Table.jsx";
+import { useConfirm, useToast } from "../../common/ui/feedbackContext.js";
 import { icons } from "../../common/input/icons";
 
 import {
@@ -34,11 +42,20 @@ const GENDER_OPTIONS = [
   { value: 2, label: "여자" },
 ];
 
-// DB 값 0: 상, 1: 중, 2: 하
+// DB 값 0: 상, 1: 중, 2: 하 (배지 색: 상 success · 중 info · 하 warning · 미진단 neutral)
 const LEVEL_OPTIONS = [
-  { value: 0, label: "상", className: "levelHigh" },
-  { value: 1, label: "중", className: "levelMid" },
-  { value: 2, label: "하", className: "levelLow" },
+  { value: 0, label: "상", tone: "success" },
+  { value: 1, label: "중", tone: "info" },
+  { value: 2, label: "하", tone: "warning" },
+];
+
+// 수정할 때 고르는 수준 (ChoiceGroup 은 문자열 값, "" = 미진단)
+const LEVEL_CHOICES = [
+  ...LEVEL_OPTIONS.map((option) => ({
+    value: String(option.value),
+    label: option.label,
+  })),
+  { value: "", label: "미진단" },
 ];
 
 const CAPABILITY_STAGES = [
@@ -48,15 +65,33 @@ const CAPABILITY_STAGES = [
 ];
 
 const CONSULT_TYPES = ["학습", "진로", "취업", "기타"];
+const CONSULT_TYPE_OPTIONS = CONSULT_TYPES.map((type) => ({
+  value: type,
+  label: type,
+}));
 
-const LIST_GRID_HEADER = [
-  { id: "studentName", title: "수강생" },
-  { id: "opinion", title: "종합의견" },
+const LIST_COLUMNS = [
+  { key: "studentName", title: "수강생", width: "160px" },
+  {
+    key: "opinion",
+    title: "종합의견",
+    ellipsis: true,
+    render: (row) =>
+      row.opinion || (
+        <span className="field-hint">등록된 종합의견이 없습니다.</span>
+      ),
+  },
 ];
 
-const SCORE_GRID_HEADER = [
-  { id: "setName", title: "과목" },
-  { id: "score", title: "점수" },
+const SCORE_COLUMNS = [
+  { key: "setName", title: "과목" },
+  {
+    key: "score",
+    title: "점수",
+    width: "100px",
+    align: "num",
+    render: (row) => row.score ?? "-",
+  },
 ];
 
 const EMPTY_CAPABILITY = {
@@ -67,6 +102,8 @@ const EMPTY_CAPABILITY = {
   capabilityEndLevel: null,
   capabilityEndDesc: "",
 };
+
+const LOCKED_REASON = "상담 기본 정보를 먼저 등록하세요.";
 
 const findLabel = (options, value) =>
   options.find((option) => option.value === value)?.label;
@@ -179,63 +216,40 @@ export default function MyCounsel({ courseId: courseIdProp }) {
 
   if (selectedStudentId) {
     return (
-      <div className={styles.page}>
-        <CounselDetail
-          // 학생이 바뀌면 다시 마운트하여 이전 학생의 상태를 남기지 않는다
-          key={selectedStudentId}
-          courseId={courseId}
-          courseStudentId={selectedStudentId}
-          onBack={() => setSelectedStudentId(null)}
-          onOpinionSaved={handleOpinionSaved}
-        />
-      </div>
+      <CounselDetail
+        // 학생이 바뀌면 다시 마운트하여 이전 학생의 상태를 남기지 않는다
+        key={selectedStudentId}
+        courseId={courseId}
+        courseStudentId={selectedStudentId}
+        onBack={() => setSelectedStudentId(null)}
+        onOpinionSaved={handleOpinionSaved}
+      />
     );
   }
 
-  const selectStudent = (_value, rowIndex) =>
-    setSelectedStudentId(counselList[rowIndex]?.courseStudentId ?? null);
+  if (errorMessage) {
+    return <StatusBox type="error" detail={errorMessage} />;
+  }
 
-  const gridContent = counselList.map((counsel) => [
-    {
-      id: `${counsel.courseStudentId}_studentName`,
-      value: counsel.studentName,
-    },
-    {
-      id: `${counsel.courseStudentId}_opinion`,
-      value: counsel.opinion || "등록된 종합의견이 없습니다.",
-    },
-  ]);
-
-  const hasCounsel = counselList.length > 0;
+  if (isLoading) {
+    return <StatusBox type="loading" title="상담 목록을 불러오는 중..." />;
+  }
 
   return (
-    <div className={styles.page}>
-      <section className={styles.content}>
-        {errorMessage && <p className={styles.error}>{errorMessage}</p>}
-
-        {isLoading && (
-          <p className={styles.message}>상담 목록을 불러오는 중입니다.</p>
-        )}
-
-        {!isLoading && hasCounsel && (
-          <>
-            <p className={styles.guide}>
-              수강생을 선택하면 상담 상세 정보를 확인할 수 있습니다.
-            </p>
-            <Grid
-              title=""
-              header={LIST_GRID_HEADER}
-              content={gridContent}
-              columnStyle="160px 1fr"
-              clickableColumn={{ 0: selectStudent, 1: selectStudent }}
-            />
-          </>
-        )}
-
-        {!isLoading && !hasCounsel && !errorMessage && (
-          <p className={styles.message}>등록된 수강생이 없습니다.</p>
-        )}
-      </section>
+    <div className="form-stack">
+      {counselList.length > 0 && (
+        <p className="field-hint">
+          수강생을 고르면 상담 상세 정보를 볼 수 있습니다.
+        </p>
+      )}
+      <Table
+        columns={LIST_COLUMNS}
+        rows={counselList}
+        rowKey="courseStudentId"
+        onRowClick={(row) => setSelectedStudentId(row.courseStudentId ?? null)}
+        ariaLabel="상담 수강생 목록"
+        emptyText="등록된 수강생이 없습니다."
+      />
     </div>
   );
 }
@@ -258,11 +272,11 @@ function CounselDetail({ courseId, courseStudentId, onBack, onOpinionSaved }) {
   const hasCounsel = detail.data?.gender != null;
 
   return (
-    <div className={styles.detail}>
-      <div className={styles.detailHeader}>
-        <button type="button" className={styles.backButton} onClick={onBack}>
+    <div className="form-stack">
+      <div>
+        <Button variant="text" onClick={onBack}>
           ← 수강생 목록
-        </button>
+        </Button>
       </div>
 
       <StudentInfoSection
@@ -278,7 +292,8 @@ function CounselDetail({ courseId, courseStudentId, onBack, onOpinionSaved }) {
           <CapabilitySection
             courseId={courseId}
             courseStudentId={courseStudentId}
-            canUpdate={canUpdate && hasCounsel}
+            canUpdate={canUpdate}
+            isLocked={!hasCounsel}
           />
           <ScoreSection courseId={courseId} courseStudentId={courseStudentId} />
           <ConsultSection
@@ -289,7 +304,8 @@ function CounselDetail({ courseId, courseStudentId, onBack, onOpinionSaved }) {
           <OpinionSection
             courseId={courseId}
             courseStudentId={courseStudentId}
-            canUpdate={canUpdate && hasCounsel}
+            canUpdate={canUpdate}
+            isLocked={!hasCounsel}
             onSaved={onOpinionSaved}
           />
         </>
@@ -298,48 +314,55 @@ function CounselDetail({ courseId, courseStudentId, onBack, onOpinionSaved }) {
   );
 }
 
-function Section({ title, actions, children }) {
-  return (
-    <section className={styles.section}>
-      <div className={styles.sectionHeader}>
-        <h3 className={styles.sectionTitle}>{title}</h3>
-        {actions && <div className={styles.buttons}>{actions}</div>}
-      </div>
-      {children}
-    </section>
-  );
-}
+/** 보기 ↔ 수정: [수정] → [취소] [저장] (권한이 없으면 숨김, 기본 정보가 없으면 비활성 + 이유) */
+function EditActions({ isEditing, isSaving, canEdit, isLocked, onEdit, onCancel, onSave }) {
+  if (isEditing) {
+    return (
+      <>
+        <Button size="sm" disabled={isSaving} onClick={onCancel}>
+          취소
+        </Button>
+        <Button size="sm" variant="primary" loading={isSaving} onClick={onSave}>
+          {isSaving ? "저장 중..." : "저장"}
+        </Button>
+      </>
+    );
+  }
 
-function SaveCancelButtons({ isSaving, saveLabel = "저장", onSave, onCancel }) {
+  if (!canEdit) return null;
+
   return (
-    <>
-      <IconButton icon={icons.ok} disabled={isSaving} onClick={onSave}>
-        {isSaving ? "저장 중..." : saveLabel}
-      </IconButton>
-      <IconButton icon={icons.close} disabled={isSaving} onClick={onCancel}>
-        취소
-      </IconButton>
-    </>
+    <Button
+      size="sm"
+      icon={icons.edit}
+      disabled={isLocked}
+      title={isLocked ? LOCKED_REASON : undefined}
+      onClick={onEdit}
+    >
+      수정
+    </Button>
   );
 }
 
 function StudentInfoSection({ courseId, courseStudentId, detail, canCreate }) {
+  const toast = useToast();
   const { data: info, isLoading, errorMessage, reload } = detail;
 
   const [form, setForm] = useState({ gender: "", contact: "" });
-  const [formError, setFormError] = useState("");
+  const [formErrors, setFormErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleRegister = async () => {
+  const handleRegister = async (event) => {
+    event.preventDefault();
     if (isSaving) return;
 
     const contact = form.contact.trim();
     if (!form.gender) {
-      setFormError("성별을 선택해주세요.");
+      setFormErrors({ gender: "성별을 고르세요." });
       return;
     }
     if (!contact) {
-      setFormError("연락처를 입력해주세요.");
+      setFormErrors({ contact: "연락처를 입력하세요." });
       return;
     }
 
@@ -349,10 +372,11 @@ function StudentInfoSection({ courseId, courseStudentId, detail, canCreate }) {
         gender: Number(form.gender),
         contact,
       });
-      setFormError("");
+      setFormErrors({});
       await reload();
+      toast.success("상담 기본 정보를 등록했습니다.");
     } catch (error) {
-      setFormError(
+      toast.error(
         getErrorMessage(error, "기본 정보 등록 중 오류가 발생했습니다."),
       );
     } finally {
@@ -360,75 +384,95 @@ function StudentInfoSection({ courseId, courseStudentId, detail, canCreate }) {
     }
   };
 
+  const setField = (name, value) => {
+    setForm((previous) => ({ ...previous, [name]: value }));
+    setFormErrors((previous) => (previous[name] ? {} : previous));
+  };
+
   if (isLoading) {
-    return <p className={styles.message}>교육생 정보를 불러오는 중입니다.</p>;
+    return <StatusBox type="loading" title="교육생 정보를 불러오는 중..." />;
   }
 
   if (!info) {
     return (
-      <p className={styles.error}>
-        {errorMessage || "교육생 정보를 찾을 수 없습니다."}
-      </p>
+      <StatusBox
+        type={errorMessage ? "error" : "notFound"}
+        title={errorMessage ? undefined : "교육생 정보를 찾을 수 없습니다."}
+        detail={errorMessage || undefined}
+      />
     );
   }
 
   const hasCounsel = info.gender != null;
 
   return (
-    <section className={styles.infoCard}>
-      <h2 className={styles.infoTitle}>교육생 면담일지</h2>
-
-      <dl className={styles.infoList}>
-        <div>
-          <dt>과정</dt>
-          <dd>
-            {info.courseNo}기 {info.courseName}
-          </dd>
-        </div>
-        <div>
-          <dt>교육기간</dt>
-          <dd>
-            {info.startDate} ~ {info.endDate}
-          </dd>
-        </div>
-        <div>
-          <dt>교육시간</dt>
-          <dd>{EDUCATION_TIME}</dd>
-        </div>
-        <div>
-          <dt>교육생</dt>
-          <dd className={styles.studentName}>{info.studentName}</dd>
-        </div>
-        <div>
-          <dt>성별</dt>
-          <dd>{findLabel(GENDER_OPTIONS, info.gender) ?? "-"}</dd>
-        </div>
-        <div>
-          <dt>연락처</dt>
-          <dd>{info.contact || "-"}</dd>
-        </div>
-      </dl>
-
+    <>
       {!hasCounsel && (
-        <div className={styles.notice}>
-          <p className={styles.noticeText}>
-            상담 기본 정보가 없습니다. 성별과 연락처를 등록하면 역량 수준
-            진단과 종합의견을 작성할 수 있습니다.
-          </p>
+        <Callout tone="warning" title="상담 기본 정보가 없습니다">
+          성별과 연락처를 등록하면 역량 수준 진단과 종합의견을 작성할 수
+          있습니다.
+        </Callout>
+      )}
 
-          {canCreate && (
-            <div className={styles.inlineForm}>
+      <Panel
+        title="교육생 면담일지"
+        badge={
+          hasCounsel ? undefined : <Badge tone="warning">기본 정보 없음</Badge>
+        }
+      >
+        <div className="form-stack">
+        <dl className="desc-list-stacked">
+          <div>
+            <dt>과정</dt>
+            <dd>
+              {info.courseNo}기 {info.courseName}
+            </dd>
+          </div>
+          <div>
+            <dt>교육기간</dt>
+            <dd>
+              {info.startDate} ~ {info.endDate}
+            </dd>
+          </div>
+          <div>
+            <dt>교육시간</dt>
+            <dd>{EDUCATION_TIME}</dd>
+          </div>
+          <div>
+            <dt>교육생</dt>
+            <dd>
+              <strong>{info.studentName}</strong>
+            </dd>
+          </div>
+          <div>
+            <dt>성별</dt>
+            <dd>{findLabel(GENDER_OPTIONS, info.gender) ?? "-"}</dd>
+          </div>
+          <div>
+            <dt>연락처</dt>
+            <dd>{info.contact || "-"}</dd>
+          </div>
+        </dl>
+
+        {/* 기본 정보 등록 (등록 권한이 있을 때만) */}
+        {!hasCounsel && canCreate && (
+          <form
+            className="form-row"
+            onSubmit={handleRegister}
+            noValidate
+          >
+            <Field
+              label="성별"
+              htmlFor="counselGender"
+              required
+              error={formErrors.gender}
+            >
               <select
-                className={styles.select}
-                aria-label="성별"
+                id="counselGender"
+                className="form-control"
                 value={form.gender}
                 disabled={isSaving}
-                onChange={(event) =>
-                  setForm((previous) => ({
-                    ...previous,
-                    gender: event.target.value,
-                  }))
-                }
+                onChange={(event) => setField("gender", event.target.value)}
               >
                 <option value="">성별 선택</option>
                 {GENDER_OPTIONS.map((option) => (
@@ -437,55 +481,57 @@ function StudentInfoSection({ courseId, courseStudentId, detail, canCreate }) {
                   </option>
                 ))}
               </select>
+            </Field>
+            <Field
+              label="연락처"
+              htmlFor="counselContact"
+              required
+              error={formErrors.contact}
+            >
               <input
+                id="counselContact"
                 type="text"
-                className={styles.input}
-                aria-label="연락처"
-                placeholder="연락처 (예: 010-1234-5678)"
+                className="form-control"
+                placeholder="예: 010-1234-5678"
                 maxLength={CONTACT_MAX_LENGTH}
                 value={form.contact}
                 disabled={isSaving}
-                onChange={(event) =>
-                  setForm((previous) => ({
-                    ...previous,
-                    contact: event.target.value,
-                  }))
-                }
+                onChange={(event) => setField("contact", event.target.value)}
               />
-              <IconButton
-                icon={icons.add}
-                disabled={isSaving}
-                onClick={handleRegister}
-              >
+            </Field>
+            <div>
+              <Button type="submit" variant="primary" loading={isSaving}>
                 {isSaving ? "등록 중..." : "기본 정보 등록"}
-              </IconButton>
+              </Button>
             </div>
-          )}
-
-          {formError && <p className={styles.error}>{formError}</p>}
+          </form>
+        )}
         </div>
-      )}
-    </section>
+      </Panel>
+    </>
   );
 }
 
 function LevelBadge({ level }) {
   const option = LEVEL_OPTIONS.find((item) => item.value === level);
 
-  if (!option) {
-    return (
-      <span className={`${styles.levelBadge} ${styles.levelNone}`}>미진단</span>
-    );
-  }
+  if (!option) return <Badge>미진단</Badge>;
 
-  return (
-    <span className={`${styles.levelBadge} ${styles[option.className]}`}>
-      {option.label}
-    </span>
-  );
+  return <Badge tone={option.tone}>{option.label}</Badge>;
 }
 
-function CapabilitySection({ courseId, courseStudentId, canUpdate }) {
+// 수정 시작 시 서버에서 받은 원본을 편집용으로 복사 (빈 내용은 "")
+const toCapabilityForm = (capability) => ({
+  ...capability,
+  capabilityStartDesc: capability.capabilityStartDesc ?? "",
+  capabilityMidDesc: capability.capabilityMidDesc ?? "",
+  capabilityEndDesc: capability.capabilityEndDesc ?? "",
+});
+
+function CapabilitySection({ courseId, courseStudentId, canUpdate, isLocked }) {
+  const toast = useToast();
+  const confirm = useConfirm();
+
   const fetchCapability = useCallback(
     (options) => getCapability(courseId, courseStudentId, options),
     [courseId, courseStudentId],
@@ -499,26 +545,29 @@ function CapabilitySection({ courseId, courseStudentId, canUpdate }) {
 
   // 수정 중인 값. null 이면 조회 모드
   const [form, setForm] = useState(null);
-  const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const isEditing = form !== null;
 
-  // 수정 시작 시 서버에서 받은 원본을 복사해서 편집
   const handleEdit = () => {
-    setForm({
-      ...capability,
-      capabilityStartDesc: capability.capabilityStartDesc ?? "",
-      capabilityMidDesc: capability.capabilityMidDesc ?? "",
-      capabilityEndDesc: capability.capabilityEndDesc ?? "",
-    });
-    setSaveError("");
+    setForm(toCapabilityForm(capability));
   };
 
-  // 취소: 편집 값을 버리면 원본(capability)이 그대로 표시된다
-  const handleCancel = () => {
+  // 취소: 고친 내용이 있으면 확인 후 버림 (원본 capability 가 그대로 표시된다)
+  const handleCancel = async () => {
+    const isDirty =
+      JSON.stringify(form) !== JSON.stringify(toCapabilityForm(capability));
+    if (
+      isDirty &&
+      !(await confirm({
+        message: "고친 내용을 버릴까요?",
+        confirmText: "버리기",
+        danger: true,
+      }))
+    )
+      return;
+
     setForm(null);
-    setSaveError("");
   };
 
   const handleChange = (name, value) =>
@@ -531,8 +580,8 @@ function CapabilitySection({ courseId, courseStudentId, canUpdate }) {
       ({ key }) => form[`capability${key}Desc`].length > DESC_MAX_LENGTH,
     );
     if (tooLong) {
-      setSaveError(
-        `${tooLong.label} 진단 내용은 ${DESC_MAX_LENGTH}자 이내로 입력해주세요.`,
+      toast.error(
+        `${tooLong.label} 진단 내용은 ${DESC_MAX_LENGTH}자 이내로 입력하세요.`,
       );
       return;
     }
@@ -542,10 +591,10 @@ function CapabilitySection({ courseId, courseStudentId, canUpdate }) {
       await updateCapability(courseId, courseStudentId, form);
       await reload();
       setForm(null);
-      setSaveError("");
+      toast.success("역량 수준 진단을 저장했습니다.");
     } catch (error) {
       // 실패 시 수정 모드와 입력값 유지
-      setSaveError(
+      toast.error(
         getErrorMessage(error, "역량 수준 진단 저장 중 오류가 발생했습니다."),
       );
     } finally {
@@ -553,86 +602,88 @@ function CapabilitySection({ courseId, courseStudentId, canUpdate }) {
     }
   };
 
-  const actions = isEditing ? (
-    <SaveCancelButtons
-      isSaving={isSaving}
-      saveLabel="수정 완료"
-      onSave={handleSave}
-      onCancel={handleCancel}
-    />
-  ) : (
-    canUpdate &&
-    !isLoading && (
-      <IconButton icon={icons.edit} onClick={handleEdit}>
-        역량 수준 진단 수정
-      </IconButton>
-    )
-  );
-
   return (
-    <Section title="역량 수준 진단" actions={actions}>
-      {isLoading && <p className={styles.message}>불러오는 중입니다.</p>}
-      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+    <Panel
+      title="역량 수준 진단"
+      actions={
+        !isLoading && (
+          <EditActions
+            isEditing={isEditing}
+            isSaving={isSaving}
+            canEdit={canUpdate}
+            isLocked={isLocked}
+            onEdit={handleEdit}
+            onCancel={handleCancel}
+            onSave={handleSave}
+          />
+        )
+      }
+    >
+      {isLoading && <StatusBox type="loading" size="sm" />}
+      {errorMessage && (
+        <StatusBox type="error" size="sm" detail={errorMessage} />
+      )}
 
       {!isLoading && (
-        <div className={styles.stageGrid}>
+        <div className="card-grid">
           {CAPABILITY_STAGES.map(({ key, label }) => {
             const levelName = `capability${key}Level`;
             const descName = `capability${key}Desc`;
+            const descId = `capability${key}Desc`;
 
             return (
-              <div
-                key={key}
-                className={`${styles.stageCard} ${isEditing ? styles.editing : ""}`}
-              >
-                <div className={styles.stageHeader}>
-                  <span className={styles.stageLabel}>{label}</span>
-                  {isEditing ? (
-                    <select
-                      className={styles.select}
-                      aria-label={`${label} 진단 수준`}
-                      value={form[levelName] ?? ""}
-                      disabled={isSaving}
-                      onChange={(event) =>
-                        handleChange(
-                          levelName,
-                          event.target.value === ""
-                            ? null
-                            : Number(event.target.value),
-                        )
-                      }
-                    >
-                      <option value="">미진단</option>
-                      {LEVEL_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <LevelBadge level={capability[levelName]} />
-                  )}
+              <div key={key} className="card">
+                <div className="card-header">
+                  <h3 className="card-title">{label}</h3>
+                  {!isEditing && <LevelBadge level={capability[levelName]} />}
                 </div>
 
                 {isEditing ? (
-                  <>
-                    <textarea
-                      className={styles.textarea}
-                      aria-label={`${label} 진단 내용`}
-                      placeholder="진단 내용을 입력하세요."
-                      maxLength={DESC_MAX_LENGTH}
-                      value={form[descName]}
-                      disabled={isSaving}
-                      onChange={(event) =>
-                        handleChange(descName, event.target.value)
+                  <div className="form-stack">
+                    <ChoiceGroup
+                      variant="segmented"
+                      name={`capability${key}Level`}
+                      legend={`${label} 진단 수준`}
+                      options={LEVEL_CHOICES.map((option) => ({
+                        ...option,
+                        disabled: isSaving,
+                      }))}
+                      value={form[levelName] == null ? "" : String(form[levelName])}
+                      onChange={(value) =>
+                        handleChange(
+                          levelName,
+                          value === "" ? null : Number(value),
+                        )
                       }
                     />
-                    <span className={styles.counter}>
-                      {form[descName].length} / {DESC_MAX_LENGTH}
-                    </span>
-                  </>
+                    <Field
+                      label="진단 내용"
+                      htmlFor={descId}
+                      count={{
+                        current: form[descName].length,
+                        max: DESC_MAX_LENGTH,
+                      }}
+                    >
+                      <textarea
+                        id={descId}
+                        className="form-control"
+                        rows={3}
+                        placeholder="진단 내용을 입력하세요."
+                        maxLength={DESC_MAX_LENGTH}
+                        value={form[descName]}
+                        disabled={isSaving}
+                        onChange={(event) =>
+                          handleChange(descName, event.target.value)
+                        }
+                      />
+                    </Field>
+                  </div>
                 ) : (
-                  <p className={styles.stageDesc}>
+                  <p
+                    className={`card-body ${styles.preLine}${
+                      capability[descName] ? "" : " field-hint"
+                    }`}
+                  >
                     {capability[descName] || "진단 내용이 없습니다."}
                   </p>
                 )}
@@ -641,9 +692,7 @@ function CapabilitySection({ courseId, courseStudentId, canUpdate }) {
           })}
         </div>
       )}
-
-      {saveError && <p className={styles.error}>{saveError}</p>}
-    </Section>
+    </Panel>
   );
 }
 
@@ -664,56 +713,55 @@ function ScoreSection({ courseId, courseStudentId }) {
   );
 
   const scoreList = scores.data ?? [];
-  const hasScores = scoreList.length > 0;
-
-  const gridContent = scoreList.map((score) => [
-    { id: `${score.testSetId}_setName`, value: score.setName },
-    { id: `${score.testSetId}_score`, value: score.score ?? "-" },
-  ]);
+  const hasAverage = !average.isLoading && average.data != null;
 
   return (
-    <Section title="성적">
-      <div className={styles.scoreLayout}>
-        <div className={styles.averageCard}>
-          <span className={styles.averageLabel}>평균 점수</span>
-          <strong className={styles.averageValue}>
-            {average.isLoading ? "..." : (average.data ?? "-")}
-          </strong>
-          {!average.isLoading && average.data == null && (
-            <span className={styles.averageHint}>성적 데이터 없음</span>
-          )}
-        </div>
+    <Panel title="성적">
+      <div className={`layout-split layout-split-start ${styles.scoreSplit}`}>
+        <StatCard
+          label="평균 점수"
+          value={average.isLoading ? "..." : (average.data ?? "-")}
+          unit={hasAverage ? "점" : undefined}
+          hint={
+            !average.isLoading && average.data == null
+              ? "성적 데이터 없음"
+              : undefined
+          }
+        />
 
-        <div className={styles.scoreList}>
-          {scores.isLoading && (
-            <p className={styles.message}>불러오는 중입니다.</p>
-          )}
+        <div className="form-stack">
           {scores.errorMessage && (
-            <p className={styles.error}>{scores.errorMessage}</p>
+            <StatusBox type="error" size="sm" detail={scores.errorMessage} />
           )}
           {average.errorMessage && (
-            <p className={styles.error}>{average.errorMessage}</p>
+            <StatusBox type="error" size="sm" detail={average.errorMessage} />
           )}
-          {!scores.isLoading && hasScores && (
-            <Grid
-              title=""
-              header={SCORE_GRID_HEADER}
-              content={gridContent}
-              columnStyle="1fr 100px"
-            />
-          )}
-          {!scores.isLoading && !hasScores && !scores.errorMessage && (
-            <p className={styles.message}>등록된 성적이 없습니다.</p>
+          {scores.isLoading ? (
+            <StatusBox type="loading" size="sm" />
+          ) : (
+            !scores.errorMessage && (
+              <Table
+                columns={SCORE_COLUMNS}
+                rows={scoreList}
+                rowKey="testSetId"
+                size="sm"
+                ariaLabel="성적"
+                emptyText="등록된 성적이 없습니다."
+              />
+            )
           )}
         </div>
       </div>
-    </Section>
+    </Panel>
   );
 }
 
 const EMPTY_CONSULT_FORM = { consultType: CONSULT_TYPES[0], consultDesc: "" };
 
 function ConsultSection({ courseId, courseStudentId, canCreate }) {
+  const toast = useToast();
+  const confirm = useConfirm();
+
   const fetchConsults = useCallback(
     (options) => getConsultDataList(courseId, courseStudentId, options),
     [courseId, courseStudentId],
@@ -727,23 +775,34 @@ function ConsultSection({ courseId, courseStudentId, canCreate }) {
 
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_CONSULT_FORM);
-  const [saveError, setSaveError] = useState("");
+  const [descError, setDescError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const closeForm = () => {
     setForm(EMPTY_CONSULT_FORM);
-    setSaveError("");
+    setDescError("");
     setIsRegisterOpen(false);
   };
 
-  const handleSave = async () => {
+  const handleSave = async (event) => {
+    event.preventDefault();
     if (isSaving) return;
 
     const consultDesc = form.consultDesc.trim();
     if (!consultDesc) {
-      setSaveError("상담내용을 입력해주세요.");
+      setDescError("상담내용을 입력하세요.");
       return;
     }
+
+    // 상담내용은 등록 후 수정 · 삭제할 수 없으므로 한 번 더 확인
+    if (
+      !(await confirm({
+        title: "상담내용 등록",
+        message: "등록한 상담내용은 고치거나 지울 수 없습니다. 등록할까요?",
+        confirmText: "등록",
+      }))
+    )
+      return;
 
     setIsSaving(true);
     try {
@@ -753,8 +812,9 @@ function ConsultSection({ courseId, courseStudentId, canCreate }) {
       });
       closeForm();
       await reload();
+      toast.success("상담내용을 등록했습니다.");
     } catch (error) {
-      setSaveError(
+      toast.error(
         getErrorMessage(error, "상담내용 등록 중 오류가 발생했습니다."),
       );
     } finally {
@@ -762,95 +822,108 @@ function ConsultSection({ courseId, courseStudentId, canCreate }) {
     }
   };
 
-  const actions = canCreate && !isRegisterOpen && (
-    <IconButton icon={icons.add} onClick={() => setIsRegisterOpen(true)}>
-      새 상담내용 등록
-    </IconButton>
-  );
-
   return (
-    <Section title="상담내용" actions={actions}>
-      {isRegisterOpen && (
-        <div className={styles.registerForm}>
-          <div className={styles.typeGroup} role="radiogroup" aria-label="상담 유형">
-            {CONSULT_TYPES.map((type) => (
-              <label
-                key={type}
-                className={`${styles.typeOption} ${
-                  form.consultType === type ? styles.typeSelected : ""
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="consultType"
-                  value={type}
-                  checked={form.consultType === type}
-                  disabled={isSaving}
-                  onChange={() =>
-                    setForm((previous) => ({ ...previous, consultType: type }))
-                  }
-                />
-                {type}
-              </label>
-            ))}
-          </div>
-          <textarea
-            className={styles.textarea}
-            aria-label="상담내용"
-            placeholder="상담내용을 입력하세요. 등록 후에는 수정하거나 삭제할 수 없습니다."
-            maxLength={DESC_MAX_LENGTH}
-            value={form.consultDesc}
-            disabled={isSaving}
-            onChange={(event) =>
-              setForm((previous) => ({
-                ...previous,
-                consultDesc: event.target.value,
-              }))
-            }
-          />
-          <div className={styles.formFooter}>
-            <span className={styles.counter}>
-              {form.consultDesc.length} / {DESC_MAX_LENGTH}
-            </span>
-            <div className={styles.buttons}>
-              <SaveCancelButtons
-                isSaving={isSaving}
-                onSave={handleSave}
-                onCancel={closeForm}
+    <Panel
+      title="상담내용"
+      subtitle={isLoading || errorMessage ? undefined : `${consultList.length}건`}
+      actions={
+        canCreate &&
+        !isRegisterOpen && (
+          <Button
+            size="sm"
+            icon={icons.add}
+            onClick={() => setIsRegisterOpen(true)}
+          >
+            상담내용 등록
+          </Button>
+        )
+      }
+    >
+      <div className="form-stack">
+        {isRegisterOpen && (
+          <form className="form-stack" onSubmit={handleSave} noValidate>
+            <Field group label="상담 유형">
+              <ChoiceGroup
+                name="consultType"
+                options={CONSULT_TYPE_OPTIONS.map((option) => ({
+                  ...option,
+                  disabled: isSaving,
+                }))}
+                value={form.consultType}
+                onChange={(consultType) =>
+                  setForm((previous) => ({ ...previous, consultType }))
+                }
               />
+            </Field>
+            <Field
+              label="상담내용"
+              htmlFor="consultDesc"
+              required
+              error={descError}
+              hint="등록한 뒤에는 고치거나 지울 수 없습니다."
+              count={{ current: form.consultDesc.length, max: DESC_MAX_LENGTH }}
+            >
+              <textarea
+                id="consultDesc"
+                className="form-control"
+                rows={4}
+                placeholder="상담내용을 입력하세요."
+                maxLength={DESC_MAX_LENGTH}
+                value={form.consultDesc}
+                disabled={isSaving}
+                onChange={(event) => {
+                  setForm((previous) => ({
+                    ...previous,
+                    consultDesc: event.target.value,
+                  }));
+                  setDescError("");
+                }}
+              />
+            </Field>
+            <div className="btn-group btn-group-end">
+              <Button disabled={isSaving} onClick={closeForm}>
+                취소
+              </Button>
+              <Button type="submit" variant="primary" loading={isSaving}>
+                {isSaving ? "등록 중..." : "등록"}
+              </Button>
             </div>
-          </div>
-          {saveError && <p className={styles.error}>{saveError}</p>}
-        </div>
-      )}
+          </form>
+        )}
 
-      {isLoading && <p className={styles.message}>불러오는 중입니다.</p>}
-      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+        {isLoading && <StatusBox type="loading" size="sm" />}
+        {errorMessage && (
+          <StatusBox type="error" size="sm" detail={errorMessage} />
+        )}
 
-      {!isLoading && consultList.length > 0 && (
-        <ol className={styles.timeline}>
-          {consultList.map((consult) => (
-            <li key={consult.id} className={styles.timelineItem}>
-              <div className={styles.timelineMeta}>
-                <time className={styles.timelineDate}>
-                  {consult.consultDate}
-                </time>
-                <span className={styles.typeTag}>{consult.consultType}</span>
-              </div>
-              <p className={styles.timelineDesc}>{consult.consultDesc}</p>
-            </li>
-          ))}
-        </ol>
-      )}
+        {!isLoading && consultList.length > 0 && (
+          <ol className="timeline">
+            {consultList.map((consult) => (
+              <li key={consult.id} className="timeline-item">
+                <div className="timeline-meta">
+                  <time>{consult.consultDate}</time>{" "}
+                  <span className="tag">{consult.consultType}</span>
+                </div>
+                <p className={`timeline-body ${styles.preLine}`}>
+                  {consult.consultDesc}
+                </p>
+              </li>
+            ))}
+          </ol>
+        )}
 
-      {!isLoading && consultList.length === 0 && !errorMessage && (
-        <p className={styles.message}>등록된 상담내용이 없습니다.</p>
-      )}
-    </Section>
+        {!isLoading && consultList.length === 0 && !errorMessage && (
+          <StatusBox type="empty" size="sm" title="등록된 상담내용이 없습니다." />
+        )}
+      </div>
+    </Panel>
   );
 }
 
-function OpinionSection({ courseId, courseStudentId, canUpdate, onSaved }) {
+function OpinionSection({ courseId, courseStudentId, canUpdate, isLocked, onSaved }) {
+  const toast = useToast();
+  const confirm = useConfirm();
+
   const fetchOpinion = useCallback(
     (options) => getOpinion(courseId, courseStudentId, options),
     [courseId, courseStudentId],
@@ -862,14 +935,22 @@ function OpinionSection({ courseId, courseStudentId, canUpdate, onSaved }) {
 
   // 수정 중인 값. null 이면 조회 모드
   const [draft, setDraft] = useState(null);
-  const [saveError, setSaveError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const isEditing = draft !== null;
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
+    if (
+      draft !== (opinion ?? "") &&
+      !(await confirm({
+        message: "고친 내용을 버릴까요?",
+        confirmText: "버리기",
+        danger: true,
+      }))
+    )
+      return;
+
     setDraft(null);
-    setSaveError("");
   };
 
   const handleSave = async () => {
@@ -883,9 +964,9 @@ function OpinionSection({ courseId, courseStudentId, canUpdate, onSaved }) {
       await reload();
       onSaved(courseStudentId, nextOpinion);
       setDraft(null);
-      setSaveError("");
+      toast.success("종합의견을 저장했습니다.");
     } catch (error) {
-      setSaveError(
+      toast.error(
         getErrorMessage(error, "종합의견 저장 중 오류가 발생했습니다."),
       );
     } finally {
@@ -893,47 +974,48 @@ function OpinionSection({ courseId, courseStudentId, canUpdate, onSaved }) {
     }
   };
 
-  const actions = isEditing ? (
-    <SaveCancelButtons
-      isSaving={isSaving}
-      onSave={handleSave}
-      onCancel={handleCancel}
-    />
-  ) : (
-    canUpdate &&
-    !isLoading && (
-      <IconButton icon={icons.edit} onClick={() => setDraft(opinion ?? "")}>
-        종합의견 수정
-      </IconButton>
-    )
-  );
-
   return (
-    <Section title="종합의견" actions={actions}>
-      {isLoading && <p className={styles.message}>불러오는 중입니다.</p>}
-      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+    <Panel
+      title="종합의견"
+      actions={
+        !isLoading && (
+          <EditActions
+            isEditing={isEditing}
+            isSaving={isSaving}
+            canEdit={canUpdate}
+            isLocked={isLocked}
+            onEdit={() => setDraft(opinion ?? "")}
+            onCancel={handleCancel}
+            onSave={handleSave}
+          />
+        )
+      }
+    >
+      {isLoading && <StatusBox type="loading" size="sm" />}
+      {errorMessage && (
+        <StatusBox type="error" size="sm" detail={errorMessage} />
+      )}
 
       {!isLoading &&
         (isEditing ? (
-          <textarea
-            className={`${styles.textarea} ${styles.opinionTextarea}`}
-            aria-label="종합의견"
-            placeholder="종합의견을 입력하세요."
-            value={draft}
-            disabled={isSaving}
-            onChange={(event) => setDraft(event.target.value)}
-          />
+          <Field label="종합의견" htmlFor="counselOpinion">
+            <textarea
+              id="counselOpinion"
+              className="form-control"
+              rows={5}
+              placeholder="종합의견을 입력하세요."
+              value={draft}
+              disabled={isSaving}
+              onChange={(event) => setDraft(event.target.value)}
+            />
+          </Field>
+        ) : opinion ? (
+          <blockquote className="quote">
+            <p>{opinion}</p>
+          </blockquote>
         ) : (
-          <div className={styles.opinionBox}>
-            {opinion || (
-              <span className={styles.message}>
-                등록된 종합의견이 없습니다.
-              </span>
-            )}
-          </div>
+          <p className="field-hint">등록된 종합의견이 없습니다.</p>
         ))}
-
-      {saveError && <p className={styles.error}>{saveError}</p>}
-    </Section>
+    </Panel>
   );
 }

@@ -6,9 +6,13 @@ import styles from "./MyCourseData.module.css";
 import usePermission from "../../../hooks/usePermission";
 import Editor from "../../common/Editor";
 import "../../common/editor/editorContent.css";
-import {Grid} from "../../common/Grid";
-import {Paginator} from "../../common/Paginator";
-import {IconButton} from "../../common/input/IconButton";
+import Button from "../../common/ui/Button.jsx";
+import Field from "../../common/ui/Field.jsx";
+import Pagination from "../../common/ui/Pagination.jsx";
+import Panel from "../../common/ui/Panel.jsx";
+import StatusBox from "../../common/ui/StatusBox.jsx";
+import Table from "../../common/ui/Table.jsx";
+import { useConfirm, useToast } from "../../common/ui/feedbackContext.js";
 import {icons} from "../../common/input/icons";
 
 import {
@@ -27,18 +31,9 @@ const PAGE_SIZE = 20;
 const PAGE_GROUP_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 300;
 const DATA_NAME_MAX_LENGTH = 200;
-const TOAST_DURATION_MS = 2500;
-const DELETE_CONFIRM_MESSAGE = "해당 교육 자료를 삭제하시겠습니까?";
 
-const BASE_GRID_HEADER = [
-  { id: "rowNumber", title: "No." },
-  { id: "dataName", title: "자료 명" },
-  { id: "crtDt", title: "생성일" },
-  { id: "mdfyDt", title: "수정일" },
-];
-
-// "2026-11-20 14:30" → "2026.11.20 14:30"
-const formatDateTime = (value) => (value ? value.replaceAll("-", ".") : "");
+// "2026-11-20T14:30" → "2026-11-20 14:30" (가이드 8장 날짜 형식)
+const formatDateTime = (value) => (value ? value.replace("T", " ") : "");
 
 /** 객체에서 key 하나를 제외한 새 객체 */
 const omitKey = (object, key) => {
@@ -77,6 +72,7 @@ const deleteTemporaryFiles = (courseId, fileIds) =>
 // 상세 보기 (본문 이미지 표시 · 첨부 파일 다운로드는 인증 헤더가 필요하므로 Blob 으로 처리)
 // ======================================================================
 function CourseDataDetail({ courseId, dataId, onClose, onEdit, onDelete, isDeleting }) {
+  const toast = useToast();
   const contentRef = useRef(null);
   const [detail, setDetail] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -133,39 +129,45 @@ function CourseDataDetail({ courseId, dataId, onClose, onEdit, onDelete, isDelet
       const blob = await downloadCourseDataFile(courseId, link.dataset.fileId);
       saveBlob(blob, link.dataset.fileName || link.dataset.fileId);
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     }
   };
 
   return (
-    <div className={styles.detail}>
-      <div className={styles.detailHeader}>
-        <h3 className={styles.formTitle}>{detail?.dataName ?? "교육 자료"}</h3>
-        <div className={styles.rowActions}>
-          {onEdit && detail && (
-            <IconButton icon={icons.edit} onClick={onEdit}>
-              수정
-            </IconButton>
-          )}
-          {onDelete && detail && (
-            <IconButton icon={icons.delete} disabled={isDeleting} onClick={onDelete}>
-              {isDeleting ? "삭제 중..." : "삭제"}
-            </IconButton>
-          )}
-          <IconButton icon={icons.close} onClick={onClose}>
-            목록
-          </IconButton>
-        </div>
-      </div>
-
-      {errorMessage && <p className={styles.error}>{errorMessage}</p>}
+    <Panel
+      title={detail?.dataName ?? "교육 자료"}
+      actions={
+        detail && (onEdit || onDelete) ? (
+          <>
+            {onEdit && (
+              <Button size="sm" icon={icons.edit} onClick={onEdit}>
+                수정
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                size="sm"
+                variant="danger"
+                icon={icons.delete}
+                loading={isDeleting}
+                onClick={onDelete}
+              >
+                {isDeleting ? "삭제 중..." : "삭제"}
+              </Button>
+            )}
+          </>
+        ) : undefined
+      }
+      footer={<Button onClick={onClose}>목록</Button>}
+    >
+      {errorMessage && <StatusBox type="error" size="sm" detail={errorMessage} />}
       {!detail && !errorMessage && (
-        <p className={styles.loading}>교육 자료를 불러오는 중입니다.</p>
+        <StatusBox type="loading" size="sm" title="교육 자료를 불러오는 중..." />
       )}
 
       {detail && (
         <>
-          <p className={styles.detailMeta}>
+          <p className="card-meta">
             생성일 {formatDateTime(detail.crtDt)} · 수정일{" "}
             {formatDateTime(detail.mdfyDt)}
           </p>
@@ -178,7 +180,7 @@ function CourseDataDetail({ courseId, dataId, onClose, onEdit, onDelete, isDelet
           />
         </>
       )}
-    </div>
+    </Panel>
   );
 }
 
@@ -187,6 +189,8 @@ function CourseDataDetail({ courseId, dataId, onClose, onEdit, onDelete, isDelet
 // ======================================================================
 export default function MyCourseData({ courseId: courseIdProp }) {
   const params = useParams();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   // 부모(MyCourse)에서 받은 courseId 우선, 없으면 URL 파라미터(CourseItem :id) 사용
   const courseId = courseIdProp ?? params?.courseId ?? params?.id;
@@ -237,25 +241,14 @@ export default function MyCourseData({ courseId: courseIdProp }) {
   // 상세
   const [selectedDataId, setSelectedDataId] = useState(null);
 
-  // 처리 결과 알림 (Toast)
-  const [toast, setToast] = useState(null);
-  const toastTimerRef = useRef(null);
-
   const isFormOpen = isRegisterOpen || isEditMode;
 
   const errorMessage = courseId
     ? loadErrorMessage
     : "과정 ID(courseId)를 확인할 수 없습니다.";
 
-  const showToast = (message, type = "success") => {
-    clearTimeout(toastTimerRef.current);
-    setToast({ message, type });
-    toastTimerRef.current = setTimeout(() => setToast(null), TOAST_DURATION_MS);
-  };
-
   useEffect(
     () => () => {
-      clearTimeout(toastTimerRef.current);
       editRequestRef.current?.abort();
     },
     [],
@@ -415,21 +408,21 @@ export default function MyCourseData({ courseId: courseIdProp }) {
     const trimmedName = dataName.trim();
 
     if (!trimmedName) {
-      nextErrors.dataName = "자료 명을 입력해주세요.";
+      nextErrors.dataName = "자료 명을 입력하세요.";
     } else if (trimmedName.length > DATA_NAME_MAX_LENGTH) {
-      nextErrors.dataName = `자료 명은 ${DATA_NAME_MAX_LENGTH}자 이내로 입력해주세요.`;
+      nextErrors.dataName = `자료 명은 ${DATA_NAME_MAX_LENGTH}자 이내로 입력하세요.`;
     }
 
     if (!editorContent || editorRef.current?.isEmpty()) {
-      nextErrors.content = "교육 자료 내용을 입력해주세요.";
+      nextErrors.content = "교육 자료 내용을 입력하세요.";
     }
 
     if (isUploading) {
-      nextErrors.global = "파일 업로드가 끝난 뒤 저장해주세요.";
+      nextErrors.global = "파일 업로드가 끝난 뒤 저장하세요.";
     }
 
     if (isEditMode && (!editingDataId || !isEditorReady)) {
-      nextErrors.global = "수정할 교육 자료를 확인할 수 없습니다. 목록에서 다시 선택해주세요.";
+      nextErrors.global = "수정할 교육 자료를 확인할 수 없습니다. 목록에서 다시 고르세요.";
     }
 
     if (!courseId) {
@@ -440,12 +433,16 @@ export default function MyCourseData({ courseId: courseIdProp }) {
   };
 
   // 저장 (등록 · 수정 완료)
-  const handleSave = async () => {
+  const handleSave = async (event) => {
+    event?.preventDefault();
     // 중복 요청 방지 (state 반영 전 연속 클릭도 차단)
     if (savingRef.current) return;
 
     const validationErrors = validate();
-    setErrors(validationErrors);
+    // 칸 오류는 칸 아래, 칸에 속하지 않는 오류(global)는 토스트
+    const { global: globalError, ...fieldErrors } = validationErrors;
+    setErrors(fieldErrors);
+    if (globalError) toast.error(globalError);
     if (Object.keys(validationErrors).length > 0) return;
 
     const content = editorRef.current.getContentHtml();
@@ -468,7 +465,7 @@ export default function MyCourseData({ courseId: courseIdProp }) {
           .filter((fileId) => !content.includes(fileId)),
       );
 
-      showToast(isEditMode ? "교육 자료가 수정되었습니다." : "교육 자료가 등록되었습니다.");
+      toast.success(isEditMode ? "교육 자료를 저장했습니다." : "교육 자료를 등록했습니다.");
       closeForm();
       // 기존 검색어 · 페이지 그대로 재조회
       reloadList();
@@ -486,7 +483,9 @@ export default function MyCourseData({ courseId: courseIdProp }) {
       if (Object.keys(serverErrors).length === 0) {
         serverErrors.global = error.message;
       }
-      setErrors(serverErrors);
+      const { global: globalError, ...fieldErrors } = serverErrors;
+      setErrors(fieldErrors);
+      if (globalError) toast.error(globalError);
     } finally {
       savingRef.current = false;
       setIsSaving(false);
@@ -505,13 +504,19 @@ export default function MyCourseData({ courseId: courseIdProp }) {
   // 삭제: 확인 후 API 호출, 현재 페이지의 마지막 자료였다면 이전 페이지로 이동
   const handleDelete = async (id) => {
     if (!id || deletingRef.current) return;
-    if (!window.confirm(DELETE_CONFIRM_MESSAGE)) return;
+    const confirmed = await confirm({
+      title: "교육 자료 삭제",
+      message: "이 교육 자료를 삭제할까요?",
+      confirmText: "삭제",
+      danger: true,
+    });
+    if (!confirmed) return;
 
     deletingRef.current = true;
     setIsDeleting(true);
     try {
       await deleteCourseData(courseId, id);
-      showToast("교육 자료가 삭제되었습니다.");
+      toast.success("교육 자료를 삭제했습니다.");
 
       if (selectedDataId === id) setSelectedDataId(null);
 
@@ -523,7 +528,7 @@ export default function MyCourseData({ courseId: courseIdProp }) {
       }
     } catch (error) {
       // 실패 시 기존 목록 유지
-      showToast(error.message || "교육 자료 삭제에 실패했습니다.", "error");
+      toast.error(error.message || "교육 자료를 삭제하지 못했습니다.");
     } finally {
       deletingRef.current = false;
       setIsDeleting(false);
@@ -535,33 +540,32 @@ export default function MyCourseData({ courseId: courseIdProp }) {
     setQuery((previous) => ({ ...previous, page }));
   };
 
-  const showActions = canUpdate || canDelete;
-  const gridHeader = showActions
-    ? [...BASE_GRID_HEADER]
-    : BASE_GRID_HEADER;
-
-  const gridContent = courseDataList.map((courseData, index) => {
-    return [
-      {
-        id: `${courseData.id}_rowNumber`,
-        value: totalCount - (currentPage - 1) * PAGE_SIZE - index,
-      },
-      {id: `${courseData.id}_dataName`, value: courseData.dataName},
-      {id: `${courseData.id}_crtDt`, value: formatDateTime(courseData.crtDt)},
-      {id: `${courseData.id}_mdfyDt`, value: formatDateTime(courseData.mdfyDt)},
-    ];
-  });
+  const columns = [
+    {
+      key: "rowNumber",
+      title: "No.",
+      width: "80px",
+      align: "num",
+      render: (_row, index) => totalCount - (currentPage - 1) * PAGE_SIZE - index,
+    },
+    { key: "dataName", title: "자료 명", ellipsis: true },
+    {
+      key: "crtDt",
+      title: "생성일",
+      width: "180px",
+      mono: true,
+      render: (row) => formatDateTime(row.crtDt),
+    },
+    {
+      key: "mdfyDt",
+      title: "수정일",
+      width: "180px",
+      mono: true,
+      render: (row) => formatDateTime(row.mdfyDt),
+    },
+  ];
 
   const hasData = courseDataList.length > 0;
-
-  const toastElement = toast && (
-    <div
-      className={`${styles.toast} ${toast.type === "error" ? styles.toastError : ""}`}
-      role={toast.type === "error" ? "alert" : "status"}
-    >
-      {toast.message}
-    </div>
-  );
 
   // ------------------------------------------------------------------
   // 신규 등록 · 수정 화면 (같은 에디터 컴포넌트)
@@ -571,58 +575,62 @@ export default function MyCourseData({ courseId: courseIdProp }) {
     // 수정 화면의 파일 업로드 · 링크 미리보기 API 는 등록 권한(COURSE_DATA_CREATE)이 필요
     const canUseUploadApi = !isEditMode || canCreate;
 
+    const saveLabel = isEditMode ? "저장" : "등록";
+
     return (
-      <div className={styles.page}>
-        <section className={styles.content}>
-          <h3 className={styles.formTitle}>
-            {isEditMode ? "교육 자료 수정" : "새 교육 자료 등록"}
-          </h3>
-
-          <div className={styles.buttons}>
-            <IconButton
-              icon={icons.ok}
-              disabled={isSaving || isUploading || !showEditor || (isEditMode && !isEditorReady)}
-              onClick={handleSave}
-            >
-              {isSaving
-                ? "저장 중..."
-                : isUploading
-                  ? "업로드 중..."
-                  : isEditMode
-                    ? "수정 완료"
-                    : "저장"}
-            </IconButton>
-            <IconButton icon={icons.close} disabled={isSaving} onClick={handleCancel}>
-              취소
-            </IconButton>
-          </div>
-
+      <form onSubmit={handleSave} noValidate>
+        <Panel
+          title={isEditMode ? "교육 자료 수정" : "교육 자료 등록"}
+          footer={
+            <>
+              <Button disabled={isSaving} onClick={handleCancel}>
+                취소
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                loading={isSaving}
+                disabled={isUploading || !showEditor || (isEditMode && !isEditorReady)}
+              >
+                {isSaving
+                  ? `${saveLabel} 중...`
+                  : isUploading
+                    ? "업로드 중..."
+                    : saveLabel}
+              </Button>
+            </>
+          }
+        >
           {isEditMode && isEditLoading && (
-            <p className={styles.loading}>교육 자료를 불러오는 중입니다.</p>
+            <StatusBox type="loading" size="sm" title="교육 자료를 불러오는 중..." />
           )}
           {isEditMode && editLoadError && (
-            <p className={styles.fieldError}>{editLoadError}</p>
+            <StatusBox type="error" size="sm" detail={editLoadError} />
           )}
 
           {showEditor && (
-            <>
-              <div className={styles.field}>
+            <div className="form-stack">
+              <Field
+                label="자료 명"
+                htmlFor="courseDataName"
+                required
+                error={errors.dataName}
+                count={{ current: dataName.length, max: DATA_NAME_MAX_LENGTH }}
+              >
                 <input
+                  id="courseDataName"
                   type="text"
-                  className={styles.textInput}
+                  className="form-control"
                   placeholder="자료 명을 입력하세요."
-                  aria-label="자료 명"
                   maxLength={DATA_NAME_MAX_LENGTH}
                   value={dataName}
                   onChange={handleDataNameChange}
                   disabled={isSaving}
                 />
-                {errors.dataName && (
-                  <p className={styles.fieldError}>{errors.dataName}</p>
-                )}
-              </div>
+              </Field>
 
-              <div className={styles.field}>
+              {/* 에디터는 표준 부품이 없어 그대로 둠 (가이드 6장 제외 1) */}
+              <Field label="내용" required error={errors.content}>
                 <Editor
                   key={editorKey}
                   ref={editorRef}
@@ -645,19 +653,11 @@ export default function MyCourseData({ courseId: courseIdProp }) {
                   onUploadingChange={setIsUploading}
                   onFileUploaded={handleFileUploaded}
                 />
-                {errors.content && (
-                  <p className={styles.fieldError}>{errors.content}</p>
-                )}
-              </div>
-            </>
+              </Field>
+            </div>
           )}
-
-          {errors.global && (
-            <p className={styles.fieldError}>{errors.global}</p>
-          )}
-        </section>
-        {toastElement}
-      </div>
+        </Panel>
+      </form>
     );
   }
 
@@ -666,19 +666,14 @@ export default function MyCourseData({ courseId: courseIdProp }) {
   // ------------------------------------------------------------------
   if (selectedDataId) {
     return (
-      <div className={styles.page}>
-        <section className={styles.content}>
-          <CourseDataDetail
-            courseId={courseId}
-            dataId={selectedDataId}
-            onClose={() => setSelectedDataId(null)}
-            onEdit={canUpdate ? () => handleOpenEdit(selectedDataId) : undefined}
-            onDelete={canDelete ? () => handleDelete(selectedDataId) : undefined}
-            isDeleting={isDeleting}
-          />
-        </section>
-        {toastElement}
-      </div>
+      <CourseDataDetail
+        courseId={courseId}
+        dataId={selectedDataId}
+        onClose={() => setSelectedDataId(null)}
+        onEdit={canUpdate ? () => handleOpenEdit(selectedDataId) : undefined}
+        onDelete={canDelete ? () => handleDelete(selectedDataId) : undefined}
+        isDeleting={isDeleting}
+      />
     );
   }
 
@@ -686,76 +681,64 @@ export default function MyCourseData({ courseId: courseIdProp }) {
   // 목록 화면
   // ------------------------------------------------------------------
   return (
-    <div className={styles.page}>
-      <section className={styles.content}>
-        {canCreate && (
-          <div className={styles.header}>
-            <IconButton icon={icons.add} onClick={handleOpenRegister}>
-              자료 추가
-            </IconButton>
-          </div>
-        )}
-
+    <div className="form-stack">
+      <div className="toolbar">
         <input
           type="search"
-          className={styles.textInput}
+          className={`form-control ${styles.search}`}
           placeholder="자료 명을 입력하세요."
           aria-label="자료 명 검색"
           value={searchKeyword}
           onChange={(event) => setSearchKeyword(event.target.value)}
         />
-
-        <p className={styles.totalCount}>전체 {totalCount}건</p>
-
-        {/* 조회 오류 */}
-        {errorMessage && <p className={styles.error}>{errorMessage}</p>}
-
-        {/* 조회 중 */}
-        {isLoading && (
-          <p className={styles.loading}>교육 자료를 불러오는 중입니다.</p>
+        {canCreate && (
+          <Button
+            variant="primary"
+            icon={icons.add}
+            onClick={handleOpenRegister}
+            className="toolbar-end"
+          >
+            자료 추가
+          </Button>
         )}
+      </div>
 
-        {/* 교육 자료 그리드 (자료명 클릭 시 상세, 관리 열에서 수정 · 삭제) */}
-        {!isLoading && hasData && (
-          <Grid
-            title=""
-            header={gridHeader}
-            content={gridContent}
-            columnStyle={"80px 1fr 200px 200px"}
-            clickableColumn={{
-              1: (_value, rowIndex) =>
-                setSelectedDataId(courseDataList[rowIndex]?.id ?? null),
-            }}
+      {/* 조회 오류 · 조회 중 · 표 (행을 누르면 상세) */}
+      {errorMessage ? (
+        <StatusBox
+          type="error"
+          detail={errorMessage}
+          onRetry={courseId ? reloadList : undefined}
+        />
+      ) : isLoading ? (
+        <StatusBox type="loading" title="교육 자료를 불러오는 중..." />
+      ) : (
+        <div>
+          <Table
+            columns={columns}
+            rows={courseDataList}
+            rowKey="id"
+            onRowClick={(row) => setSelectedDataId(row.id ?? null)}
+            ariaLabel="교육 자료"
+            emptyText={
+              query.keyword
+                ? "검색 결과가 없습니다."
+                : "등록된 교육 자료가 없습니다."
+            }
           />
-        )}
-
-        {/* 데이터 없음 */}
-        {!isLoading && !hasData && !errorMessage && (
-          <p className={styles.emptyMessage}>
-            {query.keyword
-              ? "검색 결과가 없습니다."
-              : "등록된 교육 자료가 없습니다."}
-          </p>
-        )}
-
-        {!isLoading && hasData && (
-          <div className={styles.pagination}>
-            {/* 공통 Paginator 는 0부터 시작하는 페이지 번호를 사용 */}
-            <Paginator
-              id="courseData"
-              start={
-                Math.floor((currentPage - 1) / PAGE_GROUP_SIZE) *
-                PAGE_GROUP_SIZE
-              }
-              countPerPageGroup={PAGE_GROUP_SIZE}
-              activePage={currentPage - 1}
-              setActivePage={(pageIndex) => handlePageChange(pageIndex + 1)}
-              totalPageCount={totalPages}
-            />
+          <div className="table-footer">
+            <span className="field-hint">전체 {totalCount}건</span>
+            {hasData && (
+              <Pagination
+                page={currentPage - 1}
+                totalPages={totalPages}
+                onChange={(pageIndex) => handlePageChange(pageIndex + 1)}
+                groupSize={PAGE_GROUP_SIZE}
+              />
+            )}
           </div>
-        )}
-      </section>
-      {toastElement}
+        </div>
+      )}
     </div>
   );
 }

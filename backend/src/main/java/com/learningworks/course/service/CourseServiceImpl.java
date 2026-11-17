@@ -17,6 +17,7 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
@@ -349,32 +350,31 @@ public class CourseServiceImpl implements CourseService{
 		return this.courseDao.readCourseMembers(courseId);
 	}
 
+	@Override
+	public List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO) {
+		// 결과가 없으면 MyBatis가 빈 리스트를 반환한다.
+		return this.courseDao.searchCourseList(searchCourseVO);
+	}
+
 	@Transactional
 	@Override
-	public CourseVO updateCourse(String courseId, ModifyCourseVO modifyCourseVO) {
-		this.findCourse(courseId); // 없거나 삭제된 강의면 404
+	public String updateCourse(String courseId, ModifyCourseVO modifyCourseVO) {
+		modifyCourseVO.setId(courseId);
 
-		// 관리자(ROLE_SUPER_ADMIN, ROLE_ADMIN)는 모든 강의, 강사는 자기 강의만 수정할 수 있다.
-		// (수정 권한 자체는 컨트롤러의 @RequireAction COURSE_UPDATE 가 검사)
-		String loginId = AuthUtil.getLoginId();
-		if (!this.isCourseAdmin(loginId) && this.courseDao.countCourseTutor(courseId, loginId) == 0) {
-			throw new LearningworksException(ErrorCode.COURSE_NOT_AUTHORIZED);
-		}
-
-		int result = this.courseDao.updateCourse(courseId, modifyCourseVO);
-		if (result == 0) {
+		// 삭제되지 않은 과정이 없으면 0 행이 수정된다.
+		int updatedRow = this.courseDao.updateCourse(modifyCourseVO);
+		if (updatedRow == 0) {
 			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
 		}
-		return this.findCourse(courseId);
+		return courseId;
 	}
 
 	@Transactional
 	@Override
 	public String deleteCourse(String courseId) {
-		// 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다. 이미 삭제됐거나 없으면 404
-		// (삭제 권한은 컨트롤러의 @RequireAction COURSE_DELETE 가 검사 — 관리자에게만 부여)
-		int result = this.courseDao.deleteCourse(courseId);
-		if (result == 0) {
+		// 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다. 삭제되지 않은 과정이 없으면 0 행.
+		int deletedRow = this.courseDao.deleteCourse(courseId);
+		if (deletedRow == 0) {
 			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
 		}
 		return courseId;
@@ -453,7 +453,5 @@ public class CourseServiceImpl implements CourseService{
 		}
 		return Math.round(part * 1000.0 / total) / 10.0;
 	}
-
-	
 
 }

@@ -18,7 +18,6 @@
          ON C.ID = CT.COURSE_ID
       INNER JOIN "USER" U
          ON CT.TUTOR_ID = U.ID
-      -- 삭제(DEL_YN = 'Y')된 강의는 관리자 목록에서도 제외
       WHERE C.DEL_YN = 'N'
       <if test="userId != null">
         AND C.ID IN (SELECT CS.COURSE_ID
@@ -414,25 +413,53 @@
            AND CT.TUTOR_ID  = #{userId}
        </select>
 
-       <update id="updateCourse">
-       UPDATE COURSE
-          SET COURSE_NAME = #{modifyCourseVO.courseName}
-            , NO = #{modifyCourseVO.no}
-            , START_DATE = TO_DATE(#{modifyCourseVO.startDate}, 'YYYY-MM-DD')
-            , END_DATED = TO_DATE(#{modifyCourseVO.endDated}, 'YYYY-MM-DD')
-        WHERE DEL_YN = 'N'
-          AND ID = #{courseId}
+       <!-- 과정 목록 검색 (관리자 과정 목록): 삭제되지 않은 과정만, 입력된 조건만 적용 -->
+       <select id="searchCourseList"
+               parameterType="com.learningworks.course.vo.request.SearchCourseVO"
+               resultType="com.learningworks.course.vo.response.CourseVO">
+        SELECT ID
+             , "NO"
+             , COURSE_NAME
+             , TO_CHAR(START_DATE, 'YYYY-MM-DD') AS START_DATE
+             , TO_CHAR(END_DATED, 'YYYY-MM-DD')  AS END_DATED
+          FROM COURSE
+         WHERE DEL_YN = 'N'
+        <if test="no != null and no != ''">
+           AND "NO" = #{no}
+        </if>
+        <if test="courseName != null and courseName != ''">
+           AND COURSE_NAME LIKE '%' || #{courseName} || '%'
+        </if>
+        <if test="startDate != null and startDate != ''">
+           AND TRUNC(START_DATE) = TO_DATE(#{startDate}, 'YYYY-MM-DD')
+        </if>
+        <if test="endDated != null and endDated != ''">
+           AND TRUNC(END_DATED) = TO_DATE(#{endDated}, 'YYYY-MM-DD')
+        </if>
+         ORDER BY START_DATE DESC
+                , ID DESC
+       </select>
+
+       <!-- 과정 정보 수정: 삭제되지 않은 과정만 수정된다 -->
+       <update id="updateCourse"
+               parameterType="com.learningworks.course.vo.request.ModifyCourseVO">
+        UPDATE COURSE
+           SET "NO"        = #{no}
+             , COURSE_NAME = #{courseName}
+             , START_DATE  = TO_DATE(#{startDate}, 'YYYY-MM-DD')
+             , END_DATED   = TO_DATE(#{endDated}, 'YYYY-MM-DD')
+         WHERE ID     = #{id}
+           AND DEL_YN = 'N'
        </update>
 
-       <!-- 강의 삭제: 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다 (수강생 · 과제 · 출결 데이터는 남는다) -->
+       <!-- 과정 삭제: 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다 -->
        <update id="deleteCourse" parameterType="string">
-       UPDATE COURSE
-          SET DEL_YN = 'Y'
-        WHERE ID = #{_parameter}
-          AND DEL_YN = 'N'
+        UPDATE COURSE
+           SET DEL_YN = 'Y'
+         WHERE ID     = #{_parameter}
+           AND DEL_YN = 'N'
        </update>
-       
-       
+
     <!--
         출석률 요약: 전체 수업일 수 / 어제까지 진행된 수업일 수
         COURSE 의 시작일 ~ 종료일 중 평일(월~금)만 센다. (시간표 · 공휴일은 보지 않음)
