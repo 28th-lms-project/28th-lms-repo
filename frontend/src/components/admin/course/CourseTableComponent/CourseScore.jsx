@@ -6,6 +6,7 @@ import { getCourseScoreList } from "../../../../api/my/course/scoreApi.js";
 import {
   getScoreStatus,
   formatTestType,
+  hasScoreValue,
 } from "../../../../utils/scoreFormat.js";
 
 export default function CourseScore() {
@@ -53,6 +54,13 @@ function ScoreCell({ row }) {
     );
   }
   return <>{row.score}</>;
+}
+
+function AverageCell({ value }) {
+  if (!hasScoreValue(value)) {
+    return <span className={styles.muted}>-</span>;
+  }
+  return <>{value}</>;
 }
 
 function CourseScoreContent({ courseId }) {
@@ -142,6 +150,16 @@ function CourseScoreContent({ courseId }) {
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr className={styles.averageRow}>
+              <td className={styles.studentCol}>반 평균</td>
+              {testSets.map((test) => (
+                <td key={test.testSetId} className={styles.cellScore}>
+                  <AverageCell value={test.averageScore} />
+                </td>
+              ))}
+            </tr>
+          </tfoot>
         </table>
       </div>
     </section>

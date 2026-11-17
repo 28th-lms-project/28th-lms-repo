@@ -84,3 +84,9 @@
   background-color: #fff4d6;
   color: #8a6100;
 }
+
+.averageRow td {
+  background-color: #f7f7f7;
+  border-top: 1px solid #ccc;
+  font-weight: 700;
+}
