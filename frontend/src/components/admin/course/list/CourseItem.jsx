@@ -67,6 +67,17 @@ export default function CourseItem() {
     dispatch(courseActions.startLoading());
     // 다른 과정으로 이동했을 때 이전 과정의 출석률이 보이지 않도록 비운다
     dispatch(courseActions.loadAttendanceSummary(null));
+    dispatch(courseActions.showStudents([]));
+
+    // 수강생 목록도 따로 호출 — 수강생 역할에는 목록 조회 권한(COURSE_STUDENT_READ)이 없어
+    // 403 이 나도 과정 화면은 뜨도록. 실패하면 빈 목록으로 둔다
+    getCourseStudents(id, options)
+      .then((students) => dispatch(courseActions.showStudents(students)))
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          console.log(error);
+        }
+      });
 
     // 출석률 요약은 따로 호출 (이 API만 실패해도 과정 화면은 뜨도록)
     getAttendanceSummary(id, options)
@@ -79,13 +90,11 @@ export default function CourseItem() {
 
     (async () => {
       try {
-        const [course, students, homeworks] = await Promise.all([
+        const [course, homeworks] = await Promise.all([
           getCourse(id, options),
-          getCourseStudents(id, options),
           getHomeworks(id, options),
         ]);
         dispatch(courseActions.loadShowCourse(course));
-        dispatch(courseActions.showStudents(students));
         dispatch(courseActions.loadhomeworks(homeworks));
         dispatch(courseActions.finishLoading());
       } catch (error) {
