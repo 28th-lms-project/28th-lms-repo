@@ -2,6 +2,7 @@ import { useId, useState } from "react";
 import { useDispatch } from "react-redux";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
 import {
+  getCourse,
   getCourses,
   updateCourse,
 } from "../../../../api/admin/course/courseApi";
@@ -82,7 +83,9 @@ export default function CourseEditModal({ course, onClose }) {
 
     setSaving(true);
     try {
-      const updated = await updateCourse(course.id, modifyCourse);
+      // 수정 API는 과정 ID만 돌려주므로, 저장 뒤 과정 정보를 다시 조회한다
+      await updateCourse(course.id, modifyCourse);
+      const updated = await getCourse(course.id);
       // 화면 위쪽 과정 정보 갱신
       dispatch(courseActions.loadShowCourse(updated));
       // 과정 버튼 목록(CourseMain)의 과정 명도 갱신

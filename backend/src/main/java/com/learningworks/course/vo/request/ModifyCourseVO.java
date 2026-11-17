@@ -6,7 +6,9 @@ import lombok.Data;
 
 @Data
 public class ModifyCourseVO {
-	
+
+	/** COURSE.ID - 요청 본문이 아니라 URL 경로의 courseId 로 서비스에서 채운다 */
+	private String id;
 
 	/** COURSE.COURSE_NAME */
 	@NotBlank(message = "과정 명을 입력해주세요.")
