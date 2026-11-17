@@ -37,7 +37,7 @@
 | **데이터** | 표 · 페이지 이동 · 표 확장(체크 선택 · 편집 · 순서 바꾸기 · 시간표) · 두 목록 사이 옮기기 | `StandardDataCatalog.jsx` |
 | **배치 · 탐색** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 3단 배치 · 팝업 창 틀 | `StandardLayoutCatalog.jsx` |
 | **내용** | 시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 인용 · 세로 키-값 · 상자 목록 | `StandardContentCatalog.jsx` |
-| **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 문제 은행 문제 추가 · 수정 · 문제 은행 목록 · 시험 응시 · 시험지 보기 · 주간 접속 기록 · 날짜별 시간표 · 목록 위 추가 폼 · 댓글 수정 · 권한 코드 · 역할별 권한 · 공통 코드 · 로그인 · 비밀번호 다시 확인 · 상담 기록 · 과제 상세(보기 ↔ 수정) · 설문 편집기 | `StandardScreenCatalog.jsx` + `ScreenStudyCatalog.jsx` · `ScreenSystemCatalog.jsx` · `ScreenMyCatalog.jsx` |
+| **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 문제 은행 문제 추가 · 수정 · 문제 은행 목록 · 시험 응시 · 시험지 보기 · 주간 접속 기록 · 날짜별 시간표 · 목록 위 추가 폼 · 댓글 수정 · 메뉴 관리(순서 바꾸기) · 권한 코드 · 역할별 권한 · 공통 코드 · 설문 결과(집계) · 로그인 · 비밀번호 다시 확인 · 상담 기록 · 과제 상세(보기 ↔ 수정) · 설문 편집기 | `StandardScreenCatalog.jsx` + `ScreenStudyCatalog.jsx` · `ScreenSystemCatalog.jsx` · `ScreenMyCatalog.jsx` |
 | 토큰 (통일 전 값) | **통일 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
@@ -331,6 +331,7 @@
    - ~~7차 (문제 은행): 문제 은행 문제 추가 · 수정 폼 + `ListEditor` `renderMarker`(줄 앞 정답 표시) + 통일 전 탭에 `AddTest`~~ → 완료 (8장)
    - ~~8차 (화면 전체 점검): 화면 파일마다 표준 대응을 분류(아래 "화면별 표준 대응")하고, 조합 규칙이 필요하거나 부품이 모자란 화면 13개의 예시와 부품(문항 번호 이동 · 가운데 카드 · 강조 행 · 왼쪽 좁은 배치)을 만듦~~ → 완료 (8장)
    - ~~9차 (PR 전 점검): 공통 부품 버그 · 접근성 수정(`Button` `loading` · `Modal` Esc · Tab · `Field` 자동 연결 · `SelectBox` 메뉴 · `Table` · `Tabs` · `TransferList` · 토스트 · `ListEditor`, 8장 각 부품) + 문서 보강(화면 옮기는 순서 · 기존 컴포넌트 대응 · 어떤 걸 쓰나 · 공통 규칙 · 팀이 정할 것)~~ → 완료
+   - ~~10차 (보류 정리): 메뉴 관리 순서 바꾸기 예시(`Table` 순서 + 저장 바), 작은 화면 사이드바 서랍(실제 `SideMenu`), 설문 결과 집계 예시. 보류였던 세 가지를 모두 결정함~~ → 완료
 3. 화면들을 표준으로 옮기면서 카탈로그의 해당 `Variant`를 지웁니다 (아래 "화면 옮기는 순서"). 카탈로그가 비면 샘플 페이지가 곧 디자인 시스템 페이지가 됩니다.
 4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`(가능하면 표준)으로 옮깁니다. `sample/Modal`은 쓰는 곳을 `common/ui/Modal` · `useConfirm`으로 바꾼 뒤 삭제합니다.
 
@@ -348,7 +349,7 @@
 4. **새 표준 부품 · 토큰 승인**: 누가 어떻게 승인할지 (예: PR 리뷰 1명 이상 + 8장 · 7장에 추가).
 5. **통일 전 `Variant`를 지우는 시점과 담당**: 제안은 화면을 옮긴 사람이 같은 PR에서 지우는 것.
 6. **옛 컴포넌트를 지우는 시점**: `sample/` 중복 컴포넌트 · `common/input/Input.jsx` · `PageContainer` · `Section`.
-7. **보류 항목을 할지**: 메뉴 끌어 순서 바꾸기, 접힌 사이드바(아이콘만), 설문 응답 집계 (아래 "화면별 표준 대응"의 보류).
+7. **메뉴 아이콘**: 메뉴 데이터에 아이콘을 넣을지. 넣으면 접힌 사이드바를 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿀 수 있습니다 (지금은 접힌 상태에서 메뉴를 표시하지 않음, 8장 "사이드 메뉴").
 
 ### 화면 옮기는 순서
 
@@ -434,7 +435,7 @@
 | `ExamSetTable` · `my/course/MyTest` | 부품 | `Table`. 역할마다 다른 칸은 `columns` 배열을 걸러서 (칸을 숨기는 CSS 아님), 공개 Y/N은 `Badge` + 바꿀 때 `useConfirm`. 규칙: 목록에서 바로 바꾸면 `Badge` · 버튼 + `useConfirm`, 폼 안에서 저장과 함께 바꾸면 체크박스(`form-check`, 시험 문제 고르기 예시) |
 | `CourseTableComponent/CourseSurvey` · `CourseSurveyForm` | 예시 | 목록 위 추가 폼 (+ `SelectBox`, 읽기 전용 값은 `readOnly` 입력 또는 `hint`). 목록은 `Table`, 눌러서 여는 칸(설문 명 · 결과 보기)은 링크 · 버튼처럼 보이게 (`btn-text`), 삭제는 `useConfirm` |
 | `CourseSurveyAns` (설문 응답 팝업) | 부품 | 팝업 창 틀(`popup-page`) + `QuestionBlock`(보기 radio · checkbox, 배점 없음) + 주관식 `Field` textarea + 바닥 [저장]. 결과는 토스트, 제출 뒤 창 닫기 |
-| `CourseSurveyResult` (설문 결과 팝업) | 부품 · 보류 1 | `popup-page` + `layout-split-start` + `list-group`(응답자, `aria-current`) + 읽기 전용 `QuestionBlock`(`value`만, `onChange` 없음) · `answer-box`(주관식). **보류**: 보기별 응답 수 · 비율 집계는 표준 없음 (필요하면 `Progress`로 막대) |
+| `CourseSurveyResult` (설문 결과 팝업) | 예시 (10차) | 설문 결과 (문항별 집계 \| 학생별 응답). 지금 화면에 없는 집계(보기별 응답 수 · 비율)는 설문 담당자가 만들 예정 → 이 예시를 따름 |
 | `HomeworkItem` · `HomeworkSubmitStatus` · `HomeworkDetails` | 예시 | 과제 상세 |
 | `HomeWorkList` · `HomeworkForm` · `CourseStudentList` | 예시 (8차) | 목록 위 추가 폼 |
 | `HomeworkReply` · `ReplyForm` | 예시 (8차) | 댓글 같은 자리 수정 · 권한 · 마감 잠금. 주소 자동 링크는 로직이라 표준 밖 |
@@ -450,7 +451,7 @@
 | `admin/system/access/Access` | 예시 (8차) | 권한 코드 관리 (연쇄 선택 · 같은 폼으로 추가 · 수정) |
 | `access-role/AccessRole` | 예시 (8차) | 역할별 권한 (저장 전 변경 표시). 새 클래스 `layout-split-start` |
 | `admin/system/code/*` | 예시 (8차) | 공통 코드 (패널 하나가 보기 · 수정 · 추가). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
-| `admin/system/menu/Menu` · `MenuColumn` | 부품 · 보류 1 | 3단 배치 + 상세 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. **보류**: 목록(`list-group`)을 끌어 순서 바꾸기는 표준 없음 → 필요하면 순서 칸을 `Table onReorder`로 |
+| `admin/system/menu/Menu` · `MenuColumn` | 예시 (10차) | 메뉴 관리 (3단 `Table` + 순서 바꾸기 + 순서 저장 바). 상세는 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. 지금 화면의 "놓자마자 저장" 대신 저장 바로 한 번에 (역할 관리와 같게), 키보드(↑ ↓)로도 옮길 수 있게 됨 |
 | `my/course/MyCourse` | 부품 | `Tabs` (고른 탭은 주소 `?tab=`에) |
 | `my/course/MyCourseData` | 예시 · 제외 1 | 목록 \| 상세 · 상세 화면. **제외**: 리치 텍스트 `Editor` (6장 "표준을 만들지 않기로 한 것") |
 | `my/course/MyTimetable` | 부품 + 예시 (8차) | 날짜별 시간표 (새 클래스 `tr.is-highlight`). 하루 보기는 `Table bordered`, 업로드는 `FilePicker` |
@@ -459,7 +460,7 @@
 | `my/info/MyInfo` · `MyPassword` · `login/Login` | 부품 + 예시 (8차) | 로그인 · 비밀번호 다시 확인. 새 부품 `auth-page` · `auth-card` |
 | `my/info/MyInfoForm` · `MyPasswordForm` | 부품 | `Field` + `form-stack` + `desc-list`(읽기 전용 값). 성공은 토스트, 비밀번호 규칙(8~20자)은 처음부터 `hint`로 |
 | `main/Main` | 예시 | 대시보드 |
-| `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 · 보류 1 | 사이드바 자체가 기준 (토큰 · 테마 완료). **보류**: 접힌 사이드바(아이콘만)는 `SideNav` 표준에 없음 |
+| `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
 | `menu/MenuGuard` · `login/IsLogin` | 부품 | 로직. 화면은 `StatusBox` (loading · error · denied) |
 | `Section.jsx` | 부품 | `Panel` |
 | `my/course/MyCourseList` · `MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가 |
@@ -472,6 +473,7 @@
 - `FeedbackProvider`가 앱 전체를 감쌉니다 (`useToast` · `useConfirm`을 어디서나 쓸 수 있음).
 - 일부 화면 CSS module의 `font-family` 한 줄을 `var(--font-sans)`로 바꿨습니다 (위 "글꼴을 Pretendard로 정한 이유").
 - 사이드바(`menu/SideMenu` · `UserProfile`)는 색을 토큰 · 테마(brand)로 바꿨습니다. 현재 메뉴 빨강이 조금 밝아지고, 프로필 아래에 테마 견본이 생깁니다 (7장).
+- 화면 폭 768px 이하에서는 사이드바가 숨고 왼쪽 위 [☰ 메뉴] 버튼으로 여는 서랍이 됩니다. 본문 여백도 그 폭에서 `64px 16px 24px`로 바뀝니다 (`layout/MainLayout.module.css`).
 - 그 밖의 기존 화면 모양은 그대로입니다. 표준 클래스는 새 코드(샘플 페이지)에서만 씁니다.
 
 ---
@@ -518,7 +520,7 @@
 | 크기 | `--control-height-{sm · md}` · `--control-padding-x-{sm · md}` · `--table-header-height` · `--table-row-height` · `--modal-width-{sm · md · lg}` |
 | 모서리 | `--radius` · `--radius-lg` · `--radius-pill` |
 | 그림자 | `--shadow-sm`(패널) · `--shadow-md`(토스트) · `--shadow-lg`(모달). 다크에서는 밝은 1px 링 + 진한 그림자 (9장) |
-| 쌓임 순서 | `--z-sticky` · `--z-modal` · `--z-toast` |
+| 쌓임 순서 | `--z-sticky`(10) · `--z-drawer`(900, 작은 화면 사이드바 서랍) · `--z-modal`(1000) · `--z-toast`(1100) |
 
 ### 옮길 때 대응표
 
@@ -1090,7 +1092,7 @@ import Pagination from "../common/ui/Pagination";
 | 열 · 행 클래스 | 열에 `className`(머리글 · 칸 모두, 예: `col-highlight` 오늘 열), `rowClassName={(row) => ...}`(예: `is-break` 쉬는 시간 행) |
 | 체크 선택 | `checkedKeys` · `onCheckedChange` → 맨 앞 체크박스 칸 + 머리글 전체 선택(이 페이지만, 일부면 `-`). 못 고르는 행은 `isRowCheckable`. 체크박스 이름은 `rowLabel={(row) => row.name}` → "홍길동 선택" (없으면 key) |
 | 편집 표 | 칸을 `render`로 `<input className="cell-input">`, `rowStatus={(row) => row.status}`(`"added"` · `"modified"` · `"deleted"`) → 왼쪽 선 + 배경 (삭제 예정은 취소선) |
-| 순서 바꾸기 | `onReorder(from, to)` → 맨 앞 손잡이 칸. 손잡이를 잡고 끌거나 손잡이에서 ↑ ↓ 키 (행의 다른 곳은 끌리지 않아 글자 선택 · 클릭 · 입력이 그대로). 못 옮기는 행은 `isRowLocked` ("고정" 표시, 그 자리로 놓기도 막음). 잠긴 행을 건너가는 이동도 막음 |
+| 순서 바꾸기 | `onReorder(from, to)` → 맨 앞 손잡이 칸. 손잡이를 잡고 끌거나 손잡이에서 ↑ ↓ 키 (행의 다른 곳은 끌리지 않아 글자 선택 · 클릭 · 입력이 그대로). 못 옮기는 행은 `isRowLocked` ("고정" 표시, 그 자리로 놓기도 막음). 잠긴 행을 건너가는 이동도 막음. **저장은 바로 하지 않고** 위에 "순서가 변경되었습니다 [되돌리기] [순서 저장]" `Callout`으로 한 번에 (역할 관리 · 메뉴 관리). 목록처럼 보이는 곳(메뉴 3단)도 작은 `Table`로 만들어 이 기능을 씀 (`list-group`에는 끌기가 없음) |
 
 - 컴포넌트 없이: `<div className="table-wrap"><table className="table table-hover">…`, 행에 `is-selected` · `is-clickable` · `is-muted`, 칸에 `col-num` · `col-center` · `col-actions` · `cell-mono`.
 - 공통 `Grid`와 대응: `checkable` → `checkedKeys`, 편집 모드(`type: add · modify · del`) → `rowStatus` + `cell-input`, `activeRows` → `selectedKey`. `Grid`처럼 표가 데이터를 들고 있지 않고, **바뀐 목록은 화면이 state로 들고 있다가 저장할 때 보냅니다** (샘플 표준 탭 "데이터"의 편집 표 예시).
@@ -1160,6 +1162,8 @@ import TransferList from "../common/ui/TransferList";
 - 색은 `--color-sidebar-*` 토큰입니다. 실제 사이드바(`menu/SideMenu` · `UserProfile`)도 같은 토큰을 씁니다 (2026-11-16, 직접 적은 색 → 토큰). 다크 모드와 상관없이 항상 어둡고, 배경 · 현재 메뉴 색은 테마(7장 "강조색 (primary) 과 테마 (brand)")를 따릅니다.
 - 그룹은 `<details open>`이라 제목을 누르면 접힙니다. 현재 화면 항목은 `aria-current="page"` (테마의 현재 메뉴 색 글자 + 왼쪽 선).
 - 사이드바 프로필 아래에 테마 견본(`SwatchPicker`)이 있습니다.
+- **접기 (큰 화면)**: [‹]로 60px까지 접어 본문을 넓힙니다. 접힌 상태에서는 메뉴를 **표시하지 않습니다**. 메뉴에 아이콘이 없어서 약어("회" · "과")나 작은 글자는 겹치거나 잘려 결국 다시 펼쳐야 알 수 있기 때문입니다. 메뉴 데이터에 아이콘이 생기면 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿉니다 (6장 "팀이 정할 것").
+- **서랍 (768px 이하)**: 사이드바를 숨기고 왼쪽 위 [☰ 메뉴] 버튼(`aria-expanded`)으로 화면 위에 덮어 엽니다 (`--z-drawer`, 배경 `--color-overlay`). 배경 누르기 · Esc · 메뉴를 눌러 이동하면 닫히고, 열리면 [×]에, 닫히면 [☰]에 포커스가 갑니다. 이 폭에서는 접기 버튼을 쓰지 않습니다.
 
 | 비슷한 것 | 쓰는 곳 |
 | --- | --- |
@@ -1388,11 +1392,13 @@ import Comment from "../common/ui/Comment";
 | 날짜별 시간표 | `table.table-bordered`(rowSpan) + `tr.is-highlight` + `Panel`(접기) | `MyTimetable` | 위 "한 묶음이 여러 줄인 표" |
 | 목록 위 추가 폼 | `toolbar` + `Panel`(form) + `Field` + `SelectBox` + `datetime-local` + `Table` | `MyInterview` · `HomeWorkList` · `CourseStudentList` | 아래 "목록 위 추가 폼 vs 모달" |
 | 댓글 수정 | `Comment`(actions · badge) + 같은 자리 textarea + `Callout`(마감) | `HomeworkReply` | 아래 "할 수 없는 동작" |
+| 메뉴 관리 | `layout-3col` + `Panel`(flush) + `Table`(`onReorder` · `isRowLocked` · `selectedKey` · `isRowMuted`) + `Callout`(actions) | `Menu` · `MenuColumn` | 각 단은 작은 `Table`: 행을 누르면 선택, 손잡이를 끌거나 ↑ ↓ 키로 순서. 여러 단 · 여러 번 옮긴 뒤 "순서가 변경되었습니다: 바뀐 목록 이름" 바에서 한 번에 저장. 옮길 수 없는 메뉴는 `isRowLocked`(고정) |
 | 권한 코드 관리 | `Panel`(form) + 연쇄 select(`input-range`) + `form-row`(도메인 · 권한 · 이름) + `Table`(선택 행) | `Access` | 연쇄 선택: 위를 고르기 전 아래 비활성 + 안내, 위를 바꾸면 아래 비움. 권한은 원래 화면처럼 서버가 준 목록에서 "설명 (동작)"으로 고르고(등록된 것은 비활성), 고르면 이름을 채움. 결과 코드는 권한 칸 힌트로 (사이 기호 · 따로 상자 없음). 표의 [수정] → 위 폼이 수정 모드(제목 · 배지 · 버튼 문구), 못 바꾸는 값은 잠금 + 이유 |
 | 역할별 권한 | `layout-split-start` + `list-group` + 연쇄 select(필터) + `TransferList`(`leftTone` · `rightTone`) + `Callout`(actions) | `AccessRole` | 미허용 붉은색 · 허용 초록색. 옮긴 것은 바로 저장하지 않고 "저장하지 않은 변경 +n · -n" + [되돌리기] [저장]. 변경이 있는데 다른 역할을 고르면 확인 |
 | 공통 코드 | `layout-3col` + `list-group` + `Table`(선택 · 흐린 행) + `Panel` + `desc-list` · `Field` · `form-check`(사용) | `Code` · `AddCode` · `UpdateCode` · `CodeForm` | 상세 패널 하나가 보기 · 수정 · 추가. [저장]은 바뀐 게 있을 때만. 추가한 뒤 코드(ID)는 못 바꿈 |
 | 로그인 · 비밀번호 다시 확인 | `auth-page` + `auth-card` + `Field` + `Callout` + `Button block` | `Login` · `MyPassword` | 위 "가운데 카드" |
 | 상담 기록 | `Callout`(actions) + `desc-list` + `Panel`(actions) + `card-grid` + `Badge`(수준) + `ChoiceGroup` + `Field count` + `timeline` + `StatCard` | `MyCounsel` | 기본 정보가 없으면 위에 안내 + 아래 구역 잠금(버튼 비활성 + 이유). 구역마다 [수정] → [취소] [저장]. 고칠 수 없는 기록은 등록 전에 확인 |
+| 설문 결과 (집계) | `popup-page` + 응답률(`progress-row` + `Progress`) + `Tabs`(문항별 집계 · 학생별 응답) + `Panel` + `Table`(보기 · 비율 막대 · 응답 수) · `list-boxed`(주관식) / `layout-split-start` + `list-group` + 읽기 전용 `QuestionBlock` · `answer-box` | `CourseSurveyResult` (+ 담당자가 만들 집계) | 객관식은 보기마다 응답 수 + 비율 막대. 여러 개 고르기는 응답자 기준이라 합이 100%를 넘는다고 안내. 주관식은 빈 답을 빼고 목록. 학생별은 응답자 목록 | 그 학생의 답 (빈 답은 `answer-box-empty`) |
 
 **목록 위 추가 폼 vs 모달**
 

@@ -558,10 +558,167 @@ const CodeScreen = () => {
     );
 };
 
+/* ───── 메뉴 관리: 3단 + 순서 바꾸기 (Menu · MenuColumn) ───── */
+const MENU_ITEMS = {
+    home: { title: "대시보드", fixed: true },
+    sys: { title: "시스템 관리" },
+    course: { title: "과정 관리" },
+    my: { title: "내 강의실" },
+    member: { title: "회원 관리" },
+    role: { title: "역할 관리" },
+    menu: { title: "메뉴 관리" },
+    code: { title: "코드 관리", unused: true },
+    courseList: { title: "과정 목록" },
+    exam: { title: "시험 관리" },
+    timetable: { title: "시간표" },
+    data: { title: "자료실" },
+    memberList: { title: "회원 목록" },
+    memberAdd: { title: "회원 등록" },
+    roleList: { title: "역할 목록" },
+    accessRole: { title: "역할별 권한" },
+    menuList: { title: "메뉴 목록" },
+    commonCode: { title: "공통 코드" },
+    courseDetail: { title: "과정 상세" },
+    courseAdd: { title: "과정 등록" },
+    bank: { title: "문제 은행" },
+    examAdd: { title: "시험 만들기" },
+    today: { title: "오늘 시간표" },
+    dataList: { title: "자료 목록" },
+};
+/** 부모 id → 자식 id 순서 (ROOT = 대메뉴) */
+const MENU_ORDER = {
+    ROOT: ["home", "sys", "course", "my"],
+    home: [],
+    sys: ["member", "role", "menu", "code"],
+    course: ["courseList", "exam"],
+    my: ["timetable", "data"],
+    member: ["memberList", "memberAdd"],
+    role: ["roleList", "accessRole"],
+    menu: ["menuList"],
+    code: ["commonCode"],
+    courseList: ["courseDetail", "courseAdd"],
+    exam: ["bank", "examAdd"],
+    timetable: ["today"],
+    data: ["dataList"],
+};
+const LEVEL_NAMES = ["대메뉴", "중메뉴", "소메뉴"];
+const sameOrder = (a, b) => a.length === b.length && a.every((id, i) => id === b[i]);
+
+const MenuOrderScreen = () => {
+    const toast = useToast();
+    const [saved, setSaved] = useState(MENU_ORDER);
+    const [draft, setDraft] = useState(MENU_ORDER);
+    const [top, setTop] = useState("sys");
+    const [mid, setMid] = useState("member");
+
+    const parents = ["ROOT", top, mid];
+    const changed = Object.keys(draft).filter((p) => !sameOrder(draft[p], saved[p]));
+    const changedNames = changed.map((p) => (p === "ROOT" ? "대메뉴" : MENU_ITEMS[p].title));
+
+    const reorder = (parent) => (from, to) =>
+        setDraft((prev) => {
+            const next = [...prev[parent]];
+            const [moved] = next.splice(from, 1);
+            next.splice(to, 0, moved);
+            return { ...prev, [parent]: next };
+        });
+
+    const select = (level, id) => {
+        if (level === 0) {
+            setTop(id);
+            setMid(draft[id][0] ?? "");
+        } else if (level === 1) setMid(id);
+    };
+
+    const save = () => {
+        setSaved(draft);
+        toast.success(`순서를 저장했습니다: ${changedNames.join(" · ")} (예시)`);
+    };
+
+    const columnsFor = (level) => [
+        {
+            key: "title",
+            title: LEVEL_NAMES[level],
+            render: (r) => (
+                <>
+                    {r.title}
+                    {r.unused && <span className="field-hint"> (미사용)</span>}
+                </>
+            ),
+        },
+        ...(level < 2 ? [{ key: "count", title: "하위", width: "56px", align: "num", render: (r) => draft[r.id]?.length ?? 0 }] : []),
+    ];
+
+    return (
+        <Variant
+            name="메뉴 관리: 3단 + 순서 바꾸기 (끌기 · 키보드) + 순서 저장 바"
+            source="layout-3col · Panel(flush) · Table(onReorder · isRowLocked · selectedKey · isRowMuted) · Callout(actions)"
+            note={
+                "Menu · MenuColumn(목록을 끌어 놓으면 바로 저장)을 표준으로. 각 단은 작은 Table: 행을 누르면 선택, 손잡이(⠿)를 끌거나 손잡이에서 ↑ ↓ 키로 순서 바꾸기.\n" +
+                "여러 단 · 여러 번 옮긴 뒤 위 '순서가 변경되었습니다' 바에서 한 번에 [순서 저장] (역할 관리와 같은 규칙). 바뀐 목록 이름을 바에 적고, [되돌리기]는 저장된 순서로.\n" +
+                "옮길 수 없는 메뉴(대시보드)는 isRowLocked: 손잡이 대신 '고정', 그 자리로 놓거나 건너뛸 수 없음. 미사용은 흐리게"
+            }
+            block
+        >
+            <div className="form-stack" style={{ width: "100%" }}>
+                {changed.length > 0 && (
+                    <Callout
+                        tone="info"
+                        actions={
+                            <>
+                                <Button size="sm" onClick={() => setDraft(saved)}>
+                                    되돌리기
+                                </Button>
+                                <Button size="sm" variant="primary" onClick={save}>
+                                    순서 저장
+                                </Button>
+                            </>
+                        }
+                    >
+                        순서가 변경되었습니다: {changedNames.join(" · ")}
+                    </Callout>
+                )}
+                <div className="layout-3col">
+                    {parents.map((parent, level) => {
+                        const rows = (parent ? draft[parent] ?? [] : []).map((id) => ({ id, ...MENU_ITEMS[id] }));
+                        const title = level === 0 ? "대메뉴" : `${LEVEL_NAMES[level]} · ${MENU_ITEMS[parent]?.title ?? ""}`;
+                        return (
+                            <Panel
+                                key={level}
+                                title={title}
+                                flush
+                                actions={
+                                    <Button size="sm" icon={icons.add}>
+                                        추가
+                                    </Button>
+                                }
+                            >
+                                <Table
+                                    columns={columnsFor(level)}
+                                    rows={rows}
+                                    size="sm"
+                                    selectedKey={level === 0 ? top : level === 1 ? mid : undefined}
+                                    onRowClick={level < 2 ? (r) => select(level, r.id) : undefined}
+                                    isRowMuted={(r) => !!r.unused}
+                                    onReorder={reorder(parent)}
+                                    isRowLocked={(r) => !!r.fixed}
+                                    emptyText="하위 메뉴가 없습니다."
+                                    ariaLabel={`${title} (예시)`}
+                                />
+                            </Panel>
+                        );
+                    })}
+                </div>
+            </div>
+        </Variant>
+    );
+};
+
 export const ScreenSystemCatalog = () => (
     <>
-        <GroupTitle>화면 예시: 시스템 관리 (권한 · 코드)</GroupTitle>
+        <GroupTitle>화면 예시: 시스템 관리 (메뉴 · 권한 · 코드)</GroupTitle>
         <Variants wide>
+            <MenuOrderScreen />
             <AccessScreen />
             <AccessRoleScreen />
             <CodeScreen />

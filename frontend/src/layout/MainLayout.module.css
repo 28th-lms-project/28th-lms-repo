@@ -12,3 +12,10 @@
   padding: 24px 32px;
   box-sizing: border-box;
 }
+
+/* 768px 이하: 사이드바는 서랍(SideMenu)이라 자리를 차지하지 않음. 왼쪽 위 [☰ 메뉴] 버튼 아래부터 본문 */
+@media screen and (max-width: 768px) {
+  .content {
+    padding: 64px 16px 24px;
+  }
+}

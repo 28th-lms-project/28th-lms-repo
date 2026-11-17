@@ -686,6 +686,160 @@ const ReplyEditScreen = () => {
     );
 };
 
+/* ───── 설문 결과: 문항별 집계 | 학생별 응답 (CourseSurveyResult + 집계) ───── */
+const SV_STUDENTS = ["홍길동", "김철수", "이영희", "박민수", "최지우", "정해인", "윤아름", "임수정", "한지민"].map((name, i) => ({ id: `r${i + 1}`, name }));
+const SV_TOTAL = 12; // 수강생 수 (3명 미응답)
+const SV_QUESTIONS = [
+    { id: "q1", type: "radio", subject: "강의 내용에 얼마나 만족하나요?", options: ["매우 만족", "만족", "보통", "불만족"] },
+    { id: "q2", type: "checkBox", subject: "도움이 된 것을 모두 고르세요.", options: ["실습", "예제 코드", "질의응답", "과제 피드백"] },
+    { id: "q3", type: "text", subject: "바라는 점을 적어 주세요." },
+];
+/** 학생별 답: 보기는 번호(1부터), 주관식은 글 */
+const SV_ANSWERS = {
+    r1: { q1: "1", q2: ["1", "2"], q3: "실습 시간이 조금 더 길면 좋겠습니다." },
+    r2: { q1: "2", q2: ["1"], q3: "" },
+    r3: { q1: "1", q2: ["1", "3", "4"], q3: "과제 피드백이 빨라서 좋았습니다." },
+    r4: { q1: "3", q2: ["2"], q3: "" },
+    r5: { q1: "2", q2: ["1", "2"], q3: "예제 코드를 미리 받고 싶습니다." },
+    r6: { q1: "1", q2: ["4"], q3: "" },
+    r7: { q1: "2", q2: ["1", "3"], q3: "" },
+    r8: { q1: "4", q2: [], q3: "진도가 조금 빠릅니다." },
+    r9: { q1: "1", q2: ["1", "2", "3"], q3: "" },
+};
+const SV_TYPE_LABEL = { radio: "하나 고르기", checkBox: "여러 개 고르기", text: "글로 답하기" };
+
+const countAnswers = (q) => {
+    const list = Object.values(SV_ANSWERS).map((a) => a[q.id]);
+    if (q.type === "text") return list.filter((v) => v && v.trim());
+    return q.options.map((label, i) => {
+        const value = String(i + 1);
+        return { id: value, label, count: list.filter((v) => (Array.isArray(v) ? v.includes(value) : v === value)).length };
+    });
+};
+
+const SurveyResultScreen = () => {
+    const tabsId = useId();
+    const [tab, setTab] = useState("summary");
+    const [studentId, setStudentId] = useState("r1");
+    const answered = SV_STUDENTS.length;
+    const student = SV_STUDENTS.find((s) => s.id === studentId);
+
+    return (
+        <Variant
+            name="설문 결과: 문항별 집계 | 학생별 응답"
+            source="popup-page · Progress · Tabs · Table(막대 칸) · list-boxed · layout-split-start · list-group · QuestionBlock(읽기 전용) · answer-box"
+            note={
+                "CourseSurveyResult(학생 한 명씩 답 보기)에 집계를 더한 표준. 위에 응답률(응답 n / 수강생 N명 + 막대), 탭 [문항별 집계 | 학생별 응답].\n" +
+                "집계: 객관식은 보기마다 응답 수 + 비율 막대 (여러 개 고르기는 응답자 대비 비율이라 합이 100%를 넘을 수 있음을 안내), 주관식은 답 목록(빈 답 제외).\n" +
+                "학생별: 왼쪽 응답자 목록(aria-current) | 오른쪽 그 학생의 답 (QuestionBlock은 value만 넘겨 읽기 전용, 주관식은 answer-box, 빈 답은 answer-box-empty)"
+            }
+            block
+        >
+            <div className="popup-page" style={{ width: "100%", minHeight: "auto", border: "1px solid var(--color-border-light)", borderRadius: "var(--radius-lg)" }}>
+                <header className="popup-header">
+                    <h1 className="popup-title">사후 설문 결과 · 풀스택 28기</h1>
+                </header>
+                <div className="popup-body form-stack">
+                    <div className="progress-row" style={{ maxWidth: "420px" }}>
+                        <span className="field-hint" style={{ whiteSpace: "nowrap" }}>
+                            응답 {answered} / {SV_TOTAL}명
+                        </span>
+                        <Progress value={answered} max={SV_TOTAL} label="응답률" showValue />
+                    </div>
+                    <Tabs
+                        idBase={tabsId}
+                        items={[
+                            { id: "summary", label: "문항별 집계" },
+                            { id: "student", label: "학생별 응답", count: answered },
+                        ]}
+                        value={tab}
+                        onChange={setTab}
+                        ariaLabel="결과 보기 방식"
+                    />
+                    <TabPanel idBase={tabsId} tabId={tab}>
+                        {tab === "summary" ? (
+                            <div className="form-stack">
+                                {SV_QUESTIONS.map((q, i) => {
+                                    const result = countAnswers(q);
+                                    return (
+                                        <Panel key={q.id} title={`${i + 1}. ${q.subject}`} badge={<Badge>{SV_TYPE_LABEL[q.type]}</Badge>} flush={q.type !== "text"}>
+                                            {q.type === "text" ? (
+                                                result.length ? (
+                                                    <ul className="list-boxed">
+                                                        {result.map((text) => (
+                                                            <li key={text}>{text}</li>
+                                                        ))}
+                                                    </ul>
+                                                ) : (
+                                                    <StatusBox type="empty" size="sm" title="적은 답이 없습니다." />
+                                                )
+                                            ) : (
+                                                <Table
+                                                    size="sm"
+                                                    rows={result}
+                                                    ariaLabel={`${i + 1}번 문항 집계`}
+                                                    columns={[
+                                                        { key: "label", title: "보기", width: "28%" },
+                                                        {
+                                                            key: "bar",
+                                                            title: "비율",
+                                                            render: (r) => <Progress value={r.count} max={answered} label={`${r.label} 비율`} showValue size="sm" />,
+                                                        },
+                                                        { key: "count", title: "응답", width: "72px", align: "num", render: (r) => `${r.count}명` },
+                                                    ]}
+                                                />
+                                            )}
+                                            {q.type === "checkBox" && (
+                                                <p className="field-hint" style={{ margin: "8px 12px" }}>
+                                                    여러 개 고르기라 비율의 합이 100%를 넘을 수 있습니다 (응답자 {answered}명 기준).
+                                                </p>
+                                            )}
+                                        </Panel>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="layout-split layout-split-start" style={{ "--layout-aside-width": "180px" }}>
+                                <Panel title="응답자" subtitle={`${answered}명`} flush>
+                                    <ul className="list-group">
+                                        {SV_STUDENTS.map((s) => (
+                                            <li key={s.id}>
+                                                <button type="button" className="list-item" aria-current={s.id === studentId || undefined} onClick={() => setStudentId(s.id)}>
+                                                    {s.name}
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </Panel>
+                                <div className="form-stack">
+                                    <p className="field-hint">{student.name}의 응답</p>
+                                    {SV_QUESTIONS.map((q, i) => {
+                                        const value = SV_ANSWERS[studentId][q.id];
+                                        return q.type === "text" ? (
+                                            <QuestionBlock key={q.id} no={i + 1} title={q.subject}>
+                                                <div className={`answer-box${value ? "" : " answer-box-empty"}`}>{value || "적지 않음"}</div>
+                                            </QuestionBlock>
+                                        ) : (
+                                            <QuestionBlock
+                                                key={q.id}
+                                                no={i + 1}
+                                                title={q.subject}
+                                                options={q.options.map((label, n) => ({ value: String(n + 1), label }))}
+                                                multiple={q.type === "checkBox"}
+                                                value={value}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+                    </TabPanel>
+                </div>
+            </div>
+        </Variant>
+    );
+};
+
 export const ScreenStudyCatalog = () => (
     <>
         <GroupTitle>화면 예시: 시험 응시 · 문제 은행 목록</GroupTitle>
@@ -699,6 +853,10 @@ export const ScreenStudyCatalog = () => (
             <TimetableScreen />
             <InlineAddScreen />
             <ReplyEditScreen />
+        </Variants>
+        <GroupTitle>화면 예시: 설문 결과 (집계)</GroupTitle>
+        <Variants wide>
+            <SurveyResultScreen />
         </Variants>
     </>
 );

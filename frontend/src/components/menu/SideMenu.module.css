@@ -223,3 +223,106 @@
   padding: 0.5rem;
   margin-bottom: 1rem;
 }
+
+/* ───── 작은 화면 (768px 이하): 서랍 ─────
+ * 사이드바는 화면 밖(왼쪽)에 두고 [☰ 메뉴]로 위에 덮어 연다. 접기(collapsed)는 쓰지 않음.
+ * z-index: --z-drawer (모달보다 아래, 본문보다 위)
+ */
+.drawerToggle,
+.drawerClose,
+.drawerBackdrop {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .sideMenu,
+  .sideMenu.collapsed {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: calc(var(--z-drawer) + 1);
+    width: min(280px, 85vw);
+    min-width: 0;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform 0.25s ease,
+      visibility 0s linear 0.25s;
+  }
+
+  .sideMenu.drawerOpen {
+    transform: translateX(0);
+    visibility: visible;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.25s ease;
+  }
+
+  .sideMenu.collapsed .menuBody,
+  .sideMenu.collapsed .logo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .collapseBtn {
+    display: none;
+  }
+
+  .drawerClose {
+    display: block;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--color-sidebar-text);
+    background: none;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .drawerClose:focus-visible,
+  .drawerToggle:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .drawerToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: var(--z-drawer);
+    height: var(--control-height-md);
+    padding: 0 12px;
+    font: inherit;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-sidebar-text-strong);
+    background-color: var(--color-sidebar-bg);
+    border: 0;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+  }
+
+  .drawerBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-drawer);
+    background-color: var(--color-overlay);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sideMenu,
+  .sideMenu.drawerOpen {
+    transition: none;
+  }
+}
