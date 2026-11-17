@@ -28,6 +28,8 @@ export default function HomeworkSubmitStatus() {
   const [students, setStudents] = useState([]);
   const [pickCount, setPickCount] = useState("");
   const [pickedNames, setPickedNames] = useState([]);
+  // 수강생 목록 조회 권한(COURSE_STUDENT_READ)이 없으면(수강생 역할) 제출 현황을 숨긴다
+  const [forbidden, setForbidden] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -38,9 +40,15 @@ export default function HomeworkSubmitStatus() {
         });
         setStudents(result ?? []);
       } catch (error) {
-        if (error.name !== "AbortError") {
-          alert(error.message);
+        if (error.name === "AbortError") {
+          return;
         }
+        // 403: 권한 없는 역할(수강생)은 알림 없이 숨김. 그 외 오류는 알림
+        if (error.httpStatusCode === 403) {
+          setForbidden(true);
+          return;
+        }
+        alert(error.message);
       }
     })();
     return () => {
@@ -79,6 +87,10 @@ export default function HomeworkSubmitStatus() {
         .map((student) => student.name),
     );
   };
+
+  if (forbidden) {
+    return null;
+  }
 
   return (
     <div
