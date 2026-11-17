@@ -82,11 +82,11 @@ const TIMETABLE = [
 let nextCodeNo = 4;
 
 const QUESTIONS = [
-    { id: "q1", question: "Java의 기본형이 아닌 것은?", answerType: "객관식-단항", pointAlloc: 5 },
+    { id: "q1", question: "Java의 기본형이 아닌 것은?", answerType: "객관식 (하나)", pointAlloc: 5 },
     { id: "q2", question: "JVM이 하는 일을 설명하세요.", answerType: "주관식", pointAlloc: 10 },
     { id: "q3", question: "String은 불변 객체이다.", answerType: "O/X", pointAlloc: 5 },
-    { id: "q4", question: "배열을 뒤집는 메서드를 작성하세요.", answerType: "코드작성", pointAlloc: 20 },
-    { id: "q5", question: "접근 제한자를 모두 고르세요.", answerType: "객관식-다항", pointAlloc: 10 },
+    { id: "q4", question: "배열을 뒤집는 메서드를 작성하세요.", answerType: "코드 작성", pointAlloc: 20 },
+    { id: "q5", question: "접근 제한자를 모두 고르세요.", answerType: "객관식 (여러 개)", pointAlloc: 10 },
     { id: "q6", question: "오버로딩과 오버라이딩의 차이는?", answerType: "주관식", pointAlloc: 10 },
     { id: "q7", question: "인터페이스는 다중 구현이 가능하다.", answerType: "O/X", pointAlloc: 5 },
 ];
@@ -240,7 +240,7 @@ const TableExtGroup = () => {
     const removeChecked = async () => {
         const ok = await confirm({ message: `${checked.length}명을 과정에서 뺄까요?`, confirmText: "빼기", danger: true });
         if (!ok) return;
-        toast.success(`${checked.length}명을 뺐습니다. (예시)`);
+        toast.success(`${checked.length}명을 뺐습니다.`);
         setChecked([]);
     };
 
@@ -265,7 +265,7 @@ const TableExtGroup = () => {
     const saveCodes = () => {
         if (codes.some((c) => c.status !== "deleted" && !c.name.trim())) return toast.error("이름이 빈 코드가 있습니다.");
         setCodes((prev) => prev.filter((c) => c.status !== "deleted").map((c) => ({ ...c, status: undefined, prevStatus: undefined })));
-        toast.success("저장했습니다. (예시)");
+        toast.success("저장했습니다.");
     };
 
     const codeColumns = [
@@ -346,47 +346,51 @@ const TableExtGroup = () => {
   isRowCheckable={(row) => row.state !== "수료"}
 />`}
                 >
-                    <div className="toolbar" style={{ marginBottom: "12px", alignItems: "center" }}>
-                        <span className="field-hint">{checked.length ? `${checked.length}명 선택됨` : "학생을 고르세요."}</span>
-                        <div className="btn-group">
-                            <Button size="sm" disabled={!checked.length} onClick={() => setChecked([])}>
-                                선택 해제
-                            </Button>
-                            <Button size="sm" variant="danger" disabled={!checked.length} onClick={removeChecked}>
-                                과정에서 빼기
-                            </Button>
+                    <div className="form-stack">
+                        <div className="toolbar" style={{ alignItems: "center" }}>
+                            <span className="field-hint">{checked.length ? `${checked.length}명 선택됨` : "학생을 고르세요."}</span>
+                            <div className="btn-group">
+                                <Button size="sm" disabled={!checked.length} onClick={() => setChecked([])}>
+                                    선택 해제
+                                </Button>
+                                <Button size="sm" variant="danger" disabled={!checked.length} onClick={removeChecked}>
+                                    과정에서 빼기
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                    <Table
-                        ariaLabel="수강생 목록 (체크 선택)"
-                        size="sm"
-                        columns={[
-                            { key: "id", title: "아이디", width: "20%", mono: true },
-                            { key: "name", title: "이름" },
-                            { key: "course", title: "과정", width: "28%" },
-                            {
-                                key: "state",
-                                title: "상태",
-                                width: "16%",
-                                align: "center",
-                                render: (r) => <Badge tone={r.state === "수료" ? "neutral" : "primary"}>{r.state}</Badge>,
-                            },
-                        ]}
-                        rows={studentRows}
-                        checkedKeys={checked}
-                        onCheckedChange={setChecked}
-                        isRowCheckable={(r) => r.state !== "수료"}
-                    />
-                    <div className="table-footer">
-                        <span>전체 {STUDENTS.length}명</span>
-                        <Pagination page={studentPage} totalPages={Math.ceil(STUDENTS.length / STUDENT_PAGE)} onChange={setStudentPage} />
+                        <div>
+                            <Table
+                                ariaLabel="수강생 목록 (체크 선택)"
+                                size="sm"
+                                columns={[
+                                    { key: "id", title: "아이디", width: "20%", mono: true },
+                                    { key: "name", title: "이름" },
+                                    { key: "course", title: "과정", width: "28%" },
+                                    {
+                                        key: "state",
+                                        title: "상태",
+                                        width: "16%",
+                                        align: "center",
+                                        render: (r) => <Badge tone={r.state === "수료" ? "neutral" : "info"}>{r.state}</Badge>,
+                                    },
+                                ]}
+                                rows={studentRows}
+                                checkedKeys={checked}
+                                onCheckedChange={setChecked}
+                                isRowCheckable={(r) => r.state !== "수료"}
+                            />
+                            <div className="table-footer">
+                                <span>전체 {STUDENTS.length}명</span>
+                                <Pagination page={studentPage} totalPages={Math.ceil(STUDENTS.length / STUDENT_PAGE)} onChange={setStudentPage} />
+                            </div>
+                        </div>
                     </div>
                 </Variant>
 
                 <Variant
                     name="편집 표 (rowStatus + cell-input)"
                     source="common/ui/Table.jsx · styles/table.css"
-                    note={"Grid 편집 모드(코드 관리)의 표준. 칸 안 입력은 평소 글자처럼 보이고, 올리거나 누르면 입력 칸.\n추가(초록) · 수정(노랑) · 삭제 예정(빨강 + 취소선) 행은 왼쪽 선과 배경으로 표시하고 저장할 때 한꺼번에 보냄"}
+                    note={"Grid 편집 모드(환경 변수 관리)의 표준. 칸 안 입력은 평소 글자처럼 보이고, 올리거나 누르면 입력 칸.\n추가(초록) · 수정(노랑) · 삭제 예정(빨강 + 취소선) 행은 왼쪽 선과 배경으로 표시하고 저장할 때 한꺼번에 보냄"}
                     block
                     code={`
 const columns = [
@@ -440,11 +444,11 @@ const columns = [
                                             size="sm"
                                             variant="primary"
                                             onClick={() => {
-                                                toast.success("순서를 저장했습니다. (예시)");
+                                                toast.success("순서를 저장했습니다.");
                                                 setRoles(INITIAL_ROLES);
                                             }}
                                         >
-                                            저장
+                                            순서 저장
                                         </Button>
                                     </>
                                 }

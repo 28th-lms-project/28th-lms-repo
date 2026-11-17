@@ -2,14 +2,14 @@
  * 디자인 토큰 (frontend/docs/ui-style-guide.md 6 · 7장)
  * - 팔레트: Open Color 값 그대로. 화면 코드에서는 직접 쓰지 않는다.
  * - 의미 토큰(--color-* 등): 화면 코드는 이것만 쓴다.
- * - 강조색(primary): 팀이 정하는 값. --primary-* 8개를 밝은 · 다크 의미 토큰(--color-primary* 등)이 읽는다.
- *   후보 미리 보기는 :root[data-primary-preview="..."] (샘플 페이지에서만 붙음, 저장 안 함).
- * - 테마(brand): 사용자가 고르는 값. --brand-* 2개를 사이드바 토큰(--color-sidebar-*)만 읽는다.
- *   버튼 · 입력 · 표 · 상태색에는 닿지 않는다. <html data-brand="...">, 앱 전체 (index.html · theme/brandTheme.js).
+ * - 강조색(primary): 인디고로 확정 (2026-11-17). --primary-* 8개를 밝은 · 다크 의미 토큰(--color-primary* 등)이 읽는다.
+ * - 테마(brand): 네이비로 확정 (2026-11-17). --brand-* 2개를 사이드바 토큰(--color-sidebar-*)만 읽는다.
+ *   버튼 · 입력 · 표 · 상태색에는 닿지 않는다. 고르는 기능은 없음 (바꾸려면 아래 값만 고침).
  * - 회색 · 상태색(info 포함)은 어느 쪽과도 상관없이 고정.
  * - 다크 모드: 색 토큰만 [data-color-scheme="dark"]에서 바뀐다 (파일 끝).
  *   <html>에 붙이면 전체, 요소에 붙이면 그 안만. [data-color-scheme="light"]는 다크 안의 "밝은 섬".
- *   지금은 샘플 페이지에서만 켠다 (가이드 9장).
+ *   앱 전체: 사이드바의 다크 모드 버튼 (theme/colorScheme.js). 아직 표준으로 옮기지 않은 화면은
+ *   MainLayout이 밝은 섬으로 감싸고, 라우트 handle.darkReady인 화면만 다크를 따른다 (가이드 9장).
  */
 
 /* 공통 UI 클래스 (가이드 8장). @import는 파일 맨 앞에 있어야 함 */
@@ -79,7 +79,7 @@
   --dark-raised: #2b3035; /* 모달 · 메뉴처럼 떠 있는 표면 (카드보다 한 단계 밝게) */
   --dark-muted: #9ca3aa; /* gray-5와 gray-6 사이: 흐린 글자가 모달 · 회색 배경 위에서도 4.5:1 이상 */
 
-  /* ───── 강조색 (primary) 기본: 인디고 ─────
+  /* ───── 강조색 (primary): 인디고 (확정) ─────
    * fill: 채운 배경(흰 글자 4.5:1 이상) · text: 연한 배경 위 글자 · light · border: 연한 배경 · 테두리
    * dark-text · dark-focus · dark-tint: 다크 모드용 (글자 · 포커스 · 반투명 배경의 바탕색) */
   --primary-fill: var(--indigo-7);
@@ -91,66 +91,11 @@
   --primary-dark-focus: var(--indigo-4);
   --primary-dark-tint: var(--indigo-6);
 
-  /* ───── 테마 (brand) 기본: 차콜 ─────
+  /* ───── 테마 (brand): 네이비 (확정) ─────
    * bg: 사이드바 배경 (어두운 색만. 회색 글자 gray-6까지 4.5:1 이상)
    * accent: 현재 메뉴 글자 · 왼쪽 선 (bg와 그 위 10% 배경 모두에서 4.5:1 이상) */
-  --brand-bg: var(--gray-9);
-  --brand-accent: #ff6b6b;
-}
-
-/* ───── 테마 (brand): 앱 전체, 사이드바에만 (가이드 7장) ───── */
-:root[data-brand="navy"] {
   --brand-bg: #1b2440;
   --brand-accent: #91a7ff;
-}
-
-:root[data-brand="plum"] {
-  --brand-bg: #261d3d;
-  --brand-accent: #b197fc;
-}
-
-:root[data-brand="forest"] {
-  --brand-bg: #11271f;
-  --brand-accent: #63e6be;
-}
-
-:root[data-brand="wine"] {
-  --brand-bg: #33182a;
-  --brand-accent: #faa2c1;
-}
-
-/* ───── 강조색 후보 미리 보기 (샘플 페이지에서만. Open Color 단계에서 명암비를 맞춰 고름, 가이드 7장) ───── */
-:root[data-primary-preview="violet"] {
-  --primary-fill: #7048e8;
-  --primary-fill-hover: #6741d9;
-  --primary-text: #7048e8;
-  --primary-light: #f3f0ff;
-  --primary-border: #d0bfff;
-  --primary-dark-text: #b197fc;
-  --primary-dark-focus: #9775fa;
-  --primary-dark-tint: #7950f2;
-}
-
-:root[data-primary-preview="grape"] {
-  --primary-fill: #ae3ec9;
-  --primary-fill-hover: #9c36b5;
-  --primary-text: #9c36b5;
-  --primary-light: #f8f0fc;
-  --primary-border: #eebefa;
-  --primary-dark-text: #e599f7;
-  --primary-dark-focus: #da77f2;
-  --primary-dark-tint: #be4bdb;
-}
-
-:root[data-primary-preview="cyan"] {
-  --primary-fill: #0b7285;
-  --primary-fill-hover: #095c6b;
-  --primary-text: #0b7285;
-  --primary-light: #e3fafc;
-  --primary-border: #99e9f2;
-  --primary-dark-text: #66d9e8;
-  --primary-dark-focus: #3bc9db;
-  --primary-dark-tint: #15aabf;
 }
 
 /* ───── 색 토큰: 밝은 모드 (기본) ───── */
@@ -276,6 +221,7 @@
 
   /* ───── 쌓임 순서 ───── */
   --z-sticky: 10;
+  --z-drawer: 900; /* 작은 화면 사이드바 서랍 (모달 아래) */
   --z-modal: 1000;
   --z-toast: 1100;
 }
@@ -284,11 +230,17 @@
   box-sizing: border-box;
 }
 
+/* 배경은 토큰(밝은 모드 gray-2 ≒ 예전 #e9e9e9). 글자 #333은 옮기기 전 화면들이 기대는 값이라 밝은 모드에서는 그대로 */
 body {
-  background-color: #e9e9e9;
+  background-color: var(--color-bg-page);
   margin: 0;
   color: #333;
   font-family: var(--font-sans);
+}
+
+/* 다크 모드: 글자도 토큰 (밝은 섬 안의 옮기기 전 화면은 MainLayout이 #333으로 되돌림) */
+:root[data-color-scheme="dark"] body {
+  color: var(--color-text);
 }
 
 /* 입력 · 버튼은 기본적으로 글꼴을 물려받지 않아서 (브라우저 기본 글꼴) 본문 글꼴을 따르게 함. 크기는 각 화면 그대로 */

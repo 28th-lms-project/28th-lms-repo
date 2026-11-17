@@ -1,5 +1,5 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import styles from "./SideMenu.module.css";
 import UserProfile from "./UserProfile";
@@ -10,6 +10,7 @@ import {
   selectMyMenuStatus,
 } from "../../store/slices/menuSliceStore";
 import { buildMenuTree, getCurrentGroupIds, isGroupOpen } from "./sideMenuUtils";
+import { useColorScheme } from "../../theme/colorScheme";
 
 // 미사용 메뉴(SUPER_ADMIN만 받음)는 흐리게 표시하고 이름 뒤에 "(미사용)"
 const titleOf = (menu) => (menu.useYn === "N" ? `${menu.title} (미사용)` : menu.title);
@@ -21,6 +22,10 @@ const titleOf = (menu) => (menu.useYn === "N" ? `${menu.title} (미사용)` : me
  * - 내 메뉴 조회는 MainLayout이 로그인 시 시작한다. 이 컴포넌트는 store 값을 읽기만 한다.
  * - 메뉴를 받는 중에는 메뉴 영역을 비워 둔다.
  * - 메뉴 관리에서 저장하면 refreshMyMenus로 다시 받아 바로 반영된다.
+ * - 큰 화면: [‹]로 60px까지 접음 (접힌 상태에서는 메뉴를 표시하지 않음, 메뉴 아이콘이 없어서. 가이드 8장 "사이드 메뉴").
+ * - 머리: 로고 | [☾ 다크 모드] [‹ 접기]. 접으면 버튼 둘을 세로로 (다크 모드는 접힌 상태에서도 바로 바꿀 수 있음).
+ * - 768px 이하: 사이드바를 숨기고 왼쪽 위 [☰ 메뉴] 버튼으로 화면 위에 덮이는 서랍으로 연다.
+ *   배경 누르기 · Esc · 다른 화면으로 이동하면 닫힘. 닫히면 [☰] 버튼으로 포커스가 돌아간다.
  */
 export default function SideMenu() {
   const dispatch = useDispatch();
@@ -29,6 +34,12 @@ export default function SideMenu() {
   const myMenus = useSelector(selectMyMenus);
 
   const [collapsed, setCollapsed] = useState(false);
+  const [scheme, setColorScheme] = useColorScheme();
+  const dark = scheme === "dark";
+  // 작은 화면(768px 이하) 서랍. 큰 화면에서는 CSS가 이 값을 무시한다
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerToggleRef = useRef(null);
+  const drawerCloseRef = useRef(null);
 
   const tree = useMemo(() => buildMenuTree(myMenus), [myMenus]);
   const currentGroupIds = getCurrentGroupIds(tree, pathname);
@@ -44,6 +55,7 @@ export default function SideMenu() {
   const [lastPathname, setLastPathname] = useState(pathname);
   if (lastPathname !== pathname) {
     setLastPathname(pathname);
+    setDrawerOpen(false); // 메뉴를 눌러 이동하면 서랍을 닫음
     const closedCurrentIds = currentGroupIds.filter((id) => overrides[id] === false);
     if (closedCurrentIds.length > 0) {
       const next = { ...overrides };
@@ -51,6 +63,24 @@ export default function SideMenu() {
       setOverrides(next);
     }
   }
+
+  // 서랍: 열리면 닫기 버튼에 포커스, Esc로 닫기, 닫히면 [☰]로 포커스 복귀
+  const wasDrawerOpen = useRef(false);
+  useEffect(() => {
+    if (drawerOpen) {
+      drawerCloseRef.current?.focus();
+      const onKeyDown = (event) => {
+        if (event.key === "Escape") setDrawerOpen(false);
+      };
+      document.addEventListener("keydown", onKeyDown);
+      wasDrawerOpen.current = true;
+      return () => document.removeEventListener("keydown", onKeyDown);
+    }
+    if (wasDrawerOpen.current) {
+      wasDrawerOpen.current = false;
+      drawerToggleRef.current?.focus();
+    }
+  }, [drawerOpen]);
 
   function toggleGroup(group) {
     const isOpen = isGroupOpen(group, currentGroupIds.includes(group.id), overrides);
@@ -66,16 +96,44 @@ export default function SideMenu() {
     toggleLabel = "메뉴 펼치기";
     collapseIcon = "›";
   }
+  if (drawerOpen) {
+    navClass += ` ${styles.drawerOpen}`;
+  }
 
   return (
-    <nav className={navClass}>
-      {/* 상단 로고 & 접기 버튼 */}
+    <>
+    {/* 작은 화면 전용: 서랍 열기 버튼 · 배경 (큰 화면에서는 CSS로 숨김) */}
+    <button
+      ref={drawerToggleRef}
+      type="button"
+      className={styles.drawerToggle}
+      aria-expanded={drawerOpen}
+      aria-controls="side-menu"
+      onClick={() => setDrawerOpen(true)}
+    >
+      <span aria-hidden="true">☰</span> 메뉴
+    </button>
+    {drawerOpen && <div className={styles.drawerBackdrop} onClick={() => setDrawerOpen(false)} aria-hidden="true" />}
+    <nav id="side-menu" className={navClass} aria-label="메뉴">
+      {/* 상단: 로고 | 다크 모드 · 접기(작은 화면은 닫기) */}
       <div className={styles.header}>
-        <div className={styles.logo}>
+        {/* 로고를 누르면 첫 화면(대시보드). 작은 화면 서랍은 주소가 바뀌면 닫힘 */}
+        <Link to="/" className={styles.logo} title="첫 화면으로">
           Learning
           <br />
           Works
-        </div>
+        </Link>
+        <div className={styles.headerActions}>
+        <button
+          type="button"
+          className={styles.headerBtn}
+          aria-pressed={dark}
+          aria-label="다크 모드"
+          title={dark ? "밝은 모드로" : "다크 모드로"}
+          onClick={() => setColorScheme(dark ? "light" : "dark")}
+        >
+          <span aria-hidden="true">{dark ? "☀" : "☾"}</span>
+        </button>
         <button
           type="button"
           className={styles.collapseBtn}
@@ -84,6 +142,16 @@ export default function SideMenu() {
         >
           {collapseIcon}
         </button>
+        <button
+          ref={drawerCloseRef}
+          type="button"
+          className={styles.drawerClose}
+          onClick={() => setDrawerOpen(false)}
+          aria-label="메뉴 닫기"
+        >
+          ×
+        </button>
+        </div>
       </div>
 
       <div className={styles.menuBody}>
@@ -160,5 +228,6 @@ export default function SideMenu() {
         </IsLogin>
       </div>
     </nav>
+    </>
   );
 }

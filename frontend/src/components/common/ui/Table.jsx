@@ -31,6 +31,7 @@ const join = (...classes) => classes.filter(Boolean).join(" ") || undefined;
  * @param {string[]} [props.checkedKeys]          있으면 맨 앞에 체크박스 칸 + 머리글 전체 선택
  * @param {(keys: string[]) => void} [props.onCheckedChange]
  * @param {(row) => boolean} [props.isRowCheckable]  false면 그 행은 체크박스 비활성
+ * @param {(row) => string} [props.rowLabel]       체크박스 이름에 쓸 행 이름 (예: row => row.name → "홍길동 선택"). 없으면 key
  *
  * 변경 상태 (편집 표: 추가 · 수정 · 삭제 예정)
  * @param {(row) => "added"|"modified"|"deleted"|undefined} [props.rowStatus]
@@ -60,6 +61,7 @@ export default function Table({
   checkedKeys,
   onCheckedChange,
   isRowCheckable,
+  rowLabel,
   rowStatus,
   onReorder,
   isRowLocked,
@@ -122,11 +124,16 @@ export default function Table({
   };
 
   /* ───── 순서 바꾸기 ───── */
-  const canDropAt = (index) => index !== null && !locked(rows[index]);
+  // from → to 사이(양 끝 포함)에 잠긴 행이 있으면 못 옮김 (건너뛰어 놓아도 잠긴 행이 밀리므로)
+  const crossesLocked = (from, to) => {
+    const [lo, hi] = from < to ? [from, to] : [to, from];
+    return rows.slice(lo, hi + 1).some(locked);
+  };
+  const canDropAt = (index) => index !== null && (dragIndex === null ? !locked(rows[index]) : !crossesLocked(dragIndex, index));
 
   const move = (from, to) => {
     if (from === to || to < 0 || to >= rows.length) return;
-    if (locked(rows[from]) || locked(rows[to])) return;
+    if (crossesLocked(from, to)) return;
     onReorder(from, to);
   };
 
@@ -278,8 +285,11 @@ export default function Table({
                           tabIndex={0}
                           className="table-handle"
                           aria-label={`순서 바꾸기 (${index + 1}번째, ↑ ↓ 키로 이동)`}
-                          onPointerDown={() => setArmedIndex(index)}
-                          onPointerUp={() => setArmedIndex(null)}
+                          onPointerDown={() => {
+                            setArmedIndex(index);
+                            // 손잡이 밖에서 손을 떼도 풀리게 (안 풀리면 그 행에서 글자를 고를 때 행이 끌림)
+                            window.addEventListener("pointerup", () => setArmedIndex(null), { once: true });
+                          }}
                           onPointerCancel={() => setArmedIndex(null)}
                           onKeyDown={(event) => handleHandleKeyDown(event, index)}
                           onClick={(event) => event.stopPropagation()}
@@ -293,7 +303,7 @@ export default function Table({
                     <td className="col-check" onClick={(event) => event.stopPropagation()}>
                       <input
                         type="checkbox"
-                        aria-label={`${key} 선택`}
+                        aria-label={`${rowLabel?.(row) ?? key} 선택`}
                         checked={checkedKeys.includes(key)}
                         disabled={!(isRowCheckable?.(row) ?? true)}
                         onChange={() => toggleRow(key)}
