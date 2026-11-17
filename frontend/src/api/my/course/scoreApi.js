@@ -19,8 +19,8 @@ export const getMyScoreList = (courseId, options) =>
 /**
  * 과정 전체 성적 조회 (강사 · 관리자용, 비공개 시험 포함)
  * 반환: [{ courseStudentId, userId, userName,
- *          scoreList: [{ testSetId, setName, testType, totalPoint, score, pendingCount }] }]
- *       미응시 시험은 score · pendingCount 가 null (averageScore 는 없음)
+ *          scoreList: [{ testSetId, setName, testType, totalPoint, score, pendingCount, averageScore }] }]
+ *       미응시 시험은 score · pendingCount 가 null (시험별 반 평균 averageScore 포함, 채점 중 답안이 있으면 null)
  * errorCode: COURSE_NOT_AUTHORIZED (관리자가 아니고 이 과정의 강사도 아님)
  *            권한 코드 SCORE_READ_COURSE 가 없으면 403
  */

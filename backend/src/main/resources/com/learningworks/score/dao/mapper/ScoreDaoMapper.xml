@@ -31,6 +31,31 @@
             END)
     </sql>
 
+    <!-- 과정 시험별 반 평균 (채점 중 답안이 남은 시험은 행 없음 -> null) -->
+    <sql id="courseAverageScore">
+        SELECT SS.TEST_SET_ID
+             , ROUND(AVG(SS.STUDENT_SCORE), 1) AS AVERAGE_SCORE
+          FROM (SELECT TA.TEST_SET_ID
+                     , TA.COURSE_STUDENT_ID
+                     , <include refid="gradedScoreSum" /> AS STUDENT_SCORE
+                     , <include refid="pendingCountSum" /> AS PENDING_COUNT
+                  FROM TEST_ANSWERS TA
+                 INNER JOIN TESTS T
+                    ON TA.TEST_ID = T.ID
+                 WHERE T.DEL_YN = 'N'
+                   AND EXISTS (SELECT 1
+                                 FROM COURSE_STUDENT CS
+                                INNER JOIN "USER" U
+                                   ON U.ID = CS.USER_ID
+                                WHERE CS.COURSE_ID = #{courseId}
+                                  AND CS.USER_ID = TA.COURSE_STUDENT_ID
+                                  AND U.DEL_YN = 'N')
+                 GROUP BY TA.TEST_SET_ID
+                     , TA.COURSE_STUDENT_ID) SS
+         GROUP BY SS.TEST_SET_ID
+        HAVING SUM(SS.PENDING_COUNT) = 0
+    </sql>
+
     <select id="selectMyScoreList"
             resultType="com.learningworks.score.vo.response.ScoreVO">
         SELECT TS.ID AS TEST_SET_ID
@@ -59,27 +84,7 @@
                               AND T.DEL_YN = 'N'
                             GROUP BY TA.TEST_SET_ID) MA
             ON MA.TEST_SET_ID = TS.ID
-          LEFT OUTER JOIN (SELECT SS.TEST_SET_ID
-                                , ROUND(AVG(SS.STUDENT_SCORE), 1) AS AVERAGE_SCORE
-                             FROM (SELECT TA.TEST_SET_ID
-                                        , TA.COURSE_STUDENT_ID
-                                        , <include refid="gradedScoreSum" /> AS STUDENT_SCORE
-                                        , <include refid="pendingCountSum" /> AS PENDING_COUNT
-                                     FROM TEST_ANSWERS TA
-                                    INNER JOIN TESTS T
-                                       ON TA.TEST_ID = T.ID
-                                    WHERE T.DEL_YN = 'N'
-                                      AND EXISTS (SELECT 1
-                                                    FROM COURSE_STUDENT CS
-                                                   INNER JOIN "USER" U
-                                                      ON U.ID = CS.USER_ID
-                                                   WHERE CS.COURSE_ID = #{courseId}
-                                                     AND CS.USER_ID = TA.COURSE_STUDENT_ID
-                                                     AND U.DEL_YN = 'N')
-                                    GROUP BY TA.TEST_SET_ID
-                                        , TA.COURSE_STUDENT_ID) SS
-                            GROUP BY SS.TEST_SET_ID
-                           HAVING SUM(SS.PENDING_COUNT) = 0) CA
+          LEFT OUTER JOIN (<include refid="courseAverageScore" />) CA
             ON CA.TEST_SET_ID = TS.ID
          WHERE TS.COURSE_ID = #{courseId}
            AND (TS.SHOW_YN = 'Y'
@@ -92,12 +97,13 @@
 	    <result property="userId" column="USER_ID" />
 	    <result property="userName" column="USER_NAME" />
 	    <collection property="scoreList" ofType="com.learningworks.score.vo.response.ScoreVO">
-	        <id property="testSetId" column="TEST_SET_ID" />
-	        <result property="setName" column="SET_NAME" />
-	        <result property="testType" column="TEST_TYPE" />
-	        <result property="totalPoint" column="TOTAL_POINT" />
-	        <result property="score" column="SCORE" />
-	        <result property="pendingCount" column="PENDING_COUNT" />
+            <id property="testSetId" column="TEST_SET_ID" />
+            <result property="setName" column="SET_NAME" />
+            <result property="testType" column="TEST_TYPE" />
+            <result property="totalPoint" column="TOTAL_POINT" />
+            <result property="score" column="SCORE" />
+            <result property="pendingCount" column="PENDING_COUNT" />
+            <result property="averageScore" column="AVERAGE_SCORE" />
 	    </collection>
 	</resultMap>
 
@@ -112,6 +118,7 @@
              , TP.TOTAL_POINT
              , SA.SCORE
              , SA.PENDING_COUNT
+             , CA.AVERAGE_SCORE
           FROM COURSE_STUDENT CS
          INNER JOIN "USER" U
             ON U.ID = CS.USER_ID
@@ -137,6 +144,8 @@
                                 , TA.TEST_SET_ID) SA
             ON SA.COURSE_STUDENT_ID = CS.USER_ID
            AND SA.TEST_SET_ID = TS.ID
+          LEFT OUTER JOIN (<include refid="courseAverageScore" />) CA
+            ON CA.TEST_SET_ID = TS.ID
          WHERE CS.COURSE_ID = #{courseId}
            AND U.DEL_YN = 'N'
          ORDER BY U.NAME ASC
