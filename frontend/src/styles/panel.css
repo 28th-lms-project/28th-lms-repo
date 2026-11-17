@@ -1,0 +1,441 @@
+/*
+ * 패널 · 카드 · 안내 상자 · 목록 · 배치 (frontend/docs/ui-style-guide.md 8장)
+ *
+ *   panel (panel-header · panel-title · panel-actions · panel-body[-flush] · panel-footer)  React: common/ui/Panel.jsx
+ *   card · card-grid · card-clickable · card-accent / stat-card                          React: common/ui/StatCard.jsx
+ *   callout + callout-{info · success · warning · danger}
+ *   desc-list (dl 키-값) · list-group + list-item · timeline
+ *   toolbar (toolbar-end: 오른쪽 묶음) · layout-split (layout-split-start: 좁은 쪽이 왼쪽) · layout-3col
+ */
+
+/* ───── 패널: 화면의 주요 구역 ───── */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  min-height: 52px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
+
+.panel-subtitle {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+}
+
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.panel-body {
+  flex: 1;
+  min-width: 0;
+  padding: 16px;
+}
+
+/* 표 · 목록을 패널 가장자리까지 */
+.panel-body-flush {
+  padding: 0;
+}
+
+.panel-body-flush > .table-wrap {
+  border: 0;
+  border-radius: 0;
+}
+
+.panel-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: var(--color-bg-subtle);
+  border-top: 1px solid var(--color-border-light);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* ───── 카드: 같은 종류 여러 개를 나열 ───── */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px;
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+}
+
+.card-meta {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.card-body {
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  color: var(--color-text-secondary);
+}
+
+.card-clickable {
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.card-clickable:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-clickable:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.card.is-selected {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+/* 왼쪽 강조선 (요약 정보 카드) */
+.card-accent {
+  border-left: 4px solid var(--color-primary);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* ───── 수치 카드 ───── */
+.stat-card {
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.stat-unit {
+  margin-left: 2px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.stat-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.stat-up {
+  color: var(--color-success);
+}
+
+.stat-down {
+  color: var(--color-danger);
+}
+
+/* ───── 안내 상자 (경고 · 변경 알림 · 도움말) ───── */
+.callout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+}
+
+.callout > svg {
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+.callout-content {
+  flex: 1;
+  min-width: 200px;
+  white-space: pre-line;
+}
+
+.callout-title {
+  display: block;
+  font-weight: var(--font-weight-bold);
+}
+
+.callout-info {
+  color: var(--color-info);
+  background-color: var(--color-info-bg);
+  border-color: var(--color-info-border);
+}
+
+.callout-success {
+  color: var(--color-success);
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success-border);
+}
+
+.callout-warning {
+  color: var(--color-warning);
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+}
+
+.callout-danger {
+  color: var(--color-danger);
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+}
+
+/* ───── 키-값 목록 ───── */
+.desc-list {
+  display: grid;
+  grid-template-columns: var(--desc-label-width, 120px) minmax(0, 1fr);
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+.desc-list > dt,
+.desc-list > dd {
+  margin: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.desc-list > dt {
+  padding-right: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.desc-list > dd {
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.desc-list > dt:nth-last-of-type(1),
+.desc-list > dd:last-child {
+  border-bottom: 0;
+}
+
+/* 회색 상자 안에 촘촘히 */
+.desc-list-boxed {
+  padding: 4px 16px;
+  background-color: var(--color-bg-subtle);
+  border-radius: var(--radius);
+}
+
+/* ───── 선택 목록 ───── */
+.list-group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-md);
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  font: inherit;
+  text-align: left;
+  color: var(--color-text);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.list-group > li:last-child > .list-item,
+.list-group > .list-item:last-child {
+  border-bottom: 0;
+}
+
+button.list-item {
+  cursor: pointer;
+}
+
+button.list-item:hover {
+  background-color: var(--color-bg-hover);
+}
+
+button.list-item:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.list-item[aria-current="true"],
+.list-item.is-selected {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-text);
+  background-color: var(--color-primary-light);
+}
+
+.list-item.is-muted {
+  color: var(--color-text-disabled);
+}
+
+.list-item-end {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ───── 타임라인 ───── */
+.timeline {
+  margin: 0;
+  padding: 0 0 0 18px;
+  list-style: none;
+  border-left: 2px solid var(--color-border-light);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 16px;
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: -25px;
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-bg-surface);
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+}
+
+.timeline-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.timeline-body {
+  margin: 4px 0 0;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  white-space: pre-wrap;
+}
+
+/* ───── 배치 ───── */
+/* 검색 · 필터 줄 */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+}
+
+/* toolbar 안 오른쪽 묶음 (주 동작 버튼) */
+.toolbar-end {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* 목록 | 상세 */
+.layout-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--layout-aside-width, 380px);
+  gap: 20px;
+  align-items: start;
+}
+
+/* 좁은 목록이 왼쪽 (역할 목록 | 내용처럼 고르는 쪽이 먼저일 때) */
+.layout-split-start {
+  grid-template-columns: var(--layout-aside-width, 240px) minmax(0, 1fr);
+}
+
+/* 3단 (대 > 중 > 소, 역할 · 허용 · 전체) */
+.layout-3col {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+@media screen and (max-width: 1024px) {
+  .layout-split,
+  .layout-split-start,
+  .layout-3col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,6 +1,5 @@
 import {
   createBrowserRouter,
-  Navigate,
   Outlet,
   redirect,
   RouterProvider,
@@ -26,10 +25,14 @@ import AccessRole from "../components/admin/system/access-role/AccessRole";
 import Code from "../components/admin/system/code/Code";
 import Sample from "../components/sample/Sample.jsx";
 import CourseMain from "../components/admin/course/CourseMain.jsx";
+import CourseHeader from "../components/admin/course/CourseHeader.jsx";
 
+import CourseList from "../components/admin/course/list/CourseList.jsx";
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 import { getCourses } from "../api/admin/course/courseApi";
 import HomeworkDetails from "../components/admin/course/CourseTableComponent/HomeworkDetails.jsx";
+import CourseSurveyAns from "../components/admin/course/CourseTableComponent/CourseSurveyAns.jsx";
+import CourseSurveyResult from "../components/admin/course/CourseTableComponent/CourseSurveyResult.jsx";
 
 /**
  * 라우트 목록. 메뉴 관리 화면이 메뉴 URL 선택지를 만드는 데 사용한다 (routeUtils.getMenuUrlOptions).
@@ -47,8 +50,16 @@ export const routes = [
         <HomeworkDetails />
       </MenuGuard>
     ),
-    handle: { guardAs: "/admin/course/list" },
+    handle: { guardAs: "/my/course/list" },
     errorElement: <RouteError />,
+  },
+  {
+    path: "/survey/answer/:courseId/:courseSurveyId",
+    element: <CourseSurveyAns />,
+  },
+  {
+    path: "/survey/result/:courseId/:courseSurveyId",
+    element: <CourseSurveyResult />,
   },
   {
     path: "/",
@@ -69,7 +80,7 @@ export const routes = [
           {
             path: "sample",
             element: <Sample />,
-            handle: { crumb: "Sample", menu: true },
+            handle: { crumb: "Sample", menu: true, darkReady: true },
           },
           {
             path: "my",
@@ -83,12 +94,44 @@ export const routes = [
               {
                 path: "course",
                 handle: { crumb: "수강 과정" },
+                element: (
+                    <>
+                      <CourseMain />
+                      <Outlet />
+                    </>
+                ),
                 children: [
-                  // /my/course는 메뉴가 아니므로, 수강 과정 메뉴 기준으로 판정해야 list로 넘어갈 수 있다
                   {
-                    index: true,
-                    element: <Navigate to="list" replace />,
-                    handle: { guardAs: "/my/course/list" },
+                    path: "list",
+                    element: (
+                        <>
+                          <Outlet />
+                        </>
+                    ),
+                    handle: { crumb: "과정 목록", menu: true },
+                    children: [
+                      {
+                        index: true,
+                        element: null,
+                        loader: async () => {
+                          const courses = await getCourses();
+                          if (!courses || courses.length === 0) {
+                            return redirect("/admin/course/add");
+                          }
+                          return redirect(
+                              `/my/course/list/${courses[0].id}?tab=0`,
+                          );
+                        },
+                      },
+                      {
+                        path: ":id",
+                        element: (
+                            <>
+                              <CourseItem />
+                            </>
+                        ),
+                      },
+                    ],
                   },
                   {
                     path: "list",
@@ -112,10 +155,9 @@ export const routes = [
               {
                 path: "course",
                 handle: { crumb: "과정 관리" },
-                // 과정 버튼 목록(CourseMain)은 과정 관리 화면에서만 표시
                 element: (
                   <>
-                    <CourseMain />
+                    <CourseHeader />
                     <Outlet />
                   </>
                 ),
@@ -124,33 +166,12 @@ export const routes = [
                     path: "list",
                     element: (
                       <>
+                        <CourseList />
                         <Outlet />
                       </>
                     ),
                     handle: { crumb: "과정 목록", menu: true },
-                    children: [
-                      {
-                        index: true,
-                        element: null,
-                        loader: async () => {
-                          const courses = await getCourses();
-                          if (!courses || courses.length === 0) {
-                            return redirect("/admin/course/add");
-                          }
-                          return redirect(
-                            `/admin/course/list/${courses[0].id}?tab=0`,
-                          );
-                        },
-                      },
-                      {
-                        path: ":id",
-                        element: (
-                          <>
-                            <CourseItem />
-                          </>
-                        ),
-                      },
-                    ],
+                      // TODO 과정 목록 경로 설정
                   },
                   {
                     path: "add",

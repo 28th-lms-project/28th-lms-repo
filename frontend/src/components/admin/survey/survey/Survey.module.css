@@ -12,7 +12,7 @@ body {
 
   border: 1px solid #aaa;
   border-radius: 10px 10px 0 0;
-  overflow: hidden;
+  overflow: auto;
 }
 .surveyHeader {
   display: flex;
@@ -102,4 +102,21 @@ body {
 .surveyType {
   width: 30%;
   size: 10px;
+}
+.surveyPreview label {
+  order: 1; /* 라벨을 아이콘 뒤로 */
+  margin-left: 6px; /* 아이콘과 간격 */
+  cursor: pointer;
+}
+
+/* 권한 확인 중 · 권한 없음 안내 (권한 관리 화면과 같은 스타일) */
+.notice {
+  margin: 0;
+  padding: 40px 20px;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 14px;
+  color: #777;
 }

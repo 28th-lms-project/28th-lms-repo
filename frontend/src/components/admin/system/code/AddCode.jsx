@@ -4,6 +4,7 @@ import { icons } from "../../../common/input/icons";
 import { IconButton } from "../../../common/input/IconButton";
 import { createCode } from "../../../../api/admin/system/code/codeApi";
 import CodeForm from "./CodeForm";
+import style from "./AddCode.module.css";
 
 export default function AddCode({
   parentOptions,
@@ -51,7 +52,7 @@ export default function AddCode({
         crtDt=""
         mdfyDt=""
       />
-      <div className="codeButtons">
+      <div className={style.codeButtons}>
         <IconButton
           icon={icons.close}
           onClick={onCancel}

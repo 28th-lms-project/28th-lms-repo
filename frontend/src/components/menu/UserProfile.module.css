@@ -9,11 +9,12 @@
 .role {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #adb5bd;
+  color: var(--color-sidebar-muted);
 }
 
 .name {
   font-size: 1.1rem;
-  color: #f1f3f5;
+  color: var(--color-sidebar-text);
   margin-bottom: 0.5rem;
 }
+

@@ -39,6 +39,9 @@ export const IconButton = ({
                                disabled = false,
                                style = {},
                                onClick = () => {},
+                               // 그 밖의 props(aria-label, title, type …)는 <button>에 그대로 전달
+                               className = "",
+                               ...rest
                            }) => {
     const [hover, setHover] = useState(false);
     const hoverHandler = () => {
@@ -63,7 +66,8 @@ export const IconButton = ({
     return (
         <button
             type="button"
-            className="iconButton"
+            {...rest}
+            className={`iconButton ${className}`.trim()}
             onMouseEnter={hoverHandler}
             onMouseLeave={houtHandler}
             onClick={onClick}

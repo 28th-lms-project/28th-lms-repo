@@ -1,0 +1,154 @@
+/*
+ * 상태 상자: 권한 없음 · 불러오는 중 · 오류(+ 다시 시도) · 빈 목록 (frontend/docs/ui-style-guide.md 8장)
+ *
+ *   <div class="status-box">
+ *     <p class="status-box-title">권한이 없습니다.</p>
+ *     <p class="status-box-detail">관리자에게 문의하세요.</p>
+ *   </div>
+ *   + status-box-error (상세 문구 빨강) · status-box-sm (목록 · 표 안: 테두리 없이 작게)
+ *   + status-box-lg (화면 전체: 404 · 라우트 오류) + status-box-code (큰 숫자) · status-box-actions
+ *
+ * React: common/ui/StatusBox.jsx (type별 기본 문구 · 아이콘 · 다시 시도 버튼)
+ */
+
+.status-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+}
+
+.status-box-icon {
+  fill: var(--color-text-placeholder);
+}
+
+.status-box-title {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+.status-box-detail {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-base);
+  color: var(--color-text-muted);
+  white-space: pre-line;
+}
+
+.status-box-error .status-box-icon {
+  fill: var(--color-danger);
+}
+
+.status-box-error .status-box-detail {
+  color: var(--color-danger);
+}
+
+.status-box > .btn {
+  margin-top: 4px;
+}
+
+.status-box-sm {
+  gap: 4px;
+  padding: 24px 12px;
+  background-color: transparent;
+  border: 0;
+}
+
+.status-box-sm .status-box-title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-muted);
+}
+
+/* 화면 전체 (404 · 라우트 오류): 큰 코드 + 문구 + 버튼 */
+.status-box-lg {
+  justify-content: center;
+  gap: 10px;
+  min-height: 360px;
+  padding: 56px 24px;
+}
+
+.status-box-lg .status-box-title {
+  font-size: var(--font-size-xl);
+}
+
+.status-box-code {
+  margin: 0;
+  font-size: 56px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--color-border-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.status-box-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ───── 진행 막대 ─────
+ *   <div class="progress" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"
+ *        aria-label="진도율" style="--progress: 40%"><span></span></div>
+ *   progress-success · progress-warning · progress-danger: 색 / progress-sm: 4px
+ * React: common/ui/Progress.jsx
+ */
+.progress {
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  background-color: var(--color-bg-subtle);
+  border-radius: var(--radius-pill);
+}
+
+.progress > span {
+  display: block;
+  width: var(--progress, 0%);
+  height: 100%;
+  background-color: var(--progress-color, var(--color-primary));
+  border-radius: inherit;
+  transition: width 0.3s;
+}
+
+.progress-success {
+  --progress-color: var(--color-success);
+}
+
+.progress-warning {
+  --progress-color: var(--color-warning);
+}
+
+.progress-danger {
+  --progress-color: var(--color-danger);
+}
+
+.progress-sm {
+  height: 4px;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.progress-row > .progress-value {
+  flex-shrink: 0;
+  min-width: 3em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
