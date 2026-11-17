@@ -42,7 +42,7 @@ export default function CourseAdd() {
       try {
         await createCourse(formData);
         alert("과정이 등록되었습니다.");
-        navigate("/admin/course/list");
+        navigate("/my/course/list");
       } catch (error) {
         alert(error.message);
       }

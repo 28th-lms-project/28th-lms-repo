@@ -40,7 +40,7 @@ export default function CourseMain() {
     navigate("/admin/course/add");
   };
   const clickCourseIdButtonHandler = (urlId) => {
-    navigate(`/admin/course/list/${urlId}?tab=0`);
+    navigate(`/my/course/list/${urlId}?tab=0`);
   };
   return (
     <>
@@ -56,7 +56,7 @@ export default function CourseMain() {
           <Fragment key={course.id}>
             <IconButton
               backgroundColor={
-                pathname === `/admin/course/list/${course.id}`
+                pathname === `/my/course/list/${course.id}`
                   ? "#fff"
                   : "buttonface"
               }
