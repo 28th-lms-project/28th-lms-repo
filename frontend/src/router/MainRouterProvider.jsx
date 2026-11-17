@@ -49,7 +49,7 @@ export const routes = [
         <HomeworkDetails />
       </MenuGuard>
     ),
-    handle: { guardAs: "/admin/course/list" },
+    handle: { guardAs: "/my/course/list" },
     errorElement: <RouteError />,
   },
   {
@@ -93,12 +93,44 @@ export const routes = [
               {
                 path: "course",
                 handle: { crumb: "수강 과정" },
+                element: (
+                    <>
+                      <CourseMain />
+                      <Outlet />
+                    </>
+                ),
                 children: [
-                  // /my/course는 메뉴가 아니므로, 수강 과정 메뉴 기준으로 판정해야 list로 넘어갈 수 있다
                   {
-                    index: true,
-                    element: <Navigate to="list" replace />,
-                    handle: { guardAs: "/my/course/list" },
+                    path: "list",
+                    element: (
+                        <>
+                          <Outlet />
+                        </>
+                    ),
+                    handle: { crumb: "과정 목록", menu: true },
+                    children: [
+                      {
+                        index: true,
+                        element: null,
+                        loader: async () => {
+                          const courses = await getCourses();
+                          if (!courses || courses.length === 0) {
+                            return redirect("/admin/course/add");
+                          }
+                          return redirect(
+                              `/my/course/list/${courses[0].id}?tab=0`,
+                          );
+                        },
+                      },
+                      {
+                        path: ":id",
+                        element: (
+                            <>
+                              <CourseItem />
+                            </>
+                        ),
+                      },
+                    ],
                   },
                   {
                     path: "list",
@@ -138,29 +170,7 @@ export const routes = [
                       </>
                     ),
                     handle: { crumb: "과정 목록", menu: true },
-                    children: [
-                      {
-                        index: true,
-                        element: null,
-                        loader: async () => {
-                          const courses = await getCourses();
-                          if (!courses || courses.length === 0) {
-                            return redirect("/admin/course/add");
-                          }
-                          return redirect(
-                            `/admin/course/list/${courses[0].id}?tab=0`,
-                          );
-                        },
-                      },
-                      {
-                        path: ":id",
-                        element: (
-                          <>
-                            <CourseItem />
-                          </>
-                        ),
-                      },
-                    ],
+                      // TODO 과정 목록 경로 설정
                   },
                   {
                     path: "add",
