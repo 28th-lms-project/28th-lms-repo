@@ -14,6 +14,7 @@ import ExamQuestionPicker from "./ExamQuestionPicker";
 import ExamSetTable from "./ExamSetTable";
 import { IconButton } from "../../../sample/input/IconButton";
 import { icons } from "../../../sample/input/icons";
+import usePermission from "../../../../hooks/usePermission";
 
 export default function ExamPage() {
   const { id } = useParams();
@@ -24,6 +25,9 @@ export default function ExamPage() {
   );
   // 시험 추가 폼 열림 여부
   const [showAddExam, setShowAddExam] = useState(false);
+  // [시험 추가]: POST addTestSet 의 권한
+  const { can } = usePermission();
+  const canAddExam = can("EXAM_COURSE_SET_CREATE");
   // 이 강좌의 시험 세트 목록 (ExamSetTable)
   const [testSets, setTestSets] = useState([]);
 
@@ -148,15 +152,17 @@ export default function ExamPage() {
     <>
       {!showAddExam && (
         <>
-          <IconButton
-            color="#666"
-            icon={icons.add}
-            onClick={() => setShowAddExam(true)}
-            // 가로로 늘어나지 않고, hover 시 글씨가 굵어져도 크기가 변하지 않도록 고정
-            style={{ width: "120px", flexShrink: 0 }}
-          >
-            시험 추가
-          </IconButton>
+          {canAddExam && (
+            <IconButton
+              color="#666"
+              icon={icons.add}
+              onClick={() => setShowAddExam(true)}
+              // 가로로 늘어나지 않고, hover 시 글씨가 굵어져도 크기가 변하지 않도록 고정
+              style={{ width: "120px", flexShrink: 0 }}
+            >
+              시험 추가
+            </IconButton>
+          )}
           <div style={{ marginTop: "8px" }}>
             <ExamSetTable testSets={testSets} onChangeShowYn={onChangeShowYn} />
           </div>

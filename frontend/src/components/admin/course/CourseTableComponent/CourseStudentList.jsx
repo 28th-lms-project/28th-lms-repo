@@ -10,6 +10,7 @@ import {
   addCourseStudent,
   getCourseStudents,
 } from "../../../../api/admin/course/courseApi";
+import usePermission from "../../../../hooks/usePermission";
 
 export default function CourseStudentList() {
   const { showStudents, selectStudents } = useSelector(
@@ -19,6 +20,10 @@ export default function CourseStudentList() {
   // 수강생 추가 폼 열림 여부
   const [showAddStudent, setShowAddStudent] = useState(false);
   const { id } = useParams();
+  // [수강생 추가]: 추가 API(COURSE_STUDENT_CREATE) + 학생 선택 목록 API(COURSE_MEMBER_READ) 둘 다 필요
+  const { can } = usePermission();
+  const canAddStudent =
+    can("COURSE_STUDENT_CREATE") && can("COURSE_MEMBER_READ");
 
   const STUDENT_HEADER = [
     { id: "rowNum", title: "No." },
@@ -73,7 +78,7 @@ export default function CourseStudentList() {
 
   return (
     <>
-      {!showAddStudent && (
+      {canAddStudent && !showAddStudent && (
         <IconButton
           color="#666"
           icon={icons.add}
@@ -84,7 +89,7 @@ export default function CourseStudentList() {
           수강생 추가
         </IconButton>
       )}
-      {showAddStudent && (
+      {canAddStudent && showAddStudent && (
         <div
           style={{
             display: "flex",

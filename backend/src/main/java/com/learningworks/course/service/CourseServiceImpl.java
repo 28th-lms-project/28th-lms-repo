@@ -33,9 +33,6 @@ public class CourseServiceImpl implements CourseService{
 	/** 수강생 · 강사가 아니어도 모든 강의에 댓글을 작성할 수 있는 역할 */
 	private static final String SUPER_ADMIN_ROLE = "ROLE_SUPER_ADMIN";
 
-	/** 수강생 역할. 출석률 요약은 본인 것만 조회된다. */
-	private static final String STUDENT_ROLE = "ROLE_STUDENT";
-
 	private CourseDao courseDao;
 
 	public CourseServiceImpl (CourseDao courseDao) {
@@ -352,12 +349,35 @@ public class CourseServiceImpl implements CourseService{
 		return this.courseDao.readCourseMembers(courseId);
 	}
 
+	@Transactional
 	@Override
 	public CourseVO updateCourse(String courseId, ModifyCourseVO modifyCourseVO) {
+		this.findCourse(courseId); // 없거나 삭제된 강의면 404
+
+		// 관리자(ROLE_SUPER_ADMIN, ROLE_ADMIN)는 모든 강의, 강사는 자기 강의만 수정할 수 있다.
+		// (수정 권한 자체는 컨트롤러의 @RequireAction COURSE_UPDATE 가 검사)
+		String loginId = AuthUtil.getLoginId();
+		if (!this.isCourseAdmin(loginId) && this.courseDao.countCourseTutor(courseId, loginId) == 0) {
+			throw new LearningworksException(ErrorCode.COURSE_NOT_AUTHORIZED);
+		}
+
 		int result = this.courseDao.updateCourse(courseId, modifyCourseVO);
-		
-		CourseVO course = this.courseDao.readOneCourse(courseId);
-		return course;
+		if (result == 0) {
+			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
+		}
+		return this.findCourse(courseId);
+	}
+
+	@Transactional
+	@Override
+	public String deleteCourse(String courseId) {
+		// 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다. 이미 삭제됐거나 없으면 404
+		// (삭제 권한은 컨트롤러의 @RequireAction COURSE_DELETE 가 검사 — 관리자에게만 부여)
+		int result = this.courseDao.deleteCourse(courseId);
+		if (result == 0) {
+			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
+		}
+		return courseId;
 	}
 
 	/** 이 비율(진행된 수업일 대비 출석 인정일 %) 미만이면 출석 경고 */
@@ -371,9 +391,10 @@ public class CourseServiceImpl implements CourseService{
 		this.findCourse(courseId);        // 없는 강의면 404
 		this.checkCourseAccess(courseId); // 관리자 또는 이 강의의 수강생 · 강사만
 
-		// 수강생은 본인 것만, 관리자 · 강사는 강의 전체 수강생 (userId 가 null 이면 전체)
+		// 이 강의의 수강생으로 등록된 사람은 본인 것만, 그 외(관리자 · 강사)는 강의 전체 수강생 (userId 가 null 이면 전체)
+		// 역할 이름이 아니라 COURSE_STUDENT 등록 여부로 판단한다 (access-control-guide 9장)
 		String loginId = AuthUtil.getLoginId();
-		String userId = STUDENT_ROLE.equals(this.courseDao.readUserBaseRole(loginId)) ? loginId : null;
+		String userId = this.isCourseStudent(courseId, loginId) ? loginId : null;
 
 		AttendanceSummaryVO summary = this.courseDao.readCourseClassDays(courseId);
 		if (summary == null) {
@@ -400,6 +421,13 @@ public class CourseServiceImpl implements CourseService{
 			summary.setAverageWarning(this.isAttendanceWarning(averageAttended, passed));
 		}
 		return summary;
+	}
+
+	/** 이 강의의 수강생(COURSE_STUDENT)인지. (수강생 + 강사 수) - 강사 수 */
+	private boolean isCourseStudent(String courseId, String userId) {
+		int studentOrTutor = this.courseDao.countCourseStudentOrTutor(courseId, userId);
+		int tutor = this.courseDao.countCourseTutor(courseId, userId);
+		return studentOrTutor - tutor > 0;
 	}
 
 	/**

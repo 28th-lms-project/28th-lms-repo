@@ -178,9 +178,14 @@ export default function ExamTakeModal() {
     });
   };
 
-  // 응시 화면은 [제출]로만 닫힌다
-  // TODO: 응시 제출 API가 생기면 여기서 호출하고, 성공했을 때만 닫을 것
-  const onClickSubmit = () => {
+  // 제출 중이면 버튼을 다시 누를 수 없게 (중복 제출 방지)
+  const [submitting, setSubmitting] = useState(false);
+
+  // 응시 화면은 [제출]로만 닫힌다. 제출 API가 성공했을 때만 닫고, 실패하면 알림 후 창을 유지한다
+  const onClickSubmit = async () => {
+    if (submitting) {
+      return;
+    }
     // 문제가 없는 시험은 제출할 답이 없으므로 바로 닫음
     if (questions.length === 0) {
       onClose();
@@ -205,12 +210,17 @@ export default function ExamTakeModal() {
           : (value ?? ""),
       };
     });
-    (async () => {
-      const result = await createTestAnswers(testSetId, submitAnswers);
-      console.log(result);
-    })();
-    console.log("제출 답안", submitAnswers);
-    onClose();
+    setSubmitting(true);
+    try {
+      await createTestAnswers(testSetId, submitAnswers);
+      alert("답안이 제출되었습니다.");
+      onClose();
+    } catch (error) {
+      // 예: 이미 제출한 시험(400), 비공개 시험(403) — 서버 메시지를 그대로 보여주고 창은 유지
+      alert(error.message || "답안 제출에 실패했습니다.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   /** 객관식(단항/다항) 선택지 */
@@ -330,8 +340,9 @@ export default function ExamTakeModal() {
             type="button"
             style={submitButtonStyle}
             onClick={onClickSubmit}
+            disabled={submitting}
           >
-            제출
+            {submitting ? "제출 중..." : "제출"}
           </button>
         </div>
       </div>

@@ -14,6 +14,7 @@ public class ModifyCourseVO {
 
 	/** COURSE.NO */
 	@NotBlank(message = "과정 기수를 입력해주세요.")
+	@Pattern(regexp = "^$|^\\d+$", message = "과정 기수는 숫자로 입력해주세요.") // COURSE.NO 는 NUMBER
 	private String no;
 
 	/** COURSE.START_DATE - <input type="date"> 값 (yyyy-MM-dd) */

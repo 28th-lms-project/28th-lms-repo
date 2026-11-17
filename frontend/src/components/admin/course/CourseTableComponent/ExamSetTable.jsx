@@ -10,14 +10,22 @@ import ConfirmModal from "./ConfirmModal";
 import ExamQuestionViewModal from "./ExamQuestionViewModal";
 import ExamTakeModal from "./ExamTakeModal";
 import ExamGradeModal from "./ExamGradeModal";
+import usePermission from "../../../../hooks/usePermission";
 
 /**
- * 시험 응시(시험 명 클릭)가 가능한 역할.
- * ROLE_SUPER_ADMIN은 개발 중 응시 화면 테스트용으로 허용 — 배포 전에 제거할 것.
+ * 버튼별 권한 코드 (백엔드 ExamController 의 @RequireAction).
+ * 역할 이름이 아니라 권한 코드로 판단한다 (frontend/docs/permission-guide.md 6장).
+ * - 문제 보기: 호출 API(questionlist)는 EXAM_COURSE_SET_READ 지만, 응시하는 수강생도 그 권한이 필요해
+ *   정답이 보이는 문제 보기는 강사 · 관리자용인 답안 조회 권한으로 판단한다.
+ *   TODO: 정답 없는 수강생용 문제 조회 API가 생기면 다시 정리
  */
-const TEST_TAKER_ROLES = ["ROLE_STUDENT", "ROLE_SUPER_ADMIN"];
-/** 문제 보기가 가능한 역할 (강사, 관리자, 최고 관리자) */
-const QUESTION_VIEWER_ROLES = ["ROLE_TUTOR", "ROLE_ADMIN", "ROLE_SUPER_ADMIN"];
+const PERMISSION = {
+  TAKE_TEST: "EXAM_COURSE_EXAM_SUBMIT",
+  VIEW_QUESTIONS: "EXAM_COURSE_EXAM_ANSWER_READ",
+  UPDATE_SHOW_YN: "EXAM_COURSE_SET_UPDATE",
+  GRADE: "EXAM_COURSE_EXAM_ANSWER_READ",
+  DELETE: "EXAM_COURSE_SET_DELETE",
+};
 
 const BORDER_COLOR = "#e5e5e5";
 
@@ -74,11 +82,17 @@ export default function ExamSetTable({
   onChangeShowYn = () => {},
   studentView = false,
 }) {
-  // 로그인한 사용자의 역할 (GET /action-codes/me 결과)
-  const roleId = useSelector((store) => store.permission.roleId);
-  const canTakeTest = TEST_TAKER_ROLES.includes(roleId);
-  const canViewQuestions = QUESTION_VIEWER_ROLES.includes(roleId);
-  const columnCount = studentView ? 3 : 6;
+  const { can } = usePermission();
+  const canTakeTest = can(PERMISSION.TAKE_TEST);
+  const canViewQuestions = can(PERMISSION.VIEW_QUESTIONS);
+  // 공개 여부 · 채점 · 삭제는 수강생 화면(studentView)에서는 권한이 있어도 숨긴다
+  const canUpdateShowYn = !studentView && can(PERMISSION.UPDATE_SHOW_YN);
+  const canGrade = !studentView && can(PERMISSION.GRADE);
+  const canDelete = !studentView && can(PERMISSION.DELETE);
+  const columnCount =
+    2 +
+    [canUpdateShowYn, canViewQuestions, canGrade, canDelete].filter(Boolean)
+      .length;
 
   // 공개 여부를 바꾸려고 클릭한 시험 세트 (null이면 모달 닫힘)
   const [showYnTarget, setShowYnTarget] = useState(null);
@@ -113,7 +127,7 @@ export default function ExamSetTable({
   // TODO: 정답이 빠진 수강생용 문제 조회 API가 생기면 교체 (지금 API는 정답까지 내려줌)
   const onClickTestName = async (testSet) => {
     if (!canTakeTest) {
-      alert("수강생만 응시할 수 있습니다.");
+      alert("시험 응시 권한이 없습니다.");
       return;
     }
     // 공개(Y)되지 않은 시험은 응시 불가 (서버에서도 한 번 더 막음)
@@ -157,7 +171,7 @@ export default function ExamSetTable({
   // 문제 목록을 불러와 채점 모달을 연다 (수강생 탭 + 문제 · 정답)
   // TODO: 수강생 답안 조회 API가 완성되면 ExamGradeModal 의 studentAnswers 로 연결
   const onClickGrade = async (testSet) => {
-    if (!canViewQuestions) {
+    if (!canGrade) {
       alert("권한이 없습니다.");
       return;
     }
@@ -222,19 +236,19 @@ export default function ExamSetTable({
         <colgroup>
           <col style={{ width: "80px" }} />
           <col />
-          {!studentView && <col style={{ width: "100px" }} />}
-          <col style={{ width: "100px" }} />
-          {!studentView && <col style={{ width: "60px" }} />}
-          {!studentView && <col style={{ width: "60px" }} />}
+          {canUpdateShowYn && <col style={{ width: "100px" }} />}
+          {canViewQuestions && <col style={{ width: "100px" }} />}
+          {canGrade && <col style={{ width: "60px" }} />}
+          {canDelete && <col style={{ width: "60px" }} />}
         </colgroup>
         <thead>
           <tr>
             <th style={headerCellStyle}>번호</th>
             <th style={headerCellStyle}>시험 명</th>
-            {!studentView && <th style={headerCellStyle}>공개 여부</th>}
-            <th style={headerCellStyle}>문제보기</th>
-            {!studentView && <th style={headerCellStyle}>채점</th>}
-            {!studentView && <th style={headerCellStyle}>삭제</th>}
+            {canUpdateShowYn && <th style={headerCellStyle}>공개 여부</th>}
+            {canViewQuestions && <th style={headerCellStyle}>문제보기</th>}
+            {canGrade && <th style={headerCellStyle}>채점</th>}
+            {canDelete && <th style={headerCellStyle}>삭제</th>}
           </tr>
         </thead>
         <tbody>
@@ -257,7 +271,7 @@ export default function ExamSetTable({
               >
                 {testSet.setName}
               </td>
-              {!studentView && (
+              {canUpdateShowYn && (
                 <td
                   style={{ ...cellStyle, ...actionStyle }}
                   onClick={() => setShowYnTarget(testSet)}
@@ -265,13 +279,15 @@ export default function ExamSetTable({
                   {testSet.showYn}
                 </td>
               )}
-              <td
-                style={{ ...cellStyle, ...actionStyle }}
-                onClick={() => onClickShowQuestions(testSet)}
-              >
-                문제 보기
-              </td>
-              {!studentView && (
+              {canViewQuestions && (
+                <td
+                  style={{ ...cellStyle, ...actionStyle }}
+                  onClick={() => onClickShowQuestions(testSet)}
+                >
+                  문제 보기
+                </td>
+              )}
+              {canGrade && (
                 <td
                   style={{ ...cellStyle, ...actionStyle }}
                   onClick={() => onClickGrade(testSet)}
@@ -279,7 +295,7 @@ export default function ExamSetTable({
                   채점
                 </td>
               )}
-              {!studentView && (
+              {canDelete && (
                 <td
                   style={{ ...cellStyle, ...actionStyle }}
                   onClick={() => onClickDelete(testSet)}

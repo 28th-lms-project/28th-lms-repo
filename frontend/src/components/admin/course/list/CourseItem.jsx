@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
-import { useParams, useSearchParams } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
 import { IconButton } from "../../../sample/input/IconButton";
 import CourseStudentList from "../CourseTableComponent/CourseStudentList";
 import StudentConnected from "../CourseTableComponent/StudentConnected";
 import {
+  deleteCourse,
   getAttendanceSummary,
   getCourse,
   getCourseStudents,
@@ -23,6 +29,7 @@ import MyCounsel from "../../../my/course/MyCounsel.jsx";
 import CourseEditModal from "./CourseEditModal";
 import ConfirmModal from "../CourseTableComponent/ConfirmModal";
 import PeriodBar from "../CourseTableComponent/PeriodBar";
+import usePermission from "../../../../hooks/usePermission";
 
 import CourseSurvey from "../CourseTableComponent/CourseSurvey.jsx";
 
@@ -35,7 +42,12 @@ const TABS = [
   { label: "면접일정", Component: <MyInterview /> }, //<InterviewTimeTable/>
   { label: "교육자료", Component: <MyCourseData /> }, //<EducationMaterialsList/>
   { label: "설문", Component: <CourseSurvey /> }, //<Survey/>
-  { label: "상담목록", Component: <MyCounsel /> }, //<ConsultationList/>
+  // 상담 목록 API(COURSE_COUNSEL_READ) 권한이 있을 때만 탭 표시 (수강생에게는 숨김)
+  {
+    label: "상담목록",
+    Component: <MyCounsel />,
+    permission: "COURSE_COUNSEL_READ",
+  }, //<ConsultationList/>
 ];
 export default function CourseItem() {
   const { showCourse, attendanceSummary } = useSelector(
@@ -45,20 +57,45 @@ export default function CourseItem() {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // 버튼 · 조회 권한 (백엔드 @RequireAction 의 권한 코드)
+  const { can } = usePermission();
+
+  // 권한이 필요한 탭은 권한이 있을 때만 보인다 (?tab= 번호는 TABS 기준 그대로 유지)
+  const isTabVisible = (index) =>
+    Boolean(TABS[index]) &&
+    (!TABS[index].permission || can(TABS[index].permission));
+
   const tabParam = Number(searchParams.get("tab"));
-  const tab = TABS[tabParam] ? tabParam : 0;
+  // 권한 없는 탭을 주소로 직접 열면 첫 탭으로
+  const tab = isTabVisible(tabParam) ? tabParam : 0;
 
   const { Component } = TABS[tab];
+  const canReadStudents = can("COURSE_STUDENT_READ");
+  const canReadAttendance = can("COURSE_ATTENDANCE_READ");
+  const canUpdateCourse = can("COURSE_UPDATE");
+  // 수정: 강사 · 관리자 (강사는 담당 과정만 — 서버가 검사), 삭제: 관리자에게만 부여
+  const canDeleteCourse = can("COURSE_DELETE");
 
   // 과정 수정 모달 / 삭제 확인창 열림 여부
   const [showEditCourse, setShowEditCourse] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const onConfirmDeleteCourse = () => {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  // 삭제 확인창 [확인]: DEL_YN = 'Y' 로 삭제 → 과정 목록으로 이동 (첫 번째 과정으로 다시 이동됨)
+  const onConfirmDeleteCourse = async () => {
     setShowDeleteConfirm(false);
-    // TODO(API): 과정 삭제 API 호출 (지금은 확인창만 띄우고 아무것도 삭제하지 않음)
-    //   예) await deleteCourse(id);
-    //   성공하면 navigate("/admin/course/list"), 실패하면 alert("과정 삭제에 실패했습니다.");
+    try {
+      await deleteCourse(id);
+      alert("과정이 삭제되었습니다.");
+      // 수강 과정(/my/...) 화면에서 열었으면 그 목록으로, 아니면 과정 관리 목록으로
+      navigate(
+        pathname.startsWith("/my/") ? "/my/course/list" : "/admin/course/list",
+      );
+    } catch (error) {
+      alert(error.message || "과정 삭제에 실패했습니다.");
+    }
   };
 
   useEffect(() => {
@@ -66,27 +103,7 @@ export default function CourseItem() {
     const options = { signal: controller.signal };
     dispatch(courseActions.startLoading());
     // 다른 과정으로 이동했을 때 이전 과정의 출석률이 보이지 않도록 비운다
-    dispatch(courseActions.loadAttendanceSummary(null));
     dispatch(courseActions.showStudents([]));
-
-    // 수강생 목록도 따로 호출 — 수강생 역할에는 목록 조회 권한(COURSE_STUDENT_READ)이 없어
-    // 403 이 나도 과정 화면은 뜨도록. 실패하면 빈 목록으로 둔다
-    getCourseStudents(id, options)
-      .then((students) => dispatch(courseActions.showStudents(students)))
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          console.log(error);
-        }
-      });
-
-    // 출석률 요약은 따로 호출 (이 API만 실패해도 과정 화면은 뜨도록)
-    getAttendanceSummary(id, options)
-      .then((summary) => dispatch(courseActions.loadAttendanceSummary(summary)))
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          console.log(error);
-        }
-      });
 
     (async () => {
       try {
@@ -107,6 +124,41 @@ export default function CourseItem() {
       controller.abort();
     };
   }, [id, dispatch]);
+
+  // 수강생 목록: 권한(COURSE_STUDENT_READ)이 확인된 뒤에만 호출 (permission-guide 3-2)
+  // Promise.all 과 분리해서, 이 API가 실패해도 과정 화면은 뜨도록 한다
+  useEffect(() => {
+    if (!canReadStudents) {
+      return;
+    }
+    const controller = new AbortController();
+    getCourseStudents(id, { signal: controller.signal })
+      .then((students) => dispatch(courseActions.showStudents(students)))
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          console.log(error);
+        }
+      });
+    return () => controller.abort();
+  }, [id, dispatch, canReadStudents]);
+
+  // 출석률 요약: 권한(COURSE_ATTENDANCE_READ)이 확인된 뒤에만 호출. 따로 호출 (실패해도 과정 화면은 뜨도록)
+  useEffect(() => {
+    // 다른 과정으로 이동했을 때 이전 과정의 출석률이 보이지 않도록 비운다
+    dispatch(courseActions.loadAttendanceSummary(null));
+    if (!canReadAttendance) {
+      return;
+    }
+    const controller = new AbortController();
+    getAttendanceSummary(id, { signal: controller.signal })
+      .then((summary) => dispatch(courseActions.loadAttendanceSummary(summary)))
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          console.log(error);
+        }
+      });
+    return () => controller.abort();
+  }, [id, dispatch, canReadAttendance]);
 
   const finishCourse = (courseStartDate, courseEndDated) => {
     const today = new Date();
@@ -157,12 +209,16 @@ export default function CourseItem() {
               </div>
             )}
             <div>{showCourse.name}</div>
-            <button type="button" onClick={() => setShowEditCourse(true)}>
-              수정
-            </button>
-            <button type="button" onClick={() => setShowDeleteConfirm(true)}>
-              삭제
-            </button>
+            {canUpdateCourse && (
+              <button type="button" onClick={() => setShowEditCourse(true)}>
+                수정
+              </button>
+            )}
+            {canDeleteCourse && (
+              <button type="button" onClick={() => setShowDeleteConfirm(true)}>
+                삭제
+              </button>
+            )}
             {showEditCourse && (
               <CourseEditModal
                 course={showCourse}
@@ -179,16 +235,18 @@ export default function CourseItem() {
           </>
         )}
         <ul className="pageList">
-          {TABS.map(({ label }, index) => (
-            <li key={label} style={{ display: "inline-block" }}>
-              <IconButton
-                className={index === tab ? "active" : undefined}
-                onClick={() => setSearchParams({ tab: String(index) })}
-              >
-                {label}
-              </IconButton>
-            </li>
-          ))}
+          {TABS.map(({ label }, index) =>
+            !isTabVisible(index) ? null : (
+              <li key={label} style={{ display: "inline-block" }}>
+                <IconButton
+                  className={index === tab ? "active" : undefined}
+                  onClick={() => setSearchParams({ tab: String(index) })}
+                >
+                  {label}
+                </IconButton>
+              </li>
+            ),
+          )}
         </ul>
         {Component}
       </div>

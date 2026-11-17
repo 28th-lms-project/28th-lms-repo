@@ -82,6 +82,7 @@ public class CourseController {
 	 * @return CourseVO
 	 */
 
+	@RequireAction(domain = "COURSE", action = "READ", description = "강의 조회")
 	@GetMapping("/my/course/list/{courseId}")
 	public ApiResponse<CourseVO> readMyCourse(@PathVariable String courseId, Authentication authentication) {
 		
@@ -205,6 +206,7 @@ public class CourseController {
 	 * 전체 학생 목록 조회 query문에서 WHERE BASE_ROLE = 'ROLE_STUDENT'
 	 * @return List<CourseMemberVO>
 	 */
+	@RequireAction(domain = "COURSE", action = "MEMBER_READ", description = "강의 회원 선택 목록 조회")
 	@GetMapping("/student/list")
 	public ApiResponse<List<CourseMemberVO>> courseMemberList() {
 		List<CourseMemberVO> courseMemberVO = this.courseService.courseMemberList();
@@ -218,6 +220,7 @@ public class CourseController {
 	 * @return List<CourseMemberVO>
 	 */
 
+	@RequireAction(domain = "COURSE", action = "MEMBER_READ", description = "강의 회원 선택 목록 조회")
 	@GetMapping("/tutor/list")
 	public ApiResponse<List<CourseMemberVO>> courseTutorList(){
 		List<CourseMemberVO> courseMemberVO = this.courseService.courseTutorList();
@@ -229,11 +232,13 @@ public class CourseController {
 	 * @param registCourseVO
 	 * @return ApiResponse.CREATED
 	 */
+	@RequireAction(domain = "COURSE", action = "CREATE", description = "강의 등록")
 	@PostMapping("/admin/course/add")
 	public ApiResponse<CourseVO> addCourse(@Valid @ModelAttribute RegistCourseVO registCourseVO) {
 		return ApiResponse.CREATED(this.courseService.addCourse(registCourseVO));
 	}
 	
+	@RequireAction(domain = "COURSE", action = "STUDENT_CREATE", description = "강의 수강생 추가")
 	@PostMapping("admin/course/list/{courseId}")
 	public ApiResponse<List<CourseMemberVO>> addCourseMember (@PathVariable String courseId 
 							,@RequestBody  List<String> studentId){
@@ -241,10 +246,22 @@ public class CourseController {
 		return ApiResponse.OK(null);
 	}
 	
+	@RequireAction(domain = "COURSE", action = "UPDATE", description = "강의 수정")
 	@PutMapping("admin/course/{courseId}/updatecourse")
-	public ApiResponse<CourseVO> updateCourse(@PathVariable String courseId , @RequestBody ModifyCourseVO modifyCourseVO){
+	public ApiResponse<CourseVO> updateCourse(@PathVariable String courseId , @Valid @RequestBody ModifyCourseVO modifyCourseVO){
 		CourseVO result = this.courseService.updateCourse(courseId, modifyCourseVO);
 		return ApiResponse.OK(result);
+	}
+
+	/**
+	 * 강의 삭제 (DEL_YN = 'Y'). 관리자에게만 COURSE_DELETE 를 부여한다.
+	 * @param courseId
+	 * @return 삭제한 강의 ID
+	 */
+	@RequireAction(domain = "COURSE", action = "DELETE", description = "강의 삭제")
+	@DeleteMapping("/admin/course/{courseId}")
+	public ApiResponse<String> deleteCourse(@PathVariable String courseId) {
+		return ApiResponse.OK(this.courseService.deleteCourse(courseId));
 	}
 	
 	/**

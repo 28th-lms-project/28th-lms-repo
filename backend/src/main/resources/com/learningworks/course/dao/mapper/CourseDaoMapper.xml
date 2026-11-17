@@ -18,15 +18,16 @@
          ON C.ID = CT.COURSE_ID
       INNER JOIN "USER" U
          ON CT.TUTOR_ID = U.ID
+      -- 삭제(DEL_YN = 'Y')된 강의는 관리자 목록에서도 제외
+      WHERE C.DEL_YN = 'N'
       <if test="userId != null">
-      WHERE C.ID IN (SELECT CS.COURSE_ID
+        AND C.ID IN (SELECT CS.COURSE_ID
                        FROM COURSE_STUDENT CS
                       WHERE CS.USER_ID = #{userId}
                       UNION
                      SELECT CT2.COURSE_ID
                        FROM COURSE_TUTOR CT2
                       WHERE CT2.TUTOR_ID = #{userId})
-        AND C.DEL_YN = 'N'
       </if>
 	</select>
 
@@ -48,26 +49,28 @@
       INNER JOIN COURSE_TUTOR CT
          ON C.ID = CT.COURSE_ID
       INNER JOIN "USER" U
-         ON CT.TUTOR_ID = U.ID 
+         ON CT.TUTOR_ID = U.ID
       WHERE C.ID = #{_parameter}
+        AND C.DEL_YN = 'N'
 	</select>
 	
 	
 	<select
 	 id="readMyCourse"
-	 resultType="com.learningworks.course.vo.response.CourseVO" 
-	 parameterType="string">
+	 resultType="com.learningworks.course.vo.response.CourseVO">
 	 SELECT C."NO" 
           , C.COURSE_NAME 
           , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
           , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
           , C.ID 
-        FROM COURSE c 
-       WHERE C.ID = (SELECT COURSE_ID 
-                       FROM COURSE_STUDENT  
-                      WHERE USER_ID IN (SELECT ID 
-                                             FROM "USER"
-                                         WHERE ID = #{userId}))
+        FROM COURSE C
+       -- 요청한 강의(courseId)를 로그인 사용자가 수강 중일 때만 조회 (여러 강의를 들어도 하나만 나옴)
+       WHERE C.ID = #{courseId}
+         AND C.DEL_YN = 'N'
+         AND EXISTS (SELECT 1
+                       FROM COURSE_STUDENT CS
+                      WHERE CS.COURSE_ID = C.ID
+                        AND CS.USER_ID   = #{userId})
 	</select>
 	
 	<select id="courseMemeberList"
@@ -415,10 +418,18 @@
        UPDATE COURSE
           SET COURSE_NAME = #{modifyCourseVO.courseName}
             , NO = #{modifyCourseVO.no}
-            , START_DATE = #{modifyCourseVO.startDate}
-            , END_DATED = #{modifyCourseVO.endDated}
+            , START_DATE = TO_DATE(#{modifyCourseVO.startDate}, 'YYYY-MM-DD')
+            , END_DATED = TO_DATE(#{modifyCourseVO.endDated}, 'YYYY-MM-DD')
         WHERE DEL_YN = 'N'
           AND ID = #{courseId}
+       </update>
+
+       <!-- 강의 삭제: 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다 (수강생 · 과제 · 출결 데이터는 남는다) -->
+       <update id="deleteCourse" parameterType="string">
+       UPDATE COURSE
+          SET DEL_YN = 'Y'
+        WHERE ID = #{_parameter}
+          AND DEL_YN = 'N'
        </update>
        
        

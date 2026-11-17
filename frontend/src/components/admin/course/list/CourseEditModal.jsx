@@ -1,4 +1,10 @@
 import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { courseActions } from "../../../../store/slices/courseSliceStore";
+import {
+  getCourses,
+  updateCourse,
+} from "../../../../api/admin/course/courseApi";
 
 const overlayStyle = {
   position: "fixed",
@@ -100,7 +106,13 @@ export default function CourseEditModal({ course, onClose }) {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const onClickSave = () => {
+  const dispatch = useDispatch();
+  const [saving, setSaving] = useState(false);
+
+  const onClickSave = async () => {
+    if (saving) {
+      return;
+    }
     if (!form.courseName.trim()) {
       alert("과정 명을 입력해주세요.");
       return;
@@ -125,17 +137,27 @@ export default function CourseEditModal({ course, onClose }) {
       startDate: form.startDate,
       endDated: form.endDated,
     };
-    console.log("과정 수정", course.id, modifyCourse);
 
-    // TODO(API): 과정 수정 API 호출
-    //   PUT admin/course/{courseId}/updatecourse   body: modifyCourse
-    //   예) const updated = await updateCourse(course.id, modifyCourse);
-    //
-    // TODO(API): 성공하면 화면의 과정 정보 갱신 후 모달 닫기
-    //   dispatch(courseActions.loadShowCourse(updated));
-    //   onClose();
-    //
-    // TODO(API): 실패하면 alert("과정 수정에 실패했습니다.");
+    setSaving(true);
+    try {
+      const updated = await updateCourse(course.id, modifyCourse);
+      // 화면 위쪽 과정 정보 갱신
+      dispatch(courseActions.loadShowCourse(updated));
+      // 과정 버튼 목록(CourseMain)의 과정 명도 갱신
+      const courses = await getCourses();
+      dispatch(courseActions.load(courses));
+      onClose();
+    } catch (error) {
+      // 입력값 검증 실패면 필드별 메시지를 함께 보여준다
+      const validationMessages = Object.values(error.validations ?? {}).flat();
+      alert(
+        validationMessages.length > 0
+          ? validationMessages.join("\n")
+          : error.message || "과정 수정에 실패했습니다.",
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -190,8 +212,13 @@ export default function CourseEditModal({ course, onClose }) {
         </div>
 
         <div style={buttonAreaStyle}>
-          <button type="button" style={saveButtonStyle} onClick={onClickSave}>
-            저장
+          <button
+            type="button"
+            style={saveButtonStyle}
+            onClick={onClickSave}
+            disabled={saving}
+          >
+            {saving ? "저장 중..." : "저장"}
           </button>
           <button type="button" style={cancelButtonStyle} onClick={onClose}>
             취소

@@ -5,6 +5,7 @@ import {
   updateAnswerGrade,
 } from "../../../../api/admin/system/test/testApi";
 import ConfirmModal from "./ConfirmModal";
+import usePermission from "../../../../hooks/usePermission";
 
 const CORRECT_COLOR = "#1a7f37";
 const ACTIVE_COLOR = "#333";
@@ -264,6 +265,8 @@ export default function ExamGradeModal({
 }) {
   // 채점 중인 시험 세트 ID (ExamSetTable 에서 [채점] 클릭 시 slice 에 저장)
   const testSetId = useSelector((store) => store.test.gradeTestSetId);
+  const { can } = usePermission();
+  const canGrade = can("EXAM_COURSE_EXAM_GRADE");
 
   // 선택한 수강생 ID (처음엔 첫 번째 수강생)
   const [selectedStudentId, setSelectedStudentId] = useState(
@@ -407,30 +410,32 @@ export default function ExamGradeModal({
         ) : (
           <div style={noAnswerStyle}>제출한 답안이 없습니다.</div>
         )}
-        {/* 채점 버튼: 제출한 답안(행)이 없으면 저장할 대상이 없어 비활성 */}
-        <div style={gradeButtonAreaStyle}>
-          {GRADE_BUTTONS.map((buttonGrade) => {
-            const disabled = !studentAnswer?.id;
-            const selected = studentAnswer?.isCorrect === buttonGrade;
-            return (
-              <button
-                key={buttonGrade}
-                type="button"
-                disabled={disabled}
-                style={
-                  disabled
-                    ? disabledGradeButtonStyle
-                    : selected
-                      ? selectedGradeButtonStyle(buttonGrade)
-                      : gradeButtonStyle
-                }
-                onClick={() => onClickGrade(question, buttonGrade)}
-              >
-                {GRADE_LABELS[buttonGrade].text}
-              </button>
-            );
-          })}
-        </div>
+        {/* 채점 버튼: 채점 권한(EXAM_COURSE_EXAM_GRADE)이 있을 때만. 제출한 답안(행)이 없으면 비활성 */}
+        {canGrade && (
+          <div style={gradeButtonAreaStyle}>
+            {GRADE_BUTTONS.map((buttonGrade) => {
+              const disabled = !studentAnswer?.id;
+              const selected = studentAnswer?.isCorrect === buttonGrade;
+              return (
+                <button
+                  key={buttonGrade}
+                  type="button"
+                  disabled={disabled}
+                  style={
+                    disabled
+                      ? disabledGradeButtonStyle
+                      : selected
+                        ? selectedGradeButtonStyle(buttonGrade)
+                        : gradeButtonStyle
+                  }
+                  onClick={() => onClickGrade(question, buttonGrade)}
+                >
+                  {GRADE_LABELS[buttonGrade].text}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };

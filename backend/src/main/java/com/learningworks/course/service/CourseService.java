@@ -53,6 +53,9 @@ public interface CourseService {
 
 	CourseVO updateCourse(String courseId, ModifyCourseVO modifyCourseVO);
 
+	/** 강의 삭제 (DEL_YN = 'Y'). 삭제한 강의 ID 반환 */
+	String deleteCourse(String courseId);
+
 	/** 강의 진행률 · 출석률 요약 (어제까지 기준). 수강생은 본인만 */
 	AttendanceSummaryVO readAttendanceSummary(String courseId);
 

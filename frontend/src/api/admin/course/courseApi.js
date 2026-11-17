@@ -30,6 +30,27 @@ export const getCourseStudents = (courseId, options) =>
   api.get(`/${encode(courseId)}/list/student`, undefined, options);
 
 /**
+ * 과정 수정 (관리자는 모든 과정, 강사는 담당 과정만)
+ * 백엔드: CourseController#updateCourse → PUT /admin/course/{courseId}/updatecourse (COURSE_UPDATE)
+ * @param {string} courseId
+ * @param {{ courseName: string, no: string, startDate: string, endDated: string }} data 날짜는 "YYYY-MM-DD"
+ * @returns {Promise<{ id: string, courseName: string, startDate: string, endDated: string, no: string, name: string }>} 수정된 과정
+ * errorCode: GLOBAL_INVALID_PARAMETER(validations), COURSE_NOT_EXISTS, COURSE_NOT_AUTHORIZED
+ */
+export const updateCourse = (courseId, data) =>
+  api.put(`/admin/course/${encode(courseId)}/updatecourse`, data);
+
+/**
+ * 과정 삭제 (DEL_YN = 'Y', 관리자만)
+ * 백엔드: CourseController#deleteCourse → DELETE /admin/course/{courseId} (COURSE_DELETE)
+ * @param {string} courseId
+ * @returns {Promise<string>} 삭제된 과정 ID
+ * errorCode: COURSE_NOT_EXISTS
+ */
+export const deleteCourse = (courseId) =>
+  api.delete(`/admin/course/${encode(courseId)}`);
+
+/**
  * 과정 진행률 · 출석률 요약 조회 (어제까지 기준)
  * 백엔드: CourseController#readAttendanceSummary → GET /{courseId}/attendance/summary
  * 관리자 · 강사는 과정 전체 수강생, 수강생은 본인만 내려온다.

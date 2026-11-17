@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { IconButton } from "../../../sample/input/IconButton";
 import { getCourseStudents } from "../../../../api/admin/course/courseApi";
+import usePermission from "../../../../hooks/usePermission";
 
 /** 배열을 섞은 새 배열 (Fisher-Yates) */
 const shuffle = (list) => {
@@ -30,6 +31,11 @@ export default function HomeworkSubmitStatus() {
   const [pickedNames, setPickedNames] = useState([]);
   // 수강생 목록 조회 권한(COURSE_STUDENT_READ)이 없으면(수강생 역할) 제출 현황을 숨긴다
   const [forbidden, setForbidden] = useState(false);
+
+  // 내 권한 (팝업의 권한 조회는 부모 HomeworkItem 이 한다)
+  const { can } = usePermission();
+  // 제출자 랜덤 뽑기: 과제를 관리하는 사람(강사)에게만. 과제 수정 권한 기준
+  const canPickRandom = can("COURSE_HOMEWORK_UPDATE");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -108,19 +114,21 @@ export default function HomeworkSubmitStatus() {
           `: ${notSubmittedStudents.map((student) => student.name).join(", ")}`}
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-        <input
-          type="number"
-          min={1}
-          max={submittedStudents.length}
-          value={pickCount}
-          onChange={(e) => setPickCount(e.target.value)}
-          placeholder="명수"
-          style={{ width: "70px", padding: "3px 5px" }}
-        />
-        <IconButton onClick={onClickPickRandom}>제출자 랜덤 뽑기</IconButton>
-        {pickedNames.length > 0 && <span>{pickedNames.join(", ")}</span>}
-      </div>
+      {canPickRandom && (
+        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <input
+            type="number"
+            min={1}
+            max={submittedStudents.length}
+            value={pickCount}
+            onChange={(e) => setPickCount(e.target.value)}
+            placeholder="명수"
+            style={{ width: "70px", padding: "3px 5px" }}
+          />
+          <IconButton onClick={onClickPickRandom}>제출자 랜덤 뽑기</IconButton>
+          {pickedNames.length > 0 && <span>{pickedNames.join(", ")}</span>}
+        </div>
+      )}
     </div>
   );
 }

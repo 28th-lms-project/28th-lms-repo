@@ -11,6 +11,11 @@ import {
 } from "../../../../api/admin/course/courseApi";
 import { useParams } from "react-router-dom";
 import { IconButton } from "../../../sample/input/IconButton";
+import usePermission from "../../../../hooks/usePermission";
+import {
+  fetchMyPermission,
+  selectPermissionStatus,
+} from "../../../../store/slices/permissionSliceStore";
 
 export default function HomeworkItem() {
   const [addReply, setAddReply] = useState(false);
@@ -18,6 +23,19 @@ export default function HomeworkItem() {
   const { showHomework } = useSelector((store) => store.courses);
   const { courseId, homeworkId } = useParams();
   const dispatch = useDispatch();
+
+  // 내 권한: 팝업은 MainLayout 밖이라 권한 조회가 자동으로 되지 않아, MainLayout 과 같은 방식으로 한 번 조회한다
+  // (자식 HomeworkSubmitStatus 도 같은 store 의 권한을 쓴다)
+  const permissionStatus = useSelector(selectPermissionStatus);
+  useEffect(() => {
+    if (permissionStatus === "idle") {
+      dispatch(fetchMyPermission());
+    }
+  }, [dispatch, permissionStatus]);
+  const { can } = usePermission();
+  const canUpdateHomework = can("COURSE_HOMEWORK_UPDATE");
+  const canDeleteHomework = can("COURSE_HOMEWORK_DELETE");
+  const canCreateReply = can("COURSE_HOMEWORK_REPLY_CREATE");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -163,14 +181,10 @@ export default function HomeworkItem() {
         )}{" "}
         제출마감)
       </h3>
-      {/* TODO: 학생에게는 수정 버튼 숨김 처리 필요 (팝업은 MainLayout 밖이라 can() 사용 불가) */}
+      {/* 과제 [수정] [삭제]: 과제 수정 · 삭제 권한이 있을 때만 (강사) */}
       {editing ? (
         <>
-          <button
-            type="button"
-            onClick={onClickSaveHomework}
-            disabled={saving}
-          >
+          <button type="button" onClick={onClickSaveHomework} disabled={saving}>
             {saving ? "저장 중..." : "저장"}
           </button>
           <button type="button" onClick={onClickCancelUpdate} disabled={saving}>
@@ -181,16 +195,20 @@ export default function HomeworkItem() {
         // 제출마감일이 지나면 과제 [수정] 버튼을 보여주지 않는다. (프론트에서만 막음)
         !isDeadlinePassed && (
           <>
-            <button type="button" onClick={onClickUpdateHomeworkContent}>
-              수정
-            </button>
-            <button
-              type="button"
-              onClick={onClickDeleteHomework}
-              disabled={deleting}
-            >
-              {deleting ? "삭제 중..." : "삭제"}
-            </button>
+            {canUpdateHomework && (
+              <button type="button" onClick={onClickUpdateHomeworkContent}>
+                수정
+              </button>
+            )}
+            {canDeleteHomework && (
+              <button
+                type="button"
+                onClick={onClickDeleteHomework}
+                disabled={deleting}
+              >
+                {deleting ? "삭제 중..." : "삭제"}
+              </button>
+            )}
           </>
         )
       )}
@@ -271,14 +289,15 @@ export default function HomeworkItem() {
             )}
             {!isDeadlinePassed && !addReply && (
               <>
-                {/* TODO: 팝업(/popup/homework)은 MainLayout 밖이라 권한 조회가 안 돼서
-                    can("COURSE_HOMEWORK_REPLY_CREATE") 조건을 임시로 뺐다. 권한 없는 사용자는 등록 시 403 alert */}
-                <IconButton
-                  style={{ marginRight: "5px" }}
-                  onClick={onClickAddReply}
-                >
-                  댓글 작성
-                </IconButton>
+                {/* 댓글 작성: 댓글 등록 권한이 있을 때만 (팝업 권한 조회는 위 useEffect 에서 함) */}
+                {canCreateReply && (
+                  <IconButton
+                    style={{ marginRight: "5px" }}
+                    onClick={onClickAddReply}
+                  >
+                    댓글 작성
+                  </IconButton>
+                )}
                 <IconButton onClick={onClickRefrashReply} style={{}}>
                   댓글 새로고침
                 </IconButton>
