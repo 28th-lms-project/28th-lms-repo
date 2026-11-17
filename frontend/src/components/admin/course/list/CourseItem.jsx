@@ -19,9 +19,12 @@ import MyInterview from "../../../my/course/MyInterview.jsx";
 import ExamPage from "../CourseTableComponent/ExamPage.jsx";
 import MyCourseData from "../../../my/course/MyCourseData.jsx";
 import MyCounsel from "../../../my/course/MyCounsel.jsx";
+
 import CourseEditModal from "./CourseEditModal";
 import ConfirmModal from "../CourseTableComponent/ConfirmModal";
 import PeriodBar from "../CourseTableComponent/PeriodBar";
+
+import CourseSurvey from "../CourseTableComponent/CourseSurvey.jsx";
 
 const TABS = [
   { label: "수강생", Component: <CourseStudentList /> }, // <CourseStudentList/>
@@ -31,7 +34,7 @@ const TABS = [
   { label: "시험", Component: <ExamPage /> }, //<Exam/>
   { label: "면접일정", Component: <MyInterview /> }, //<InterviewTimeTable/>
   { label: "교육자료", Component: <MyCourseData /> }, //<EducationMaterialsList/>
-  { label: "설문", Component: <div>설문</div> }, //<Survey/>
+  { label: "설문", Component: <CourseSurvey /> }, //<Survey/>
   { label: "상담목록", Component: <MyCounsel /> }, //<ConsultationList/>
 ];
 export default function CourseItem() {

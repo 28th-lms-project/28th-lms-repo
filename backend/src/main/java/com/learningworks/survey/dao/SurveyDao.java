@@ -7,9 +7,14 @@ import org.apache.ibatis.annotations.Param;
 
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
 import com.learningworks.survey.vo.request.ModifySurveyVO;
+import com.learningworks.survey.vo.request.RegistCourseSurveyAnswerVO;
+import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
+import com.learningworks.survey.vo.response.CourseSurveyVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
+import com.learningworks.survey.vo.response.SurveyRespondentVO;
+import com.learningworks.survey.vo.response.SurveyStudentAnswerVO;
 import com.learningworks.survey.vo.response.SurveyVO;
 
 import jakarta.validation.Valid;
@@ -38,6 +43,31 @@ public interface SurveyDao {
 	int deleteOneSurveyData(@Param("surveyId") String surveyId, @Param("surveyDataId") String surveyDataId);
 	
 	int deleteSurveyDatas(String surveyId);
+
+	List<CourseSurveyVO> selectAllCourseSurvey(String courseId);
+
+	int insertNewCourseSurvey(RegistCourseSurveyVO registCourseSurvey);
+
+	CourseSurveyVO selectCourseSurvey(String id);
+
+	int deleteCourseSurveyAnswerDatas(String courseSurveyId);
+
+	int deleteCourseSurveyAnswers(String courseSurveyId);
+
+	int deleteOneCourseSurvey(@Param("courseId") String courseId,@Param("courseSurveyId") String courseSurveyId);
+
+	String selectCourseStudentId(@Param("courseId") String courseId, @Param("userId") String userId);
+
+	int selectCourseSurveyAnswerCount(@Param("courseSurveyId") String courseSurveyId, @Param("courseStudentId") String courseStudentId);
+
+	int insertNewCourseSurveyAnswer(@Param("courseSurveyId") String courseSurveyId, @Param("courseStudentId") String courseStudentId, @Param("answer") RegistCourseSurveyAnswerVO answer);
+
+	void insertNewCourseSurveyAnswerData(@Param("answerId") String answerId, @Param("dataId") String dataId, @Param("textAnswer") String textAnswer);
+
+	List<SurveyRespondentVO> selectCourseSurveyRespondents(String courseSurveyId);
+
+	List<SurveyStudentAnswerVO> selectCourseSurveyStudentAnswers(@Param("courseSurveyId") String courseSurveyId,
+			@Param("courseStudentId") String courseStudentId);
 	
 	
 
