@@ -47,12 +47,12 @@ import SwatchPicker from "../common/ui/SwatchPicker.jsx";
  */
 const STANDARD = [
     { id: "standard-foundation", label: "기초", title: "기초 (토큰 · 테마)", Component: TokenCatalog },
-    { id: "standard-input", label: "동작 · 입력", title: "동작 · 입력 (버튼 · 입력 · 셀렉트 · 선택 · 날짜 · 파일 · 반복 입력 행)", Component: StandardInputCatalog },
-    { id: "standard-feedback", label: "표시 · 상태", title: "표시 · 상태 (배지 · 안내 상자 · 상태 상자 · 진행 막대 · 토스트 · 모달)", Component: StandardFeedbackCatalog },
-    { id: "standard-data", label: "데이터", title: "데이터 (표 · 페이지 이동 · 표 확장 · 두 목록 옮기기)", Component: StandardDataCatalog },
-    { id: "standard-layout", label: "배치 · 탐색", title: "배치 · 탐색 (화면 머리 · 사이드 메뉴 · 탭 · 패널 · 카드 · 배치 · 팝업 창 틀)", Component: StandardLayoutCatalog },
-    { id: "standard-content", label: "내용", title: "내용 (시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 내용 블록)", Component: StandardContentCatalog },
-    { id: "standard-screen", label: "화면 예시", title: "화면 예시 (목록 | 상세 · 상세 · 대시보드 · 오류 · 과정 · 시험 · 문제 은행 · 강의실 · 과제 · 설문 · 시스템 관리 · 로그인 · 상담)", Component: StandardScreenCatalog },
+    { id: "standard-input", label: "동작 · 입력", title: "동작 · 입력 (버튼 · 입력 · 폼 · 검색 셀렉트 · 선택 · 날짜 · 숫자 · 기간 · 검색 · 파일 · 반복 입력 행)", Component: StandardInputCatalog },
+    { id: "standard-feedback", label: "표시 · 상태", title: "표시 · 상태 (배지 · 태그 · 안내 상자 · 상태 상자 · 진행 막대 · 토스트 · 확인 창 · 모달)", Component: StandardFeedbackCatalog },
+    { id: "standard-data", label: "데이터", title: "데이터 (표 · 페이지 이동 · 표 확장 · 두 목록 사이 옮기기)", Component: StandardDataCatalog },
+    { id: "standard-layout", label: "배치 · 탐색", title: "배치 · 탐색 (화면 머리 · 브레드크럼 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 3단 배치 · 팝업 창 틀)", Component: StandardLayoutCatalog },
+    { id: "standard-content", label: "내용", title: "내용 (시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 인용 · 세로 키-값 · 상자 목록)", Component: StandardContentCatalog },
+    { id: "standard-screen", label: "화면 예시", title: "화면 예시 (목록 | 상세 · 상세 · 대시보드 · 오류 · 과정 · 시험 · 시험 응시 · 문제 은행 · 과제 · 강의실 · 설문 · 시스템 관리 · 로그인 · 상담)", Component: StandardScreenCatalog },
 ];
 
 /** 통일 전 현재 UI (비교용) */

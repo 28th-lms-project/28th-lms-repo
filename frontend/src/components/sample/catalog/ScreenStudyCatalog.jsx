@@ -22,9 +22,8 @@ import { icons } from "../../common/input/icons.js";
  * 가이드: frontend/docs/ui-style-guide.md 8장 "화면 예시"
  */
 
-/* 유형별 배지 색 (문제 은행 · 시험지에서 같게) */
-const TYPE_LABEL = { select: "객관식", multiple: "객관식 (여러 개)", ox: "O/X", write: "주관식", code: "코드 작성" };
-const TYPE_TONE = { select: "primary", multiple: "primary", ox: "neutral", write: "info", code: "warning" };
+/* 문제 유형 이름 (분류라 tag로, 문제 은행 · 시험지에서 같게) */
+const TYPE_LABEL = { select: "객관식 (하나)", multiple: "객관식 (여러 개)", ox: "O/X", write: "주관식", code: "코드 작성" };
 
 const PAPER = [
     { no: 1, type: "select", title: "Java의 기본형이 아닌 것은?", point: 2, options: ["int", "boolean", "String", "char"], answer: "3" },
@@ -58,7 +57,7 @@ const ExamTakeScreen = () => {
         if (!(await confirm({ title: "답안 제출", message, confirmText: "제출" }))) return;
         setMode(null);
         setAnswers({});
-        toast.success("답안을 제출했습니다. (예시)");
+        toast.success("답안을 제출했습니다.");
     };
 
     const view = mode === "view";
@@ -91,7 +90,7 @@ const ExamTakeScreen = () => {
                         <Button onClick={() => setMode(null)}>닫기</Button>
                     ) : (
                         <>
-                            <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: "10px" }}>
+                            <div className="progress-row" style={{ flex: 1, minWidth: 0 }}>
                                 <span className="field-hint" style={{ whiteSpace: "nowrap" }}>
                                     답함 {done} / {PAPER.length}
                                 </span>
@@ -130,7 +129,7 @@ const ExamTakeScreen = () => {
                                 no={q.no}
                                 title={
                                     <>
-                                        {q.title} <Badge tone={TYPE_TONE[q.type]}>{TYPE_LABEL[q.type]}</Badge>
+                                        {q.title} <span className="tag">{TYPE_LABEL[q.type]}</span>
                                     </>
                                 }
                                 score={q.point}
@@ -191,7 +190,7 @@ const QuestionBankListScreen = () => {
     return (
         <Variant
             name="문제 은행 목록 (과목 탭 · 문제 카드 · 문항별 펼치기 · 출제 통계)"
-            source="Tabs(count) · card · Badge · QuestionBlock(showResult) · card-meta"
+            source="Tabs(count) · card · tag · QuestionBlock(showResult) · card-meta · btn-group"
             note={
                 "Test(과목 li 탭 + 문제 카드 + 라벨 없는 숫자 3개 + '내용보기')를 표준으로.\n" +
                 "통계는 이름을 붙인 한 줄 글자('출제 12회 · 정답률 75%'). StatCard는 너무 커서 목록 카드 안에는 쓰지 않음. 출제 0회는 '아직 안 냄'.\n" +
@@ -208,68 +207,70 @@ const QuestionBankListScreen = () => {
                     ariaLabel="과목"
                 />
                 <TabPanel idBase={tabsId} tabId={subject}>
-                    <div className="toolbar" style={{ marginBottom: "12px" }}>
-                        <span className="field-hint">{BANK[subject].length}문제</span>
-                        <Button variant="primary" icon={icons.add} style={{ marginLeft: "auto" }}>
-                            문제 추가
-                        </Button>
-                    </div>
-                    {BANK[subject].length === 0 ? (
-                        <StatusBox type="empty" title="이 과목에 등록된 문제가 없습니다." />
-                    ) : (
-                        <div className="form-stack" style={{ gap: "12px" }}>
-                            {BANK[subject].map((q) => {
-                                const expanded = open.includes(q.no);
-                                const hasDetail = !!toOptions(q) || q.body;
-                                return (
-                                    <article key={q.no} className="card">
-                                        <div className="card-header">
-                                            <h3 className="card-title">
-                                                <Badge tone={TYPE_TONE[q.type]}>{TYPE_LABEL[q.type]}</Badge> {q.title}
-                                            </h3>
-                                            <span className="field-hint" style={{ whiteSpace: "nowrap" }}>
-                                                {q.point}점
-                                            </span>
-                                        </div>
-                                        <div className="card-meta">
-                                            <span>
-                                                {q.crtDt} · {q.writer}
-                                            </span>
-                                            <span>{q.issued ? `출제 ${q.issued}회 · 정답 ${q.correct}회 · 정답률 ${Math.round((q.correct / q.issued) * 100)}%` : "아직 안 냄"}</span>
-                                        </div>
-                                        <div className="toolbar" style={{ marginTop: "8px" }}>
-                                            {hasDetail && (
-                                                <Button size="sm" variant="text" aria-expanded={expanded} onClick={() => toggle(q.no)}>
-                                                    {expanded ? "보기 · 정답 접기" : "보기 · 정답 펼치기"}
-                                                </Button>
-                                            )}
-                                            <span style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
-                                                <Button size="sm" icon={icons.edit}>
-                                                    수정
-                                                </Button>
-                                                <Button size="sm" variant="danger" icon={icons.delete}>
-                                                    삭제
-                                                </Button>
-                                            </span>
-                                        </div>
-                                        {expanded && hasDetail && (
-                                            <div style={{ marginTop: "8px" }}>
-                                                <QuestionBlock
-                                                    no={q.no}
-                                                    title="보기 · 정답"
-                                                    code={q.body}
-                                                    options={toOptions(q)}
-                                                    multiple={q.type === "multiple"}
-                                                    answer={q.answer}
-                                                    showResult={!!toOptions(q)}
-                                                />
-                                            </div>
-                                        )}
-                                    </article>
-                                );
-                            })}
+                    <div className="form-stack">
+                        <div className="toolbar">
+                            <span className="field-hint">{BANK[subject].length}문제</span>
+                            <Button variant="primary" icon={icons.add} className="toolbar-end">
+                                문제 추가
+                            </Button>
                         </div>
-                    )}
+                        {BANK[subject].length === 0 ? (
+                            <StatusBox type="empty" title="이 과목에 등록된 문제가 없습니다." />
+                        ) : (
+                            <div className="form-stack" style={{ gap: "12px" }}>
+                                {BANK[subject].map((q) => {
+                                    const expanded = open.includes(q.no);
+                                    const hasDetail = !!toOptions(q) || q.body;
+                                    return (
+                                        <article key={q.no} className="card">
+                                            <div className="card-header">
+                                                <h3 className="card-title">
+                                                    <span className="tag">{TYPE_LABEL[q.type]}</span> {q.title}
+                                                </h3>
+                                                <span className="field-hint" style={{ whiteSpace: "nowrap" }}>
+                                                    {q.point}점
+                                                </span>
+                                            </div>
+                                            <div className="card-meta">
+                                                <span>
+                                                    {q.crtDt} · {q.writer}
+                                                </span>
+                                                <span>{q.issued ? `출제 ${q.issued}회 · 정답 ${q.correct}회 · 정답률 ${Math.round((q.correct / q.issued) * 100)}%` : "아직 안 냄"}</span>
+                                            </div>
+                                            <div className="btn-group" style={{ marginTop: "8px" }}>
+                                                {hasDetail && (
+                                                    <Button size="sm" variant="text" aria-expanded={expanded} onClick={() => toggle(q.no)}>
+                                                        {expanded ? "보기 · 정답 접기" : "보기 · 정답 펼치기"}
+                                                    </Button>
+                                                )}
+                                                <div className="toolbar-end">
+                                                    <Button size="sm" icon={icons.edit}>
+                                                        수정
+                                                    </Button>
+                                                    <Button size="sm" variant="danger" icon={icons.delete}>
+                                                        삭제
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            {expanded && hasDetail && (
+                                                <div style={{ marginTop: "8px" }}>
+                                                    <QuestionBlock
+                                                        no={q.no}
+                                                        title="보기 · 정답"
+                                                        code={q.body}
+                                                        options={toOptions(q)}
+                                                        multiple={q.type === "multiple"}
+                                                        answer={q.answer}
+                                                        showResult={!!toOptions(q)}
+                                                    />
+                                                </div>
+                                            )}
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </TabPanel>
             </div>
         </Variant>
@@ -340,7 +341,7 @@ const ConnectedScreen = () => {
                             이번 주
                         </Button>
                     )}
-                    <span className="field-hint" style={{ marginLeft: "auto" }}>
+                    <span className="field-hint toolbar-end">
                         기준 {LATE} · 결석 = 그날 접속 없음
                     </span>
                 </div>
@@ -492,7 +493,7 @@ const InlineAddScreen = () => {
             setRows((prev) => [...prev, { id: `i${prev.length + 1}`, student: student.label, company: company.trim(), at }].sort((a, b) => a.at.localeCompare(b.at)));
             setSaving(false);
             close();
-            toast.success("면접 일정을 등록했습니다. (예시)");
+            toast.success("면접 일정을 등록했습니다.");
         }, 700);
     };
 
@@ -517,7 +518,7 @@ const InlineAddScreen = () => {
                 <div className="toolbar">
                     <span className="field-hint">면접 일정 {rows.length}건</span>
                     {!adding && (
-                        <Button variant="primary" icon={icons.add} onClick={() => setAdding(true)} style={{ marginLeft: "auto" }}>
+                        <Button variant="primary" icon={icons.add} onClick={() => setAdding(true)} className="toolbar-end">
                             일정 등록
                         </Button>
                     )}
@@ -539,7 +540,7 @@ const InlineAddScreen = () => {
                         >
                             <div className="form-row">
                                 <Field label="수강생" htmlFor="std-iv-student" required error={errors.student}>
-                                    <SelectBox inputId="std-iv-student" options={STUDENT_OPTIONS} value={student} onChange={setStudent} aria-invalid={!!errors.student} />
+                                    <SelectBox inputId="std-iv-student" options={STUDENT_OPTIONS} value={student} onChange={setStudent} />
                                 </Field>
                                 <Field label="면접 일시" htmlFor="std-iv-at" required error={errors.at}>
                                     <input
@@ -548,8 +549,6 @@ const InlineAddScreen = () => {
                                         className="form-control"
                                         value={at}
                                         onChange={(e) => setAt(e.target.value)}
-                                        aria-invalid={!!errors.at}
-                                        aria-describedby="std-iv-at-msg"
                                     />
                                 </Field>
                                 <Field label="회사명" htmlFor="std-iv-company" required error={errors.company} count={{ current: company.length, max: COMPANY_MAX }}>
@@ -559,8 +558,6 @@ const InlineAddScreen = () => {
                                         maxLength={COMPANY_MAX}
                                         value={company}
                                         onChange={(e) => setCompany(e.target.value)}
-                                        aria-invalid={!!errors.company}
-                                        aria-describedby="std-iv-company-msg"
                                     />
                                 </Field>
                             </div>
@@ -599,15 +596,14 @@ const ReplyEditScreen = () => {
         setEditingId(null);
     };
     const saveEdit = () => {
-        if (!draft.trim()) return toast.error("내용을 입력하세요.");
         setReplies((prev) => prev.map((r) => (r.id === editingId ? { ...r, body: draft.trim(), edited: true } : r)));
         setEditingId(null);
-        toast.success("댓글을 고쳤습니다. (예시)");
+        toast.success("댓글을 저장했습니다.");
     };
     const remove = async (r) => {
         if (!(await confirm({ message: `${r.author}님의 댓글을 삭제할까요?`, confirmText: "삭제", danger: true }))) return;
         setReplies((prev) => prev.filter((x) => x.id !== r.id));
-        toast.success("삭제했습니다. (예시)");
+        toast.success("삭제했습니다.");
     };
 
     return (
@@ -641,14 +637,14 @@ const ReplyEditScreen = () => {
                                 <li key={r.id} className="comment">
                                     <div className="comment-head">
                                         <span className="comment-author">{r.author}</span>
-                                        <Badge tone="info">수정 중</Badge>
+                                        <Badge tone="warning">수정 중</Badge>
                                     </div>
                                     <textarea className="form-control" rows={3} aria-label="댓글 수정" value={draft} onChange={(e) => setDraft(e.target.value)} autoFocus />
                                     <div className="comment-actions">
                                         <Button size="sm" variant="text" onClick={cancelEdit}>
                                             취소
                                         </Button>
-                                        <Button size="sm" variant="primary" onClick={saveEdit}>
+                                        <Button size="sm" variant="primary" onClick={saveEdit} disabled={!draft.trim()}>
                                             저장
                                         </Button>
                                     </div>
@@ -762,7 +758,7 @@ const SurveyResultScreen = () => {
                                 {SV_QUESTIONS.map((q, i) => {
                                     const result = countAnswers(q);
                                     return (
-                                        <Panel key={q.id} title={`${i + 1}. ${q.subject}`} badge={<Badge>{SV_TYPE_LABEL[q.type]}</Badge>} flush={q.type !== "text"}>
+                                        <Panel key={q.id} title={`${i + 1}. ${q.subject}`} badge={<span className="tag">{SV_TYPE_LABEL[q.type]}</span>} flush={q.type !== "text"}>
                                             {q.type === "text" ? (
                                                 result.length ? (
                                                     <ul className="list-boxed">
@@ -840,13 +836,18 @@ const SurveyResultScreen = () => {
     );
 };
 
-export const ScreenStudyCatalog = () => (
+export const ScreenExamTakeCatalog = () => (
     <>
         <GroupTitle>화면 예시: 시험 응시 · 문제 은행 목록</GroupTitle>
         <Variants wide>
             <ExamTakeScreen />
             <QuestionBankListScreen />
         </Variants>
+    </>
+);
+
+export const ScreenClassroomCatalog = () => (
+    <>
         <GroupTitle>화면 예시: 강의실 (접속 기록 · 시간표 · 면접 일정 · 댓글)</GroupTitle>
         <Variants wide>
             <ConnectedScreen />
@@ -854,6 +855,11 @@ export const ScreenStudyCatalog = () => (
             <InlineAddScreen />
             <ReplyEditScreen />
         </Variants>
+    </>
+);
+
+export const ScreenSurveyResultCatalog = () => (
+    <>
         <GroupTitle>화면 예시: 설문 결과 (집계)</GroupTitle>
         <Variants wide>
             <SurveyResultScreen />

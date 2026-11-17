@@ -96,7 +96,7 @@ const AuthScreen = () => {
                             </Field>
                         </div>
                         <Button type="submit" variant="primary" block loading={loading}>
-                            {loading ? "확인 중..." : isLogin ? "로그인" : "확인"}
+                            {loading ? (isLogin ? "로그인 중..." : "확인 중...") : isLogin ? "로그인" : "확인"}
                         </Button>
                         <p className="auth-footer">{isLogin ? "비밀번호를 잊었으면 관리자에게 초기화를 요청하세요." : <a href="#std-auth-kind">이전 화면으로</a>}</p>
                     </form>
@@ -149,7 +149,7 @@ const CounselScreen = () => {
     const saveLevels = () => {
         setLevels(draft);
         setEditingLevels(false);
-        toast.success("역량 진단을 저장했습니다. (예시)");
+        toast.success("역량 진단을 저장했습니다.");
     };
 
     const addRecord = async (event) => {
@@ -159,7 +159,7 @@ const CounselScreen = () => {
         setRecords((prev) => [{ id: prev.length + 1, date: "2026-11-16", type, text: text.trim() }, ...prev]);
         setText("");
         setError("");
-        toast.success("상담 내용을 등록했습니다. (예시)");
+        toast.success("상담 내용을 등록했습니다.");
     };
 
     return (
@@ -266,8 +266,8 @@ const CounselScreen = () => {
                 <div className="layout-split" style={{ "--layout-aside-width": "220px" }}>
                     <Panel title="상담 내용" subtitle={`${records.length}건`}>
                         <form className="form-stack" onSubmit={addRecord} noValidate>
-                            <Field label="상담 유형">
-                                <ChoiceGroup name="std-counsel-type2" legend="상담 유형" options={COUNSEL_TYPES} value={type} onChange={setType} />
+                            <Field group label="상담 유형">
+                                <ChoiceGroup name="std-counsel-type2" options={COUNSEL_TYPES} value={type} onChange={setType} />
                             </Field>
                             <Field
                                 label="내용"
@@ -284,12 +284,10 @@ const CounselScreen = () => {
                                     disabled={locked}
                                     value={text}
                                     onChange={(e) => setText(e.target.value)}
-                                    aria-invalid={!!error}
-                                    aria-describedby="std-counsel-text-msg"
                                 />
                             </Field>
                             <div>
-                                <Button type="submit" variant="primary" icon={icons.add} disabled={locked}>
+                                <Button type="submit" variant="primary" disabled={locked}>
                                     상담 내용 등록
                                 </Button>
                             </div>

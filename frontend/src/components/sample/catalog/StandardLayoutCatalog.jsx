@@ -243,7 +243,7 @@ const PanelGroup = () => {
                     code={`
 <Panel title="홍길동" badge={<Badge tone="success">정상</Badge>}
        actions={<Button size="sm" icon={icons.edit}>수정</Button>}
-       footer={<><Button variant="danger">잠금</Button>
+       footer={<><Button variant="danger" className="btn-start">잠금</Button>
                  <Button variant="primary">저장</Button></>}>
   <dl className="desc-list">...</dl>
 </Panel>`}
@@ -254,7 +254,7 @@ const PanelGroup = () => {
                         actions={<Button size="sm" icon={icons.edit}>수정</Button>}
                         footer={
                             <>
-                                <Button variant="danger">잠금</Button>
+                                <Button variant="danger" className="btn-start">잠금</Button>
                                 <Button variant="primary">저장</Button>
                             </>
                         }
@@ -350,7 +350,7 @@ const CardGroup = () => {
                             >
                                 <span className="card-header">
                                     <span className="card-title">{name}</span>
-                                    <Badge tone={state === "종료" ? "neutral" : "primary"}>{state}</Badge>
+                                    <Badge tone={state === "종료" ? "neutral" : "info"}>{state}</Badge>
                                 </span>
                                 <span className="card-meta">{meta}</span>
                             </button>
@@ -493,7 +493,7 @@ const PopupGroup = () => {
                                 <h1 className="popup-title">{HOMEWORK.subject}</h1>
                                 <div className="popup-actions">
                                     <Button size="sm" icon={icons.refresh} aria-label="새로고침" />
-                                    <Button size="sm" onClick={() => toast.show("팝업이면 window.close()로 닫습니다. (예시)")}>
+                                    <Button size="sm" onClick={() => toast.show("팝업이면 window.close()로 닫습니다.")}>
                                         닫기
                                     </Button>
                                 </div>

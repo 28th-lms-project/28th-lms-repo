@@ -12,6 +12,7 @@
  *
  *   comment-list > li.comment (comment-head · comment-author · comment-time · comment-body · comment-actions)
  *     답글은 comment 안의 comment-list.comment-replies
+ *   comment-form: 댓글 입력 (textarea + <div class="btn-group btn-group-end">버튼</div>)
  *   quote: 의견 · 인용 (<blockquote class="quote"><p>..</p><footer>이름</footer></blockquote>)
  *   desc-list-stacked: 라벨 위 · 값 아래, 여러 열 (dl)
  *   list-boxed: 회색 상자 안 글머리 목록 (ul)
@@ -300,6 +301,18 @@
 
 .comment-replies > .comment {
   padding: 8px 0;
+}
+
+/* 댓글 · 제출 입력: textarea + 오른쪽 버튼 줄 (btn-group btn-group-end) */
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.comment-form > textarea {
+  min-height: 64px;
 }
 
 /* ───── 인용 ───── */

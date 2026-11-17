@@ -1,4 +1,4 @@
-import { Children, cloneElement, isValidElement } from "react";
+import { Children, cloneElement, isValidElement, useId } from "react";
 
 /**
  * 폼 필드 틀: 라벨 + 입력 + (오류 또는 힌트) + (글자 수). 스타일은 styles/form.css.
@@ -8,9 +8,13 @@ import { Children, cloneElement, isValidElement } from "react";
  * aria-invalid(오류일 때) · aria-describedby(힌트 · 오류 문구) — SelectBox는 aria-errormessage — 를 자동으로 붙인다.
  * 입력이 children 바로 아래에 없으면(input-range · input-group 안 등) 직접 붙인다: aria-describedby={`${htmlFor}-msg`}.
  *
+ * group: 체크 · 라디오 · ChoiceGroup처럼 여러 입력을 묶을 때. 바깥을 role="group"으로 만들고
+ * 라벨(<span>)을 aria-labelledby로, 힌트 · 오류를 aria-describedby로 연결한다 (htmlFor 없이 씀).
+ *
  * @param {object} props
  * @param {string} props.label
  * @param {string} [props.htmlFor]   입력의 id
+ * @param {boolean} [props.group]    여러 입력 묶음 (체크 · 라디오 · ChoiceGroup)
  * @param {boolean} [props.required] 라벨 뒤 빨간 *
  * @param {string} [props.hint]      도움말 (오류가 있으면 오류만 표시)
  * @param {string} [props.error]
@@ -35,17 +39,29 @@ const wire = (children, htmlFor, messageId, hasMessage, error) =>
     return Object.keys(extra).length ? cloneElement(child, extra) : child;
   });
 
-export default function Field({ label, htmlFor, required = false, hint, error, count, className = "", children }) {
-  const messageId = htmlFor ? `${htmlFor}-msg` : undefined;
+export default function Field({ label, htmlFor, group = false, required = false, hint, error, count, className = "", children }) {
+  const labelId = useId();
+  const messageId = group ? `${labelId}-msg` : htmlFor ? `${htmlFor}-msg` : undefined;
+  const hasMessage = !!(error || hint);
+  const labelClass = `field-label ${required ? "field-required" : ""}`.trim();
+
+  const groupProps = group
+    ? { role: "group", "aria-labelledby": label ? labelId : undefined, "aria-describedby": hasMessage ? messageId : undefined }
+    : {};
 
   return (
-    <div className={`field ${className}`.trim()}>
-      {label && (
-        <label className={`field-label ${required ? "field-required" : ""}`.trim()} htmlFor={htmlFor}>
-          {label}
-        </label>
-      )}
-      {wire(children, htmlFor, messageId, !!(error || hint), error)}
+    <div className={`field ${className}`.trim()} {...groupProps}>
+      {label &&
+        (group ? (
+          <span id={labelId} className={labelClass}>
+            {label}
+          </span>
+        ) : (
+          <label className={labelClass} htmlFor={htmlFor}>
+            {label}
+          </label>
+        ))}
+      {group ? children : wire(children, htmlFor, messageId, hasMessage, error)}
       {error ? (
         <p id={messageId} className="field-error" role="alert">
           {error}

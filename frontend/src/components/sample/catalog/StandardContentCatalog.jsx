@@ -133,14 +133,13 @@ const CommentGroup = () => {
                         </Comment>
                         <Comment author="이영희" time="2026-11-16 16:45" body="마감이 금요일 자정 맞나요?" actions={<Button variant="text">답글</Button>} />
                     </ul>
-                    <div className="form-stack" style={{ gap: "8px", marginTop: "12px" }}>
+                    <div className="comment-form" style={{ marginTop: "12px" }}>
                         <textarea
                             className="form-control"
                             aria-label="댓글 입력"
                             placeholder="댓글을 입력하세요."
                             value={reply}
                             onChange={(e) => setReply(e.target.value)}
-                            style={{ minHeight: "64px" }}
                         />
                         <div className="btn-group btn-group-end">
                             <Button
@@ -148,7 +147,7 @@ const CommentGroup = () => {
                                 size="sm"
                                 disabled={!reply.trim()}
                                 onClick={() => {
-                                    toast.success("댓글을 등록했습니다. (예시)");
+                                    toast.success("댓글을 등록했습니다.");
                                     setReply("");
                                 }}
                             >
@@ -231,7 +230,7 @@ const ContentBlockGroup = () => {
 
     return (
         <>
-            <GroupTitle>내용 블록 (인용 · 세로 키-값 · 상자 목록)</GroupTitle>
+            <GroupTitle>인용 · 세로 키-값 · 상자 목록</GroupTitle>
             <Variants>
                 <Variant name="quote: 의견 · 인용" source="styles/content.css" note="MyCounsel 의견 인용 상자의 표준" code={`<blockquote className="quote"><p>내용</p><footer>김강사</footer></blockquote>`}>
                     <blockquote className="quote" style={{ width: "100%" }}>

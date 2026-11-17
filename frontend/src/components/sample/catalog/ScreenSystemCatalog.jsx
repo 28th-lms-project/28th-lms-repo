@@ -133,10 +133,10 @@ const AccessScreen = () => {
         if (!menu.low || !code || taken || !name.trim()) return;
         if (editing) {
             setRows((prev) => prev.map((r) => (r.id === editingId ? { ...r, ...menu, name: name.trim() } : r)));
-            toast.success("수정했습니다. (예시)");
+            toast.success("저장했습니다.");
         } else {
             setRows((prev) => [...prev, { id: Math.max(...prev.map((r) => r.id)) + 1, code, name: name.trim(), ...menu }]);
-            toast.success(`${code}를 추가했습니다. (예시)`);
+            toast.success(`${code}를 등록했습니다.`);
         }
         reset();
     };
@@ -161,10 +161,10 @@ const AccessScreen = () => {
 
     return (
         <Variant
-            name="접근 관리: 연쇄 선택 + 같은 폼으로 추가 · 수정"
+            name="접근 관리: 연쇄 선택 + 같은 폼으로 등록 · 수정"
             source="Panel · Field · input-range(메뉴 select 셋) · form-row(도메인 · 권한 · 이름) · Table · Badge"
             note={
-                "Access(대 · 중 · 소 select + 도메인 · 권한 select + 이름 + [추가] / 표의 [수정]을 누르면 위 폼이 수정 모드)를 표준으로.\n" +
+                "Access(대 · 중 · 소 select + 도메인 · 권한 select + 이름 + [등록] / 표의 [수정]을 누르면 위 폼이 수정 모드)를 표준으로.\n" +
                 "도메인 · 권한은 원래 화면처럼 서버가 준 목록에서 고름 (권한마다 '설명 (동작)', 등록된 것은 비활성 · 등록됨). 고르면 이름을 설명으로 채움. 결과 코드는 따로 상자 대신 권한 칸 힌트로.\n" +
                 "연쇄 선택: 위를 고르기 전에는 아래가 비활성(안내 문구), 위를 바꾸면 아래는 비움.\n" +
                 "수정 모드: 폼 제목 · 배지 · 버튼 문구가 바뀌고, 바꿀 수 없는 값(권한 코드)은 잠금 + 이유 힌트. 수정 중인 행은 표에서 선택 표시"
@@ -174,13 +174,13 @@ const AccessScreen = () => {
             <div className="form-stack" style={{ width: "100%" }}>
                 <form onSubmit={submit} noValidate>
                     <Panel
-                        title={editing ? "권한 코드 수정" : "권한 코드 추가"}
+                        title={editing ? "접근 권한 수정" : "접근 권한 등록"}
                         badge={editing ? <Badge tone="warning">수정 중</Badge> : undefined}
                         footer={
                             <>
                                 {editing && <Button onClick={reset}>취소</Button>}
-                                <Button type="submit" variant="primary" icon={editing ? undefined : icons.add}>
-                                    {editing ? "수정 반영" : "추가"}
+                                <Button type="submit" variant="primary">
+                                    {editing ? "저장" : "등록"}
                                 </Button>
                             </>
                         }
@@ -197,7 +197,6 @@ const AccessScreen = () => {
                                         value={domain}
                                         disabled={editing}
                                         onChange={(e) => changeDomain(e.target.value)}
-                                        aria-describedby="std-access-domain-msg"
                                     >
                                         <option value="">도메인 선택</option>
                                         {ACTION_DOMAINS.map((d) => (
@@ -218,8 +217,6 @@ const AccessScreen = () => {
                                         value={code}
                                         disabled={editing || !domain}
                                         onChange={(e) => changeCode(e.target.value)}
-                                        aria-invalid={!!errors.code && !!domain}
-                                        aria-describedby="std-access-code-msg"
                                     >
                                         <option value="">{domain ? "권한 선택" : "도메인을 먼저"}</option>
                                         {actions.map((a) => (
@@ -239,8 +236,6 @@ const AccessScreen = () => {
                                             setName(e.target.value);
                                             setNameEdited(true);
                                         }}
-                                        aria-invalid={!!errors.name}
-                                        aria-describedby="std-access-name-msg"
                                     />
                                 </Field>
                             </div>
@@ -288,13 +283,13 @@ const AccessRoleScreen = () => {
 
     const save = () => {
         setSaved((prev) => ({ ...prev, [role]: draft.map(Number) }));
-        toast.success("권한을 저장했습니다. (예시)");
+        toast.success("권한을 저장했습니다.");
     };
 
     return (
         <Variant
             name="권한별 접근 권한 관리: 역할 목록 | 두 목록 옮기기 + 저장 전 변경 표시"
-            source="layout-split · list-group · TransferList · Callout(actions) · 연쇄 선택(필터)"
+            source="layout-split-start · list-group · TransferList · Callout(actions) · 연쇄 선택(필터)"
             note={
                 "AccessRole(역할 목록 | 허용 목록 | 미허용 목록, 각 목록에 필터, 누르면 바로 옮겨지고 [저장]으로 반영)을 표준으로.\n" +
                 "옮기기는 TransferList(체크 후 옮기기 · 두 번 눌러 바로). 메뉴 필터는 위에 하나만 두고 미허용 후보를 좁힘 (허용 목록은 늘 전부 보임).\n" +
@@ -328,7 +323,7 @@ const AccessRoleScreen = () => {
                     </div>
                     {dirty && (
                         <Callout
-                            tone="warning"
+                            tone="info"
                             actions={
                                 <>
                                     <Button size="sm" onClick={() => setDraft(savedKeys)}>
@@ -368,7 +363,7 @@ const AccessRoleScreen = () => {
 /* ───── 환경 변수 관리 (Code): 패널 하나가 보기 · 수정 · 추가 ───── */
 const INITIAL_CODES = {
     TEST_ANSWER_TYPE: [
-        { id: "ANSWER_SELECT", name: "객관식-단항", order: 1, used: true, crtDt: "2026-03-02", mdfDt: "2026-09-14" },
+        { id: "ANSWER_SELECT", name: "객관식 (하나)", order: 1, used: true, crtDt: "2026-03-02", mdfDt: "2026-09-14" },
         { id: "ANSWER_CHECK", name: "O/X", order: 2, used: true, crtDt: "2026-03-02", mdfDt: "2026-03-02" },
         { id: "ANSWER_ESSAY", name: "서술형 (안 씀)", order: 3, used: false, crtDt: "2026-03-02", mdfDt: "2026-10-01" },
     ],
@@ -430,7 +425,7 @@ const CodeScreen = () => {
         setSelectedId(item.id);
         setMode("view");
         setSubmitted(false);
-        toast.success(mode === "add" ? "코드를 추가했습니다. (예시)" : "저장했습니다. (예시)");
+        toast.success(mode === "add" ? "코드를 등록했습니다." : "저장했습니다.");
     };
 
     const columns = [
@@ -448,7 +443,7 @@ const CodeScreen = () => {
             <>
                 <Button onClick={() => open("view")}>취소</Button>
                 <Button type="submit" variant="primary" disabled={!dirty}>
-                    {mode === "add" ? "추가" : "저장"}
+                    {mode === "add" ? "등록" : "저장"}
                 </Button>
             </>
         );
@@ -502,7 +497,7 @@ const CodeScreen = () => {
                     </Panel>
                     <Panel
                         title={mode === "add" ? "새 코드" : selected?.name ?? "코드"}
-                        badge={mode === "view" ? (selected?.used ? <Badge tone="success">사용</Badge> : <Badge>안 씀</Badge>) : <Badge tone="warning">{mode === "add" ? "추가 중" : "수정 중"}</Badge>}
+                        badge={mode === "view" ? (selected?.used ? <Badge tone="success">사용</Badge> : <Badge>안 씀</Badge>) : <Badge tone="warning">{mode === "add" ? "등록 중" : "수정 중"}</Badge>}
                         footer={footer}
                     >
                         {mode === "view" ? (
@@ -529,8 +524,6 @@ const CodeScreen = () => {
                                         value={draft.id}
                                         readOnly={mode === "edit"}
                                         onChange={(e) => setDraft({ ...draft, id: e.target.value.toUpperCase() })}
-                                        aria-invalid={!!errors.id}
-                                        aria-describedby="std-code-id-msg"
                                     />
                                 </Field>
                                 <Field label="이름" htmlFor="std-code-name" required error={errors.name}>
@@ -539,8 +532,6 @@ const CodeScreen = () => {
                                         className="form-control"
                                         value={draft.name}
                                         onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                                        aria-invalid={!!errors.name}
-                                        aria-describedby="std-code-name-msg"
                                     />
                                 </Field>
                                 <Field label="순서" htmlFor="std-code-order">
@@ -632,7 +623,7 @@ const MenuOrderScreen = () => {
 
     const save = () => {
         setSaved(draft);
-        toast.success(`순서를 저장했습니다: ${changedNames.join(" · ")} (예시)`);
+        toast.success("순서를 저장했습니다.");
     };
 
     const columnsFor = (level) => [
