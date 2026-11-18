@@ -458,6 +458,19 @@
            AND DEL_YN = 'N'
        </update>
 
+       <!-- 과정 기간 변경 전 검사: 새 기간(startDate ~ endDate) 밖에 있는 시간표 날짜. 삭제된 과정은 빈 목록 -->
+       <select id="selectTimetableDatesOutside" resultType="string">
+        SELECT DISTINCT TO_CHAR(TRUNC(TT.DATETIME), 'YYYY-MM-DD') AS CLASS_DAY
+          FROM COURSE_TIME_TABLE TT
+         INNER JOIN COURSE C
+            ON C.ID = TT.COURSE_ID
+         WHERE TT.COURSE_ID = #{courseId}
+           AND C.DEL_YN = 'N'
+           AND (TRUNC(TT.DATETIME) <![CDATA[ < ]]> TO_DATE(#{startDate}, 'YYYY-MM-DD')
+             OR TRUNC(TT.DATETIME) <![CDATA[ > ]]> TO_DATE(#{endDate}, 'YYYY-MM-DD'))
+         ORDER BY CLASS_DAY
+       </select>
+
        <!-- 과정 삭제: 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다 -->
        <update id="deleteCourse" parameterType="string">
         UPDATE COURSE

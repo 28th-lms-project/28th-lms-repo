@@ -1,13 +1,17 @@
 package com.learningworks.course.service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.learningworks.common.exceptions.LearningworksException;
+import com.learningworks.common.exceptions.ValidationFailedException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.AuthUtil;
+import com.learningworks.common.utils.DateListText;
 import com.learningworks.course.dao.CourseDao;
 import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
@@ -444,6 +448,7 @@ public class CourseServiceImpl implements CourseService{
 	@Override
 	public String updateCourse(String courseId, ModifyCourseVO modifyCourseVO) {
 		modifyCourseVO.setId(courseId);
+		this.checkTimetableInPeriod(courseId, modifyCourseVO.getStartDate(), modifyCourseVO.getEndDated());
 
 		// 삭제되지 않은 과정이 없으면 0 행이 수정된다.
 		int updatedRow = this.courseDao.updateCourse(modifyCourseVO);
@@ -451,6 +456,32 @@ public class CourseServiceImpl implements CourseService{
 			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
 		}
 		return courseId;
+	}
+
+	/**
+	 * 새 과정 기간 밖에 시간표가 있으면 수정하지 않는다 (시작일 · 종료일 칸에 날짜를 적어 알림).
+	 * 수업일 = 과정 기간 안에서 시간표가 있는 날이라, 기간을 줄이면 밀려난 날의 출석 · 진행률이 조용히 바뀌기 때문.
+	 * 기간을 늘리는 것은 영향이 없어 그대로 허용된다.
+	 */
+	private void checkTimetableInPeriod(String courseId, String startDate, String endDate) {
+		List<String> outside = this.courseDao.selectTimetableDatesOutside(courseId, startDate, endDate);
+		if (outside.isEmpty()) {
+			return;
+		}
+		// yyyy-MM-dd 문자열은 사전순 비교가 날짜 비교와 같다
+		List<String> before = outside.stream().filter(day -> day.compareTo(startDate) < 0).toList();
+		List<String> after = outside.stream().filter(day -> day.compareTo(endDate) > 0).toList();
+
+		Map<String, List<String>> validations = new LinkedHashMap<>();
+		if (!before.isEmpty()) {
+			validations.put("startDate", List.of("시작일보다 앞에 시간표가 있습니다: "
+					+ DateListText.summarize(before) + ". 시간표를 먼저 다시 올려 주세요."));
+		}
+		if (!after.isEmpty()) {
+			validations.put("endDated", List.of("종료일보다 뒤에 시간표가 있습니다: "
+					+ DateListText.summarize(after) + ". 시간표를 먼저 다시 올려 주세요."));
+		}
+		throw new ValidationFailedException(validations);
 	}
 
 	@Transactional
