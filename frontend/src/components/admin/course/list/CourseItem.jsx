@@ -131,11 +131,8 @@ export default function CourseItem() {
     const controller = new AbortController();
     getCourseStudents(id, { signal: controller.signal })
       .then((students) => dispatch(courseActions.showStudents(students)))
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          console.log(error);
-        }
-      });
+      // 실패하면 수강생 목록 없이 둔다 (각 탭이 빈 상태를 보여 줌)
+      .catch(() => {});
     return () => controller.abort();
   }, [id, dispatch, canReadStudents]);
 
@@ -149,11 +146,8 @@ export default function CourseItem() {
     const controller = new AbortController();
     getAttendanceSummary(id, { signal: controller.signal })
       .then((summary) => dispatch(courseActions.loadAttendanceSummary(summary)))
-      .catch((error) => {
-        if (error.name !== "AbortError") {
-          console.log(error);
-        }
-      });
+      // 실패하면 요약 없이 둔다 (과정 진행률은 날짜 기준으로 표시됨)
+      .catch(() => {});
     return () => controller.abort();
   }, [id, dispatch, canReadAttendance]);
 
