@@ -72,11 +72,9 @@ function SurveyManagement() {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectGroup, setSelectGroup] = useState("pre");
 
-  const currentCourse = selectedSubject;
-
   let currGroup = null;
-  if (currentCourse) {
-    currGroup = `${currentCourse}_${selectGroup}`;
+  if (selectedSubject) {
+    currGroup = `${selectedSubject}_${selectGroup}`;
   }
 
   // 환경 변수(TEST_SUBJECT)에서 과목 목록 조회
@@ -151,7 +149,7 @@ function SurveyManagement() {
     const modifySurvey = { subject };
     (async () => {
       try {
-        const updateResult = await updateSurvey(surveyId, modifySurvey);
+        await updateSurvey(surveyId, modifySurvey);
       } catch (e) {
         toast.error(e.message);
       }
@@ -170,11 +168,7 @@ function SurveyManagement() {
     const updateData = { data };
     (async () => {
       try {
-        const updateResult = await updateSurveyData(
-          surveyId,
-          surveyDataId,
-          updateData,
-        );
+        await updateSurveyData(surveyId, surveyDataId, updateData);
       } catch (e) {
         toast.error(e.message);
       }
@@ -198,7 +192,7 @@ function SurveyManagement() {
   const deleteDataButtonHandler = (surveyId, dataId) => {
     (async () => {
       try {
-        const deleteResult = await deletedSurveyData(surveyId, dataId);
+        await deletedSurveyData(surveyId, dataId);
         dispatch(surveyActions.deleteSurveyData({ surveyId, dataId }));
       } catch (e) {
         toast.error(e.message);
