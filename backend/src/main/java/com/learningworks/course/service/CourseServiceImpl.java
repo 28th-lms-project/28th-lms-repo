@@ -9,7 +9,6 @@ import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.AuthUtil;
 import com.learningworks.course.dao.CourseDao;
-import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseStudentVO;
@@ -17,7 +16,6 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
-import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
@@ -346,36 +344,6 @@ public class CourseServiceImpl implements CourseService{
 			 }
 		}
 		return this.courseDao.readCourseMembers(courseId);
-	}
-
-	@Override
-	public List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO) {
-		// 결과가 없으면 MyBatis가 빈 리스트를 반환한다.
-		return this.courseDao.searchCourseList(searchCourseVO);
-	}
-
-	@Transactional
-	@Override
-	public String updateCourse(String courseId, ModifyCourseVO modifyCourseVO) {
-		modifyCourseVO.setId(courseId);
-
-		// 삭제되지 않은 과정이 없으면 0 행이 수정된다.
-		int updatedRow = this.courseDao.updateCourse(modifyCourseVO);
-		if (updatedRow == 0) {
-			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
-		}
-		return courseId;
-	}
-
-	@Transactional
-	@Override
-	public String deleteCourse(String courseId) {
-		// 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다. 삭제되지 않은 과정이 없으면 0 행.
-		int deletedRow = this.courseDao.deleteCourse(courseId);
-		if (deletedRow == 0) {
-			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
-		}
-		return courseId;
 	}
 
 }
