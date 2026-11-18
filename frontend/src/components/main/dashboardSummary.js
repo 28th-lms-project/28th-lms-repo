@@ -264,3 +264,97 @@ export const homeworkDue = (today, endDate) => {
     tone: days <= HOMEWORK_WARNING_DAYS ? "warning" : "neutral",
   };
 };
+
+/* ───── 강사 대시보드 ───── */
+
+/**
+ * 지금까지 출석률 % = 출석 인정일(attendedDays) / 진행된 수업일 (소수 1자리). 진행된 수업일이 0이면 null.
+ * 서버의 attendanceRate는 "과정 전체 수업일" 기준이라 과정 중간에는 빠진 날이 없어도 낮게 나온다.
+ * 주의 표시(warning)는 진행된 수업일 기준(80%)이라, 강사 화면은 이 값과 기준을 맞춰 보여 준다.
+ */
+export const rateSoFar = (student, passedClassDays) =>
+  passedClassDays > 0 && typeof student?.attendedDays === "number"
+    ? Math.round((student.attendedDays / passedClassDays) * 1000) / 10
+    : null;
+
+/**
+ * 강사: 담당 과정의 출석 요약.
+ * rate: 담당 과정 수강생 전원의 "지금까지 출석률" 평균 (수업일이 지난 과정만), warningCount: 출석 주의 학생 수 합계
+ */
+export const summarizeTutorAttendance = (activeCourses) => {
+  const rates = [];
+  let warningCount = 0;
+  let studentCount = 0;
+  let noTimetable = false;
+  const flags = scan(activeCourses, "summary", (summary) => {
+    if (summary?.totalClassDays === 0) noTimetable = true;
+    const students = summary?.students ?? [];
+    studentCount += students.length;
+    warningCount += students.filter((student) => student.warning).length;
+    for (const student of students) {
+      const rate = rateSoFar(student, summary.passedClassDays);
+      if (rate !== null) rates.push(rate);
+    }
+  });
+  const rate = rates.length > 0
+    ? Math.round((rates.reduce((sum, value) => sum + value, 0) / rates.length) * 10) / 10
+    : null;
+  return { rate, warningCount, studentCount, noTimetable, ...flags };
+};
+
+/** 강사: 출석 주의 학생 (서버의 warning), 지금까지 출석률 낮은 순. 항목에 rate(지금까지 출석률) 포함 */
+export const collectAttendanceWarnings = (activeCourses) => {
+  const items = [];
+  const flags = scan(activeCourses, "summary", (summary, course) => {
+    for (const student of summary?.students ?? []) {
+      if (student.warning) {
+        const rate = rateSoFar(student, summary.passedClassDays);
+        items.push({ key: `${course.id}-${student.userId}`, course, student, rate });
+      }
+    }
+  });
+  items.sort((a, b) => (a.rate ?? 0) - (b.rate ?? 0));
+  return { items, ...flags };
+};
+
+/**
+ * 강사: 채점 대기. 과정 전체 성적(학생별 scoreList)을 시험별로 묶는다.
+ * 항목: { key, course, testSetId, setName, pendingAnswers(채점 안 된 답안 수), pendingStudents, submitted(응시 학생), studentCount }
+ * pendingAnswers가 있는 시험만, 많은 순. total: 전체 채점 대기 답안 수
+ */
+export const collectGradingQueue = (activeCourses) => {
+  const items = [];
+  let total = 0;
+  const flags = scan(activeCourses, "courseScores", (students, course) => {
+    const bySet = new Map();
+    for (const student of students ?? []) {
+      for (const row of student.scoreList ?? []) {
+        const entry = bySet.get(row.testSetId) ?? {
+          key: `${course.id}-${row.testSetId}`,
+          course,
+          testSetId: row.testSetId,
+          setName: row.setName,
+          pendingAnswers: 0,
+          pendingStudents: 0,
+          submitted: 0,
+          studentCount: 0,
+        };
+        entry.studentCount += 1;
+        if (row.score !== null && row.score !== undefined) entry.submitted += 1;
+        if (row.pendingCount > 0) {
+          entry.pendingAnswers += row.pendingCount;
+          entry.pendingStudents += 1;
+        }
+        bySet.set(row.testSetId, entry);
+      }
+    }
+    for (const entry of bySet.values()) {
+      if (entry.pendingAnswers > 0) {
+        items.push(entry);
+        total += entry.pendingAnswers;
+      }
+    }
+  });
+  items.sort((a, b) => b.pendingAnswers - a.pendingAnswers);
+  return { items, total, ...flags };
+};

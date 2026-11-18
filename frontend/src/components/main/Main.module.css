@@ -1,0 +1,13 @@
+/* 대시보드 영역 구분 (수강생 · 강사 영역이 함께 보일 때만 제목을 씀) */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.sectionTitle {
+  margin: 0 0 12px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+}
