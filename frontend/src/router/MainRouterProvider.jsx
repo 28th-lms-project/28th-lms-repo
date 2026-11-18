@@ -33,6 +33,7 @@ import { getCourses } from "../api/admin/course/courseApi";
 import HomeworkDetails from "../components/admin/course/CourseTableComponent/HomeworkDetails.jsx";
 import CourseSurveyAns from "../components/admin/course/CourseTableComponent/CourseSurveyAns.jsx";
 import CourseSurveyResult from "../components/admin/course/CourseTableComponent/CourseSurveyResult.jsx";
+import CourseSurveyStatistics from "../components/admin/course/CourseTableComponent/CourseSurveyStatistics.jsx";
 
 /**
  * 라우트 목록. 메뉴 관리 화면이 메뉴 URL 선택지를 만드는 데 사용한다 (routeUtils.getMenuUrlOptions).
@@ -60,6 +61,10 @@ export const routes = [
   {
     path: "/survey/result/:courseId/:courseSurveyId",
     element: <CourseSurveyResult />,
+  },
+  {
+    path: "/survey/statistics/:courseId/:courseSurveyId",
+    element: <CourseSurveyStatistics />,
   },
   {
     path: "/",
@@ -95,18 +100,18 @@ export const routes = [
                 path: "course",
                 handle: { crumb: "수강 과정" },
                 element: (
-                    <>
-                      <CourseMain />
-                      <Outlet />
-                    </>
+                  <>
+                    <CourseMain />
+                    <Outlet />
+                  </>
                 ),
                 children: [
                   {
                     path: "list",
                     element: (
-                        <>
-                          <Outlet />
-                        </>
+                      <>
+                        <Outlet />
+                      </>
                     ),
                     handle: { crumb: "과정 목록", menu: true },
                     children: [
@@ -119,16 +124,16 @@ export const routes = [
                             return redirect("/admin/course/add");
                           }
                           return redirect(
-                              `/my/course/list/${courses[0].id}?tab=0`,
+                            `/my/course/list/${courses[0].id}?tab=0`,
                           );
                         },
                       },
                       {
                         path: ":id",
                         element: (
-                            <>
-                              <CourseItem />
-                            </>
+                          <>
+                            <CourseItem />
+                          </>
                         ),
                       },
                     ],
@@ -171,7 +176,7 @@ export const routes = [
                       </>
                     ),
                     handle: { crumb: "과정 목록", menu: true },
-                      // TODO 과정 목록 경로 설정
+                    // TODO 과정 목록 경로 설정
                   },
                   {
                     path: "add",

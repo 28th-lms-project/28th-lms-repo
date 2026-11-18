@@ -16,8 +16,6 @@ export const surveySliceStore = createSlice({
 
   reducers: {
     load(state, action) {
-      console.log(action.payload);
-
       state.count = action.payload.count;
       state.surveyList = action.payload.surveyList;
     },
@@ -30,7 +28,6 @@ export const surveySliceStore = createSlice({
     },
     updateSurvey(state, action) {
       const { id, ...changes } = action.payload;
-      console.log(action.payload);
 
       const survey = state.surveyList.find((s) => s.id === id);
 
