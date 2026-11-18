@@ -186,7 +186,7 @@ public class TimetableServiceImpl implements TimetableService {
                 ))
                 .toList();
 
-        return new DailyScheduleResponseVO(date, lessons);
+        return new DailyScheduleResponseVO(date, lessons, TIME_SLOTS);
     }
 
     private List<ExcelLesson> parseExcel(

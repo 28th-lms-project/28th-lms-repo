@@ -71,7 +71,7 @@ public interface CourseDao {
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
 
-	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐) */
+	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐). 수업일 = 과정 기간 안 시간표가 있는 날 */
 	AttendanceSummaryVO readCourseClassDays(@Param("courseId") String courseId);
 
 	/** 수강생별 Y / L / N 횟수 (어제까지). userId 가 null 이면 강의 전체 수강생 */

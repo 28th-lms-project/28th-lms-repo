@@ -19,15 +19,11 @@
 		   AND USER_ID = #{userId}
 	</select>
 	
-	<select id="selectTodayClassDayCount" parameterType="string" resultType="int">
-		SELECT COUNT(TT.COURSE_ID)
-		  FROM COURSE_TIME_TABLE TT
-		 INNER JOIN COURSE C
-		    ON C.ID = TT.COURSE_ID
-		 WHERE TT.COURSE_ID = #{courseId}
-		   AND TT.DATETIME <![CDATA[ >= ]]> TRUNC(SYSDATE)
-           AND TT.DATETIME <![CDATA[ < ]]> TRUNC(SYSDATE) + 1
-           AND TRUNC(SYSDATE) BETWEEN TRUNC(C.START_DATE) AND TRUNC(C.END_DATED)
+	<!-- 오늘이 수업일인지 (수업일 기준은 CourseDaoMapper의 courseClassDays 하나로 같이 씀) -->
+	<select id="selectTodayClassDayCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM (<include refid="com.learningworks.course.dao.CourseDao.courseClassDays"/>) D
+		 WHERE D.CLASS_DAY = TRUNC(SYSDATE)
 	</select>
 	
 	<insert id="insertTodayAttendance">

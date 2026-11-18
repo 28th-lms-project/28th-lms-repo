@@ -13,7 +13,8 @@ public interface AttendanceDao {
   String selectCourseStudentId(@Param("courseId") String courseId,
       @Param("userId") String userId);
 
-  int selectTodayClassDayCount(String courseId);
+  /** 오늘이 이 과정의 수업일이면 1, 아니면 0 (기준: CourseDaoMapper courseClassDays) */
+  int selectTodayClassDayCount(@Param("courseId") String courseId);
 
   int insertTodayAttendance(@Param("courseId") String courseId, @Param("userId") String userId,
       @Param("lateTime") String lateTime, @Param("absentTime") String absentTime);
