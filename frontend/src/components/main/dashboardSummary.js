@@ -318,6 +318,57 @@ export const collectAttendanceWarnings = (activeCourses) => {
 };
 
 /**
+ * 강사: 오늘 출석 현황 (오늘 수업이 있는 과정만 합산).
+ * checked: 출석 · 지각 · 결석 기록 수, present · late · notChecked, classCourses: 오늘 수업 있는 과정 수
+ */
+export const summarizeTodayAttendance = (activeCourses) => {
+  const total = { studentCount: 0, present: 0, late: 0, absent: 0, notChecked: 0, classCourses: 0 };
+  const flags = scan(activeCourses, "todayAttendance", (today) => {
+    if (!today?.classDay) return;
+    total.classCourses += 1;
+    total.studentCount += today.studentCount ?? 0;
+    total.present += today.presentCount ?? 0;
+    total.late += today.lateCount ?? 0;
+    total.absent += today.absentCount ?? 0;
+    total.notChecked += today.notCheckedCount ?? 0;
+  });
+  return { ...total, ...flags };
+};
+
+/**
+ * 강사: 마감 전 과제와 제출 현황 (마감 순). 항목에 submittedCount · studentCount (서버 집계, 수강생 제출만)
+ */
+export const collectTutorHomeworks = (activeCourses, today) => {
+  const items = [];
+  const flags = scan(activeCourses, "homeworks", (homeworks, course) => {
+    for (const homework of homeworks ?? []) {
+      if (homework.endDate && homework.endDate >= today) {
+        items.push({ key: `${course.id}-${homework.id}`, course, homework });
+      }
+    }
+  });
+  items.sort((a, b) => a.homework.endDate.localeCompare(b.homework.endDate));
+  return { items, ...flags };
+};
+
+/**
+ * 강사: 설문 응답 현황. 수강생이 있고 아직 모두 응답하지 않은 설문만, 응답률 낮은 순.
+ * 항목: { key, course, survey, rate(%) }
+ */
+export const collectSurveyResponses = (activeCourses) => {
+  const items = [];
+  const flags = scan(activeCourses, "surveys", (surveys, course) => {
+    for (const survey of surveys ?? []) {
+      if (!(survey.studentCount > 0) || survey.answerCount >= survey.studentCount) continue;
+      const rate = Math.round((survey.answerCount / survey.studentCount) * 100);
+      items.push({ key: `${course.id}-${survey.id}`, course, survey, rate });
+    }
+  });
+  items.sort((a, b) => a.rate - b.rate);
+  return { items, ...flags };
+};
+
+/**
  * 강사: 채점 대기. 과정 전체 성적(학생별 scoreList)을 시험별로 묶는다.
  * 항목: { key, course, testSetId, setName, pendingAnswers(채점 안 된 답안 수), pendingStudents, submitted(응시 학생), studentCount }
  * pendingAnswers가 있는 시험만, 많은 순. total: 전체 채점 대기 답안 수

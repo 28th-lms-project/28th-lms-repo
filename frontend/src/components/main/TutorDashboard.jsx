@@ -14,13 +14,18 @@ import { COURSE_TAB, courseUrl } from "./dashboardShared";
 import {
   collectAttendanceWarnings,
   collectGradingQueue,
+  collectSurveyResponses,
+  collectTutorHomeworks,
+  homeworkDue,
+  summarizeTodayAttendance,
   summarizeTutorAttendance,
 } from "./dashboardSummary";
 
 /**
  * 강사 대시보드 (강사로 등록된 과정).
- * 수치 → 담당 과정 → 오늘 시간표 · 채점 대기 · 출석 주의 학생 → 종료된 과정(접힘).
- * 카드 · 패널은 권한이 있을 때만 보인다 (출석: COURSE_ATTENDANCE_READ, 채점: SCORE_READ_COURSE, 시간표: COURSE_SCHEDULE_READ_ONE).
+ * 수치 → 담당 과정 → 오늘 시간표 · 채점 대기 · 출석 주의 학생 → 마감 전 과제 · 설문 응답 → 종료된 과정(접힘).
+ * 카드 · 패널은 권한이 있을 때만 보인다 (출석: COURSE_ATTENDANCE_READ, 채점: SCORE_READ_COURSE,
+ * 시간표: COURSE_SCHEDULE_READ_ONE, 과제: COURSE_HOMEWORK_READ, 설문: COURSE_SURVEY_READ).
  *
  * @param {{ courses: object[] }} props  myRelation === "TUTOR"인 과정 (useMemo로 고정)
  */
@@ -31,6 +36,7 @@ export default function TutorDashboard({ courses: baseCourses }) {
   const current = courses.filter((course) => course.phase !== "ended");
   const ended = courses.filter((course) => course.phase === "ended");
   const showToday = active.length > 0 && (can.lessons || can.scores || can.attendance);
+  const showFollowUp = active.length > 0 && (can.homeworks || can.surveys);
 
   return (
     <div className="form-stack">
@@ -51,6 +57,12 @@ export default function TutorDashboard({ courses: baseCourses }) {
           {can.attendance && <AttendanceWarnings active={active} />}
         </div>
       )}
+      {showFollowUp && (
+        <div className="layout-3col">
+          {can.homeworks && <TutorHomeworks active={active} today={today} />}
+          {can.surveys && <SurveyResponses active={active} />}
+        </div>
+      )}
       {ended.length > 0 && <EndedCourses courses={ended} today={today} showTutor={false} />}
     </div>
   );
@@ -59,6 +71,23 @@ export default function TutorDashboard({ courses: baseCourses }) {
 function TutorSummaryCards({ active, total, can }) {
   const attendance = summarizeTutorAttendance(active);
   const grading = collectGradingQueue(active);
+  const todayAttendance = summarizeTodayAttendance(active);
+
+  // 오늘 출석: 출석 + 지각 / 수강생 (오늘 수업 있는 과정만)
+  const todayChecked = todayAttendance.present + todayAttendance.late;
+  let todayValue = `${todayChecked}/${todayAttendance.studentCount}`;
+  let todayHint = `지각 ${todayAttendance.late} · 미출석 ${todayAttendance.notChecked}`;
+  if (todayAttendance.absent > 0) todayHint += ` · 결석 처리 ${todayAttendance.absent}`;
+  if (todayAttendance.loading && todayAttendance.classCourses === 0) {
+    todayValue = "-";
+    todayHint = LOADING_HINT;
+  } else if (todayAttendance.anyFailed && todayAttendance.classCourses === 0) {
+    todayValue = "-";
+    todayHint = "불러오지 못했습니다";
+  } else if (todayAttendance.classCourses === 0) {
+    todayValue = "-";
+    todayHint = "오늘 수업이 없습니다";
+  }
 
   let rateHint = `수강생 ${attendance.studentCount}명 · 지금까지(어제 기준)`;
   if (attendance.rate === null) {
@@ -79,6 +108,9 @@ function TutorSummaryCards({ active, total, can }) {
   return (
     <div className="card-grid">
       <StatCard label="진행 중 담당 과정" value={active.length} unit="개" hint={`전체 ${total}개`} />
+      {can.attendance && (
+        <StatCard label="오늘 출석" value={todayValue} unit={todayValue === "-" ? undefined : "명"} hint={todayHint} />
+      )}
       {can.attendance && (
         <StatCard
           label="평균 출석률 (지금까지)"
@@ -169,6 +201,79 @@ function AttendanceWarnings({ active }) {
             <span className="list-item-end">
               <span className="card-meta">결석 {student.totalAbsentCount ?? 0}회</span>
               <Badge tone="danger">{rate === null ? "-" : `${rate}%`}</Badge>
+            </span>
+          </button>
+        </li>
+      )}
+    />
+  );
+}
+
+/** 마감 전 과제: 마감 순, 수강생 제출 현황. 누르면 그 과정의 과제 탭 */
+function TutorHomeworks({ active, today }) {
+  const navigate = useNavigate();
+  const result = collectTutorHomeworks(active, today);
+
+  return (
+    <ListPanel
+      title="마감 전 과제"
+      subtitle={result.items.length > 0 ? `${result.items.length}건` : undefined}
+      result={result}
+      emptyTitle="마감 전 과제가 없습니다."
+      renderItem={({ key, course, homework }) => {
+        const due = homeworkDue(today, homework.endDate);
+        return (
+          <li key={key}>
+            <button
+              type="button"
+              className="list-item"
+              onClick={() => navigate(courseUrl(course.id, COURSE_TAB.homework))}
+            >
+              <span>
+                {homework.subject}
+                <span className="card-meta"> · {course.courseName}</span>
+              </span>
+              <span className="list-item-end">
+                <span className="card-meta">
+                  제출 {homework.submittedCount ?? 0}/{homework.studentCount ?? 0}
+                </span>
+                <Badge tone={due.tone}>{due.label}</Badge>
+              </span>
+            </button>
+          </li>
+        );
+      }}
+    />
+  );
+}
+
+/** 설문 응답: 아직 모두 응답하지 않은 설문, 응답률 낮은 순. 누르면 그 과정의 설문 탭 */
+function SurveyResponses({ active }) {
+  const navigate = useNavigate();
+  const result = collectSurveyResponses(active);
+
+  return (
+    <ListPanel
+      title="설문 응답"
+      subtitle={result.items.length > 0 ? `${result.items.length}개 진행 중` : undefined}
+      result={result}
+      emptyTitle="응답을 기다리는 설문이 없습니다."
+      renderItem={({ key, course, survey, rate }) => (
+        <li key={key}>
+          <button
+            type="button"
+            className="list-item"
+            onClick={() => navigate(courseUrl(course.id, COURSE_TAB.survey))}
+          >
+            <span>
+              {survey.title}
+              <span className="card-meta"> · {course.courseName}</span>
+            </span>
+            <span className="list-item-end">
+              <span className="card-meta">
+                {survey.answerCount}/{survey.studentCount}명
+              </span>
+              <Badge tone={rate < 50 ? "warning" : "info"}>{rate}%</Badge>
             </span>
           </button>
         </li>

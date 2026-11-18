@@ -34,11 +34,21 @@ export const getCourseStudents = (courseId, options) =>
  * 백엔드: CourseController#readAttendanceSummary → GET /{courseId}/attendance/summary
  * 관리자 · 강사는 과정 전체 수강생, 수강생은 본인만 내려온다.
  * @param {string} courseId
- * @returns {Promise<{ totalClassDays: number, passedClassDays: number, progressRate: number, averageAttendanceRate: number, averageWarning: boolean, students: { userId: string, name: string, presentCount: number, lateCount: number, absentCount: number, attendanceRate: number, warning: boolean }[] }>}
+ * @returns {Promise<{ totalClassDays: number, passedClassDays: number, progressRate: number, averageAttendanceRate: number, averageWarning: boolean, students: { userId: string, name: string, presentCount: number, lateCount: number, absentCount: number, noRecordCount: number, lateAbsentCount: number, totalAbsentCount: number, attendedDays: number, attendanceRate: number, warning: boolean }[] }>}
  * errorCode: COURSE_NOT_EXISTS, COURSE_NOT_AUTHORIZED
  */
 export const getAttendanceSummary = (courseId, options) =>
   api.get(`/${encode(courseId)}/attendance/summary`, undefined, options);
+
+/**
+ * 과정의 오늘 출석 현황 (강사 · 관리자용, 출석 요약은 어제까지라 오늘은 따로)
+ * 백엔드: CourseController#readTodayAttendance → GET /{courseId}/attendance/today (권한 COURSE_ATTENDANCE_READ)
+ * @param {string} courseId
+ * @returns {Promise<{ classDay: boolean, studentCount: number, presentCount: number, lateCount: number, absentCount: number, notCheckedCount: number }>}
+ * errorCode: COURSE_NOT_EXISTS, COURSE_NOT_AUTHORIZED (이 과정의 수강생이거나 강사 · 관리자가 아님)
+ */
+export const getTodayAttendanceSummary = (courseId, options) =>
+  api.get(`/${encode(courseId)}/attendance/today`, undefined, options);
 
 /**
  * 전체 수강생 목록 조회 (과정 등록 시 수강생 선택용)
