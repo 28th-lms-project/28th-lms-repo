@@ -77,3 +77,9 @@ export const getCourseSurveyStudentAnswers = (
   api.get(
     `/survey/${encodeURIComponent(courseId)}/${encodeURIComponent(courseSurveyId)}/result/${encodeURIComponent(courseStudentId)}`,
   );
+
+// 설문 통계 팝업
+export const getCourseSurveyStatistics = (courseId, courseSurveyId) =>
+  api.get(
+    `/survey/${encodeURIComponent(courseId)}/${encodeURIComponent(courseSurveyId)}/statistics`,
+  );
