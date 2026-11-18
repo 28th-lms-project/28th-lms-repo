@@ -15,24 +15,23 @@ export const COURSE_ENDING_DAYS = 14;
 export const HOMEWORK_WARNING_DAYS = 2;
 
 /**
- * 교시 → 시각. 백엔드 TimetableServiceImpl.TIME_SLOTS와 같게 둔다.
- * 일별 시간표 API(/timetable/{courseId}/{date})는 교시 번호(lessons[].slotIndex)만 주고 시각표를 주지 않아서 여기 둔다.
- * TODO(대시보드 2단계): 일별 응답에 timeSlots를 넣으면 이 표를 지우고 응답 값을 쓴다.
+ * 교시 → 시각. 일별 시간표 응답의 timeSlots 한 칸
+ * { slotIndex, label, time: "09:00 ~ 10:00", breakTime }을 { slotIndex, label, start, end }로 바꾼다.
  */
-export const TIME_SLOTS = [
-  { slotIndex: 1, label: "1교시", start: "09:00", end: "10:00" },
-  { slotIndex: 2, label: "2교시", start: "10:00", end: "11:00" },
-  { slotIndex: 3, label: "3교시", start: "11:00", end: "12:00" },
-  { slotIndex: 4, label: "점심시간", start: "12:00", end: "13:00" },
-  { slotIndex: 5, label: "4교시", start: "13:00", end: "14:00" },
-  { slotIndex: 6, label: "5교시", start: "14:00", end: "15:00" },
-  { slotIndex: 7, label: "6교시", start: "15:00", end: "16:00" },
-  { slotIndex: 8, label: "7교시", start: "16:00", end: "17:00" },
-  { slotIndex: 9, label: "8교시", start: "17:00", end: "18:00" },
-];
+export const parseSlot = (slot) => {
+  const [start = "", end = ""] = String(slot?.time ?? "")
+    .split("~")
+    .map((part) => part.trim());
+  return { slotIndex: slot?.slotIndex, label: slot?.label ?? "", start, end };
+};
 
-export const slotOf = (slotIndex) =>
-  TIME_SLOTS.find((slot) => slot.slotIndex === Number(slotIndex));
+/** 일별 응답(daily)에서 교시 번호로 시각 찾기. 없으면 undefined */
+export const slotOf = (daily, slotIndex) => {
+  const slot = (daily?.timeSlots ?? []).find(
+    (item) => Number(item.slotIndex) === Number(slotIndex),
+  );
+  return slot ? parseSlot(slot) : undefined;
+};
 
 /** 로컬 날짜 → "YYYY-MM-DD" */
 export const toDateKey = (date) => {
@@ -115,17 +114,27 @@ const scan = (courses, key, visit) => {
  */
 export const summarizeAttendance = (activeCourses) => {
   const rows = [];
+  let noTimetable = false;
   const flags = scan(activeCourses, "summary", (summary) => {
+    // 수업일 = 과정 기간 안에서 시간표가 있는 날. 0이면 시간표 미등록
+    if (summary?.totalClassDays === 0) noTimetable = true;
     const me = summary?.students?.[0];
     if (me && summary.passedClassDays > 0) rows.push(me);
   });
-  if (rows.length === 0) return { rate: null, late: 0, absent: 0, warning: false, ...flags };
-  const rate = rows.reduce((sum, row) => sum + row.attendanceRate, 0) / rows.length;
+  const sum = (key) => rows.reduce((total, row) => total + (row[key] ?? 0), 0);
+  if (rows.length === 0) {
+    return { rate: null, late: 0, lateAbsent: 0, absent: 0, warning: false, noTimetable, ...flags };
+  }
+  const rate = rows.reduce((total, row) => total + row.attendanceRate, 0) / rows.length;
   return {
     rate: Math.round(rate * 10) / 10,
-    late: rows.reduce((sum, row) => sum + (row.lateCount ?? 0), 0),
-    absent: rows.reduce((sum, row) => sum + (row.absentCount ?? 0), 0),
+    late: sum("lateCount"),
+    // 지각 3번 = 결석 1번으로 바꾼 수 (서버 계산)
+    lateAbsent: sum("lateAbsentCount"),
+    // 최종 결석 = N 기록 + 출석 안 누른 수업일 + 지각 환산 (서버 계산)
+    absent: sum("totalAbsentCount"),
     warning: rows.some((row) => row.warning),
+    noTimetable,
     ...flags,
   };
 };
@@ -184,7 +193,7 @@ export const collectOpenHomeworks = (activeCourses, today) => {
 };
 
 /**
- * 오늘 시간표: 진행 중 과정의 오늘 수업을 교시 순으로 (교시 → 시각은 TIME_SLOTS).
+ * 오늘 시간표: 진행 중 과정의 오늘 수업을 교시 순으로 (교시 → 시각은 응답의 timeSlots).
  * 수업 항목은 백엔드 LessonResponseVO { slotIndex, subject, content }.
  */
 export const collectTodayLessons = (activeCourses) => {
@@ -195,7 +204,7 @@ export const collectTodayLessons = (activeCourses) => {
         key: `${course.id}-${lesson.slotIndex}`,
         course,
         lesson,
-        slot: slotOf(lesson.slotIndex),
+        slot: slotOf(daily, lesson.slotIndex),
       });
     }
   });

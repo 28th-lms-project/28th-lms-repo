@@ -128,10 +128,12 @@ function SummaryCards({ active, total }) {
   const scores = summarizeScores(active);
   const tests = collectPendingTests(active);
 
-  let attendanceHint = `지각 ${attendance.late}회 · 결석 ${attendance.absent}회`;
+  const lateNote = attendance.lateAbsent > 0 ? ` (결석 ${attendance.lateAbsent}회로 환산)` : "";
+  let attendanceHint = `지각 ${attendance.late}회${lateNote} · 결석 ${attendance.absent}회`;
   if (attendance.rate === null) {
     if (attendance.loading) attendanceHint = LOADING_HINT;
     else if (attendance.anyFailed) attendanceHint = "불러오지 못했습니다";
+    else if (attendance.noTimetable) attendanceHint = "시간표가 등록되지 않았습니다";
     else attendanceHint = "아직 수업일이 없습니다";
   } else if (attendance.warning) {
     attendanceHint += " · 출석률 주의";
@@ -187,12 +189,15 @@ function CourseCard({ course, today }) {
   const navigate = useNavigate();
   const badge = courseBadge(course, today);
   const isActive = course.phase === "active";
-  const summary = course.summary?.ok ? course.summary.value : null;
+  const loaded = course.summary?.ok ? course.summary.value : null;
+  // 시간표가 없으면(수업일 0) 수업일 기준 진행률을 낼 수 없어 날짜 기준으로 보여 준다
+  const summary = loaded?.totalClassDays > 0 ? loaded : null;
   const summaryLoading = course.summary === undefined;
 
   let progressNote = "날짜 기준 진행률";
   if (summary) progressNote = `${summary.passedClassDays} / ${summary.totalClassDays} 수업일 (어제 기준)`;
   else if (summaryLoading) progressNote = LOADING_HINT;
+  else if (loaded) progressNote = "시간표 미등록 · 날짜 기준 진행률";
 
   return (
     <button

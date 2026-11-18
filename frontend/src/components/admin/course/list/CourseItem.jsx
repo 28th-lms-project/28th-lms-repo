@@ -208,8 +208,8 @@ export default function CourseItem() {
               </dd>
             </div>
           </dl>
-          {/* 출석률 요약이 있으면 수업일 기준 진행률, 없으면 날짜 기준 진행률 */}
-          {attendanceSummary ? (
+          {/* 출석률 요약이 있고 시간표가 있으면 수업일 기준 진행률, 아니면 날짜 기준 진행률 */}
+          {attendanceSummary?.totalClassDays > 0 ? (
             <div>
               <Progress
                 label="과정 진행률"
@@ -222,7 +222,14 @@ export default function CourseItem() {
               </p>
             </div>
           ) : (
-            <Progress label="과정 진행률" value={dateProgress} showValue />
+            <div>
+              <Progress label="과정 진행률" value={dateProgress} showValue />
+              {attendanceSummary && (
+                <p className="field-hint">
+                  시간표 미등록 · 날짜 기준 진행률
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
