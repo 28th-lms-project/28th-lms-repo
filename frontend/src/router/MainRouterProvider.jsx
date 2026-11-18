@@ -199,7 +199,7 @@ export const routes = [
                   {
                     path: "member",
                     element: <MemberManagement />,
-                    handle: { crumb: "회원 관리", menu: true },
+                    handle: { crumb: "회원 관리", menu: true, darkReady: true },
                   },
                   {
                     path: "menu",

@@ -6,8 +6,13 @@ import {
   getMember,
 } from "../../../../api/admin/system/member/memberApi.js";
 import { selectUser } from "../../../../store/slices/loginSliceStore.js";
-import styles from "./MemberDetail.module.css";
 import usePermission from "../../../../hooks/usePermission.js";
+import Panel from "../../../common/ui/Panel.jsx";
+import Badge from "../../../common/ui/Badge.jsx";
+import Button from "../../../common/ui/Button.jsx";
+import StatusBox from "../../../common/ui/StatusBox.jsx";
+import { useConfirm, useToast } from "../../../common/ui/feedbackContext.js";
+import styles from "./MemberDetail.module.css";
 import MemberFormModal from "./MemberFormModal.jsx";
 import MemberPasswordResetModal from "./MemberPasswordResetModal.jsx";
 
@@ -19,10 +24,13 @@ const orDash = (value) => {
 };
 
 export default function MemberDetail({ memberId, roles = [], onChanged }) {
+  const [loadError, setLoadError] = useState(null);
   const [member, setMember] = useState(null);
   const [openedModal, setOpenedModal] = useState(null);
   const [selectedRoleId, setSelectedRoleId] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const toast = useToast();
+  const confirm = useConfirm();
 
   const loginUser = useSelector(selectUser);
   const { can } = usePermission();
@@ -36,7 +44,7 @@ export default function MemberDetail({ memberId, roles = [], onChanged }) {
         })
         .catch((error) => {
           if (error.name !== "AbortError") {
-            alert(error.message);
+            setLoadError(error);
           }
         });
     },
@@ -49,8 +57,17 @@ export default function MemberDetail({ memberId, roles = [], onChanged }) {
     return () => controller.abort();
   }, [fetchDetail]);
 
+  if (loadError) {
+    return (
+      <StatusBox
+        type="error"
+        title="회원 정보를 불러오지 못했습니다."
+        detail={loadError.message}
+      />
+    );
+  }
   if (member === null) {
-    return null;
+    return <StatusBox type="loading" />;
   }
 
   const isSelf = loginUser?.id === member.id;
@@ -72,21 +89,25 @@ export default function MemberDetail({ memberId, roles = [], onChanged }) {
       return;
     }
 
-    if (
-      !window.confirm(`'${member.name}(${member.id})' 회원을 정말 삭제하시겠습니까?`)
-    ) {
+    const ok = await confirm({
+      title: "회원 삭제",
+      message: `'${member.name}(${member.id})' 회원을 삭제할까요?`,
+      confirmText: "삭제",
+      danger: true,
+    });
+    if (!ok) {
       return;
     }
 
     setSubmitting(true);
     try {
       await deleteMember(member.id);
-      alert("회원이 삭제되었습니다.");
+      toast.success("회원 삭제가 완료되었습니다.");
       if (onChanged) {
         onChanged();
       }
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setSubmitting(false);
     }
@@ -98,57 +119,84 @@ export default function MemberDetail({ memberId, roles = [], onChanged }) {
       return;
     }
     if (selectedRoleId === member.baseRole) {
-      alert("현재 역할과 동일합니다.");
       return;
     }
-    if (!window.confirm("회원의 역할을 변경하시겠습니까?")) {
+    const nextRole = roles.find((role) => role.roleId === selectedRoleId);
+    const ok = await confirm({
+      title: "역할 변경",
+      message: `${member.name}(${member.id}) 회원의 역할을 '${nextRole?.roleDisplayName}'(으)로 변경할까요?`,
+      confirmText: "변경",
+    });
+    if (!ok) {
       return;
     }
 
     setSubmitting(true);
     try {
       const updated = await changeRole(member.id, selectedRoleId);
-      alert("역할이 변경되었습니다.");
+      toast.success("역할 변경이 완료되었습니다.");
       setMember(updated);
       setSelectedRoleId(updated.baseRole);
       if (onChanged) {
         onChanged();
       }
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  let statusBadge = <span className={styles.badgeNormal}>정상</span>;
+  let statusBadge = <Badge tone="success">정상</Badge>;
   if (member.loginBlockDate) {
-    statusBadge = <span className={styles.badgeLocked}>계정 잠김</span>;
+    statusBadge = <Badge tone="danger">계정 잠김</Badge>;
+  }
+
+  // 삭제는 btn-start 로 왼쪽에 따로 (실수로 누르지 않게)
+  let footer = null;
+  if (hasActionButtons) {
+    footer = (
+      <>
+        {canDelete && (
+          <Button
+            variant="danger"
+            className="btn-start"
+            onClick={onClickDeleteHandler}
+            disabled={submitting}
+          >
+            회원 삭제
+          </Button>
+        )}
+        {canResetPassword && (
+          <Button
+            onClick={() => setOpenedModal("password")}
+            disabled={submitting}
+          >
+            비밀번호 초기화
+          </Button>
+        )}
+        {canUpdate && (
+          <Button onClick={() => setOpenedModal("edit")} disabled={submitting}>
+            정보 수정
+          </Button>
+        )}
+      </>
+    );
   }
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <h3 className={styles.panelTitle}>회원 상세</h3>
-        {statusBadge}
-      </div>
-
-      <dl className={styles.detailList}>
-        <div>
+    <>
+      <Panel title={member.name} badge={statusBadge} footer={footer} flush>
+        <dl className={`desc-list ${styles.detail}`}>
           <dt>아이디</dt>
           <dd>{member.id}</dd>
-        </div>
-        <div>
-          <dt>이름</dt>
-          <dd>{member.name}</dd>
-        </div>
-        <div>
           <dt>역할</dt>
           <dd>
             {canChangeRole && (
-              <div className={styles.roleWrap}>
+              <div className={styles.roleRow}>
                 <select
-                  className={styles.roleSelect}
+                  className="form-control form-control-sm"
+                  aria-label="바꿀 역할"
                   value={selectedRoleId}
                   onChange={(event) => setSelectedRoleId(event.target.value)}
                   disabled={submitting}
@@ -159,20 +207,18 @@ export default function MemberDetail({ memberId, roles = [], onChanged }) {
                     </option>
                   ))}
                 </select>
-                <button
-                  type="button"
-                  className={styles.btnRoleChange}
+                <Button
+                  size="sm"
                   onClick={onClickChangeRoleHandler}
                   disabled={submitting || selectedRoleId === member.baseRole}
                 >
                   역할 변경
-                </button>
+                </Button>
               </div>
             )}
             {!canChangeRole && member.roleName}
           </dd>
-        </div>
-        <div>
+
           <dt>GitHub</dt>
           <dd>
             {member.githubUrl && (
@@ -187,63 +233,23 @@ export default function MemberDetail({ memberId, roles = [], onChanged }) {
             )}
             {!member.githubUrl && "-"}
           </dd>
-        </div>
-        <div>
+
           <dt>등록일</dt>
           <dd>{member.createDate}</dd>
-        </div>
-        <div>
+
           <dt>수정일</dt>
           <dd>{orDash(member.modifyDate)}</dd>
-        </div>
-        <div>
+
           <dt>비밀번호 변경일</dt>
           <dd>{orDash(member.pwdChangeDate)}</dd>
-        </div>
-        <div>
+
           <dt>로그인 실패</dt>
           <dd>{member.loginFailCount}회</dd>
-        </div>
-        <div>
+
           <dt>잠금 시각</dt>
           <dd>{orDash(member.loginBlockDate)}</dd>
-        </div>
-      </dl>
-
-      {hasActionButtons && (
-        <div className={styles.buttonGroup}>
-          {canUpdate && (
-            <button
-              type="button"
-              className={styles.btnSecondary}
-              onClick={() => setOpenedModal("edit")}
-              disabled={submitting}
-            >
-              정보 수정
-            </button>
-          )}
-          {canResetPassword && (
-            <button
-              type="button"
-              className={styles.btnSecondary}
-              onClick={() => setOpenedModal("password")}
-              disabled={submitting}
-            >
-              비밀번호 초기화
-            </button>
-          )}
-          {canDelete && (
-            <button
-              type="button"
-              className={styles.btnDanger}
-              onClick={onClickDeleteHandler}
-              disabled={submitting}
-            >
-              회원 삭제
-            </button>
-          )}
-        </div>
-      )}
+        </dl>
+      </Panel>
 
       {openedModal === "edit" && (
         <MemberFormModal
@@ -272,6 +278,6 @@ export default function MemberDetail({ memberId, roles = [], onChanged }) {
           }}
         />
       )}
-    </div>
+    </>
   );
 }

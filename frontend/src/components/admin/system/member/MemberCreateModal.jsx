@@ -1,11 +1,15 @@
-import { createPortal } from "react-dom";
-import styles from "./MemberModal.module.css";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { createMember } from "../../../../api/admin/system/member/memberApi.js";
+import Field from "../../../common/ui/Field.jsx";
+import { useToast } from "../../../common/ui/feedbackContext.js";
+import Modal from "../../../common/ui/Modal.jsx";
+import Button from "../../../common/ui/Button.jsx";
 
 export default function MemberCreateModal({ roles, onClose, onCompleted }) {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const toast = useToast();
+  const baseId = useId();
 
   const validate = (id, password, name, baseRole, githubUrl) => {
     const newErrors = {};
@@ -73,95 +77,124 @@ export default function MemberCreateModal({ roles, onClose, onCompleted }) {
         githubUrl: trimmedUrl,
       });
 
-      alert("회원이 성공적으로 등록되었습니다.");
+      toast.success("회원이 등록되었습니다.");
       onCompleted(newId);
     } catch (error) {
       if (error.validations) {
         setErrors(error.validations);
       } else {
-        setErrors({ form: [error.message || "회원 등록에 실패했습니다."] });
+        toast.error(error.message || "회원 등록에 실패했습니다.");
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  return createPortal(
-    <div className={styles.modalOverlay}>
-      <form className={styles.modal} onSubmit={onSubmitHandler}>
-        <h3 className={styles.modalTitle}>신규 회원 등록</h3>
+  let submitLabel = "등록";
+  if (submitting) {
+    submitLabel = "등록 중...";
+  }
 
-        <div className={styles.modalContent}>
-          <label className={styles.field}>
-            <span>아이디 *</span>
-            <input name="id" maxLength={20} placeholder="아이디 입력 (최대 20자)" />
-            {errors.id && <p className={styles.errorMessage}>{errors.id[0]}</p>}
-          </label>
-
-          <label className={styles.field}>
-            <span>비밀번호 *</span>
-            <input
-              name="password"
-              type="password"
-              placeholder="비밀번호 입력 (8~20자)"
-              autoComplete="new-password"
-            />
-            {errors.password && (
-              <p className={styles.errorMessage}>{errors.password[0]}</p>
-            )}
-          </label>
-
-          <label className={styles.field}>
-            <span>이름 *</span>
-            <input name="name" maxLength={10} placeholder="이름 입력 (최대 10자)" />
-            {errors.name && (
-              <p className={styles.errorMessage}>{errors.name[0]}</p>
-            )}
-          </label>
-
-          <label className={styles.field}>
-            <span>역할 *</span>
-            <select name="baseRole" defaultValue="">
-              <option value="" disabled>
-                역할을 선택해주세요
-              </option>
-              {roles.map((role) => (
-                <option key={role.roleId} value={role.roleId}>
-                  {role.roleDisplayName}
-                </option>
-              ))}
-            </select>
-            {errors.baseRole && (
-              <p className={styles.errorMessage}>{errors.baseRole[0]}</p>
-            )}
-          </label>
-
-          <label className={styles.field}>
-            <span>GitHub 주소</span>
-            <input
-              name="githubUrl"
-              placeholder="https://github.com/아이디 (선택)"
-            />
-            {errors.githubUrl && (
-              <p className={styles.errorMessage}>{errors.githubUrl[0]}</p>
-            )}
-          </label>
-
-          {errors.form && (
-            <p className={styles.errorMessage}>{errors.form[0]}</p>
-          )}
-        </div>
-
-        <div className={styles.modalButtons}>
-          <button type="button" onClick={onClose}>
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="신규 회원 등록"
+      onSubmit={onSubmitHandler}
+      dismissible={!submitting}
+      footer={
+        <>
+          <Button onClick={onClose} disabled={submitting}>
             취소
-          </button>
-          <button type="submit" disabled={submitting}>
-            등록
-          </button>
-        </div>
-      </form>
-    </div>,
-    document.body,
+          </Button>
+          <Button type="submit" variant="primary" loading={submitting}>
+            {submitLabel}
+          </Button>
+        </>
+      }
+    >
+      <div className="form-stack">
+        <Field
+          label="아이디"
+          htmlFor={`${baseId}-id`}
+          required
+          hint="20자 이하"
+          error={errors.id?.[0]}
+        >
+          <input
+            id={`${baseId}-id`}
+            name="id"
+            className="form-control"
+            maxLength={20}
+            autoComplete="off"
+          />
+        </Field>
+        <Field
+          label="비밀번호"
+          htmlFor={`${baseId}-pw`}
+          required
+          hint="8~20자"
+          error={errors.password?.[0]}
+        >
+          <input
+            id={`${baseId}-pw`}
+            name="password"
+            type="password"
+            className="form-control"
+            maxLength={20}
+            autoComplete="new-password"
+          />
+        </Field>
+        <Field
+          label="이름"
+          htmlFor={`${baseId}-name`}
+          required
+          hint="10자 이하"
+          error={errors.name?.[0]}
+        >
+          <input
+            id={`${baseId}-name`}
+            name="name"
+            className="form-control"
+            maxLength={10}
+          />
+        </Field>
+        <Field
+          label="역할"
+          htmlFor={`${baseId}-role`}
+          required
+          error={errors.baseRole?.[0]}
+        >
+          <select
+            id={`${baseId}-role`}
+            name="baseRole"
+            className="form-control"
+            defaultValue=""
+          >
+            <option value="" disabled>
+              역할을 고르세요
+            </option>
+            {roles.map((role) => (
+              <option key={role.roleId} value={role.roleId}>
+                {role.roleDisplayName}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field
+          label="GitHub 주소"
+          htmlFor={`${baseId}-github`}
+          hint="선택"
+          error={errors.githubUrl?.[0]}
+        >
+          <input
+            id={`${baseId}-github`}
+            name="githubUrl"
+            className="form-control"
+            placeholder="https://github.com/아이디"
+          />
+        </Field>
+      </div>
+    </Modal>
   );
 }

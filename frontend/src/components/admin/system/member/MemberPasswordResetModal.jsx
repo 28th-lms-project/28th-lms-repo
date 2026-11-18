@@ -1,7 +1,9 @@
-import { createPortal } from "react-dom";
-import styles from "./MemberModal.module.css";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { resetPassword } from "../../../../api/admin/system/member/memberApi.js";
+import Field from "../../../common/ui/Field.jsx";
+import Modal from "../../../common/ui/Modal.jsx";
+import Button from "../../../common/ui/Button.jsx";
+import { useToast } from "../../../common/ui/feedbackContext.js";
 
 export default function MemberPasswordResetModal({
   member,
@@ -11,6 +13,8 @@ export default function MemberPasswordResetModal({
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const toast = useToast();
+  const passwordId = useId();
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
@@ -28,57 +32,62 @@ export default function MemberPasswordResetModal({
     setErrorMessage("");
     try {
       await resetPassword(member.id, password);
-      alert(`${member.name}(${member.id}) 회원의 비밀번호가 초기화되었습니다.`);
+      toast.success(
+        `${member.name}(${member.id}) 회원의 비밀번호를 초기화했습니다.`,
+      );
       onCompleted();
     } catch (error) {
       if (error.validations?.password?.[0]) {
         setErrorMessage(error.validations.password[0]);
       } else {
-        setErrorMessage(error.message || "비밀번호 초기화에 실패했습니다.");
+        toast.error(error.message || "비밀번호 초기화에 실패했습니다.");
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  return createPortal(
-    <div className={styles.modalOverlay}>
-      <form className={styles.modal} onSubmit={onSubmitHandler}>
-        <h3 className={styles.modalTitle}>비밀번호 초기화</h3>
+  let submitLabel = "초기화";
+  if (submitting) {
+    submitLabel = "초기화 중...";
+  }
 
-        <div className={styles.modalContent}>
-          <p className={styles.modalDescription}>
-            <strong>
-              {member.name} ({member.id})
-            </strong>{" "}
-            회원의 새 비밀번호를 입력해주세요.
-          </p>
-
-          <label className={styles.field}>
-            <span>새 비밀번호 *</span>
-            <input
-              type="password"
-              placeholder="새 비밀번호 입력 (8~20자)"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="new-password"
-            />
-            {errorMessage && (
-              <p className={styles.errorMessage}>{errorMessage}</p>
-            )}
-          </label>
-        </div>
-
-        <div className={styles.modalButtons}>
-          <button type="button" onClick={onClose}>
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="비밀번호 초기화"
+      description={`${member.name}(${member.id}) 회원의 새 비밀번호를 입력하세요. 초기화하면 로그인 잠금도 풀립니다.`}
+      onSubmit={onSubmitHandler}
+      dismissible={!submitting}
+      footer={
+        <>
+          <Button onClick={onClose} disabled={submitting}>
             취소
-          </button>
-          <button type="submit" disabled={submitting}>
-            초기화
-          </button>
-        </div>
-      </form>
-    </div>,
-    document.body,
+          </Button>
+          <Button type="submit" variant="primary" loading={submitting}>
+            {submitLabel}
+          </Button>
+        </>
+      }
+    >
+      <Field
+        label="새 비밀번호"
+        htmlFor={passwordId}
+        required
+        hint="8~20자"
+        error={errorMessage}
+      >
+        <input
+          id={passwordId}
+          type="password"
+          className="form-control"
+          maxLength={20}
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          autoComplete="new-password"
+        />
+      </Field>
+    </Modal>
   );
 }
