@@ -16,6 +16,7 @@ import StatusBox from "../../../common/ui/StatusBox";
 import { Tabs, TabPanel } from "../../../common/ui/Tabs";
 import { useToast } from "../../../common/ui/feedbackContext";
 import MyPassword from "../../../my/info/MyPassword";
+import { toAnswerTypeCode } from "../../../../utils/examAnswerType";
 
 const NO_DETAIL_TYPES = ["ANSWER_CHECK", "ANSWER_WRITE", "ANSWER_CODE"];
 
@@ -58,7 +59,10 @@ export default function Test() {
     if (!passwordVerified) {
       return (
         <PageContainer>
-          <MyPassword onVerified={() => setPasswordVerified(true)} />
+          {/* MyPassword는 아직 표준 전(hex 색)이라 다크 모드에서 밝은 섬으로 고정 (가이드 9장) */}
+          <div data-color-scheme="light">
+            <MyPassword onVerified={() => setPasswordVerified(true)} />
+          </div>
         </PageContainer>
       );
     }
@@ -178,9 +182,11 @@ function TestManagement() {
     questionList = (
       <div className="form-stack">
         {questions.map((question) => {
-          const isOx = question.answerType === "ANSWER_CHECK";
+          // 옛 데이터(한글 이름 등)도 코드로 바꿔서 비교
+          const answerType = toAnswerTypeCode(question.answerType);
+          const isOx = answerType === "ANSWER_CHECK";
           // 보기가 있는 유형만 [보기 · 정답 펼치기] (O/X는 정답을 항상 보여줌)
-          const hasDetail = !NO_DETAIL_TYPES.includes(question.answerType);
+          const hasDetail = !NO_DETAIL_TYPES.includes(answerType);
           const expanded = openIds.includes(question.id);
 
           let toggleButton = null;
@@ -234,7 +240,7 @@ function TestManagement() {
                   value: String(answer.no),
                   label: answer.text,
                 }))}
-                multiple={question.answerType === "ANSWER_MULTIPLE"}
+                multiple={answerType === "ANSWER_MULTIPLE"}
                 answer={getCorrectNumbers(question.correctAnswer)}
                 showResult
               />
@@ -245,8 +251,8 @@ function TestManagement() {
             <article key={question.id} className="card">
               <div className="card-header">
                 <h3 className="card-title">
-                  <Badge tone={toTypeTone(question.answerType)}>
-                    {toAnswerTypeName(question.answerType)}
+                  <Badge tone={toTypeTone(answerType)}>
+                    {toAnswerTypeName(answerType)}
                   </Badge>{" "}
                   {question.question}
                 </h3>

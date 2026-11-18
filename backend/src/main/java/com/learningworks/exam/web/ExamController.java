@@ -39,8 +39,10 @@ public class ExamController {
 	@RequireAction(domain = "EXAM", action = "QUESTION_CREATE", description = "시험 문제 등록")
 	@PostMapping("admin/system/test")
 	public ApiResponse<ExamQuestionVO> makeNewQuestion(
-			@Valid @RequestBody RegistExamQuestionVO registExamQuestionVO) {
-		ExamQuestionVO examQuestion = this.examService.createNewExam(registExamQuestionVO);
+			@Valid @RequestBody RegistExamQuestionVO registExamQuestionVO,
+			Authentication authentication) {
+		ExamQuestionVO examQuestion = this.examService.createNewExam(registExamQuestionVO,
+				authentication.getName());
 		return ApiResponse.CREATED(examQuestion);
 	}
 
@@ -67,16 +69,20 @@ public class ExamController {
 	
 	@RequireAction(domain = "EXAM", action = "QUESTION_DELETE", description = "시험 문제 삭제")
 	@DeleteMapping("admin/system/test/{examId}")
-	public ApiResponse<String> deleteExamQuestion(@PathVariable String examId) {
-		String deleteResult = this.examService.deleteExamQuestion(examId);
+	public ApiResponse<String> deleteExamQuestion(@PathVariable String examId,
+			Authentication authentication) {
+		String deleteResult = this.examService.deleteExamQuestion(examId, authentication.getName());
 		return ApiResponse.OK(deleteResult);
 	}
 
 
 	@RequireAction(domain = "EXAM", action = "QUESTION_UPDATE", description = "시험 문제 수정")
 	@PutMapping("admin/system/test/{examId}")
-	public ApiResponse<ExamQuestionVO> updateExamQuestion(@PathVariable String examId, @Valid @RequestBody ModifyExamQuestionVO modifyExamQuestionVO) {
-		ExamQuestionVO examQuestionVO = this.examService.updateExamQuestion(examId, modifyExamQuestionVO);
+	public ApiResponse<ExamQuestionVO> updateExamQuestion(@PathVariable String examId,
+			@Valid @RequestBody ModifyExamQuestionVO modifyExamQuestionVO,
+			Authentication authentication) {
+		ExamQuestionVO examQuestionVO = this.examService.updateExamQuestion(examId, modifyExamQuestionVO,
+				authentication.getName());
 		return ApiResponse.OK(examQuestionVO);
 	}
 	

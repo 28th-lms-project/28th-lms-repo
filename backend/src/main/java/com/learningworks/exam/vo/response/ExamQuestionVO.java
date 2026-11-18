@@ -22,4 +22,6 @@ public class ExamQuestionVO {
 	private String mdfyrId;
 	private String correctAnswer;
 	private String subQuestion;
+	/** 이 문제로 제출된 답안 수 (문제 1건 조회에서만 채움. 수정 전 경고용) */
+	private Integer submittedAnswerCount;
 }

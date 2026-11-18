@@ -41,6 +41,6 @@ public class ModifyExamQuestionVO {
     @Size(max = 200, message = "정답은 200자 이하로 입력해주세요.")
     private String correctAnswer;
 
-    @Size(max = 200, message = "부가 설명은 200자 이하로 입력해주세요.")
+    @Size(max = 2000, message = "부가 설명은 2000자 이하로 입력해주세요.")
     private String subQuestion;
 }
