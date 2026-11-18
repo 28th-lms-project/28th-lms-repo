@@ -98,7 +98,7 @@ export const routes = [
               },
               {
                 path: "course",
-                handle: { crumb: "수강 과정" },
+                handle: { crumb: "수강 과정", darkReady: true },
                 element: (
                   <>
                     <CourseMain />
@@ -175,7 +175,7 @@ export const routes = [
                         <Outlet />
                       </>
                     ),
-                    handle: { crumb: "과정 목록", menu: true },
+                    handle: { crumb: "과정 목록", menu: true, darkReady: true },
                     // TODO 과정 목록 경로 설정
                   },
                   {
@@ -218,12 +218,12 @@ export const routes = [
                   {
                     path: "access",
                     element: <Access />,
-                    handle: { crumb: "접근 관리", menu: true },
+                    handle: { crumb: "접근 관리", menu: true, darkReady: true },
                   },
                   {
                     path: "access-role",
                     element: <AccessRole />,
-                    handle: { crumb: "권한별 접근 권한 관리", menu: true },
+                    handle: { crumb: "권한별 접근 권한 관리", menu: true, darkReady: true },
                   },
                   {
                     path: "code",
