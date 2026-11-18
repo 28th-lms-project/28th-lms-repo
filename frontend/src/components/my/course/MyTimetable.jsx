@@ -1,9 +1,16 @@
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useParams } from "react-router-dom";
 
 import styles from "./MyTimetable.module.css";
 import usePermission from "../../../hooks/usePermission";
+import Badge from "../../common/ui/Badge.jsx";
+import Button from "../../common/ui/Button.jsx";
+import FilePicker from "../../common/ui/FilePicker.jsx";
+import Panel from "../../common/ui/Panel.jsx";
+import StatusBox from "../../common/ui/StatusBox.jsx";
+import Table from "../../common/ui/Table.jsx";
+import { useToast } from "../../common/ui/feedbackContext.js";
 
 import {
   getTimetable,
@@ -19,13 +26,6 @@ function getLocalDate() {
   const day = String(now.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
-}
-
-// 날짜 표시
-function formatDate(date) {
-  if (!date) return "";
-
-  return date.replaceAll("-", ".");
 }
 
 // API 응답 정규화
@@ -45,8 +45,17 @@ function getLesson(lessons, slotIndex) {
   );
 }
 
+// 하루 시간표: 교시마다 한 줄 (쉬는 시간 줄은 is-break)
+const DAY_COLUMNS = [
+  { key: "label", title: "교시", width: "12%", align: "center" },
+  { key: "time", title: "시간", width: "14%", align: "center", mono: true },
+  { key: "subject", title: "과목", width: "28%" },
+  { key: "content", title: "내용" },
+];
+
 export default function MyTimetable({ courseId: courseIdProp }) {
   const params = useParams();
+  const toast = useToast();
 
   // 부모(MyCourse / CourseItem)에서 받은 courseId 우선, 없으면 URL 파라미터 사용
   const courseId = courseIdProp ?? params?.courseId ?? params?.id;
@@ -137,25 +146,21 @@ export default function MyTimetable({ courseId: courseIdProp }) {
     loadTimetable();
   }, [loadTimetable]);
 
-  // 엑셀 업로드
-  const handleFileChange = async (event) => {
-    const file = event.target.files?.[0];
+  // 엑셀 업로드 (FilePicker 가 같은 파일을 다시 고를 수 있도록 input 을 비워 줌)
+  const handleFileSelect = async (files) => {
+    const file = files?.[0];
 
     if (!file) return;
 
     const extension = file.name.split(".").pop()?.toLowerCase();
 
     if (!["xlsx", "xls"].includes(extension)) {
-      setErrorMessage("엑셀 파일(.xlsx, .xls)만 업로드할 수 있습니다.");
-
-      event.target.value = "";
+      toast.error("엑셀 파일(.xlsx, .xls)만 업로드할 수 있습니다.");
       return;
     }
 
     if (!courseId) {
-      setErrorMessage("URL에서 과정 ID(courseId)를 확인할 수 없습니다.");
-
-      event.target.value = "";
+      toast.error("URL에서 과정 ID(courseId)를 확인할 수 없습니다.");
       return;
     }
 
@@ -164,7 +169,6 @@ export default function MyTimetable({ courseId: courseIdProp }) {
     formData.append("file", file);
 
     setIsUploading(true);
-    setErrorMessage("");
 
     try {
       // 실제 업로드 API 호출
@@ -179,6 +183,7 @@ export default function MyTimetable({ courseId: courseIdProp }) {
         timeSlots: data.timeSlots ?? [],
         schedules,
       });
+      setErrorMessage("");
 
       setFileName(file.name);
 
@@ -189,17 +194,15 @@ export default function MyTimetable({ courseId: courseIdProp }) {
         : (schedules[0]?.date ?? today);
 
       setSelectedDate(targetDate);
+      toast.success("시간표를 업로드했습니다.");
     } catch (error) {
-      setErrorMessage(
+      toast.error(
         error instanceof Error
           ? error.message
           : "시간표 업로드 중 오류가 발생했습니다.",
       );
     } finally {
       setIsUploading(false);
-
-      // 같은 파일도 다시 선택할 수 있도록 초기화
-      event.target.value = "";
     }
   };
 
@@ -208,185 +211,207 @@ export default function MyTimetable({ courseId: courseIdProp }) {
     setSelectedDate(date);
   };
 
+  // 하루 시간표 행
+  const dayRows = (timetable?.timeSlots ?? []).map((slot) => {
+    const lesson = getLesson(todaySchedule?.lessons, slot.slotIndex);
+
+    return {
+      slotIndex: slot.slotIndex,
+      label: slot.label,
+      time: slot.time,
+      breakTime: slot.breakTime,
+      subject: lesson?.subject ?? "",
+      content: lesson?.content ?? "",
+    };
+  });
+
   return (
-    <div className={styles.page}>
-      <section className={styles.content}>
-        {/* 엑셀 업로드 (등록 권한이 있을 때만 표시) */}
-        {canUpload && (
-          <div className={styles.uploadArea}>
-            <label className={styles.fileButton}>
-              파일 선택
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={handleFileChange}
-                disabled={isUploading}
-              />
-            </label>
+    <div className="form-stack">
+      {/* 엑셀 업로드 (등록 권한이 있을 때만 표시) */}
+      {canUpload && (
+        <div className="toolbar">
+          <FilePicker
+            accept=".xlsx,.xls"
+            onSelect={handleFileSelect}
+            disabled={isUploading}
+            fileName={
+              isUploading ? "업로드 중..." : fileName || "선택한 파일 없음"
+            }
+          />
+          <span className="field-hint">엑셀 파일(.xlsx, .xls)</span>
+        </div>
+      )}
 
-            <span className={styles.fileName}>
-              {isUploading ? "업로드 중..." : fileName || "선택된 파일 없음"}
-            </span>
-          </div>
-        )}
-
-        {/* 오류 메시지 */}
-        {errorMessage && <p className={styles.error}>{errorMessage}</p>}
-
-        {/* 조회 중 */}
-        {isLoading && (
-          <p className={styles.loading}>시간표를 불러오는 중입니다.</p>
-        )}
-
-        {/* 시간표 데이터 */}
-        {!isLoading && hasSchedules && (
-          <>
-            {/* 날짜 선택 및 일일 시간표 */}
-            <div className={styles.dateHeader}>
-              <h2 className={styles.dateTitle}>
-                {formatDate(selectedDate)}의 시간표
-              </h2>
-
+      {/* 조회 오류 · 조회 중 */}
+      {errorMessage ? (
+        <StatusBox
+          type="error"
+          detail={errorMessage}
+          onRetry={courseId ? () => loadTimetable(selectedDate) : undefined}
+        />
+      ) : isLoading ? (
+        <StatusBox type="loading" title="시간표를 불러오는 중..." />
+      ) : !hasSchedules ? (
+        /* 등록된 시간표 없음 */
+        <StatusBox
+          type="empty"
+          title="등록된 시간표가 없습니다."
+          detail={canUpload ? "엑셀 파일을 업로드하세요." : undefined}
+        />
+      ) : (
+        <>
+          {/* 날짜 선택 및 하루 시간표 */}
+          <Panel
+            title={`${selectedDate} 시간표`}
+            badge={
+              selectedDate === todayDate ? (
+                <Badge tone="success">오늘</Badge>
+              ) : undefined
+            }
+            flush
+            actions={
               <select
-                className={styles.dateSelect}
+                className="form-control form-control-sm"
+                aria-label="날짜 선택"
                 value={selectedDate}
                 onChange={(event) => handleDateChange(event.target.value)}
               >
                 {timetable.schedules.map((schedule) => (
                   <option key={schedule.date} value={schedule.date}>
-                    {formatDate(schedule.date)}
+                    {schedule.date}
                   </option>
                 ))}
               </select>
-            </div>
+            }
+          >
+            {todaySchedule ? (
+              <Table
+                columns={DAY_COLUMNS}
+                rows={dayRows}
+                rowKey="slotIndex"
+                rowClassName={(row) => (row.breakTime ? "is-break" : undefined)}
+                bordered
+                size="sm"
+                ariaLabel={`${selectedDate} 시간표`}
+              />
+            ) : (
+              <StatusBox
+                type="empty"
+                size="sm"
+                title="해당 날짜에 등록된 시간표가 없습니다."
+              />
+            )}
+          </Panel>
 
-            <div className={styles.tableScroll}>
-              <table className={styles.todayTable}>
-                <thead>
-                  <tr>
-                    {timetable.timeSlots.map((slot) => (
-                      <th key={slot.slotIndex}>{slot.label}</th>
-                    ))}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  <tr>
-                    {timetable.timeSlots.map((slot) => {
-                      const lesson = getLesson(
-                        todaySchedule?.lessons,
-                        slot.slotIndex,
-                      );
-
-                      return (
-                        <td
-                          key={slot.slotIndex}
-                          className={slot.breakTime ? styles.breakCell : ""}
-                        >
-                          {lesson && (
-                            <>
-                              <span>{lesson.subject}</span>
-
-                              <span>{lesson.content}</span>
-                            </>
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                </tbody>
-              </table>
-
-              {!todaySchedule && (
-                <p className={styles.emptyMessage}>
-                  해당 날짜에 등록된 시간표가 없습니다.
-                </p>
-              )}
-            </div>
-
-            {/* 전체 시간표 */}
-            <div className={styles.allTitle}>
-              <h2>전체 시간표</h2>
-
-              <button
-                type="button"
+          {/* 전체 시간표: 날짜마다 과목 줄 · 내용 줄 */}
+          <Panel
+            title="전체 시간표"
+            subtitle={`${timetable.schedules.length}일`}
+            flush
+            actions={
+              <Button
+                size="sm"
+                variant="text"
+                aria-expanded={isAllOpen}
                 onClick={() => setIsAllOpen((previous) => !previous)}
               >
-                [{isAllOpen ? "접기" : "펼치기"}]
-              </button>
-            </div>
-
+                {isAllOpen ? "접기" : "펼치기"}
+              </Button>
+            }
+          >
             {isAllOpen && (
-              <div className={styles.tableScroll}>
-                <table className={styles.allTable}>
+              <div className="table-wrap">
+                <table
+                  className={`table table-bordered table-sm ${styles.allTable}`}
+                >
+                  <caption className="visually-hidden">전체 시간표</caption>
                   <thead>
                     <tr>
-                      <th rowSpan={2} className={styles.dateColumn}>
+                      <th scope="col" className={styles.dateColumn}>
                         날짜
                       </th>
-                      <th rowSpan={2} className={styles.typeColumn}>
-                        구분
-                      </th>
-
                       {timetable.timeSlots.map((slot) => (
-                        <th key={slot.slotIndex}>
-                          <span>{slot.label}</span>
-                          <small>{slot.time}</small>
+                        <th
+                          key={slot.slotIndex}
+                          scope="col"
+                          className="col-center"
+                        >
+                          {slot.label}
+                          <br />
+                          <span className="field-hint">{slot.time}</span>
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody>
-                    {timetable.schedules.map((schedule) => (
-                      <Fragment key={schedule.date}>
-                        {/* 과목명 */}
-                        <tr
-                          className={`${styles.subjectRow} ${
-                            schedule.date === todayDate ? styles.todayRow : ""
-                          }`}
-                        >
-                          <th rowSpan={2} className={styles.dateCell}>
-                            {formatDate(schedule.date)}
-                          </th>
-                          <td className={styles.typeCell}>과목명</td>
-                          {timetable.timeSlots.map((slot) => (
-                            <td key={slot.slotIndex}>
-                              {getLesson(schedule.lessons, slot.slotIndex)
-                                ?.subject ?? ""}
-                            </td>
-                          ))}
-                        </tr>
-                        {/* 교육 내용 */}
-                        <tr
-                          className={`${styles.contentRow} ${
-                            schedule.date === todayDate ? styles.todayRow : ""
-                          }`}
-                        >
-                          <td className={styles.typeCell}>내용</td>
-                          {timetable.timeSlots.map((slot) => (
-                            <td key={slot.slotIndex}>
-                              {getLesson(schedule.lessons, slot.slotIndex)
-                                ?.content ?? ""}
-                            </td>
-                          ))}
-                        </tr>
-                      </Fragment>
-                    ))}
-                  </tbody>
+
+                  {timetable.schedules.map((schedule) => {
+                    const isToday = schedule.date === todayDate;
+
+                    return (
+                      <tbody key={schedule.date}>
+                        {[0, 1].map((row) => (
+                          <tr
+                            key={row}
+                            className={isToday ? "is-highlight" : undefined}
+                          >
+                            {row === 0 && (
+                              <th scope="rowgroup" rowSpan={2}>
+                                {schedule.date}
+                                {isToday && (
+                                  <>
+                                    {" "}
+                                    <Badge tone="success">오늘</Badge>
+                                  </>
+                                )}
+                              </th>
+                            )}
+
+                            {timetable.timeSlots.map((slot) => {
+                              const lesson = getLesson(
+                                schedule.lessons,
+                                slot.slotIndex,
+                              );
+
+                              // 쉬는 시간: 두 줄을 합쳐 흐린 글자
+                              if (slot.breakTime) {
+                                return row === 0 ? (
+                                  <td
+                                    key={slot.slotIndex}
+                                    rowSpan={2}
+                                    className="col-center field-hint"
+                                  >
+                                    {lesson?.subject || slot.label}
+                                  </td>
+                                ) : null;
+                              }
+
+                              return (
+                                <td
+                                  key={slot.slotIndex}
+                                  className={
+                                    row === 0 ? undefined : "field-hint"
+                                  }
+                                  style={
+                                    row === 0 ? { fontWeight: 600 } : undefined
+                                  }
+                                >
+                                  {(row === 0
+                                    ? lesson?.subject
+                                    : lesson?.content) ?? ""}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    );
+                  })}
                 </table>
               </div>
             )}
-          </>
-        )}
-        {/* 등록된 시간표 없음 */}
-        {!isLoading && !hasSchedules && !errorMessage && (
-          <p className={styles.emptyMessage}>
-            {canUpload
-              ? "등록된 시간표가 없습니다. 엑셀 파일을 업로드해 주세요."
-              : "등록된 시간표가 없습니다."}
-          </p>
-        )}
-      </section>
+          </Panel>
+        </>
+      )}
     </div>
   );
 }
