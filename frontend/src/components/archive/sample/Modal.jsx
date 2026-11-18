@@ -1,4 +1,5 @@
 /** @format */
+/* 기록용 (archive): 표준화 전 모습을 남긴 코드. 새 코드에서 import 금지(lint로 막음) · 고치지 않음. 대체: common/ui/Modal · useConfirm. 안내: components/archive/README.md */
 
 import { useImperativeHandle, useRef, useState } from "react";
 import styles from "./Modal.module.css";

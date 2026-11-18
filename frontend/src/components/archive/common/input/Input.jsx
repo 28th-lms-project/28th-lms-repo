@@ -1,10 +1,11 @@
 /** @format */
+/* 기록용 (archive): 표준화 전 모습을 남긴 코드. 새 코드에서 import 금지(lint로 막음) · 고치지 않음. 대체: common/ui/Field + 입력 클래스(form-control 등). 안내: components/archive/README.md */
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import styles from "./Input.module.css";
-import { Grid } from "../Grid";
-import { Icon, IconButton } from "./IconButton";
-import { icons } from "./icons";
+import { Grid } from "../../../common/Grid";
+import { Icon, IconButton } from "../../../common/input/IconButton";
+import { icons } from "../../../common/input/icons";
 
 const inputStyle = {
     width: "100%",

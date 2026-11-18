@@ -1,4 +1,5 @@
 /** @format */
+/* 기록용 (archive): 표준화 전 모습을 남긴 코드. 새 코드에서 import 금지(lint로 막음) · 고치지 않음. 대체: common/ui/Table. 안내: components/archive/README.md */
 
 import {
     useCallback,
@@ -10,7 +11,7 @@ import {
 import styles from "./Grid.module.css";
 import { IconButton } from "./input/IconButton";
 import { icons } from "./input/icons";
-import { isMobile } from "../../utils/window";
+import { isMobile } from "../../../utils/window";
 
 export const UpdateableGrid = ({
                                    ref,

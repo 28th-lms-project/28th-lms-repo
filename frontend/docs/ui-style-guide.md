@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | PART 1 **표준** | 강조색 | 새 화면이 쓰는 UI. 다크 모드를 따름 |
 | PART 2 **표준화 전 (기록)** | 경고색 | 표준으로 옮기기 전 화면들의 모양 (기록). 표준을 적용한 화면은 [표준 적용] · [일부 적용] 표시. 다크 모드에서도 밝게 고정 |
-| PART 3 **기존 샘플** | 회색 | 처음부터 있던 `sample/` 컴포넌트 예시 |
+| PART 3 **기존 샘플** | 회색 | 처음부터 있던 `sample/` 컴포넌트 예시 (기록. 컴포넌트는 `components/archive/sample/`) |
 
 표준 탭은 **부품의 역할**로 일곱 묶음으로 나눕니다 (만든 순서가 아님). 기초 → 동작 · 입력 → 표시 · 상태 → 데이터 → 배치 · 탐색 → 내용 → 화면 예시 순서이고, 8장도 같은 순서입니다.
 
@@ -38,16 +38,23 @@
 | **배치 · 탐색** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 3단 배치 · 팝업 창 틀 | `StandardLayoutCatalog.jsx` |
 | **내용** | 시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 인용 · 세로 키-값 · 상자 목록 | `StandardContentCatalog.jsx` |
 | **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 시험 응시 · 시험지 보기 · 문제 은행 목록 · 문제 은행 문제 추가 · 수정 · 과제 상세(보기 ↔ 수정) · 주간 접속 기록 · 날짜별 시간표 · 목록 위 추가 폼 · 댓글 수정 · 설문 편집기 · 설문 결과(집계) · 메뉴 관리(순서 바꾸기) · 접근 관리 · 권한별 접근 권한 관리 · 환경 변수 관리 · 로그인 · 비밀번호 다시 확인 · 상담 기록 | `StandardScreenCatalog.jsx` + `ScreenStudyCatalog.jsx` · `ScreenSystemCatalog.jsx` · `ScreenMyCatalog.jsx` |
-| 토큰 (통일 전 값) | **표준화 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
-| 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
-| 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
-| 리스트 · 표 | Grid, native table 3종, 3단 컬럼 리스트, 키-값 목록 4종, 타임라인, 문제 블록, 댓글 | `ListCatalog.jsx` |
-| 내비게이션 | 브레드크럼 · 화면 제목, 탭 5종, 사이드 메뉴, Paginator | `NavigationCatalog.jsx` |
-| 피드백 | 배지 · 태그, 안내 · 빈 상태 · 로딩, 오류 · 성공 · 힌트 문구, 경고 상자, 토스트, 오류 화면 | `FeedbackCatalog.jsx` |
-| 레이아웃 | 패널 · 카드 6종, 화면 배치 (목록 \| 상세, 3패널) | `LayoutCatalog.jsx` |
-| 오버레이 | 폼 모달, 확인 모달, 큰 내용 모달 (열어 볼 수 있음) | `OverlayCatalog.jsx` |
-| 과정 · 시험 · 문제 은행 · 과제 · 설문 화면 | admin/course · test · survey의 과정 머리 · 탭, 등록 폼, 문제 고르기(Grid 둘), 문제 은행 문제 추가 폼(`AddTest` · `UpdateTest`), 과제 상세, 설문 편집, 과정 설문 목록 + 추가 폼(`CourseSurvey` · `CourseSurveyForm`), 설문 응답 팝업(`CourseSurveyAns`), 설문 결과(`CourseSurveyResult`) | `CourseLegacyCatalog.jsx` |
+| 토큰 (통일 전 값) | **표준화 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `archive/LegacyTokenCatalog.jsx` |
+| 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `archive/ButtonCatalog.jsx` |
+| 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `archive/FormCatalog.jsx` |
+| 리스트 · 표 | Grid, native table 3종, 3단 컬럼 리스트, 키-값 목록 4종, 타임라인, 문제 블록, 댓글 | `archive/ListCatalog.jsx` |
+| 내비게이션 | 브레드크럼 · 화면 제목, 탭 5종, 사이드 메뉴, Paginator | `archive/NavigationCatalog.jsx` |
+| 피드백 | 배지 · 태그, 안내 · 빈 상태 · 로딩, 오류 · 성공 · 힌트 문구, 경고 상자, 토스트, 오류 화면 | `archive/FeedbackCatalog.jsx` |
+| 레이아웃 | 패널 · 카드 6종, 화면 배치 (목록 \| 상세, 3패널) | `archive/LayoutCatalog.jsx` |
+| 오버레이 | 폼 모달, 확인 모달, 큰 내용 모달 (열어 볼 수 있음) | `archive/OverlayCatalog.jsx` |
+| 과정 · 시험 · 문제 은행 · 과제 · 설문 화면 | admin/course · test · survey의 과정 머리 · 탭, 등록 폼, 문제 고르기(Grid 둘), 문제 은행 문제 추가 폼(`AddTest` · `UpdateTest`), 과제 상세, 설문 편집, 과정 설문 목록 + 추가 폼(`CourseSurvey` · `CourseSurveyForm`), 설문 응답 팝업(`CourseSurveyAns`), 설문 결과(`CourseSurveyResult`) | `archive/CourseLegacyCatalog.jsx` |
 | 기존 샘플 | 원래 있던 Buttons · Modals · FileInput · Grids · Paginator · Chart · Poll | `Sample.jsx` 아래쪽 |
+
+파일 위치 (2026-11-18부터):
+
+- 표준 탭 카탈로그: `sample/catalog/` (`TokenCatalog.jsx` · `Standard*Catalog.jsx` · `Screen*Catalog.jsx`)
+- 표준화 전 탭 카탈로그: `sample/catalog/archive/` (위 표의 `archive/…`)
+- 표준화 전 · 기존 샘플 탭이 쓰는 **옛 컴포넌트**: `components/archive/` (원래 경로 그대로, 예: `archive/common/Breadcrumb.jsx`). **새 코드에서 import 금지**이고 lint 오류가 납니다 (`eslint.config.js`). 안내와 대체 부품은 `components/archive/README.md`
+- 섹션 틀은 `CatalogParts.jsx`의 `CatalogSection` (샘플 전용 틀, 표준 UI 아님)
 
 카탈로그의 칸 하나는 `Variant`입니다. 칸 머리 오른쪽 회색 글자(`source`)는 부품 예시에서는 **원본 파일**(`src/components` 기준), 화면 예시에서는 그 화면이 **쓰는 부품 목록**이고, 클래스 이름은 `Catalog.module.css`의 주석에 원본 CSS 위치가 적혀 있습니다.
 
@@ -72,19 +79,21 @@
 
 표준 UI 컴포넌트(`common/ui/`)의 전체 목록은 8장 "구조" 표에 있습니다. 아래는 그 전부터 있던 컴포넌트이고, 표준으로 바꾸는 법은 6장 "기존 컴포넌트 → 표준 대응"에 있습니다.
 
+2026-11-18에 화면에서 쓰지 않는 옛 컴포넌트는 `components/archive/`(기록, import 금지)로 옮겼습니다. 아직 화면이 쓰는 것(`PageContainer` · `Grid` · `Paginator` · `IconButton`)은 원래 자리에 두고 `@deprecated`를 붙였습니다. 3 ~ 5장의 위치는 옮기기 전 경로입니다.
+
 | 컴포넌트 | 위치 | 주요 props · 메모 |
 | --- | --- | --- |
 | `PageContainer` | `common/PageContainer.jsx` | 호환용 틀. 안쪽은 표준 `PageHeader` (2026-11-17). `title`을 안 넘기면 브레드크럼 마지막 항목. 새 화면은 `PageHeader`를 직접 씀 |
-| `Section` | `components/Section.jsx` | 흰 카드 + 1.2rem 제목. `title`, `nopadding`, `nomargin`, `direction`, `itemGap` |
+| `Section` | `archive/Section.jsx` (기록) | 흰 카드 + 1.2rem 제목. `title`, `nopadding`, `nomargin`, `direction`, `itemGap` |
 | `Grid` | `common/Grid.jsx` | CSS grid 표. `header`, `content`, `columnStyle`, `checkable`, `editable`, `clickableColumn`, `activeRows`, `footer` |
 | `Paginator` | `common/Paginator.jsx` | `start`, `countPerPageGroup`, `activePage`, `setActivePage`, `totalPageCount` |
 | `IconButton` | `common/input/IconButton.jsx` | `icon`, `iconSize`(기본 20, 화면에서는 주로 16), `backgroundColor`, `disabled`, `hoverIconRotate`, `alwaysIconRotate`, `style`. `className` · 그 밖의 props(`aria-label` 등)는 `<button>`에 전달 (2026-11-16 수정, sample 복사본도 같음). 모양은 아직 그대로 — 표준 `Button`으로 바꾸는 법은 6장 "기존 컴포넌트 → 표준 대응" |
 | `icons` | `common/input/icons.js` | edit, close, add, setting, fullStar, star, login, logout, download, downloadDone, progress, delete, refresh, sort, unchecked, checked, radioUnChecked, radioChecked, home, arrowRight, error, ok, full, exitFull |
-| `Id` · `Password` · `TextField` · `NativeSelect` · `Textarea` · `Checkbox` · `Radio` · `FileField` · `Button` | `common/input/Input.jsx` | `NativeSelect` · `Textarea`는 스타일 클래스가 정의되어 있지 않아 브라우저 기본 모양 |
+| `Id` · `Password` · `TextField` · `NativeSelect` · `Textarea` · `Checkbox` · `Radio` · `FileField` · `Button` | `archive/common/input/Input.jsx` (기록) | `NativeSelect` · `Textarea`는 스타일 클래스가 정의되어 있지 않아 브라우저 기본 모양 |
 | `Editor` | `common/Editor.jsx` | 리치 텍스트 에디터 (MyCourseData에서 사용). 카탈로그에는 넣지 않음 |
 | `NotFound` · `RouteError` | `common/error/` | 404 · 라우트 오류 화면. 표준 `StatusBox size="lg"`로 옮김 (2026-11-17) |
-| `Alert` · `Confirm` | `sample/Modal.jsx` | `ref.current.open()`. 새 코드는 `common/ui/Modal` · `useConfirm()`을 씀 (8장). 메뉴 관리는 2026-11-17에 옮겨서 화면에서 쓰는 곳은 없음 (샘플만). 샘플 표준화 전 기록과 기존 샘플 탭이 쓰므로 남겨 둠 |
-| `Chart` · `PollList` · `DataGrid` | `sample/` | 샘플 전용. `Chart`(apexcharts)는 샘플에서만 사용 |
+| `Alert` · `Confirm` | `archive/sample/Modal.jsx` (기록) | `ref.current.open()`. 새 코드는 `common/ui/Modal` · `useConfirm()`을 씀 (8장). 메뉴 관리는 2026-11-17에 옮겨서 화면에서 쓰는 곳은 없음. 기존 샘플 탭만 씀 |
+| `Chart` · `PollList` | `archive/sample/` (기록) | 기존 샘플 탭 전용. 화면용 차트는 `common/Chart.jsx`(2026-11-18 성적 화면에서 추가, 표준 아님). `DataGrid`는 아무도 쓰지 않아 삭제 (2026-11-18) |
 
 ### sample / common 중복
 
@@ -94,7 +103,7 @@
 | `Grid.jsx` | common만 `activeRows`(선택 행 배경)가 있고, `clickableColumn` 콜백이 `(value, rowIndex)` (sample은 `(value)`) |
 | `Modal.jsx` | sample에만 있음. 화면에서 쓰는 곳은 없음 (메뉴 관리는 2026-11-17에 `useConfirm`으로 옮김) |
 
-`sample/`에서 가져다 쓰는 화면: `admin/course/**` 전체, `admin/survey/Survey.jsx`, `admin/test/AddTest.jsx` · `UpdateTest.jsx`. 새 코드는 **`common/`에서** 가져옵니다.
+2026-11-18 기준 `sample/` 컴포넌트를 가져다 쓰는 화면은 없습니다. `sample/`의 컴포넌트는 모두 `archive/sample/`(기록)로 옮겼고, `sample/`에는 샘플 페이지(`Sample.jsx` · `catalog/`)만 남았습니다.
 
 ---
 
@@ -268,7 +277,7 @@
 
 - **정의되지 않은 클래스**: `tab-list`(MyCourse), `codeButtons` · `inputForm` · `codeInput` · `fieldError`(Code), `gridContainer`, `surveyPreview`, `repliesFooter`, `access-role-layout`, `pageList`(CourseItem, Paginator 모듈 안에만 있음), MyTimetable의 `loading` · `dateHeader` · `dateSelect`, Survey의 `surveyQuestion`
 - ~~IconButton에 넘긴 `className`이 무시됨~~ → IconButton은 수정됨. 하지만 넘기던 클래스 자체가 없어서 아직 모양 변화는 없습니다: `admin/course/list/CourseItem.jsx`의 `"active"`(전역 `.active` 없음 → 탭 선택 표시가 여전히 안 보임), `admin/survey/survey/Survey.jsx`의 `style.addData`(Survey.module.css에 없음)
-- **`.section` 전역 클래스**는 `Section.jsx`를 import한 화면에서만 로드됩니다. `CourseItem` · `CourseAdd` · `HomeworkItem`은 `className="section"`만 쓰고 있어서, 샘플 페이지를 먼저 열었는지에 따라 모양이 달라집니다.
+- **`.section` 전역 클래스**는 `Section.jsx`를 import한 화면에서만 로드됩니다. `CourseItem` · `CourseAdd` · `HomeworkItem`은 `className="section"`만 쓰고 있어서, 샘플 페이지를 먼저 열었는지에 따라 모양이 달라집니다. → 2026-11-18 기준 이 클래스를 쓰는 화면은 없음 (표준화 전 카탈로그만 `archive/Section.css`를 직접 불러 씀).
 - `CourseMain.jsx`의 `borederBotton` 오타 (스타일이 적용되지 않음)
 
 ### 정리 대상
@@ -323,7 +332,7 @@
    - ~~9차 (PR 전 점검): 공통 부품 버그 · 접근성 수정(`Button` `loading` · `Modal` Esc · Tab · `Field` 자동 연결 · `SelectBox` 메뉴 · `Table` · `Tabs` · `TransferList` · 토스트 · `ListEditor`, 8장 각 부품) + 문서 보강(화면 옮기는 순서 · 기존 컴포넌트 대응 · 어떤 걸 쓰나 · 공통 규칙 · 팀이 정할 것)~~ → 완료
    - ~~10차 (보류 정리): 메뉴 관리 순서 바꾸기 예시(`Table` 순서 + 저장 바), 작은 화면 사이드바 서랍(실제 `SideMenu`), 설문 결과 집계 예시. 보류였던 세 가지를 모두 결정함~~ → 완료
 3. 화면들을 표준으로 옮기면 표준화 전 카탈로그에 [표준 적용]이 붙도록 `sample/catalog/standardization.js`의 `STANDARDIZED`에 화면 이름을 추가합니다 (아래 "화면 옮기는 순서"). 예시는 지우지 않고 기록으로 남깁니다.
-4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`(가능하면 표준)으로 옮깁니다. `sample/Modal`은 쓰는 곳을 `common/ui/Modal` · `useConfirm`으로 바꾼 뒤 삭제합니다.
+4. ~~`sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`(가능하면 표준)으로 옮깁니다. `sample/Modal`은 쓰는 곳을 `common/ui/Modal` · `useConfirm`으로 바꾼 뒤 삭제합니다.~~ → 화면은 모두 옮김. 지우지 않고 `components/archive/`(기록)로 모음 (2026-11-18, 아래 "정한 것")
 
 차수 밖의 현황:
 
@@ -335,24 +344,25 @@
 
 정한 것: 강조색 인디고 · 테마(사이드바) 네이비 (7장), 다크 모드는 앱 전체 · 기본 밝은 모드 · 화면별로 옮기면 켜짐 (9장). 모두 2026-11-17.
 표준화 전 예시는 지우지 않고 기록으로 남김: 탭 이름 "표준화 전 (기록)", 표준을 적용한 화면은 [표준 적용] 표시 (2026-11-18). 2026-11-17에 지웠던 메뉴 관리 · 권한 관리 · 404 · 오류 · 화면 틀 예시도 되살림.
+옛 컴포넌트도 지우지 않음 (2026-11-18): 화면이 쓰지 않는 것은 `components/archive/`(원래 경로 그대로, README, lint로 import 금지)로, 아직 쓰는 것(`PageContainer` · `Grid` · `Paginator` · `IconButton`)은 `@deprecated`를 붙여 두고 마지막 사용 화면을 옮기는 PR에서 `archive/`로 옮김. 표준화 전 카탈로그는 `sample/catalog/archive/`.
 
 1. **새 표준 부품 · 토큰 승인**: 누가 어떻게 승인할지 (예: PR 리뷰 1명 이상 + 8장 · 7장에 추가).
-2. **옛 컴포넌트를 지우는 시점**: `sample/` 중복 컴포넌트 · `common/input/Input.jsx` · `PageContainer` · `Section`. 표준화 전 기록 · 기존 샘플 탭이 이 컴포넌트를 직접 쓰는 곳(`common/Breadcrumb` · `sample/Modal` 등)이 있어서, 지우려면 그 예시를 복사본으로 바꾸거나 컴포넌트를 기록용으로 남겨야 합니다.
-3. **메뉴 아이콘**: 메뉴 데이터에 아이콘을 넣을지. 넣으면 접힌 사이드바를 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿀 수 있습니다 (지금은 접힌 상태에서 메뉴를 표시하지 않음, 8장 "사이드 메뉴").
+2. **메뉴 아이콘**: 메뉴 데이터에 아이콘을 넣을지. 넣으면 접힌 사이드바를 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿀 수 있습니다 (지금은 접힌 상태에서 메뉴를 표시하지 않음, 8장 "사이드 메뉴").
 
 ### 화면 옮기는 순서
 
 한 화면을 표준으로 옮길 때 이 순서로 합니다.
 
 1. 아래 "화면별 표준 대응" 표에서 화면을 찾고, 분류에 맞는 예시 · 부품을 확인합니다.
-2. `sample/`에서 가져오던 import를 `common/`으로 바꿉니다 (가능하면 바로 표준 부품으로, 아래 "기존 컴포넌트 → 표준 대응").
-3. 틀을 바꿉니다: `PageContainer` → `PageHeader`, `Section` → `Panel`.
+2. 옛 컴포넌트(`@deprecated` 표시: `Grid` · `Paginator` · `IconButton` · `PageContainer`) import를 표준 부품으로 바꿉니다 (아래 "기존 컴포넌트 → 표준 대응"). `components/archive/`는 import할 수 없습니다.
+3. 틀을 바꿉니다: `PageContainer` → `PageHeader`, 흰 카드 → `Panel`.
 4. 화면 CSS의 hex · px 값을 토큰으로 바꿉니다 (7장 "옮길 때 대응표").
 5. `alert()` · `confirm()`을 토스트(`useToast`) · `useConfirm`으로 바꿉니다.
 6. 불러오는 중 · 빈 목록 · 오류 · 권한 없음 상태를 `StatusBox`로 넣습니다.
 7. 화면 CSS module에서 표준 클래스와 겹치는 규칙을 지웁니다 (8장 "공통 규칙").
 8. 사이드바 [☾]로 다크 모드를 켜고 확인한 뒤, 그 화면 라우트의 `handle`에 `darkReady: true`를 넣습니다 (`router/MainRouterProvider.jsx`). 넣기 전에는 다크 모드여도 그 화면은 밝게 보입니다 (9장).
 9. `sample/catalog/standardization.js`의 `STANDARDIZED`에 옮긴 화면 이름(파일 이름, 확장자 없이)을 넣고, `REMAINING`에 있었으면 뺍니다. 표준화 전 탭의 그 화면 예시에 [표준 적용]이 붙습니다. 예시는 지우지 않습니다. 아래 "화면별 표준 대응" 표의 그 화면 분류 뒤에도 **표준 적용 (날짜)** 를 붙입니다.
+10. 이 화면이 어떤 옛 컴포넌트의 **마지막 사용처**였으면, 그 컴포넌트를 `components/archive/`로 옮깁니다 (원래 경로 그대로, 맨 위 기록용 한 줄, `archive/README.md` 표에 추가). 샘플 표준화 전 탭이 그 컴포넌트를 쓰면 그쪽 import 경로도 바꿉니다.
 
 ### 기존 컴포넌트 → 표준 대응
 
@@ -379,7 +389,7 @@
 - 둘 다 페이지 번호는 **0부터**입니다 (화면에는 +1해서 보임). 값을 바꾸지 않고 그대로 넘기면 됩니다.
 - 화면에 있던 `start` 계산 코드는 지웁니다. 페이지가 1개면 `Pagination`은 아무것도 그리지 않습니다.
 
-#### `common/input/Input.jsx` → `Field` + 네이티브 입력
+#### `common/input/Input.jsx` (지금은 `archive/`) → `Field` + 네이티브 입력
 
 | 기존 | 표준 |
 | --- | --- |
@@ -454,7 +464,7 @@
 | `main/Main` | 예시 | 대시보드 |
 | `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 · **`SideMenu` · `UserProfile` 표준 적용 (2026-11-17)** | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
 | `menu/MenuGuard` · `login/IsLogin` | 부품 · **`MenuGuard` 표준 적용 (2026-11-17)** | 로직. 화면은 `StatusBox` (loading · error · denied) |
-| `Section.jsx` | 부품 | `Panel` |
+| `Section.jsx` | 부품 | `Panel`. 쓰는 화면이 없어 `archive/Section.jsx`(기록)로 옮김 (2026-11-18) |
 | `my/course/MyCourseList` · `MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가 |
 
 ### PR에서 바뀌는 앱 전체 영향
@@ -775,7 +785,7 @@ import Field from "../common/ui/Field";
 - **여러 입력 묶음**: 체크 · 라디오 · `ChoiceGroup` · `ListEditor`처럼 입력이 여럿이면 `htmlFor` 대신 `<Field group label="상담 유형">`. 바깥이 `role="group"`이 되고 라벨 · 힌트 · 오류가 `aria-labelledby` · `aria-describedby`로 연결됩니다.
 - 글자 수: `count={{ current: memo.length, max: 200 }}`
 - 상태: `disabled`(회색 배경), `readOnly`(회색 배경 · 글자는 보통), 포커스는 강조색 테두리 + 연한 그림자.
-- 기존 `common/input/Input.jsx`의 컴포넌트(`Id` · `Password` · `TextField` · `Checkbox` · `Radio` …)는 그대로 두었습니다. 새 화면은 네이티브 입력 + `form-control`을 씁니다 (대응은 6장 "기존 컴포넌트 → 표준 대응").
+- 기존 `common/input/Input.jsx`의 컴포넌트(`Id` · `Password` · `TextField` · `Checkbox` · `Radio` …)는 쓰는 화면이 없어 `archive/common/input/Input.jsx`(기록)로 옮겼습니다 (2026-11-18). 새 화면은 네이티브 입력 + `form-control`을 씁니다 (대응은 6장 "기존 컴포넌트 → 표준 대응").
 
 #### 검색 셀렉트 (react-select)
 
@@ -1137,7 +1147,7 @@ import TransferList from "../common/ui/TransferList";
 - `common/PageContainer`(`⌂ > 대 > 중`, 22px 제목)를 대신하는 모양입니다. 2026-11-17부터 `PageContainer`도 안에서 이 `PageHeader`를 그리므로 아직 옮기지 않은 화면도 머리 모양은 같습니다. `PageContainer`는 호환용으로 남겨 둔 것이고, 화면을 옮길 때는 `PageHeader`를 직접 씁니다 (`useBreadcrumbs`의 결과를 `crumbs`로, 필요하면 `description` · `actions`).
 - 브레드크럼은 `<ol>`이고 구분자 `›`는 CSS가 그립니다. 마지막 항목(현재 화면)은 링크 없이 `aria-current="page"`.
 - **`to`는 실제로 열 수 있는 화면에만** 넘깁니다 (URL이 있는 소메뉴 · 상세 화면의 목록). URL이 없는 대 · 중메뉴는 `to` 없이 글자라 마우스를 올려도 반응하지 않습니다. 링크 항목은 평소에도 글자 항목보다 조금 진합니다(`--color-text-secondary`).
-- `useBreadcrumbs()`는 이 규칙대로 URL이 있는 메뉴에만 `to`를 붙여 줍니다. 그대로 `crumbs`에 넘기면 됩니다. 라우트로만 만든 항목(메뉴에 없는 화면의 중간 단계)은 열 수 있는 화면인지 알 수 없어 `to`를 붙이지 않습니다. 기존 `common/Breadcrumb`(글자만, `to`를 쓰지 않음)은 이제 샘플의 표준화 전 기록만 씁니다 (기록용으로 남김).
+- `useBreadcrumbs()`는 이 규칙대로 URL이 있는 메뉴에만 `to`를 붙여 줍니다. 그대로 `crumbs`에 넘기면 됩니다. 라우트로만 만든 항목(메뉴에 없는 화면의 중간 단계)은 열 수 있는 화면인지 알 수 없어 `to`를 붙이지 않습니다. 기존 `common/Breadcrumb`(글자만, `to`를 쓰지 않음)은 샘플의 표준화 전 기록만 써서 `archive/common/Breadcrumb.jsx`로 옮겼습니다 (2026-11-18).
 - `actions`에는 화면 전체에 걸리는 동작만 둡니다 (등록 · 내보내기). 목록 위 검색 · 필터는 `.toolbar` 클래스 (PageHeader 아래에 따로).
 
 #### 사이드 메뉴
@@ -1438,7 +1448,7 @@ const [scheme, setColorScheme] = useColorScheme(); // "light" | "dark"
 - `index.css`에서 **색 토큰만** 두 벌입니다: `:root, [data-color-scheme="light"]`(기본)와 `[data-color-scheme="dark"]`. 크기 · 글꼴 · 모서리 토큰은 하나입니다.
 - 속성을 붙인 요소 안에서 토큰 값이 바뀌므로, 토큰만 쓴 코드는 **아무것도 고치지 않아도** 다크 모드가 됩니다. hex를 직접 적은 코드는 바뀌지 않습니다.
 - `color-scheme`도 함께 바뀌어 네이티브 입력 · 셀렉트 목록 · 날짜 선택기 · 스크롤바가 모드를 따릅니다.
-- 모달 · 토스트는 `<body>`에 portal로 그려지므로, 밝은 섬 안에서 연 모달이 밝아야 하면 모달 최상위 요소에도 `data-color-scheme="light"`를 붙입니다 (`sample/Modal.jsx` · 샘플 오버레이 예시가 그렇게 함).
+- 모달 · 토스트는 `<body>`에 portal로 그려지므로, 밝은 섬 안에서 연 모달이 밝아야 하면 모달 최상위 요소에도 `data-color-scheme="light"`를 붙입니다 (`archive/sample/Modal.jsx` · 샘플 오버레이 예시가 그렇게 함).
 
 ### 다크 모드 색
 
@@ -1472,5 +1482,5 @@ const [scheme, setColorScheme] = useColorScheme(); // "light" | "dark"
 3. 라우트 `handle`에 `darkReady: true`를 넣습니다. 하위 라우트도 같은 화면이면 부모 하나에만 넣어도 됩니다 (지금 라우트 중 하나라도 `darkReady`면 켜짐).
 4. 모든 화면이 `darkReady`가 되면 `MainLayout`의 밝은 섬과 `darkReady` 표시를 지웁니다.
 
-- `Section`은 아직 색을 직접 적어서, 이것을 쓰는 화면은 `Panel`로 바꾼 뒤 `darkReady`를 넣습니다. `PageContainer`는 2026-11-17부터 안쪽이 표준 `PageHeader`라 다크 모드를 따릅니다 (화면의 나머지 부분만 확인하면 됨).
+- 흰 카드를 hex로 적은 화면은 `Panel`로 바꾼 뒤 `darkReady`를 넣습니다 (`Section`은 쓰는 화면이 없어 기록 폴더로 옮김). `PageContainer`는 2026-11-17부터 안쪽이 표준 `PageHeader`라 다크 모드를 따릅니다 (화면의 나머지 부분만 확인하면 됨).
 - 표준 `Modal` · 토스트는 `<body>`에 그려져서, 다크 모드에서 밝은 섬 안(아직 안 옮긴 화면)에서 열어도 어둡게 보입니다. 옮기기 전 화면에서 밝게 보여야 하면 모달 최상위에 `data-color-scheme="light"`를 붙입니다.

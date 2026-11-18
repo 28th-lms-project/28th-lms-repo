@@ -71,10 +71,42 @@
 }
 
 /* 다크 모드를 따르는 영역: 공통 Section(흰 배경 고정)도 토큰 색으로 */
-.themed :global(.section),
-.themed :global(.section-title) {
+/* 섹션 틀 (CatalogSection). 옛 Section과 같은 크기 · 여백 */
+.section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 1rem 0;
+  padding: 0 2rem 2rem;
   color: var(--color-text);
   background-color: var(--color-bg-surface);
+}
+
+.sectionTitle {
+  margin: 0 0 10px;
+  padding: 2rem 0 1rem;
+  font-size: 1.2rem;
+}
+
+.sectionContent {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  .section {
+    margin: 0 0 1rem;
+    padding: 0 1rem 1rem;
+  }
+
+  .sectionTitle {
+    padding: 1rem 0;
+    font-size: 1rem;
+  }
 }
 
 /* 목차의 구역 이름 (누르면 구역 머리로 이동) */

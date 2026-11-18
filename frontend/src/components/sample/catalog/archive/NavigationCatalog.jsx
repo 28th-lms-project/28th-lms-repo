@@ -1,9 +1,10 @@
+/* 기록용: 샘플 "표준화 전 (기록)" 탭의 카탈로그. 표준화 전 모습을 남긴 것이라 새 예시를 더하지 않음 (표준 예시는 catalog/의 Standard*). */
 import { useState } from "react";
-import styles from "./Catalog.module.css";
-import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
-import Breadcrumb from "../../common/Breadcrumb.jsx";
-import { Paginator } from "../../common/Paginator.jsx";
-import { IconButton } from "../../common/input/IconButton.jsx";
+import styles from "../Catalog.module.css";
+import { GroupTitle, Variant, Variants } from "../CatalogParts.jsx";
+import Breadcrumb from "../../../archive/common/Breadcrumb.jsx";
+import { Paginator } from "../../../common/Paginator.jsx";
+import { IconButton } from "../../../common/input/IconButton.jsx";
 
 const TABS = ["설문 목록", "설문 등록", "결과 보기"];
 const COURSES = ["풀스택 28기", "백엔드 27기", "프론트엔드 12기"];
