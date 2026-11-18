@@ -377,7 +377,7 @@ public class CourseServiceImpl implements CourseService{
 		List<StudentAttendanceVO> students = this.courseDao.readStudentAttendanceCounts(courseId, userId);
 		int attendedSum = 0;
 		for (StudentAttendanceVO student : students) {
-			int attended = this.countAttendedDays(student, passed);
+			int attended = this.fillAbsentCounts(student, passed);
 			attendedSum += attended;
 			student.setAttendanceRate(this.toPercent(attended, total));
 			student.setWarning(this.isAttendanceWarning(attended, passed));
@@ -401,14 +401,23 @@ public class CourseServiceImpl implements CourseService{
 	}
 
 	/**
-	 * 출석 인정일 = 진행된 수업일 - 결석 수
-	 * 결석 수 = N + 기록 없는 수업일 + floor(L / 3)
+	 * 결석 환산 값을 student에 채우고 출석 인정일을 돌려준다.
+	 * 기록 없는 수업일 = 진행된 수업일 - (Y + L + N)
+	 * 최종 결석 수 = N + 기록 없는 수업일 + floor(L / 3)
+	 * 출석 인정일 = 진행된 수업일 - 최종 결석 수
 	 */
-	private int countAttendedDays(StudentAttendanceVO student, int passedClassDays) {
+	private int fillAbsentCounts(StudentAttendanceVO student, int passedClassDays) {
 		int recorded = student.getPresentCount() + student.getLateCount() + student.getAbsentCount();
 		int noRecordDays = Math.max(0, passedClassDays - recorded);
-		int absentDays = student.getAbsentCount() + noRecordDays + student.getLateCount() / LATE_COUNT_PER_ABSENT;
-		return Math.max(0, passedClassDays - absentDays);
+		int lateAbsent = student.getLateCount() / LATE_COUNT_PER_ABSENT;
+		int totalAbsent = student.getAbsentCount() + noRecordDays + lateAbsent;
+		int attended = Math.max(0, passedClassDays - totalAbsent);
+
+		student.setNoRecordCount(noRecordDays);
+		student.setLateAbsentCount(lateAbsent);
+		student.setTotalAbsentCount(totalAbsent);
+		student.setAttendedDays(attended);
+		return attended;
 	}
 
 	/** 진행된 수업일 대비 출석 인정일이 80% 미만이면 true. 진행된 수업일이 0이면 false */
