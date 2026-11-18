@@ -35,13 +35,23 @@ const uniqueById = (courses) => {
   return [...seen.values()];
 };
 
+/** 진행 중 과정마다 부르는 API (시작 전 · 종료 과정은 부르지 않음) */
+const ACTIVE_REQUESTS = {
+  summary: (id, options) => settle(getAttendanceSummary(id, options)),
+  scores: (id, options) => settle(getMyScoreList(id, options)),
+  tests: (id) => settle(searchTestSets(id)), // testApi는 signal을 받지 않음
+  homeworks: (id, options) => settle(getHomeworks(id, options)),
+  lessons: (id, options, today) => settleLessons(getDailyTimetable(id, today, options)),
+};
+
 /**
  * 수강생 대시보드 데이터.
- * 내 과정 목록을 받은 뒤, 과정마다 출석 요약을 부르고
- * 진행 중 과정은 성적 · 시험 · 과제 · 오늘 시간표까지 함께 부른다 (모두 병렬).
+ * 내 과정 목록을 먼저 받아 화면을 그리고, 진행 중 과정의 출석 요약 · 성적 · 시험 · 과제 · 오늘 시간표는
+ * 각각 도착하는 대로 채운다 (느린 API 하나가 화면 전체를 붙잡지 않게).
+ * 각 결과는 undefined(불러오는 중) → { ok, value | error }. 부르지 않는 결과는 null.
  *
  * @param {boolean} enabled  false면 부르지 않음 (수강생이 아닐 때)
- * @returns {{ status: "loading"|"loaded"|"failed", courses: object[], today: string, error?: Error, reload: () => void }}
+ * @returns {{ status: "loading"|"loaded"|"failed", courses: object[], today: string, reload: () => void }}
  */
 export default function useStudentDashboard(enabled) {
   const [state, setState] = useState({ status: "loading", courses: [], today: "" });
@@ -56,28 +66,41 @@ export default function useStudentDashboard(enabled) {
     const options = { signal };
     const today = toDateKey(new Date());
 
-    const loadCourse = async (course) => {
-      const phase = coursePhase(course, today);
-      const active = phase === "active";
-      const [summary, scores, tests, homeworks, lessons] = await Promise.all([
-        settle(getAttendanceSummary(course.id, options)),
-        active ? settle(getMyScoreList(course.id, options)) : null,
-        active ? settle(searchTestSets(course.id)) : null,
-        active ? settle(getHomeworks(course.id, options)) : null,
-        active ? settleLessons(getDailyTimetable(course.id, today, options)) : null,
-      ]);
-      return { ...course, phase, summary, scores, tests, homeworks, lessons };
+    const putResult = (courseId, key, result) => {
+      if (signal.aborted) return;
+      setState((prev) => ({
+        ...prev,
+        courses: prev.courses.map((course) =>
+          course.id === courseId ? { ...course, [key]: result } : course,
+        ),
+      }));
     };
 
     getCourses(options)
-      .then((list) => Promise.all(uniqueById(list ?? []).map(loadCourse)))
-      .then((courses) => {
+      .then((list) => {
         if (signal.aborted) return;
-        setState({ status: "loaded", courses: sortCourses(courses), today });
+        const courses = sortCourses(
+          uniqueById(list ?? []).map((course) => {
+            const phase = coursePhase(course, today);
+            const notRequested = phase === "active" ? undefined : null;
+            const results = Object.fromEntries(
+              Object.keys(ACTIVE_REQUESTS).map((key) => [key, notRequested]),
+            );
+            return { ...course, phase, ...results };
+          }),
+        );
+        setState({ status: "loaded", courses, today });
+
+        for (const course of courses) {
+          if (course.phase !== "active") continue;
+          for (const [key, request] of Object.entries(ACTIVE_REQUESTS)) {
+            request(course.id, options, today).then((result) => putResult(course.id, key, result));
+          }
+        }
       })
       .catch((error) => {
         if (signal.aborted || error?.name === "AbortError") return;
-        setState({ status: "failed", courses: [], today, error });
+        setState({ status: "failed", courses: [], today });
       });
 
     return () => controller.abort();
