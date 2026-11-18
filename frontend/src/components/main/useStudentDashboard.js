@@ -27,7 +27,7 @@ const settleLessons = (promise) =>
         : { ok: false, error },
   );
 
-/** 강사가 여럿인 과정은 /course/view가 여러 줄로 준다 → id로 하나만 남긴다 */
+/** 같은 과정이 두 번 오지 않도록 id로 하나만 남긴다 (/course/view는 과정마다 한 줄이지만 방어용) */
 const uniqueById = (courses) => {
   const seen = new Map();
   for (const course of courses) {

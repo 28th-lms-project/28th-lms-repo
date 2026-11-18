@@ -24,7 +24,11 @@ import com.learningworks.course.vo.response.StudentAttendanceVO;
 @Mapper
 public interface CourseDao {
 
-	/** userId 가 null 이면 전체 강의, 아니면 해당 사용자가 수강생 · 강사인 강의만 */
+	/**
+	 * 삭제되지 않은 강의 목록 (시작일 늦은 순, 강의마다 한 줄).
+	 * userId 가 null 이면 전체 강의, 아니면 해당 사용자가 수강생 · 강사인 강의만.
+	 * name 은 강사 이름 (여럿이면 ", "로 연결, 없으면 null)
+	 */
 	List<CourseVO> viewCourse(@Param("userId") String userId);
 
 	String readUserBaseRole(String userId);
