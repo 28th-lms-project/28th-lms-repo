@@ -462,7 +462,7 @@
 | `my/info/MyInfo` · `MyPassword` · `login/Login` | 부품 + 예시 (8차) | 로그인 · 비밀번호 다시 확인. 새 부품 `auth-page` · `auth-card` |
 | `my/info/MyInfoForm` · `MyPasswordForm` | 부품 | `Field` + `form-stack` + `desc-list`(읽기 전용 값). 성공은 토스트, 비밀번호 규칙(8~20자)은 처음부터 `hint`로 |
 | `main/Main` | 예시 | 대시보드 |
-| `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 · **`SideMenu` · `UserProfile` 표준 적용 (2026-11-17)** | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
+| `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 · **표준 적용 (2026-11-17, `LogoutButton` 2026-11-18)** | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료, 2026-11-18에 글자 크기 · 굵기 · 모서리 토큰 · 포커스 · 로그아웃 `sidebar-btn`). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
 | `menu/MenuGuard` · `login/IsLogin` | 부품 · **`MenuGuard` 표준 적용 (2026-11-17)** | 로직. 화면은 `StatusBox` (loading · error · denied) |
 | `Section.jsx` | 부품 | `Panel`. 쓰는 화면이 없어 `archive/Section.jsx`(기록)로 옮김 (2026-11-18) |
 | `my/course/MyCourseList` · `MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가 |
@@ -626,8 +626,9 @@
 | --- | --- | --- |
 | 토큰 | `src/index.css` `:root` | 색 · 크기 값 (7장) |
 | 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` · `table.css` · `tabs.css` · `panel.css` · `nav.css` · `choice.css` · `content.css` (`index.css`가 `@import`). react-select만 `common/ui/selectStyles.js` (라이브러리가 CSS 대신 styles 객체를 받음) | **스타일의 원본.** 토큰만 사용 |
-| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `SideNav` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` · `SelectBox` · `QuestionBlock` · `Comment` · `TransferList` · `ListEditor` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
+| React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` · `SelectBox` · `QuestionBlock` · `Comment` · `TransferList` · `ListEditor` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
 | 훅 | `src/components/common/ui/feedbackContext.js` `useToast` · `useConfirm` | `alert()` · `confirm()` 대신. `main.jsx`의 `FeedbackProvider`가 앱 전체를 감쌈 |
+| 앱에 하나뿐인 틀 | 사이드바 `src/components/menu/` (`SideMenu` · `UserProfile` · `LogoutButton`), `src/layout/MainLayout.jsx` | 표준 토큰 · 클래스(`--color-sidebar-*` · `sidebar-btn`)를 쓰지만 **`common/ui`에 넣지 않음**. `common/ui`는 여러 화면이 다시 쓰는 부품(props로만 데이터를 받고 store · API를 쓰지 않음)만 둠. 표준 적용 여부는 폴더가 아니라 `sample/catalog/standardization.js` · 6장 "화면별 표준 대응" 표로 관리 |
 
 - raw HTML에도 클래스만 붙이면 같은 모양이 됩니다 (`<button className="btn btn-primary">`). 동작이 필요하면 컴포넌트를 씁니다.
 - 클래스 이름은 짧은 접두어 + 하이픈(`btn-*`, `form-*`, `field-*`, `badge-*`, `status-box-*`)으로, `.input` · `.section` 같은 일반 단어는 쓰지 않습니다 (전역이라 다른 CSS와 부딪힘).
@@ -652,7 +653,7 @@
 | | `Tabs variant="pills"` | 같은 영역 안 작은 내용 전환 (패널을 바꿈) |
 | | `ChoiceGroup variant="segmented"` | 폼 값 · 필터 값 (2~4개) |
 | | `list-group` | 고른 항목의 상세를 옆에 보여 줄 때 |
-| | `SideNav` | 화면 이동 |
+| | 사이드바 (`menu/SideMenu`, 앱에 하나) | 화면 이동 |
 | 목록 | `Table` | 칸이 있는 데이터 |
 | | 원시 `table.table` | 한 묶음이 여러 줄 (rowSpan) |
 | | `list-group` | 이름만 있는 선택 목록 |
@@ -1152,19 +1153,23 @@ import TransferList from "../common/ui/TransferList";
 
 #### 사이드 메뉴
 
-```jsx
-<SideNav groups={[{ key, title, items: [{ key, title, icon }] }]} currentKey={current} onSelect={(item) => navigate(item.path)} />
-```
+사이드바는 앱에 하나(`components/menu/SideMenu.jsx`, `MainLayout`이 그림)이고, 다른 화면에서 다시 쓰지 않습니다. 샘플 예시는 실제 사이드바의 CSS(`SideMenu.module.css` · `UserProfile.module.css`)를 그대로 import해서 그리므로, 실제를 고치면 예시도 같이 바뀝니다. 예전 표준 부품 `SideNav`(`<details>` 접기 · 아이콘 · 왼쪽 선)는 실제 사이드바와 모양이 달랐고 쓰는 곳이 없어 지웠습니다 (2026-11-18).
 
-- 색은 `--color-sidebar-*` 토큰입니다. 실제 사이드바(`menu/SideMenu` · `UserProfile`)도 같은 토큰을 씁니다 (2026-11-16, 직접 적은 색 → 토큰). 다크 모드와 상관없이 항상 어둡고, 배경 · 현재 메뉴 색은 테마 네이비(7장 "강조색 (primary) 과 테마 (brand)")입니다.
-- 그룹은 `<details open>`이라 제목을 누르면 접힙니다. 현재 화면 항목은 `aria-current="page"` (테마의 현재 메뉴 색 글자 + 왼쪽 선).
+- 색은 `--color-sidebar-*` 토큰이고, 글자 크기 · 굵기 · 모서리도 표준 토큰입니다 (2026-11-18). 다크 모드와 상관없이 항상 어둡고, 배경 · 현재 메뉴 색은 테마 네이비(7장 "강조색 (primary) 과 테마 (brand)")입니다.
+- **구조**: 머리 → 프로필(역할 · 이름 · [로그아웃]) → 대분류 제목(작은 대문자) > 중분류 버튼(누르면 접힘, `aria-expanded`, 화살표 ›) > 화면 링크. 현재 화면 링크는 강조 글자 + 옅은 배경(`NavLink`의 `active` · `aria-current="page"`).
+- **사이드바 안 버튼**: [로그아웃] · [다시 시도](메뉴를 못 불러왔을 때)는 `sidebar-btn`(`styles/nav.css`)입니다. 밝은 배경용 `.btn`은 어두운 사이드바에서 색이 맞지 않아 따로 둡니다. 아이콘 없이 글자만.
+- **키보드**: 로고 · 머리 버튼 · 중분류 버튼 · 화면 링크 · `sidebar-btn` 모두 포커스 테두리(`--color-focus`)가 보입니다.
+
+```jsx
+<button type="button" className="sidebar-btn">로그아웃</button>
+```
 - **머리**: 로고 | [☾ 다크 모드] [‹ 접기]. 로고는 첫 화면(`/`, 대시보드)으로 가는 링크입니다 (작은 화면 서랍에서 누르면 이동하며 닫힘). 다크 모드 버튼은 `aria-pressed`(켜짐 상태)이고 아이콘은 지금 상태의 반대(밝은 모드면 ☾, 다크면 ☀)입니다. 접으면 로고를 숨기고 [접기] 아래에 [다크 모드]를 세로로 둡니다.
 - **접기 (큰 화면)**: [‹]로 60px까지 접어 본문을 넓힙니다. 접힌 상태에서는 메뉴를 **표시하지 않습니다**. 메뉴에 아이콘이 없어서 약어("회" · "과")나 작은 글자는 겹치거나 잘려 결국 다시 펼쳐야 알 수 있기 때문입니다. 메뉴 데이터에 아이콘이 생기면 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿉니다 (6장 "팀이 정할 것").
 - **서랍 (768px 이하)**: 사이드바를 숨기고 왼쪽 위 [☰ 메뉴] 버튼(`aria-expanded`)으로 화면 위에 덮어 엽니다 (`--z-drawer`, 배경 `--color-overlay`). 배경 누르기 · Esc · 메뉴를 눌러 이동하면 닫히고, 열리면 [×]에, 닫히면 [☰]에 포커스가 갑니다. 이 폭에서는 접기 버튼을 쓰지 않습니다.
 
 | 비슷한 것 | 쓰는 곳 |
 | --- | --- |
-| `SideNav` | 화면 이동 (앱 왼쪽) |
+| 사이드바 (`menu/SideMenu`) | 화면 이동 (앱 왼쪽, 하나) |
 | `Tabs` | 화면 안 구역 전환 (회색 탭 바 · 세로 탭 · 폴더 탭 대신) |
 | `list-group` | 목록에서 하나 고르기 (3단 메뉴 · `CourseMain` 세로 탭 대신) |
 | `ChoiceGroup` · `Switch` | 값 고르기 |

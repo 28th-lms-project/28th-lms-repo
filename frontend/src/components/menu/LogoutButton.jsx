@@ -11,7 +11,7 @@ export default function LogoutButton() {
     navigate("/login", { replace: true });
   };
   return (
-    <button type="button" onClick={onClickLogoutButtonHandler}>
+    <button type="button" className="sidebar-btn" onClick={onClickLogoutButtonHandler}>
       로그아웃
     </button>
   );
