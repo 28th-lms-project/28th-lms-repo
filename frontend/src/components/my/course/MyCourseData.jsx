@@ -171,8 +171,10 @@ function CourseDataDetail({ courseId, dataId, onClose, onEdit, onDelete, isDelet
             생성일 {formatDateTime(detail.crtDt)} · 수정일{" "}
             {formatDateTime(detail.mdfyDt)}
           </p>
-          {/* 서버에서 Sanitize 된 HTML (허용 태그 · 속성 · class · style 만 포함) */}
+          {/* 서버에서 Sanitize 된 HTML (허용 태그 · 속성 · class · style 만 포함)
+              에디터 본문은 글자색이 고정(editorContent.css)이라 다크 모드에서도 밝은 섬으로 보여 줌 */}
           <div
+            data-color-scheme="light"
             ref={contentRef}
             className={`lw-editor-content ${styles.detailContent}`}
             onClick={handleContentClick}

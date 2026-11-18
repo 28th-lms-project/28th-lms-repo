@@ -12,6 +12,7 @@ import {
   CHOICE_TYPES,
   MAX_ITEMS,
   OX_OPTIONS,
+  SUB_QUESTION_MAX,
 } from "./questionFormValues";
 import style from "./QuestionForm.module.css";
 
@@ -222,11 +223,13 @@ export default function QuestionForm({
               htmlFor={`${formId}-sub`}
               hint="선택. 문제 아래 회색 상자에 보이는 내용 (줄바꿈 유지)"
               error={joinMessages(fieldErrors.subQuestion)}
+              count={{ current: form.subQuestion.length, max: SUB_QUESTION_MAX }}
             >
               <textarea
                 id={`${formId}-sub`}
                 className={subClass}
                 rows={subRows}
+                maxLength={SUB_QUESTION_MAX}
                 value={form.subQuestion}
                 onChange={(e) => update({ subQuestion: e.target.value })}
                 aria-invalid={!!fieldErrors.subQuestion}

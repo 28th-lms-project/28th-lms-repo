@@ -9,6 +9,10 @@
 /* 상세 본문: 짧은 글도 영역이 접히지 않게, 이미지는 패널 폭 안으로 */
 .detailContent {
     min-height: 160px;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius);
+    background: var(--color-bg-surface);
     word-break: break-word;
 }
 

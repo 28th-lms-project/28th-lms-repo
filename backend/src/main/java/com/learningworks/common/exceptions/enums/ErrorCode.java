@@ -36,6 +36,7 @@ public enum ErrorCode {
   MENU_MOVE_INVALID(HttpStatus.BAD_REQUEST, "같은 단계의 다른 상위 메뉴로만 옮길 수 있습니다."), //
   MENU_ROLE_INVALID(HttpStatus.BAD_REQUEST, "존재하지 않는 역할이 포함되어 있습니다."), //
   ATTENDANCE_NOT_CLASS_DAY(HttpStatus.BAD_REQUEST, "오늘은 수업일이 아닙니다."), //
+  STUDENT_NOT_IN_COURSE(HttpStatus.BAD_REQUEST, "수강중인 수강생이 아닙니다."), //
 
   // 401 UNAUTHORIZED
   GLOBAL_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."), //
@@ -81,6 +82,7 @@ public enum ErrorCode {
   ACTION_ROLE_PROTECTED(HttpStatus.CONFLICT, "최고 관리자 역할의 권한은 변경할 수 없습니다."), //
   FILES_IN_USE(HttpStatus.CONFLICT, "등록된 교육 자료에서 사용 중인 파일은 삭제할 수 없습니다."), //
   CODE_ID_USED(HttpStatus.CONFLICT, "이미 사용 중인 환경 변수 ID입니다."), //
+  CODE_IN_USE(HttpStatus.CONFLICT, "사용 중인 환경 변수라 사용 안 함으로 바꾸거나 다른 상위 변수로 옮길 수 없습니다."), //
   MENU_URL_USED(HttpStatus.CONFLICT, "이미 다른 메뉴에서 사용 중인 URL입니다."), //
   MENU_HAS_CHILDREN(HttpStatus.CONFLICT, "하위 메뉴가 있어 삭제할 수 없습니다. 하위 메뉴를 먼저 삭제해주세요."), //
   MENU_IN_USE(HttpStatus.CONFLICT, "이 메뉴를 사용하는 접근 권한(ACTION)이 있어 삭제할 수 없습니다. 접근 관리에서 먼저 변경해주세요."), //
@@ -90,6 +92,7 @@ public enum ErrorCode {
   MENU_SELF_LOCK(HttpStatus.CONFLICT,
       "저장하면 본인이 메뉴 관리 화면에 들어올 수 없게 됩니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 다른 관리자나 최고 관리자에게 요청해주세요."), //
   ATTENDANCE_ALREADY_CHECKED(HttpStatus.CONFLICT, "오늘은 이미 출석했습니다."), //
+  SURVEY_DUPLICATED(HttpStatus.CONFLICT, "이미 참여한 설문입니다."), //
 
   // 413 CONTENT TOO LARGE
   FILES_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다."), //
@@ -111,6 +114,7 @@ public enum ErrorCode {
   SURVEY_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 수정을 실패했습니다."), //
   SURVEY_DATA_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 답변 생성을 실패했습니다."), //
   SURVEY_DATA_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 답변 수정을 실패했습니다."), //
+  SURVEY_ANSWER_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "설문 응답 저장을 실패했습니다."), //
   INTERVIEW_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "면접 일정 등록에 실패했습니다."), //
   COURSE_DATA_FAILURE_CREATE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 등록에 실패했습니다."), //
   COURSE_DATA_FAILURE_UPDATE(HttpStatus.INTERNAL_SERVER_ERROR, "교육 자료 수정에 실패했습니다."), //

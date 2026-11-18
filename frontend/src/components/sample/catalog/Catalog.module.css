@@ -71,6 +71,18 @@
 }
 
 /* 다크 모드를 따르는 영역: 공통 Section(흰 배경 고정)도 토큰 색으로 */
+/* 사이드바 예시 틀: 실제 .sideMenu와 같은 폭 · 여백 · 색 (높이 · 서랍 · 접기 동작은 뺌). 안쪽은 SideMenu.module.css 클래스 */
+.sidebarPreview {
+  width: 260px;
+  max-width: 100%;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+  color: var(--color-sidebar-text);
+  background-color: var(--color-sidebar-bg);
+  border-radius: var(--radius-lg);
+  color-scheme: dark;
+}
+
 /* 섹션 틀 (CatalogSection). 옛 Section과 같은 크기 · 여백 */
 .section {
   display: flex;

@@ -79,7 +79,7 @@ export const routes = [
           {
             index: true,
             element: <Main />,
-            handle: { crumb: "Dashboard", menu: true },
+            handle: { crumb: "Dashboard", menu: true, darkReady: true },
           },
           { path: "login", element: <Login />, handle: { crumb: "로그인" } },
           {
@@ -98,7 +98,7 @@ export const routes = [
               },
               {
                 path: "course",
-                handle: { crumb: "수강 과정" },
+                handle: { crumb: "수강 과정", darkReady: true },
                 element: (
                   <>
                     <CourseMain />
@@ -135,6 +135,7 @@ export const routes = [
                             <CourseItem />
                           </>
                         ),
+                        handle: { darkReady: true },
                       },
                     ],
                   },
@@ -175,26 +176,26 @@ export const routes = [
                         <Outlet />
                       </>
                     ),
-                    handle: { crumb: "과정 목록", menu: true },
+                    handle: { crumb: "과정 목록", menu: true, darkReady: true },
                     // TODO 과정 목록 경로 설정
                   },
                   {
                     path: "add",
                     element: <CourseAdd />,
 
-                    handle: { crumb: "과정 등록", menu: true },
+                    handle: { crumb: "과정 등록", menu: true, darkReady: true },
                   },
                 ],
               },
               {
                 path: "survey",
                 element: <Survey />,
-                handle: { crumb: "설문 관리", menu: true },
+                handle: { crumb: "설문 관리", menu: true, darkReady: true },
               },
               {
                 path: "test",
                 element: <Test />,
-                handle: { crumb: "시험 문제 관리", menu: true },
+                handle: { crumb: "시험 문제 관리", menu: true, darkReady: true },
               },
               {
                 path: "system",
@@ -218,17 +219,17 @@ export const routes = [
                   {
                     path: "access",
                     element: <Access />,
-                    handle: { crumb: "접근 관리", menu: true },
+                    handle: { crumb: "접근 관리", menu: true, darkReady: true },
                   },
                   {
                     path: "access-role",
                     element: <AccessRole />,
-                    handle: { crumb: "권한별 접근 권한 관리", menu: true },
+                    handle: { crumb: "권한별 접근 권한 관리", menu: true, darkReady: true },
                   },
                   {
                     path: "code",
                     element: <Code />,
-                    handle: { crumb: "환경 변수 관리", menu: true },
+                    handle: { crumb: "환경 변수 관리", menu: true, darkReady: true },
                   },
                 ],
               },

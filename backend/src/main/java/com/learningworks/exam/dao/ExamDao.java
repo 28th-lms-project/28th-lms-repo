@@ -25,14 +25,20 @@ public interface ExamDao {
 	List<ExamSetVO> selectAllExamInExamSet(@Param("courseId") String courseId,
 			@Param("userId") String userId);
 	
-	int insertNewExam(RegistExamQuestionVO registExamQuestionVO);
+	/** selectKey 로 만든 id 는 question.id 에 채워진다. userId 는 생성자 · 수정자 */
+	int insertNewExam(@Param("question") RegistExamQuestionVO registExamQuestionVO,
+			@Param("userId") String userId);
 
 	ExamQuestionVO selectQuestionById(String id);
 
+	/** 사용 중인 시험 과목(공통 코드 TEST_SUBJECT, USE_YN = 'Y')이면 1 */
+	int countTestSubject(@Param("subjectId") String subjectId);
 
-	int deleteExamQuestion(String examId);
 
-	int updateExamQuestion(@Param("examId")String examId, @Param("modifyExamQuestionVO") ModifyExamQuestionVO modifyExamQuestionVO);
+	int deleteExamQuestion(@Param("examId") String examId, @Param("userId") String userId);
+
+	int updateExamQuestion(@Param("examId")String examId, @Param("modifyExamQuestionVO") ModifyExamQuestionVO modifyExamQuestionVO,
+			@Param("userId") String userId);
 
 	int makeNewTestSet(@Param("courseId")String courseId, @Param("RegistTestSetVO")RegistTestSetVO registTestSetVO);
 

@@ -71,6 +71,15 @@ public class CodeServiceImpl implements CodeService{
 		CodeVO existCode = this.readCode(codeId);   // 없으면 CODE_NOT_EXISTS
 		validateParent(modCode.getParentId(), codeId);
 
+		// 쓰는 곳이 있는 코드를 끄거나 다른 그룹으로 옮기면 그 화면에서 사라지므로 막음
+		boolean turningOff = "Y".equals(existCode.getUseYn()) && "N".equals(modCode.getUseYn());
+		boolean leavingGroup = !Objects.equals(existCode.getParentId(), modCode.getParentId());
+		if (turningOff || leavingGroup) {
+			if (this.codeDao.countCodeInUse(codeId, existCode.getParentId()) > 0) {
+				throw new LearningworksException(ErrorCode.CODE_IN_USE);
+			}
+		}
+
 		// 바꾸려는 순서를 이미 쓰고 있는 코드 (자기 자신 제외)
 		CodeVO conflict = this.codeDao.searchCodeByParentAndOrder(
 				modCode.getParentId(), modCode.getOrder(), codeId);

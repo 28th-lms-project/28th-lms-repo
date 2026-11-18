@@ -53,7 +53,7 @@ public class CodeController {
 	}
 
 	/** 추가. ID, P-ID, NAME, ORDER, 사용여부 전부 입력 (ORDER가 겹치면 기존 코드를 맨 뒤로) */
-//	@RequireAction(domain = "CODE", action = "CREATE", description = "환경 변수 등록")
+	@RequireAction(domain = "CODE", action = "CREATE", description = "환경 변수 등록")
 	@PostMapping("/admin/system/code")
 	public ApiResponse<CodeVO> makeNewCode(@Valid @RequestBody RegistCodeVO registCode) {
 		CodeVO code = this.codeService.createCode(registCode);
