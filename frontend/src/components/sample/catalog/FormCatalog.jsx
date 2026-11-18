@@ -56,7 +56,7 @@ export const FormCatalog = () => {
                     />
                     <Textarea id="catalog-textarea" labelText="내용" placeholder="내용을 입력하세요." />
                 </Variant>
-                <Variant name="Checkbox (checked · onoff)" source="common/input/Input.jsx" note="styleType으로 아이콘형 / 스위치형">
+                <Variant name="Checkbox (checked · onoff)" source="common/input/Input.jsx · admin/system/menu/MenuColumn.jsx" note="styleType으로 아이콘형 / 스위치형">
                     <div className={styles.checkRow}>
                         <Checkbox id="catalog-cb-1" labelText="학생" checked />
                         <Checkbox id="catalog-cb-2" labelText="강사" />
@@ -128,6 +128,38 @@ export const FormCatalog = () => {
                         </label>
                         <button type="submit" className={styles.btnSubmit}>변경</button>
                     </form>
+                </Variant>
+                <Variant
+                    name="13px 라벨 필드 (35px) + 접두어 입력"
+                    source="admin/system/role/Role.jsx (.createForm · .prefix)"
+                    note="버튼 칸은 padding-top 22px로 입력과 줄을 맞춤"
+                >
+                    <div className={styles.createForm}>
+                        <label className={styles.smallField}>
+                            <span className={styles.smallLabel}>역할 ID</span>
+                            <span className={styles.inputGroup}>
+                                <span className={styles.prefix}>ROLE_</span>
+                                <input className={styles.smallInput} placeholder="STUDENT" />
+                            </span>
+                        </label>
+                        <label className={styles.smallField}>
+                            <span className={styles.smallLabel}>역할 이름</span>
+                            <input className={styles.smallInput} placeholder="학생" />
+                        </label>
+                        <div className={styles.createButtonCell}>
+                            <IconButton icon={icons.add} iconSize={16}>추가</IconButton>
+                        </div>
+                        <label className={styles.smallField}>
+                            <span className={styles.smallLabel}>비활성 입력</span>
+                            <input className={styles.smallInput} value="수정 불가" disabled readOnly />
+                        </label>
+                        <label className={styles.smallField}>
+                            <span className={styles.smallLabel}>비활성 셀렉트</span>
+                            <select className={styles.smallSelect} disabled>
+                                <option>선택 불가</option>
+                            </select>
+                        </label>
+                    </div>
                 </Variant>
                 <Variant
                     name="연쇄 셀렉트 (대 > 중 > 소) + 읽기 전용 코드"
