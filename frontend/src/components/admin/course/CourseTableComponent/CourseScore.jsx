@@ -11,6 +11,7 @@ import {
 import StatusBox from "../../../common/ui/StatusBox.jsx";
 import Panel from "../../../common/ui/Panel.jsx";
 import Badge from "../../../common/ui/Badge.jsx";
+import MyScore from "../../../my/course/MyScore.jsx";
 
 export default function CourseScore() {
   const { id } = useParams();
@@ -31,9 +32,9 @@ export default function CourseScore() {
     );
   }
 
-  // 과정 관리에는 들어오지만 성적 권한이 없는 역할 (ROLE_READONLY 등)
+  // 과정 성적 권한이 없으면 (수강생 등) 내 성적 표시
   if (!can("SCORE_READ_COURSE")) {
-    return <StatusBox type="denied" title="성적을 볼 권한이 없습니다." />;
+    return <MyScore courseId={id} />;
   }
 
   return <CourseScoreContent courseId={id} />;

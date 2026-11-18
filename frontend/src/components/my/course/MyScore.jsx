@@ -10,6 +10,7 @@ import {
   hasScoreValue,
   toPercent,
 } from "../../../utils/scoreFormat.js";
+import StatusBox from "../../common/ui/StatusBox.jsx";
 
 const STATUS_CLASS = {
   unsubmitted: styles.statusUnsubmitted,
@@ -84,8 +85,16 @@ export default function MyScore({ courseId }) {
     [chartRows],
   );
 
-  if (status === "hidden" || status === "loading") {
-    return null;
+  if (status === "hidden") {
+    return (
+      <StatusBox
+        type="denied"
+        title="이 과정의 수강생만 성적을 볼 수 있습니다."
+      />
+    );
+  }
+  if (status === "loading") {
+    return <StatusBox type="loading" />;
   }
   if (status === "failed") {
     return (
