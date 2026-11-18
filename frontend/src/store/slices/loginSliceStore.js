@@ -16,10 +16,10 @@ function createInitialState() {
   }
 
   return {
+    // name은 MainLayout이 /members/me로 채운다. 역할 이름은 권한 정보(permission.roleDisplayName)를 쓴다
     user: {
       id: payload.sub,
       name: null,
-      roleName: null,
     },
     status: "idle",
   };

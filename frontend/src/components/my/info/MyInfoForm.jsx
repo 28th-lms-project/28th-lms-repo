@@ -1,4 +1,6 @@
 import { useEffect, useId, useState } from "react";
+import { useDispatch } from "react-redux";
+import { setUser } from "../../../store/slices/loginSliceStore";
 import { getMyInfo, updateInfo } from "../../../api/my/info/myInfoApi";
 import Panel from "../../common/ui/Panel";
 import Field from "../../common/ui/Field";
@@ -8,6 +10,7 @@ import { useToast } from "../../common/ui/feedbackContext";
 
 export default function MyInfoForm({ password }) {
   const toast = useToast();
+  const dispatch = useDispatch();
   const nameId = useId();
   const githubId = useId(); // 훅은 모두 early return 위에
   const [loadError, setLoadError] = useState(null); // 불러오기 실패
@@ -78,6 +81,8 @@ export default function MyInfoForm({ password }) {
       });
 
       setInfo(updated);
+      // 사이드바 프로필의 이름도 바로 바꾼다
+      if (updated?.name) dispatch(setUser({ name: updated.name }));
       toast.success("수정이 완료되었습니다.");
       setErrors({});
     } catch (error) {

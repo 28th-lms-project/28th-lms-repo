@@ -1,13 +1,17 @@
 package com.learningworks.course.service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.learningworks.common.exceptions.LearningworksException;
+import com.learningworks.common.exceptions.ValidationFailedException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.AuthUtil;
+import com.learningworks.common.utils.DateListText;
 import com.learningworks.course.dao.CourseDao;
 import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
@@ -156,7 +160,8 @@ public class CourseServiceImpl implements CourseService{
 	@Override
 	public List<HomeworkVO> courseHomeworkList(String courseId) {
 		this.checkCourseAccess(courseId);
-		return this.courseDao.readHomeworkList(courseId);
+		// 제출 여부(submittedYn)는 로그인 사용자 기준 (시험 세트 목록의 submittedYn과 같은 방식)
+		return this.courseDao.readHomeworkList(courseId, AuthUtil.getLoginId());
 	}
 
 	@Override
@@ -377,7 +382,7 @@ public class CourseServiceImpl implements CourseService{
 		List<StudentAttendanceVO> students = this.courseDao.readStudentAttendanceCounts(courseId, userId);
 		int attendedSum = 0;
 		for (StudentAttendanceVO student : students) {
-			int attended = this.countAttendedDays(student, passed);
+			int attended = this.fillAbsentCounts(student, passed);
 			attendedSum += attended;
 			student.setAttendanceRate(this.toPercent(attended, total));
 			student.setWarning(this.isAttendanceWarning(attended, passed));
@@ -401,14 +406,23 @@ public class CourseServiceImpl implements CourseService{
 	}
 
 	/**
-	 * 출석 인정일 = 진행된 수업일 - 결석 수
-	 * 결석 수 = N + 기록 없는 수업일 + floor(L / 3)
+	 * 결석 환산 값을 student에 채우고 출석 인정일을 돌려준다.
+	 * 기록 없는 수업일 = 진행된 수업일 - (Y + L + N)
+	 * 최종 결석 수 = N + 기록 없는 수업일 + floor(L / 3)
+	 * 출석 인정일 = 진행된 수업일 - 최종 결석 수
 	 */
-	private int countAttendedDays(StudentAttendanceVO student, int passedClassDays) {
+	private int fillAbsentCounts(StudentAttendanceVO student, int passedClassDays) {
 		int recorded = student.getPresentCount() + student.getLateCount() + student.getAbsentCount();
 		int noRecordDays = Math.max(0, passedClassDays - recorded);
-		int absentDays = student.getAbsentCount() + noRecordDays + student.getLateCount() / LATE_COUNT_PER_ABSENT;
-		return Math.max(0, passedClassDays - absentDays);
+		int lateAbsent = student.getLateCount() / LATE_COUNT_PER_ABSENT;
+		int totalAbsent = student.getAbsentCount() + noRecordDays + lateAbsent;
+		int attended = Math.max(0, passedClassDays - totalAbsent);
+
+		student.setNoRecordCount(noRecordDays);
+		student.setLateAbsentCount(lateAbsent);
+		student.setTotalAbsentCount(totalAbsent);
+		student.setAttendedDays(attended);
+		return attended;
 	}
 
 	/** 진행된 수업일 대비 출석 인정일이 80% 미만이면 true. 진행된 수업일이 0이면 false */
@@ -434,6 +448,7 @@ public class CourseServiceImpl implements CourseService{
 	@Override
 	public String updateCourse(String courseId, ModifyCourseVO modifyCourseVO) {
 		modifyCourseVO.setId(courseId);
+		this.checkTimetableInPeriod(courseId, modifyCourseVO.getStartDate(), modifyCourseVO.getEndDated());
 
 		// 삭제되지 않은 과정이 없으면 0 행이 수정된다.
 		int updatedRow = this.courseDao.updateCourse(modifyCourseVO);
@@ -441,6 +456,32 @@ public class CourseServiceImpl implements CourseService{
 			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
 		}
 		return courseId;
+	}
+
+	/**
+	 * 새 과정 기간 밖에 시간표가 있으면 수정하지 않는다 (시작일 · 종료일 칸에 날짜를 적어 알림).
+	 * 수업일 = 과정 기간 안에서 시간표가 있는 날이라, 기간을 줄이면 밀려난 날의 출석 · 진행률이 조용히 바뀌기 때문.
+	 * 기간을 늘리는 것은 영향이 없어 그대로 허용된다.
+	 */
+	private void checkTimetableInPeriod(String courseId, String startDate, String endDate) {
+		List<String> outside = this.courseDao.selectTimetableDatesOutside(courseId, startDate, endDate);
+		if (outside.isEmpty()) {
+			return;
+		}
+		// yyyy-MM-dd 문자열은 사전순 비교가 날짜 비교와 같다
+		List<String> before = outside.stream().filter(day -> day.compareTo(startDate) < 0).toList();
+		List<String> after = outside.stream().filter(day -> day.compareTo(endDate) > 0).toList();
+
+		Map<String, List<String>> validations = new LinkedHashMap<>();
+		if (!before.isEmpty()) {
+			validations.put("startDate", List.of("시작일보다 앞에 시간표가 있습니다: "
+					+ DateListText.summarize(before) + ". 시간표를 먼저 다시 올려 주세요."));
+		}
+		if (!after.isEmpty()) {
+			validations.put("endDated", List.of("종료일보다 뒤에 시간표가 있습니다: "
+					+ DateListText.summarize(after) + ". 시간표를 먼저 다시 올려 주세요."));
+		}
+		throw new ValidationFailedException(validations);
 	}
 
 	@Transactional

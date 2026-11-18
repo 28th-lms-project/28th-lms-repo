@@ -8,6 +8,11 @@ import Progress from "../common/ui/Progress";
 import Badge from "../common/ui/Badge";
 import Button from "../common/ui/Button";
 import StatusBox from "../common/ui/StatusBox";
+import { useConfirm, useToast } from "../common/ui/feedbackContext";
+import {
+  checkTodayAttendance,
+  getTodayAttendance,
+} from "../../api/my/course/attendanceApi";
 import useBreadcrumbs from "../../hooks/useBreadcrumbs";
 import {
   selectPermissionStatus,
@@ -15,7 +20,10 @@ import {
 } from "../../store/slices/permissionSliceStore";
 import useStudentDashboard from "./useStudentDashboard";
 import {
+  ATTEND_STATUS,
+  attendNowRule,
   collectOpenHomeworks,
+  collectTodayAttendance,
   collectPendingTests,
   collectTodayLessons,
   courseBadge,
@@ -67,11 +75,12 @@ export default function Main() {
 }
 
 /**
- * 수강생 대시보드: 수치 → 오늘 할 일(시간표 · 시험 · 과제) → 내 과정 → 종료된 과정(접힘).
+ * 수강생 대시보드: 수치 → 내 과정 → 오늘 출결 → 오늘 할 일(시간표 · 시험 · 남은 과제) → 종료된 과정(접힘).
+ * 내 과정 카드(기간 · 진행률)를 먼저 보여 줘서 아래 오늘 할 일이 어느 과정 얘기인지 맥락을 준다.
  * 과정 목록이 오면 바로 그리고, 각 카드 · 패널은 자기 데이터가 오는 대로 채운다.
  */
 function StudentDashboard() {
-  const { status, courses, today, reload } = useStudentDashboard(true);
+  const { status, courses, today, reload, patchResult } = useStudentDashboard(true);
 
   if (status === "loading") {
     return <StatusBox type="loading" />;
@@ -101,14 +110,7 @@ function StudentDashboard() {
 
   return (
     <div className="form-stack">
-      <SummaryCards active={active} total={courses.length} />
-      {active.length > 0 && (
-        <div className="layout-3col">
-          <TodayLessons active={active} today={today} />
-          <PendingTests active={active} />
-          <OpenHomeworks active={active} today={today} />
-        </div>
-      )}
+      <SummaryCards active={active} total={courses.length} today={today} />
       {current.length > 0 && (
         <Panel title="내 과정" subtitle={`${current.length}개`}>
           <div className="card-grid">
@@ -118,20 +120,31 @@ function StudentDashboard() {
           </div>
         </Panel>
       )}
+      {active.length > 0 && <TodayAttendance active={active} patchResult={patchResult} />}
+      {active.length > 0 && (
+        <div className="layout-3col">
+          <TodayLessons active={active} today={today} />
+          <PendingTests active={active} />
+          <OpenHomeworks active={active} today={today} />
+        </div>
+      )}
       {ended.length > 0 && <EndedCourses courses={ended} today={today} />}
     </div>
   );
 }
 
-function SummaryCards({ active, total }) {
+function SummaryCards({ active, total, today }) {
   const attendance = summarizeAttendance(active);
   const scores = summarizeScores(active);
   const tests = collectPendingTests(active);
+  const homeworks = collectOpenHomeworks(active, today);
 
-  let attendanceHint = `지각 ${attendance.late}회 · 결석 ${attendance.absent}회`;
+  const lateNote = attendance.lateAbsent > 0 ? ` (결석 ${attendance.lateAbsent}회로 환산)` : "";
+  let attendanceHint = `지각 ${attendance.late}회${lateNote} · 결석 ${attendance.absent}회`;
   if (attendance.rate === null) {
     if (attendance.loading) attendanceHint = LOADING_HINT;
     else if (attendance.anyFailed) attendanceHint = "불러오지 못했습니다";
+    else if (attendance.noTimetable) attendanceHint = "시간표가 등록되지 않았습니다";
     else attendanceHint = "아직 수업일이 없습니다";
   } else if (attendance.warning) {
     attendanceHint += " · 출석률 주의";
@@ -150,6 +163,12 @@ function SummaryCards({ active, total }) {
   let testHint = "공개됐고 아직 응시하지 않은 시험";
   if (tests.loading) testHint = LOADING_HINT;
   else if (tests.anyFailed) testHint = "일부 과정을 불러오지 못했습니다";
+
+  const nearest = homeworks.items[0];
+  let homeworkHint = "마감 전 과제를 모두 냈습니다";
+  if (homeworks.loading) homeworkHint = LOADING_HINT;
+  else if (homeworks.anyFailed) homeworkHint = "일부 과정을 불러오지 못했습니다";
+  else if (nearest) homeworkHint = `가장 빠른 마감: ${homeworkDue(today, nearest.homework.endDate).label}`;
 
   return (
     <div className="card-grid">
@@ -178,6 +197,12 @@ function SummaryCards({ active, total }) {
         unit="개"
         hint={testHint}
       />
+      <StatCard
+        label="남은 과제"
+        value={homeworks.loading && homeworks.items.length === 0 ? "-" : homeworks.items.length}
+        unit="건"
+        hint={homeworkHint}
+      />
     </div>
   );
 }
@@ -187,12 +212,15 @@ function CourseCard({ course, today }) {
   const navigate = useNavigate();
   const badge = courseBadge(course, today);
   const isActive = course.phase === "active";
-  const summary = course.summary?.ok ? course.summary.value : null;
+  const loaded = course.summary?.ok ? course.summary.value : null;
+  // 시간표가 없으면(수업일 0) 수업일 기준 진행률을 낼 수 없어 날짜 기준으로 보여 준다
+  const summary = loaded?.totalClassDays > 0 ? loaded : null;
   const summaryLoading = course.summary === undefined;
 
   let progressNote = "날짜 기준 진행률";
   if (summary) progressNote = `${summary.passedClassDays} / ${summary.totalClassDays} 수업일 (어제 기준)`;
   else if (summaryLoading) progressNote = LOADING_HINT;
+  else if (loaded) progressNote = "시간표 미등록 · 날짜 기준 진행률";
 
   return (
     <button
@@ -287,7 +315,92 @@ function ListPanel({ title, subtitle, result, emptyTitle, renderItem }) {
   );
 }
 
-/** 지금 시각 "HH:MM" (1분마다 갱신, 지금 수업 표시용) */
+/**
+ * 오늘 출결: 오늘 수업이 있는 과정마다 상태 배지, 아직 안 눌렀으면 [출석] 버튼.
+ * 지각 · 결석으로 기록될 시각이면 누르기 전에 한 번 확인한다.
+ */
+function TodayAttendance({ active, patchResult }) {
+  const toast = useToast();
+  const confirm = useConfirm();
+  const nowTime = useNowTime();
+  const [pendingId, setPendingId] = useState(null);
+  const result = collectTodayAttendance(active);
+
+  // 오늘 수업이 있는 과정이 하나도 없으면 패널을 그리지 않는다 (오늘 시간표 패널이 "수업 없음"을 보여 줌)
+  if (!result.loading && !result.anyFailed && result.items.length === 0) {
+    return null;
+  }
+
+  const handleCheck = async (course, attendance) => {
+    const rule = attendNowRule(attendance, nowTime);
+    if (rule.status !== "Y") {
+      const ok = await confirm({
+        title: "출석",
+        message: `지금 누르면 ${ATTEND_STATUS[rule.status].label}으로 기록됩니다. 출석할까요?`,
+        confirmText: "출석",
+        danger: rule.status === "N",
+      });
+      if (!ok) return;
+    }
+    setPendingId(course.id);
+    try {
+      const record = await checkTodayAttendance(course.id);
+      patchResult(course.id, "attendance", { ok: true, value: { ...attendance, ...record } });
+      toast.success(`${ATTEND_STATUS[record?.attendStatus]?.label ?? "출석"}으로 기록했습니다.`);
+    } catch (error) {
+      toast.error(error.message || "출석하지 못했습니다.");
+      // 이미 출석함 등 서버 상태가 화면과 다를 수 있으니 다시 읽는다
+      getTodayAttendance(course.id).then(
+        (value) => patchResult(course.id, "attendance", { ok: true, value }),
+        () => {},
+      );
+    } finally {
+      setPendingId(null);
+    }
+  };
+
+  return (
+    <ListPanel
+      title="오늘 출결"
+      result={result}
+      emptyTitle="오늘 출석할 수업이 없습니다."
+      renderItem={({ key, course, attendance }) => {
+        const badge = ATTEND_STATUS[attendance.attendStatus];
+        const rule = attendNowRule(attendance, nowTime);
+        return (
+          <li key={key}>
+            <div className="list-item">
+              <span>{course.courseName}</span>
+              <span className="list-item-end">
+                {badge ? (
+                  <>
+                    <span className="card-meta">{attendance.lgnDt?.slice(11)}</span>
+                    <Badge tone={badge.tone}>{badge.label}</Badge>
+                  </>
+                ) : (
+                  <>
+                    <span className="card-meta">{rule.hint}</span>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      loading={pendingId === course.id}
+                      disabled={pendingId !== null && pendingId !== course.id}
+                      onClick={() => handleCheck(course, attendance)}
+                    >
+                      출석
+                    </Button>
+                  </>
+                )}
+              </span>
+            </div>
+          </li>
+        );
+      }}
+    />
+  );
+}
+
+/** 지금 시각 "HH:MM" (1분마다 갱신, 지금 수업 · 출석 기준 표시용) */
 function useNowTime() {
   const [now, setNow] = useState(() => toTimeKey(new Date()));
   useEffect(() => {
@@ -373,10 +486,15 @@ function OpenHomeworks({ active, today }) {
 
   return (
     <ListPanel
-      title="마감 전 과제"
-      subtitle={result.items.length > 0 ? `${result.items.length}건` : undefined}
+      title="남은 과제"
+      subtitle={[
+        result.items.length > 0 ? `${result.items.length}건` : null,
+        result.submitted > 0 ? `제출 ${result.submitted}건` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ") || undefined}
       result={result}
-      emptyTitle="마감 전 과제가 없습니다."
+      emptyTitle={result.submitted > 0 ? "마감 전 과제를 모두 냈습니다." : "마감 전 과제가 없습니다."}
       renderItem={({ key, course, homework }) => {
         const due = homeworkDue(today, homework.endDate);
         return (

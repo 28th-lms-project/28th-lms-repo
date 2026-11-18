@@ -24,7 +24,11 @@ import com.learningworks.course.vo.response.StudentAttendanceVO;
 @Mapper
 public interface CourseDao {
 
-	/** userId 가 null 이면 전체 강의, 아니면 해당 사용자가 수강생 · 강사인 강의만 */
+	/**
+	 * 삭제되지 않은 강의 목록 (시작일 늦은 순, 강의마다 한 줄).
+	 * userId 가 null 이면 전체 강의, 아니면 해당 사용자가 수강생 · 강사인 강의만.
+	 * name 은 강사 이름 (여럿이면 ", "로 연결, 없으면 null)
+	 */
 	List<CourseVO> viewCourse(@Param("userId") String userId);
 
 	String readUserBaseRole(String userId);
@@ -46,7 +50,8 @@ public interface CourseDao {
 
 	List<CourseMemberVO> readCourseMembers(String courseId);
 
-	List<HomeworkVO> readHomeworkList(String courseId);
+	/** 과제 목록. submittedYn은 userId가 삭제되지 않은 댓글(제출)을 남겼는지 */
+	List<HomeworkVO> readHomeworkList(@Param("courseId") String courseId, @Param("userId") String userId);
 
 	HomeworkVO getOneHomework(String courseId, String homeworkId);
 
@@ -70,7 +75,14 @@ public interface CourseDao {
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
 
-	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐) */
+	/**
+	 * 삭제되지 않은 과정의 시간표 날짜 중 startDate ~ endDate(yyyy-MM-dd) 밖인 날짜 (yyyy-MM-dd, 오름차순, 중복 없음).
+	 * 과정 기간을 바꾸기 전에 검사한다
+	 */
+	List<String> selectTimetableDatesOutside(@Param("courseId") String courseId,
+			@Param("startDate") String startDate, @Param("endDate") String endDate);
+
+	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐). 수업일 = 과정 기간 안 시간표가 있는 날 */
 	AttendanceSummaryVO readCourseClassDays(@Param("courseId") String courseId);
 
 	/** 수강생별 Y / L / N 횟수 (어제까지). userId 가 null 이면 강의 전체 수강생 */

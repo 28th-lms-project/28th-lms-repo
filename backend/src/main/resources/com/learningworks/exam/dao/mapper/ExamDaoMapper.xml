@@ -103,7 +103,8 @@
 			 , T.MDFY_DT
 			 , T.CRTR_ID
 			 , T.MDFYR_ID
-			 , T.CORRECT_ANSWER
+			 <!-- 정답(CORRECT_ANSWER)은 넣지 않는다: 수강생도 이 목록을 받는다.
+			      정답이 필요한 문제 보기 · 채점은 viewTestSetQuestions 로 따로 조회 -->
 			 , T.SUB_QUESTION
 		FROM TEST_SET TS
 		INNER JOIN TEST_SET_TESTS TST
@@ -230,7 +231,7 @@
     
     <insert id="makeNewTestSet" parameterType="com.learningworks.exam.vo.request.RegistTestSetVO">
         <selectKey keyProperty="RegistTestSetVO.id" order="BEFORE" resultType="string">
-        SELECT ('TS-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+        SELECT ('TS-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TEST_SET_PK.NEXTVAL, 6, '0'))
           FROM DUAL
         </selectKey>
         INSERT INTO TEST_SET
@@ -251,7 +252,7 @@
     
     <insert id="makeNewTestSetTest" parameterType="string">
         <selectKey keyProperty="id" order="BEFORE" resultType="string">
-        SELECT ('TE-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+        SELECT ('TE-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TEST_SET_TESTS_PK.NEXTVAL, 6, '0'))
           FROM DUAL
         </selectKey>
         INSERT INTO TEST_SET_TESTS
@@ -318,6 +319,30 @@
          ORDER BY T.ID
      </select>
 
+    <!-- 응시용 문제 조회: viewTestSetQuestions 와 같지만 정답(CORRECT_ANSWER)을 뺀다 (수강생에게 정답이 내려가지 않도록) -->
+    <select id="viewTestSetQuestionsForTake"
+            parameterType="string"
+            resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
+        SELECT T.ID
+             , T.SUBJECT_ID
+             , T.QUESTION
+             , T.ANSWER_TYPE
+             , T.ANSWER_SHEET_1
+             , T.ANSWER_SHEET_2
+             , T.ANSWER_SHEET_3
+             , T.ANSWER_SHEET_4
+             , T.ANSWER_SHEET_5
+             , T.ANSWER_COUNT
+             , T.POINT_ALLOC
+             , T.SUB_QUESTION
+          FROM TESTS T
+         WHERE DEL_YN = 'N'
+           AND T.ID IN (SELECT TST.TEST_ID
+                          FROM TEST_SET_TESTS TST
+                         WHERE TST.TEST_SET_ID = #{parameter})
+         ORDER BY T.ID
+     </select>
+
     <!-- 채점용 정답 조회: 답안 저장 반복문 안에서 문제마다 SELECT 하지 않도록 한 번에 가져온다 -->
     <select id="selectAnswerKeysByTestSetId"
             parameterType="string"
@@ -343,7 +368,7 @@
     <insert id="insertTestAnswer"
             parameterType="com.learningworks.exam.vo.request.RegistTestAnswersVO">
         <selectKey keyProperty="id" order="BEFORE" resultType="string">
-        SELECT ('TN-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+        SELECT ('TN-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TEST_ANSWERS_PK.NEXTVAL, 6, '0'))
           FROM DUAL
         </selectKey>
         INSERT INTO TEST_ANSWERS

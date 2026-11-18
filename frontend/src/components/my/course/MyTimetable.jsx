@@ -238,7 +238,9 @@ export default function MyTimetable({ courseId: courseIdProp }) {
               isUploading ? "업로드 중..." : fileName || "선택한 파일 없음"
             }
           />
-          <span className="field-hint">엑셀 파일(.xlsx, .xls)</span>
+          <span className="field-hint">
+            엑셀 파일(.xlsx, .xls) · 과정 기간 안의 날짜만 올릴 수 있습니다
+          </span>
         </div>
       )}
 

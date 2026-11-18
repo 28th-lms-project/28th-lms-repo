@@ -92,8 +92,11 @@ public class SurveyController {
 	
 	@RequireAction(domain = "COURSE_SURVEY", action = "READ", description = "과정 설문 조회")
 	@GetMapping("/survey/{courseId}")
-	public ApiResponse<List<CourseSurveyVO>> getCourseSurvey(@PathVariable String courseId){
-		List<CourseSurveyVO> survey = this.surveyService.readAllCourseSurvey(courseId);
+	public ApiResponse<List<CourseSurveyVO>> getCourseSurvey(@PathVariable String courseId,
+			Authentication authentication){
+		// 참여 여부(answeredYn)는 로그인 사용자 기준 (응답 제출의 중복 검사와 같은 조건)
+		List<CourseSurveyVO> survey = this.surveyService.readAllCourseSurvey(courseId,
+				authentication.getName());
 		return ApiResponse.OK(survey);
 	}
 	
@@ -143,17 +146,21 @@ public class SurveyController {
 	@RequireAction(domain = "COURSE_SURVEY", action = "READ", description = "과정 설문 조회")
 	@GetMapping("/survey/{courseId}/{courseSurveyId}/result")
 	public ApiResponse<CourseSurveyResultVO> getCourseSurveyResult(@PathVariable String courseId,
-			@PathVariable String courseSurveyId) {
-		return ApiResponse.OK(this.surveyService.readCourseSurveyResult(courseId, courseSurveyId));
+			@PathVariable String courseSurveyId, Authentication authentication) {
+		// 수강생이면 응답자 목록에 본인만 (강사 · 관리자는 전체)
+		return ApiResponse.OK(this.surveyService.readCourseSurveyResult(courseId, courseSurveyId,
+				authentication.getName()));
 	}
 
 	/** 설문 결과 팝업: 한 학생의 답변 */
 	@RequireAction(domain = "COURSE_SURVEY", action = "READ", description = "과정 설문 조회")
 	@GetMapping("/survey/{courseId}/{courseSurveyId}/result/{courseStudentId}")
 	public ApiResponse<List<SurveyStudentAnswerVO>> getCourseSurveyStudentAnswers(@PathVariable String courseId,
-			@PathVariable String courseSurveyId, @PathVariable String courseStudentId) {
-		return ApiResponse.OK(
-				this.surveyService.readCourseSurveyStudentAnswers(courseId, courseSurveyId, courseStudentId));
+			@PathVariable String courseSurveyId, @PathVariable String courseStudentId,
+			Authentication authentication) {
+		// 수강생은 본인 답변만 (다른 학생 ID면 403)
+		return ApiResponse.OK(this.surveyService.readCourseSurveyStudentAnswers(courseId, courseSurveyId,
+				courseStudentId, authentication.getName()));
 	}
 	
 	@RequireAction(domain = "COURSE_SURVEY", action = "STAT_READ", description = "과정 설문 통계")

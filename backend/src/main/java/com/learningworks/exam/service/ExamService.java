@@ -36,6 +36,14 @@ public interface ExamService {
 	ExamQuestionListVO viewTestSetQuestions(String testSetId);
 
 	/**
+	 * 수강생 응시용 문제 목록. 정답은 빠져 있다.
+	 * 공개(Y)된 시험만, 아직 제출하지 않은 응시자만 조회할 수 있다.
+	 * @param testSetId 시험 세트 ID
+	 * @param userId 응시자(로그인 사용자) ID
+	 */
+	ExamQuestionListVO viewTestSetQuestionsForTake(String testSetId, String userId);
+
+	/**
 	 * @param testSetId 시험 세트 ID
 	 * @param userId 응시자(로그인 사용자) ID
 	 * @param answersVO 제출 답안 목록

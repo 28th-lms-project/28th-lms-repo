@@ -5,13 +5,23 @@
 
 <mapper namespace="com.learningworks.timetable.dao.TimetableDao">
 
+    <!-- 과정 기간 (시간표 업로드 때 날짜 검증용). 삭제된 과정은 조회되지 않음 -->
+    <select id="selectCoursePeriod"
+            resultType="com.learningworks.timetable.vo.response.CoursePeriodVO">
+        SELECT TRUNC(START_DATE) AS START_DATE
+             , TRUNC(END_DATED) AS END_DATE
+          FROM COURSE
+         WHERE ID = #{courseId}
+           AND DEL_YN = 'N'
+    </select>
+
     <!-- 과정별 시간표 전체 삭제 -->
     <delete id="deleteTimetable">
         DELETE FROM COURSE_TIME_TABLE
         WHERE COURSE_ID = #{courseId}
     </delete>
 
-    <!-- 시간표 등록 -->
+    <!-- 시간표 등록. ID는 팀 PK 규칙: 'CI-' + 날짜 + 시퀀스 6자리 -->
     <insert id="insertTimetable">
         INSERT INTO COURSE_TIME_TABLE (
 	          ID
@@ -22,7 +32,7 @@
 	        , TIME
         )
         VALUES (
-		        #{id},
+		        'CI-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_TIME_TABLE_PK.NEXTVAL, 6, '0'),
 		        #{courseId},
 		        #{date},
 		        #{agenda},

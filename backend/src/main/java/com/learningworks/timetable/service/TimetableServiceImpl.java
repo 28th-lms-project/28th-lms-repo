@@ -1,7 +1,11 @@
 
 package com.learningworks.timetable.service;
 
+import com.learningworks.common.exceptions.LearningworksException;
+import com.learningworks.common.exceptions.enums.ErrorCode;
+import com.learningworks.common.utils.DateListText;
 import com.learningworks.timetable.dao.TimetableDao;
+import com.learningworks.timetable.vo.response.CoursePeriodVO;
 import com.learningworks.timetable.vo.response.DailyScheduleResponseVO;
 import com.learningworks.timetable.vo.response.LessonResponseVO;
 import com.learningworks.timetable.vo.response.TimeSlotResponseVO;
@@ -22,7 +26,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +35,7 @@ public class TimetableServiceImpl implements TimetableService {
     private final TimetableDao timetableDao;
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
+
 
     private static final List<TimeSlotResponseVO> TIME_SLOTS = List.of(
             new TimeSlotResponseVO(1, "1교시", "09:00 ~ 10:00", false),
@@ -75,15 +79,17 @@ public class TimetableServiceImpl implements TimetableService {
             );
         }
 
-        // 2. 기존 과정 시간표 삭제
+        // 2. 과정 기간 밖 날짜가 있으면 저장하지 않음 (수업일 = 과정 기간 안 시간표가 있는 날이라,
+        //    기간 밖 시간표는 출석 · 진행률에 쓰이지 않고 화면만 헷갈리게 한다). 기존 시간표는 그대로 둔다
+        validateLessonDates(courseId, lessons);
+
+        // 3. 기존 과정 시간표 삭제
         timetableDao.deleteTimetable(courseId);
 
-        // 3. 신규 시간표 저장
+        // 4. 신규 시간표 저장
         for (ExcelLesson lesson : lessons) {
 
             timetableDao.insertTimetable(
-                    UUID.randomUUID().toString().replace("-", "")
-                            .substring(0, 20),
                     courseId,
                     lesson.date(),
                     lesson.agenda(),
@@ -92,7 +98,7 @@ public class TimetableServiceImpl implements TimetableService {
             );
         }
 
-        // 4. 실제 DB 저장 결과 반환
+        // 5. 실제 DB 저장 결과 반환
         return getTimetable(courseId);
     }
 
@@ -186,7 +192,7 @@ public class TimetableServiceImpl implements TimetableService {
                 ))
                 .toList();
 
-        return new DailyScheduleResponseVO(date, lessons);
+        return new DailyScheduleResponseVO(date, lessons, TIME_SLOTS);
     }
 
     private List<ExcelLesson> parseExcel(
@@ -398,6 +404,36 @@ public class TimetableServiceImpl implements TimetableService {
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    /**
+     * 시간표 날짜가 모두 과정 기간(시작일 ~ 종료일) 안인지 검사한다. 주말이어도 기간 안이면 허용(보강).
+     * 삭제됐거나 없는 과정이면 COURSE_NOT_EXISTS, 기간 밖 날짜가 있으면 400 (날짜를 메시지에 적음)
+     */
+    private void validateLessonDates(String courseId, List<ExcelLesson> lessons) {
+
+        CoursePeriodVO period = timetableDao.selectCoursePeriod(courseId);
+
+        if (period == null) {
+            throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
+        }
+
+        List<LocalDate> outOfPeriod = lessons.stream()
+                .map(ExcelLesson::date)
+                .filter(date -> !period.contains(date))
+                .distinct()
+                .sorted()
+                .toList();
+
+        if (outOfPeriod.isEmpty()) {
+            return;
+        }
+
+        throw new IllegalArgumentException(
+                "과정 기간(" + period.startDate() + " ~ " + period.endDate()
+                        + ") 밖의 날짜가 있습니다: " + DateListText.summarize(outOfPeriod)
+                        + ". 엑셀의 날짜를 확인해 주세요."
+        );
     }
 
     private void validateCourseId(String courseId) {

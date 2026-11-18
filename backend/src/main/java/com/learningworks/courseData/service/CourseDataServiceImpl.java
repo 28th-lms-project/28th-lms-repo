@@ -59,7 +59,7 @@ public class CourseDataServiceImpl implements CourseDataService {
 	/** 파일 ID 형식: UUID 32자리 + "." + 확장자 */
 	private static final Pattern FILE_ID_PATTERN = Pattern.compile("^[0-9a-f]{32}\\.[a-z0-9]{1,5}$");
 
-	/** 교육 자료 ID 형식 (CD-YYYYMMDD-NNNNNN) */
+	/** 교육 자료 ID 형식 (CR-YYYYMMDD-NNNNNN, 예전 데이터는 CD-) */
 	private static final Pattern DATA_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,20}$");
 
 	private static final Set<String> IMAGE_EXTENSIONS = Set.of("jpg", "jpeg", "png", "gif", "webp", "bmp");
@@ -192,7 +192,7 @@ public class CourseDataServiceImpl implements CourseDataService {
 		}
 		courseDataRequestVO.setContent(content);
 
-		// ID 는 Mapper 의 selectKey 로 생성 (CD-YYYYMMDD-NNNNNN)
+		// ID 는 Mapper 의 selectKey 로 생성 (CR-YYYYMMDD-NNNNNN)
 		int insertCount = this.courseDataDao.insertCourseData(courseDataRequestVO);
 		if (insertCount != 1) {
 			throw new LearningworksException(ErrorCode.COURSE_DATA_FAILURE_CREATE);

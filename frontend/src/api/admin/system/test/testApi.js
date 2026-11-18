@@ -42,6 +42,10 @@ export const deleteTestSet = (testSetId) =>
 export const viewTestSetQuestions = (testSetId) =>
   api.get(`admin/system/${testSetId}/questionlist`);
 
+/** 시험 응시용 문제 API (정답 제외. 수강생 응시 화면용) */
+export const viewTestSetQuestionsForTake = (testSetId) =>
+  api.get(`my/test/${testSetId}/questions`);
+
 /** 시험 제출 API */
 export const createTestAnswers = (testSetId, submitAnswers) =>
   api.post(`my/test/${testSetId}`, { answersList: [...submitAnswers] });

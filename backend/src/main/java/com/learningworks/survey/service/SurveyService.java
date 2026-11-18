@@ -35,7 +35,8 @@ public interface SurveyService {
 
 	String deleteSurveyData(String surveyId, String surveyDataId);
 
-	List<CourseSurveyVO> readAllCourseSurvey(String courseId);
+	/** userId: 로그인 사용자. 설문마다 그 사용자의 참여 여부(answeredYn)를 함께 돌려준다 */
+	List<CourseSurveyVO> readAllCourseSurvey(String courseId, String userId);
 
 	CourseSurveyVO createCourseSurvey(@Valid RegistCourseSurveyVO registCourseSurvey, String courseId);
 
@@ -47,10 +48,12 @@ public interface SurveyService {
 
 	CourseSurveyQuestionVO readCourseSurveyQuestions(String courseId, String courseSurveyId, String userId);
 
-	CourseSurveyResultVO readCourseSurveyResult(String courseId, String courseSurveyId);
+	/** userId: 로그인 사용자. 이 과정의 수강생이면 응답자 목록에 본인만 담긴다 */
+	CourseSurveyResultVO readCourseSurveyResult(String courseId, String courseSurveyId, String userId);
 
+	/** userId: 로그인 사용자. 이 과정의 수강생이면 본인 답변만 조회할 수 있다 */
 	List<SurveyStudentAnswerVO> readCourseSurveyStudentAnswers(String courseId, String courseSurveyId,
-			String courseStudentId);
+			String courseStudentId, String userId);
 
 	CourseSurveyStatisticsVO readCourseSurveyStatistics(String courseId, String courseSurveyId);
 
