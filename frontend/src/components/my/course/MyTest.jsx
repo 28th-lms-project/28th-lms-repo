@@ -40,10 +40,9 @@ export default function MyTest() {
     };
   }, [courseId]);
 
-  return (
-    <>
-      {loadFailed && <div>시험 목록을 불러오지 못했습니다.</div>}
-      {!loadFailed && <ExamSetTable testSets={testSets} studentView />}
-    </>
-  );
+  if (loadFailed) {
+    return <div>시험 목록을 불러오지 못했습니다.</div>;
+  }
+
+  return <ExamSetTable testSets={testSets} studentView />;
 }
