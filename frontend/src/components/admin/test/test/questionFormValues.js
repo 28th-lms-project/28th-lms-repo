@@ -25,8 +25,20 @@ export const emptyQuestionForm = () => ({
 
 /** 서버에서 받은 문제 → 폼 값 */
 export const toQuestionForm = (response) => {
-  const count = Number(response.answerCount) || 0;
-  const answers = response.answers || [];
+  const sheet = [
+    response.answerSheet1,
+    response.answerSheet2,
+    response.answerSheet3,
+    response.answerSheet4,
+    response.answerSheet5,
+  ];
+  let count = Number(response.answerCount) || 0;
+  if (!count) {
+    count = sheet.filter(
+      (sheet) => sheet !== null && sheet !== undefined && sheet !== "",
+    ).length;
+  }
+  const answers = sheet;
   const items = answers.slice(0, count).map((answer) => {
     let text = answer;
     if (answer === null || answer === undefined) {
@@ -127,4 +139,3 @@ export const toQuestionPayload = (form) => {
     answerSheet5: getAnswer(4),
   };
 };
-
