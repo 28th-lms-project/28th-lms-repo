@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react";
 
+import CourseScore from "../CourseTableComponent/CourseScore.jsx";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams, useSearchParams } from "react-router-dom";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
@@ -44,6 +45,8 @@ const TABS = [
     Component: <MyCounsel />,
     permission: "COURSE_COUNSEL_READ",
   }, //<ConsultationList/>
+  // 모든 역할에 표시: 과정 성적 권한(SCORE_READ_COURSE)이 있으면 과정 전체 성적, 없으면(수강생) 내 성적 (CourseScore 안에서 나눔)
+  { label: "성적", Component: <CourseScore /> }, //<CourseScore/>
 ];
 
 /** 시작일 ~ 종료일 중 오늘까지 지난 비율 (0 ~ 100, 날짜 기준) */
