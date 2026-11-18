@@ -50,7 +50,7 @@ public class InterviewServiceImpl implements InterviewService {
 			throw new LearningworksException(ErrorCode.INTERVIEW_STUDENT_NOT_IN_COURSE);
 		}
 
-		// ID 는 Mapper 의 selectKey 로 생성 (CI-YYYYMMDD-NNNNNN)
+		// ID 는 Mapper 의 selectKey 로 생성 (SI-YYYYMMDD-NNNNNN)
 		int insertCount = this.interviewDao.insertInterview(interviewRequestVO);
 		if (insertCount != 1) {
 			throw new LearningworksException(ErrorCode.INTERVIEW_FAILURE_CREATE);
