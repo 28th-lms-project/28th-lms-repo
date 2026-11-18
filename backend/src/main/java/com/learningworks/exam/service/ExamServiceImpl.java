@@ -7,6 +7,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.learningworks.common.exceptions.LearningworksException;
+import com.learningworks.common.exceptions.ValidationFailedException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 
 import org.springframework.stereotype.Service;
@@ -31,11 +32,23 @@ public class ExamServiceImpl implements ExamService {
 
 	private ExamDao examDao;
 
+	/** TESTS.ANSWER_TYPE 에 넣을 수 있는 값 (공통 코드 TEST_ANSWER_TYPE 의 ID) */
+	private static final Set<String> QUESTION_ANSWER_TYPES = Set.of(
+			"ANSWER_SELECT", "ANSWER_MULTIPLE", "ANSWER_WRITE", "ANSWER_CHECK", "ANSWER_CODE");
+
+	/** 문제 유형이 공통 코드 값인지 확인 (한글 이름 등 옛 값은 받지 않음) */
+	private void validateAnswerType(String answerType) {
+		if (answerType == null || !QUESTION_ANSWER_TYPES.contains(answerType)) {
+			throw ValidationFailedException.of("answerType", "문제 유형을 목록에서 선택해주세요.");
+		}
+	}
+
 	private boolean isManuallyGraded(String answerType) {
 		return "ANSWER_WRITE".equals(answerType) || "ANSWER_CODE".equals(answerType);
 	}
 
 	private void prepareQuestionAnswers(RegistExamQuestionVO request) {
+		this.validateAnswerType(request.getAnswerType());
 		boolean manuallyGraded = this.isManuallyGraded(request.getAnswerType());
 		boolean oxQuestion = "ANSWER_CHECK".equals(request.getAnswerType());
 		if (manuallyGraded || oxQuestion) {
@@ -58,6 +71,7 @@ public class ExamServiceImpl implements ExamService {
 	}
 
 	private void prepareQuestionAnswers(ModifyExamQuestionVO request) {
+		this.validateAnswerType(request.getAnswerType());
 		boolean manuallyGraded = this.isManuallyGraded(request.getAnswerType());
 		boolean oxQuestion = "ANSWER_CHECK".equals(request.getAnswerType());
 		if (manuallyGraded || oxQuestion) {
@@ -81,25 +95,27 @@ public class ExamServiceImpl implements ExamService {
 
 	private void validateOxAnswer(String correctAnswer) {
 		if (!"O".equals(correctAnswer) && !"X".equals(correctAnswer)) {
-			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+			throw ValidationFailedException.of("correctAnswer", "정답을 O 또는 X로 선택해주세요.");
 		}
 	}
 
 	private String validateQuestionAnswers(String answerType, Integer answerCount, String correctAnswerValue, String... answers) {
 
 		if (answerCount == null || answerCount < 1 || answerCount > 5) {
-			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+			throw ValidationFailedException.of("answerCount", "보기는 1~5개 입력해주세요.");
 		}
 
+		// 오류 필드 이름은 요청 VO 와 같게 (answerSheet1~5) → 화면이 해당 보기 오류로 표시
 		for (int i = 0; i < answers.length; i++) {
 			boolean hasText = answers[i] != null && !answers[i].isBlank();
+			String field = "answerSheet" + (i + 1);
 
 			if (i < answerCount && !hasText) {
-				throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+				throw ValidationFailedException.of(field, "보기 내용을 입력해주세요.");
 			}
 
 			if (i >= answerCount && hasText) {
-				throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+				throw ValidationFailedException.of(field, "보기 개수보다 많은 보기가 있습니다.");
 			}
 		}
 
@@ -112,32 +128,33 @@ public class ExamServiceImpl implements ExamService {
 		try {
 			correctAnswer = Integer.parseInt(correctAnswerValue);
 		} catch (NumberFormatException e) {
-			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER, e);
+			throw ValidationFailedException.of("correctAnswer", "정답 보기를 하나 선택해주세요.");
 		}
 
 		if (correctAnswer < 1 || correctAnswer > answerCount) {
-			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+			throw ValidationFailedException.of("correctAnswer", "정답 보기를 하나 선택해주세요.");
 		}
 		return correctAnswerValue;
 	}
 
 	private String validateMultipleAnswers(int answerCount, String correctAnswerValue) {
+		String message = "정답 보기를 2개 이상 선택해주세요.";
 		if (correctAnswerValue == null) {
-			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+			throw ValidationFailedException.of("correctAnswer", message);
 		}
 		Set<Integer> correctAnswers = new TreeSet<>();
 		for (String token : correctAnswerValue.split(",", -1)) {
 			String number = token.trim();
 			if (!number.matches("[1-5]")) {
-				throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+				throw ValidationFailedException.of("correctAnswer", message);
 			}
 			int answer = Integer.parseInt(number);
 			if (answer > answerCount || !correctAnswers.add(answer)) {
-				throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+				throw ValidationFailedException.of("correctAnswer", message);
 			}
 		}
 		if (correctAnswers.size() < 2) {
-			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+			throw ValidationFailedException.of("correctAnswer", message);
 		}
 		return correctAnswers.stream().map(String::valueOf).collect(Collectors.joining(","));
 	}
@@ -154,12 +171,16 @@ public class ExamServiceImpl implements ExamService {
 
 	@Transactional
 	@Override
-	public ExamQuestionVO createNewExam(RegistExamQuestionVO registExamQuestionVO) {
+	public ExamQuestionVO createNewExam(RegistExamQuestionVO registExamQuestionVO, String userId) {
 		if (registExamQuestionVO == null) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 		this.prepareQuestionAnswers(registExamQuestionVO);
-		int insertCount = this.examDao.insertNewExam(registExamQuestionVO);
+		// 환경 변수에 없는 과목이면 문제 은행 화면에 보이지 않으므로 등록하지 않음
+		if (this.examDao.countTestSubject(registExamQuestionVO.getSubjectId()) == 0) {
+			throw ValidationFailedException.of("subjectId", "시험 과목을 목록에서 선택해주세요.");
+		}
+		int insertCount = this.examDao.insertNewExam(registExamQuestionVO, userId);
 
 		if (insertCount > 0) {
 			System.out.println("문제가 등록되었습니다.");
@@ -174,8 +195,8 @@ public class ExamServiceImpl implements ExamService {
 
 	@Transactional
 	@Override
-	public String deleteExamQuestion(String examId) {
-		int deletedRows = this.examDao.deleteExamQuestion(examId);
+	public String deleteExamQuestion(String examId, String userId) {
+		int deletedRows = this.examDao.deleteExamQuestion(examId, userId);
 		if (deletedRows == 0) {
 			System.out.println("시험 문제를 삭제하는데 실패했습니다.");
 			throw new LearningworksException(ErrorCode.EXAM_NOT_EXISTS);
@@ -186,7 +207,7 @@ public class ExamServiceImpl implements ExamService {
 
 	@Transactional
 	@Override
-	public ExamQuestionVO updateExamQuestion(String examId, ModifyExamQuestionVO modifyExamQuestionVO) {
+	public ExamQuestionVO updateExamQuestion(String examId, ModifyExamQuestionVO modifyExamQuestionVO, String userId) {
 		if (examId == null || examId.isBlank() || modifyExamQuestionVO == null) {
             throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
         }
@@ -198,7 +219,7 @@ public class ExamServiceImpl implements ExamService {
 
 		this.prepareQuestionAnswers(modifyExamQuestionVO);
 
-		int updatedRows = this.examDao.updateExamQuestion(examId, modifyExamQuestionVO);
+		int updatedRows = this.examDao.updateExamQuestion(examId, modifyExamQuestionVO, userId);
 
 		if (updatedRows != 1) {
 			throw new LearningworksException(ErrorCode.EXAM_FAILURE_UPDATE);
@@ -234,6 +255,7 @@ public class ExamServiceImpl implements ExamService {
 	}
 
 	@Override
+	@Transactional 
 	public RegistTestSetVO makeNewTestSet(String courseId, RegistTestSetVO registTestSetVO) {
 		int TestSetResult = this.examDao.makeNewTestSet(courseId,registTestSetVO);
 		if (TestSetResult == 0 ) {
@@ -266,6 +288,7 @@ public class ExamServiceImpl implements ExamService {
 	}
 
 	@Override
+	@Transactional 
 	public String deleteTestSet(String testSetId) {
 		int result = this.examDao.deleteTestSet(testSetId);
 		if(result == 0) {

@@ -190,12 +190,12 @@ export const routes = [
               {
                 path: "survey",
                 element: <Survey />,
-                handle: { crumb: "설문 관리", menu: true },
+                handle: { crumb: "설문 관리", menu: true, darkReady: true },
               },
               {
                 path: "test",
                 element: <Test />,
-                handle: { crumb: "시험 문제 관리", menu: true },
+                handle: { crumb: "시험 문제 관리", menu: true, darkReady: true },
               },
               {
                 path: "system",
@@ -229,7 +229,7 @@ export const routes = [
                   {
                     path: "code",
                     element: <Code />,
-                    handle: { crumb: "환경 변수 관리", menu: true },
+                    handle: { crumb: "환경 변수 관리", menu: true, darkReady: true },
                   },
                 ],
               },

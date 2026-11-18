@@ -13,6 +13,11 @@ import QuestionBlock from "../../../common/ui/QuestionBlock";
 import StatusBox from "../../../common/ui/StatusBox";
 import { Tabs, TabPanel } from "../../../common/ui/Tabs";
 import { useConfirm, useToast } from "../../../common/ui/feedbackContext";
+import {
+  ANSWER_TYPE,
+  toAnswerTypeCode,
+  useAnswerTypeName,
+} from "../../../../utils/examAnswerType";
 
 /** 채점 결과 코드 → 화면 표시 (배지 tone 은 가이드 배지 규칙) */
 const GRADE_LABELS = {
@@ -74,6 +79,7 @@ export default function ExamGradeModal({
   const toast = useToast();
   const confirm = useConfirm();
   const tabsId = useId();
+  const toAnswerTypeName = useAnswerTypeName();
 
   // 선택한 수강생 ID (처음엔 첫 번째 수강생)
   const [selectedStudentId, setSelectedStudentId] = useState(
@@ -202,12 +208,14 @@ export default function ExamGradeModal({
     const answered = Boolean(studentAnswer?.answer);
     const grade = GRADE_LABELS[studentAnswer?.isCorrect];
     const studentName = selectedStudent?.name ?? "수강생";
-    const isChoice = ["객관식-단항", "객관식-다항"].includes(
-      question.answerType,
+    // 저장 값이 코드 · 옛 한글 이름 어느 쪽이어도 코드로 바꿔서 비교
+    const answerType = toAnswerTypeCode(question.answerType);
+    const isChoice = [ANSWER_TYPE.SELECT, ANSWER_TYPE.MULTIPLE].includes(
+      answerType,
     );
-    const isOx = question.answerType === "O/X";
-    const isCode = question.answerType === "코드작성";
-    const multiple = question.answerType === "객관식-다항";
+    const isOx = answerType === ANSWER_TYPE.CHECK;
+    const isCode = answerType === ANSWER_TYPE.CODE;
+    const multiple = answerType === ANSWER_TYPE.MULTIPLE;
 
     // 객관식 · O/X: 학생이 고른 보기를 value 로, 정답을 answer 로 → 정답 초록 · 고른 오답 빨강
     const blockProps = isChoice
@@ -236,7 +244,7 @@ export default function ExamGradeModal({
         title={
           <>
             {question.question}{" "}
-            <span className="tag">{question.answerType}</span>
+            <span className="tag">{toAnswerTypeName(question.answerType)}</span>
           </>
         }
         score={Number(question.pointAlloc) || 0}

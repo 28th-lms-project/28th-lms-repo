@@ -132,5 +132,24 @@
 			   AND USE_YN = 'Y'
 			 ORDER BY "ORDER", ID
 		</select>
+
+		<!-- 사용 중인지: 그룹(parentId)마다 그 코드를 저장하는 테이블을 센다. 그 외 그룹은 0
+		     다른 화면에서 새 그룹을 쓰게 되면 여기에 when 을 추가한다 -->
+		<select id="countCodeInUse" resultType="_int">
+			<choose>
+				<when test="parentId == 'TEST_SUBJECT'">
+			SELECT COUNT(*) FROM TESTS WHERE SUBJECT_ID = #{codeId} AND DEL_YN = 'N'
+				</when>
+				<when test="parentId == 'TEST_ANSWER_TYPE'">
+			SELECT COUNT(*) FROM TESTS WHERE ANSWER_TYPE = #{codeId} AND DEL_YN = 'N'
+				</when>
+				<when test="parentId == 'TEST_TYPE'">
+			SELECT COUNT(*) FROM TEST_SET WHERE TEST_TYPE = #{codeId}
+				</when>
+				<otherwise>
+			SELECT 0 FROM DUAL
+				</otherwise>
+			</choose>
+		</select>
 		
 </mapper>

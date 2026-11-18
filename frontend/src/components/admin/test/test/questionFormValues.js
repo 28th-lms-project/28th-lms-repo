@@ -1,4 +1,5 @@
 import { newListItem } from "../../../common/ui/listEditorItem";
+import { toAnswerTypeCode } from "../../../../utils/examAnswerType";
 
 /**
  * 문제 추가 · 수정 폼의 값 변환 (QuestionForm에서 씀)
@@ -11,6 +12,8 @@ export const OX_OPTIONS = [
   { value: "X", label: "X" },
 ];
 export const MAX_ITEMS = 5;
+// 부연 설명 최대 글자 수 (TESTS.SUB_QUESTION VARCHAR2(2000 CHAR), VO @Size와 같게)
+export const SUB_QUESTION_MAX = 2000;
 
 /** 빈 폼 (보기 4줄, 배점 4) */
 export const emptyQuestionForm = () => ({
@@ -25,6 +28,8 @@ export const emptyQuestionForm = () => ({
 
 /** 서버에서 받은 문제 → 폼 값 */
 export const toQuestionForm = (response) => {
+  // 옛 데이터(한글 이름 등)도 코드로 바꿔서 폼에 넣음 → 저장하면 코드로 고쳐진다
+  const type = toAnswerTypeCode(response.answerType);
   const sheet = [
     response.answerSheet1,
     response.answerSheet2,
@@ -60,7 +65,7 @@ export const toQuestionForm = (response) => {
   let ox = "";
   if (response.correctAnswer === "O" || response.correctAnswer === "X") {
     ox = response.correctAnswer;
-  } else if (CHOICE_TYPES.includes(response.answerType)) {
+  } else if (CHOICE_TYPES.includes(type)) {
     correct = correctNumbers
       .map((number) => items[Number(number) - 1])
       .filter(Boolean)
@@ -83,7 +88,7 @@ export const toQuestionForm = (response) => {
   }
 
   return {
-    type: response.answerType,
+    type,
     question,
     subQuestion,
     point,
