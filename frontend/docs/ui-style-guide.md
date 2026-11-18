@@ -435,7 +435,7 @@
 | `ExamTakeModal` · `ExamQuestionViewModal` | 부품 + 예시 (8차) · **표준 적용 (2026-11-17)** | 시험 응시 · 시험지 보기. 새 부품 `question-nav` |
 | `ExamSetTable` · `my/course/MyTest` | 부품 · **`ExamSetTable` 표준 적용 (2026-11-17)** | `Table`. 역할마다 다른 칸은 `columns` 배열을 걸러서 (칸을 숨기는 CSS 아님), 공개 Y/N은 `Badge` + 바꿀 때 `useConfirm`. 규칙: 목록에서 바로 바꾸면 `Badge` · 버튼 + `useConfirm`, 폼 안에서 저장과 함께 바꾸면 체크박스(`form-check`, 시험 문제 고르기 예시) |
 | `CourseTableComponent/CourseSurvey` · `CourseSurveyForm` | 예시 · **표준 적용 (2026-11-17)** | 목록 위 추가 폼 (+ `SelectBox`, 읽기 전용 값은 `readOnly` 입력 또는 `hint`). 목록은 `Table`, 눌러서 여는 칸(설문 명 · 결과 보기)은 링크 · 버튼처럼 보이게 (`btn-text`), 삭제는 `useConfirm` |
-| `CourseSurveyAns` (설문 응답 팝업) | 부품 · **표준 적용 (2026-11-17)** | 팝업 창 틀(`popup-page`) + `QuestionBlock`(보기 radio · checkbox, 배점 없음) + 주관식 `Field` textarea + 바닥 [저장]. 결과는 토스트, 제출 뒤 창 닫기 |
+| `CourseSurveyAnsModal` (설문 응답) | 부품 · **표준 적용 (2026-11-18)** | `Modal lg` + `question-nav` + `Progress` + `QuestionBlock`(보기 radio · checkbox, 배점 없음, 주관식은 textarea). 시험 응시(`ExamTakeModal`)와 같은 모양. 답이 있으면 닫을 때 `useConfirm`, [제출]도 `useConfirm`, 결과는 토스트. 목록(`CourseSurvey`)의 설문 명 옆에 "참여 완료" `Badge`. 예전 팝업 `CourseSurveyAns`(`popup-page`)는 2026-11-18에 이 모달로 바뀜 (팝업 파일 · `/survey/answer` 라우트 삭제) |
 | `CourseSurveyResult` (설문 결과 팝업) | 예시 (10차) · **표준 적용 (2026-11-17)** | 설문 결과 (문항별 집계 \| 학생별 응답). 지금 화면에 없는 집계(보기별 응답 수 · 비율)는 설문 담당자가 만들 예정 → 이 예시를 따름 |
 | `CourseSurveyStatistics` (설문 통계 팝업) | 부품 · **표준 적용 (2026-11-17)** | `popup-page` + `Panel` + `Progress`(보기별 응답 비율) + `StatusBox`. 설문 결과 예시의 문항별 집계와 같은 모양 |
 | `HomeworkItem` · `HomeworkSubmitStatus` · `HomeworkDetails` | 예시 · **표준 적용 (2026-11-17)** | 과제 상세 |

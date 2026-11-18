@@ -31,7 +31,6 @@ import CourseList from "../components/admin/course/list/CourseList.jsx";
 import CourseItem from "../components/admin/course/list/CourseItem.jsx";
 import { getCourses } from "../api/admin/course/courseApi";
 import HomeworkDetails from "../components/admin/course/CourseTableComponent/HomeworkDetails.jsx";
-import CourseSurveyAns from "../components/admin/course/CourseTableComponent/CourseSurveyAns.jsx";
 import CourseSurveyResult from "../components/admin/course/CourseTableComponent/CourseSurveyResult.jsx";
 import CourseSurveyStatistics from "../components/admin/course/CourseTableComponent/CourseSurveyStatistics.jsx";
 
@@ -53,10 +52,6 @@ export const routes = [
     ),
     handle: { guardAs: "/my/course/list" },
     errorElement: <RouteError />,
-  },
-  {
-    path: "/survey/answer/:courseId/:courseSurveyId",
-    element: <CourseSurveyAns />,
   },
   {
     path: "/survey/result/:courseId/:courseSurveyId",

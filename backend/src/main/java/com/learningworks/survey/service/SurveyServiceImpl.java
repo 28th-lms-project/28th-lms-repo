@@ -26,6 +26,7 @@ import com.learningworks.survey.vo.response.SurveyDataVO;
 import com.learningworks.survey.vo.response.SurveyListVO;
 import com.learningworks.survey.vo.response.SurveyOptionStatVO;
 import com.learningworks.survey.vo.response.SurveyQuestionStatVO;
+import com.learningworks.survey.vo.response.SurveyRespondentVO;
 import com.learningworks.survey.vo.response.SurveyVO;
 
 import jakarta.validation.Valid;
@@ -170,8 +171,8 @@ public class SurveyServiceImpl implements SurveyService {
 	}
 
 	@Override
-	public List<CourseSurveyVO> readAllCourseSurvey(String courseId) {
-		return this.surveyDao.selectAllCourseSurvey(courseId);
+	public List<CourseSurveyVO> readAllCourseSurvey(String courseId, String userId) {
+		return this.surveyDao.selectAllCourseSurvey(courseId, userId);
 	}
 
 	@Override
@@ -327,23 +328,42 @@ public class SurveyServiceImpl implements SurveyService {
 	}
 
 	@Override
-	public CourseSurveyResultVO readCourseSurveyResult(String courseId, String courseSurveyId) {
+	public CourseSurveyResultVO readCourseSurveyResult(String courseId, String courseSurveyId, String userId) {
 		CourseSurveyVO courseSurvey = this.findCourseSurvey(courseId, courseSurveyId);
+		List<SurveyRespondentVO> respondents = this.surveyDao.selectCourseSurveyRespondents(courseSurveyId);
+
+		// 이 과정의 수강생이면 다른 학생의 응답은 보이지 않게 본인만 남김 (강사 · 관리자는 전체)
+		String myCourseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
+		if (myCourseStudentId != null) {
+			List<SurveyRespondentVO> mine = new ArrayList<>();
+			for (SurveyRespondentVO respondent : respondents) {
+				if (myCourseStudentId.equals(respondent.getCourseStudentId())) {
+					mine.add(respondent);
+				}
+			}
+			respondents = mine;
+		}
 
 		CourseSurveyResultVO result = new CourseSurveyResultVO();
 		result.setCourseSurvey(courseSurvey);
 		result.setSurveyList(this.surveyDao.selectAllSurveyByGroup(courseSurvey.getSurveyGroup()));
-		result.setRespondents(this.surveyDao.selectCourseSurveyRespondents(courseSurveyId));
+		result.setRespondents(respondents);
 		return result;
 	}
 
 	@Override
 	public List<SurveyStudentAnswerVO> readCourseSurveyStudentAnswers(String courseId, String courseSurveyId,
-			String courseStudentId) {
+			String courseStudentId, String userId) {
 		if (courseStudentId == null || courseStudentId.isBlank()) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 		this.findCourseSurvey(courseId, courseSurveyId);
+
+		// 수강생은 본인 답변만 볼 수 있음 (강사 · 관리자는 누구든)
+		String myCourseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
+		if (myCourseStudentId != null && !myCourseStudentId.equals(courseStudentId)) {
+			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+		}
 		return this.surveyDao.selectCourseSurveyStudentAnswers(courseSurveyId, courseStudentId);
 	}
 
