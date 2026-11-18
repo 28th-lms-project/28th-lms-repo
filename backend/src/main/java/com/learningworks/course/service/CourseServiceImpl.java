@@ -17,7 +17,7 @@ import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
 
-import com.learningworks.course.vo.request.SearchCourseVO;
+//import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
 
 import com.learningworks.course.vo.response.CourseMemberVO;
