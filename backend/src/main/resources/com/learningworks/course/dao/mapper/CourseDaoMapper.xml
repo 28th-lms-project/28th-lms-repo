@@ -7,6 +7,7 @@
 	<!--
 		과정 목록 (삭제되지 않은 과정, 시작일 늦은 순). 과정마다 한 줄.
 		NAME: 강사 이름 (여럿이면 ", "로 연결, 강사가 없으면 null).
+		MY_RELATION: 로그인 사용자(loginId)와 과정의 관계. 강사로 등록이면 TUTOR, 수강생으로 등록이면 STUDENT, 아니면 null.
 		강사를 JOIN 하지 않고 서브쿼리로 붙인다: JOIN 하면 강사가 여럿인 과정은 여러 줄이 되고,
 		강사가 없거나 강사 ID가 잘못된 과정은 목록에서 빠진다.
 	-->
@@ -23,6 +24,16 @@
               INNER JOIN "USER" U
                  ON U.ID = CT.TUTOR_ID
               WHERE CT.COURSE_ID = C.ID) AS NAME
+          , CASE
+              WHEN EXISTS (SELECT 1
+                             FROM COURSE_TUTOR CT3
+                            WHERE CT3.COURSE_ID = C.ID
+                              AND CT3.TUTOR_ID = #{loginId}) THEN 'TUTOR'
+              WHEN EXISTS (SELECT 1
+                             FROM COURSE_STUDENT CS3
+                            WHERE CS3.COURSE_ID = C.ID
+                              AND CS3.USER_ID = #{loginId}) THEN 'STUDENT'
+            END AS MY_RELATION
        FROM COURSE C
       WHERE C.DEL_YN = 'N'
       <if test="userId != null">

@@ -1,5 +1,4 @@
-import { useEffect, useId, useState } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../common/ui/PageHeader";
 import Panel from "../common/ui/Panel";
@@ -14,10 +13,8 @@ import {
   getTodayAttendance,
 } from "../../api/my/course/attendanceApi";
 import useBreadcrumbs from "../../hooks/useBreadcrumbs";
-import {
-  selectPermissionStatus,
-  selectRoleId,
-} from "../../store/slices/permissionSliceStore";
+import usePermission from "../../hooks/usePermission";
+import useMyCourses from "./useMyCourses";
 import useStudentDashboard from "./useStudentDashboard";
 import {
   ATTEND_STATUS,
@@ -35,7 +32,6 @@ import {
   toTimeKey,
 } from "./dashboardSummary";
 
-const STUDENT_ROLE = "ROLE_STUDENT";
 const LOADING_HINT = "불러오는 중...";
 
 /** 수강 과정 화면(MyCourse)의 탭 번호 */
@@ -43,26 +39,54 @@ const COURSE_TAB = { attendance: 1, timetable: 2, homework: 3, test: 4 };
 const courseUrl = (courseId, tab = 0) =>
   `/my/course/list/${encodeURIComponent(courseId)}?tab=${tab}`;
 
+/**
+ * 대시보드. 역할 ID가 아니라 "이 사람이 과정에서 무엇인지 + 권한"으로 영역을 고른다
+ * (역할 ID를 비교하면 관리자가 화면에서 권한을 바꾸거나 새 역할을 만들어도 반영되지 않음. access-control-guide 9장).
+ * - 수강생 영역: 수강생으로 등록된 과정(myRelation === "STUDENT")이 있을 때
+ * - 강사 영역: 강사로 등록된 과정(myRelation === "TUTOR")이 있을 때 (내용은 강사 대시보드에서 채움)
+ * - 과정 조회 권한(COURSE_READ)이 없거나 어느 쪽도 아니면 안내만
+ */
 export default function Main() {
   const crumbs = useBreadcrumbs();
-  const permissionStatus = useSelector(selectPermissionStatus);
-  const roleId = useSelector(selectRoleId);
+  const { can, status: permissionStatus } = usePermission();
+  const canReadCourses = can("COURSE_READ");
+  const myCourses = useMyCourses(permissionStatus === "loaded" && canReadCourses);
+
+  // 영역별 과정 (배열을 고정해 둬야 아래 대시보드가 렌더마다 다시 요청하지 않음)
+  const studentCourses = useMemo(
+    () => myCourses.courses.filter((course) => course.myRelation === "STUDENT"),
+    [myCourses.courses],
+  );
+  const tutorCourses = useMemo(
+    () => myCourses.courses.filter((course) => course.myRelation === "TUTOR"),
+    [myCourses.courses],
+  );
 
   let body;
   if (permissionStatus === "idle" || permissionStatus === "loading") {
     body = <StatusBox type="loading" />;
   } else if (permissionStatus === "failed") {
     body = <StatusBox type="error" title="내 권한을 불러오지 못했습니다." />;
-  } else if (roleId === STUDENT_ROLE) {
-    body = <StudentDashboard />;
-  } else {
-    // 강사 · 조교 · 관리자용 대시보드는 대시보드 3단계에서 만든다
+  } else if (canReadCourses && myCourses.status === "loading") {
+    body = <StatusBox type="loading" />;
+  } else if (canReadCourses && myCourses.status === "failed") {
+    body = (
+      <StatusBox type="error" title="내 과정을 불러오지 못했습니다." onRetry={myCourses.reload} />
+    );
+  } else if (studentCourses.length === 0 && tutorCourses.length === 0) {
     body = (
       <StatusBox
         type="empty"
-        title="이 역할의 대시보드는 준비 중입니다."
-        detail="왼쪽 메뉴에서 화면을 골라 주세요."
+        title="대시보드에 보여 줄 정보가 없습니다."
+        detail="과정에 수강생이나 강사로 등록되면 이곳에 진행 상황이 보입니다. 다른 화면은 왼쪽 메뉴에서 골라 주세요."
       />
+    );
+  } else {
+    body = (
+      <div className="form-stack">
+        {studentCourses.length > 0 && <StudentDashboard courses={studentCourses} />}
+        {tutorCourses.length > 0 && <TutorSection courses={tutorCourses} />}
+      </div>
     );
   }
 
@@ -75,34 +99,28 @@ export default function Main() {
 }
 
 /**
+ * 강사 영역 (자리만). 강사 대시보드(출석 주의 학생 · 채점 대기 등)는 feature/dashboard-tutor에서 채운다.
+ */
+function TutorSection({ courses }) {
+  return (
+    <Panel title="담당 과정" subtitle={`${courses.length}개`}>
+      <StatusBox
+        type="empty"
+        size="sm"
+        title="강사 대시보드는 준비 중입니다."
+        detail="담당 과정의 출석 · 채점 현황은 왼쪽 메뉴의 과정 화면에서 확인해 주세요."
+      />
+    </Panel>
+  );
+}
+
+/**
  * 수강생 대시보드: 수치 → 내 과정 → 오늘 출결 → 오늘 할 일(시간표 · 시험 · 남은 과제) → 종료된 과정(접힘).
  * 내 과정 카드(기간 · 진행률)를 먼저 보여 줘서 아래 오늘 할 일이 어느 과정 얘기인지 맥락을 준다.
  * 과정 목록이 오면 바로 그리고, 각 카드 · 패널은 자기 데이터가 오는 대로 채운다.
  */
-function StudentDashboard() {
-  const { status, courses, today, reload, patchResult } = useStudentDashboard(true);
-
-  if (status === "loading") {
-    return <StatusBox type="loading" />;
-  }
-  if (status === "failed") {
-    return (
-      <StatusBox
-        type="error"
-        title="내 과정을 불러오지 못했습니다."
-        onRetry={reload}
-      />
-    );
-  }
-  if (courses.length === 0) {
-    return (
-      <StatusBox
-        type="empty"
-        title="수강 중인 과정이 없습니다."
-        detail="과정에 등록되면 이곳에 진행 상황이 보입니다."
-      />
-    );
-  }
+function StudentDashboard({ courses: baseCourses }) {
+  const { courses, today, patchResult } = useStudentDashboard(baseCourses);
 
   const active = courses.filter((course) => course.phase === "active");
   const current = courses.filter((course) => course.phase !== "ended");

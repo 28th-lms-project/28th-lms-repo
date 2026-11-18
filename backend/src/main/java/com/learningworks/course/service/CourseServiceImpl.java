@@ -50,7 +50,8 @@ public class CourseServiceImpl implements CourseService{
 		String loginId = AuthUtil.getLoginId();
 		String userId = this.isCourseAdmin(loginId) ? null : loginId;
 		// 목록 조회는 결과가 없으면 MyBatis가 빈 리스트를 반환하므로 별도 처리하지 않는다.
-		return this.courseDao.viewCourse(userId);
+		// 과정마다 로그인 사용자와의 관계(myRelation)를 함께 준다 (관리자도 자기가 등록된 과정은 표시됨)
+		return this.courseDao.viewCourse(userId, loginId);
 	}
 
 	@Override
