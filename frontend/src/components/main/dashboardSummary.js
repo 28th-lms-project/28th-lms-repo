@@ -109,25 +109,34 @@ const scan = (courses, key, visit) => {
 };
 
 /**
- * 출석률: 진행 중 과정에서 본인 줄(수강생은 본인만 내려옴)을 모아 평균.
+ * 출석률: 진행 중 과정에서 본인 줄(수강생은 본인만 내려옴)의 "지금까지 출석률"(rateSoFar)을 평균.
+ * 서버 attendanceRate(과정 전체 수업일 기준)는 과정 중간에 낮게 나와 주의 표시와 어긋나므로 쓰지 않는다.
  * 수업일이 아직 지나지 않은 과정(passedClassDays 0)은 뺀다.
  */
 export const summarizeAttendance = (activeCourses) => {
   const rows = [];
+  const rates = [];
   let noTimetable = false;
   const flags = scan(activeCourses, "summary", (summary) => {
     // 수업일 = 과정 기간 안에서 시간표가 있는 날. 0이면 시간표 미등록
     if (summary?.totalClassDays === 0) noTimetable = true;
     const me = summary?.students?.[0];
-    if (me && summary.passedClassDays > 0) rows.push(me);
+    if (me && summary.passedClassDays > 0) {
+      rows.push(me);
+      // 지금까지 출석률 (진행된 수업일 기준): 주의 표시 기준과 같고, 강사 대시보드와 같은 숫자
+      const rate = rateSoFar(me, summary.passedClassDays);
+      if (rate !== null) rates.push(rate);
+    }
   });
   const sum = (key) => rows.reduce((total, row) => total + (row[key] ?? 0), 0);
   if (rows.length === 0) {
     return { rate: null, late: 0, lateAbsent: 0, absent: 0, warning: false, noTimetable, ...flags };
   }
-  const rate = rows.reduce((total, row) => total + row.attendanceRate, 0) / rows.length;
+  const rate = rates.length > 0
+    ? Math.round((rates.reduce((total, value) => total + value, 0) / rates.length) * 10) / 10
+    : null;
   return {
-    rate: Math.round(rate * 10) / 10,
+    rate,
     late: sum("lateCount"),
     // 지각 3번 = 결석 1번으로 바꾼 수 (서버 계산)
     lateAbsent: sum("lateAbsentCount"),

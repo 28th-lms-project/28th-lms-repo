@@ -190,7 +190,7 @@ function SummaryCards({ active, total, today }) {
         hint={`전체 ${total}개`}
       />
       <StatCard
-        label="출석률"
+        label="출석률 (지금까지)"
         value={attendance.rate ?? "-"}
         unit={attendance.rate === null ? undefined : "%"}
         hint={attendanceHint}
