@@ -84,7 +84,8 @@ export default function MyInterview({ courseId: courseIdProp }) {
 
   // 면접 일정 등록 권한 (InterviewController#createInterview 의 @RequireAction 과 같은 코드)
   const { can } = usePermission();
-  const canCreate = can("INTERVIEW_CREATE");
+  // 권한 코드는 @RequireAction(domain = "COURSE_INTERVIEW", action = "CREATE") → COURSE_INTERVIEW_CREATE
+  const canCreate = can("COURSE_INTERVIEW_CREATE");
 
   const [interviewList, setInterviewList] = useState([]);
   const [studentList, setStudentList] = useState([]);
