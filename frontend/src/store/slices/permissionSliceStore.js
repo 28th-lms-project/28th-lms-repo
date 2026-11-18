@@ -60,10 +60,12 @@ export const permissionSlice = createSlice({
   selectors: {
     selectPermissionStatus: (state) => state.status,
     selectIsSuperAdmin: (state) => state.status === "loaded" && state.superAdmin,
+    /** 내 역할 ID (예: "ROLE_STUDENT"). 화면 구성을 역할별로 나눌 때만 쓰고, 기능 표시 여부는 selectCan으로 판단 */
+    selectRoleId: (state) => (state.status === "loaded" ? state.roleId : null),
     selectCan: (state, actionCode) =>
       state.status === "loaded" && (state.superAdmin || state.actionCodes.includes(actionCode)),
   },
 });
 
-export const { selectPermissionStatus, selectIsSuperAdmin, selectCan } = permissionSlice.selectors;
+export const { selectPermissionStatus, selectIsSuperAdmin, selectCan, selectRoleId } = permissionSlice.selectors;
 export default permissionSlice.reducer;

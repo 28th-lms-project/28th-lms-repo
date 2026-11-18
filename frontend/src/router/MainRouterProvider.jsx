@@ -79,7 +79,7 @@ export const routes = [
           {
             index: true,
             element: <Main />,
-            handle: { crumb: "Dashboard", menu: true },
+            handle: { crumb: "Dashboard", menu: true, darkReady: true },
           },
           { path: "login", element: <Login />, handle: { crumb: "로그인" } },
           {
