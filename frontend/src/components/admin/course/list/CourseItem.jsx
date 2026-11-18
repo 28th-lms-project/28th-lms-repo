@@ -114,6 +114,8 @@ export default function CourseItem() {
       try {
         const course = await getCourse(id, options);
         dispatch(courseActions.loadShowCourse(course));
+        // 다시 불러오기에 성공하면 이전에 이 과정에서 난 오류를 지운다
+        setCourseLoadError(null);
       } catch (error) {
         if (error.name !== "AbortError") {
           setCourseLoadError({ courseId: id, error });
