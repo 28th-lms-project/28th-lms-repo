@@ -55,7 +55,7 @@ export const OverlayCatalog = () => {
                 </Variant>
                 <Variant
                     name="Alert · Confirm 컴포넌트"
-                    source="sample/Modal.jsx · admin/system/menu/Menu.jsx"
+                    source="sample/Modal.jsx"
                     note="ref.current.open()으로 엶. 아래 'Sample Modals' 섹션에 예시가 있음"
                 >
                     <span className={styles.hint12}>표준: common/ui/Modal · useConfirm (표준 UI 섹션)</span>

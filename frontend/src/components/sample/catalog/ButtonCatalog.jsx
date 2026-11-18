@@ -21,7 +21,7 @@ export const ButtonCatalog = () => {
             <Variants>
                 <Variant
                     name="IconButton (작은 아이콘)"
-                    source="admin/system/role/Role.jsx · MenuColumn.jsx"
+                    source="common/input/IconButton.jsx · course · survey · test · code 등 여러 화면"
                     note="iconSize={16}. 화면 대부분의 작업 버튼"
                 >
                     <IconButton icon={icons.add} iconSize={16}>추가</IconButton>
