@@ -31,6 +31,7 @@ import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
 import { StandardContentCatalog } from "./catalog/StandardContentCatalog.jsx";
 import { StandardScreenCatalog } from "./catalog/StandardScreenCatalog.jsx";
 import { PartHeader } from "./catalog/CatalogParts.jsx";
+import { StandardizationContext } from "./catalog/standardization.js";
 import UiButton from "../common/ui/Button.jsx";
 import { Tabs, TabPanel } from "../common/ui/Tabs.jsx";
 import { useColorScheme } from "../../theme/colorScheme.js";
@@ -38,7 +39,8 @@ import { useColorScheme } from "../../theme/colorScheme.js";
 /*
  * 디자인 시스템 페이지
  * - 표준: 새 화면이 쓰는 UI (토큰 · 공통 클래스 · common/ui). 다크 모드를 따른다.
- * - 통일 전: 프론트엔드 화면들의 현재 모양 그대로 (비교용). 다크 모드에서도 밝게 고정.
+ * - 표준화 전 (기록): 표준으로 옮기기 전 화면들의 모양을 남긴 기록. 표준을 적용한 화면은 [표준 적용] 표시 (catalog/standardization.js).
+ *   다크 모드에서도 밝게 고정.
  * 가이드: frontend/docs/ui-style-guide.md
  */
 /**
@@ -55,7 +57,7 @@ const STANDARD = [
     { id: "standard-screen", label: "화면 예시", title: "화면 예시 (목록 | 상세 · 상세 · 대시보드 · 오류 · 과정 · 시험 · 시험 응시 · 문제 은행 · 과제 · 강의실 · 설문 · 시스템 관리 · 로그인 · 상담)", Component: StandardScreenCatalog },
 ];
 
-/** 통일 전 현재 UI (비교용) */
+/** 표준화 전 UI (기록). 표준을 적용한 화면도 지우지 않고 [표준 적용]으로 표시 */
 const CATALOG = [
     { id: "catalog-legacy-tokens", title: "토큰 (통일 전 값: 색 · 글자 크기 · 모서리 · 높이 · 포커스)", Component: LegacyTokenCatalog },
     { id: "catalog-buttons", title: "버튼", Component: ButtonCatalog },
@@ -82,7 +84,7 @@ const LEGACY = [
 /** 구역 탭. 선택은 주소(?part=)에 남아서 새로고침 · 링크 공유해도 그대로 */
 const PART_TABS = [
     { id: "standard", label: "표준" },
-    { id: "legacy", label: "통일 전 (현재)" },
+    { id: "legacy", label: "표준화 전 (기록)" },
     { id: "old", label: "기존 샘플" },
 ];
 
@@ -183,9 +185,10 @@ const SampleDashboard = () => {
             {/* 통일 전 · 기존 샘플: hex를 직접 써서 다크 모드에서도 밝게 고정 */}
             {part === "legacy" && (
             <div data-color-scheme="light">
-            <PartHeader id="part-legacy" part="PART 2" title="통일 전 (현재)" tone="legacy">
-                {"지금 각 화면에 흩어져 있는 UI를 모양 그대로 모은 비교용입니다. 새 코드에서 따라 쓰지 마세요.\n색을 직접 적어서(토큰 미사용) 다크 모드에서도 밝게 보입니다."}
+            <PartHeader id="part-legacy" part="PART 2" title="표준화 전 (기록)" tone="legacy">
+                {"표준 UI로 옮기기 전, 각 화면에 흩어져 있던 UI를 모양 그대로 모은 기록입니다. 새 코드에서 따라 쓰지 마세요.\n[표준 적용]은 그 화면에 표준 UI를 적용했다는 뜻이고(지금 화면은 이 모양이 아님), [일부 적용]은 아직 남은 화면을 함께 적었습니다.\n색을 직접 적어서(토큰 미사용) 다크 모드에서도 밝게 보입니다."}
             </PartHeader>
+            <StandardizationContext.Provider value={true}>
             {CATALOG.map(({ id, title, Component }) => (
                 <div key={id} id={id} className={catalogStyles.anchor}>
                     <Section title={title}>
@@ -193,6 +196,7 @@ const SampleDashboard = () => {
                     </Section>
                 </div>
             ))}
+            </StandardizationContext.Provider>
             </div>
             )}
 

@@ -1,16 +1,23 @@
+import { useContext } from "react";
+import Badge from "../../common/ui/Badge.jsx";
 import styles from "./Catalog.module.css";
+import { StandardizationContext, standardizationOf } from "./standardization.js";
 
 /**
  * 카탈로그 한 칸: 이름 + 원본 위치 + (설명) + 실제 모양.
  * @param {{ name: string, source?: string, note?: string, block?: boolean, children: React.ReactNode }} props
  *  - source: 이 모양을 쓰는 원본 파일 (src/components 기준). 여러 곳이면 " · "로 구분
+ *    표준화 전 (기록) 탭에서는 source의 화면에 표준을 적용했는지 [표준 적용] · [일부 적용]으로 표시 (standardization.js)
  *  - block: 본문을 flex 대신 block으로 (표 · 넓은 레이아웃)
  *  - code: 사용 예 코드 (표준 섹션)
  */
 export const Variant = ({ name, source, note, block = false, code, children }) => (
     <div className={styles.variant}>
         <div className={styles.variantHead}>
-            <strong>{name}</strong>
+            <span className={styles.variantName}>
+                <strong>{name}</strong>
+                <StandardizationBadge source={source} />
+            </span>
             {source && <code>{source}</code>}
         </div>
         {note && <p className={styles.variantNote}>{note}</p>}
@@ -20,6 +27,22 @@ export const Variant = ({ name, source, note, block = false, code, children }) =
         {code && <pre className={styles.codeSample}>{code.trim()}</pre>}
     </div>
 );
+
+/** 표준 적용 표시: 모두 → [표준 적용], 일부만 → [일부 적용] 남은 화면: 이름 */
+const StandardizationBadge = ({ source }) => {
+    const inArchive = useContext(StandardizationContext);
+    if (!inArchive || !source) return null;
+    const { status, remaining } = standardizationOf(source);
+    if (status === "done") return <Badge tone="success">표준 적용</Badge>;
+    if (status === "partial")
+        return (
+            <>
+                <Badge tone="info">일부 적용</Badge>
+                <span className={styles.variantRemaining}>남은 화면: {remaining.join(" · ")}</span>
+            </>
+        );
+    return null;
+};
 
 /** 카탈로그 칸 묶음. wide면 한 줄에 하나씩. */
 export const Variants = ({ wide = false, children }) => (

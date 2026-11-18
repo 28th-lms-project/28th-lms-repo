@@ -325,7 +325,7 @@ export const TokenCatalog = () => {
     );
 };
 
-/** 통일 전 화면들에 흩어진 값 (통일 전 탭, 비교용) */
+/** 표준화 전 화면들에 흩어져 있던 값 (표준화 전 (기록) 탭) */
 export const LegacyTokenCatalog = () => (
     <div>
         <p className={styles.note}>화면 코드에 직접 적힌 값을 모은 것입니다. 새 코드는 표준 탭의 토큰을 씁니다 (가이드 7장 대응표).</p>

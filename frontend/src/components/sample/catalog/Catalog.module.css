@@ -172,6 +172,18 @@
   font-size: var(--font-size-md);
 }
 
+.variantName {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.variantRemaining {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
 .variantHead code {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);

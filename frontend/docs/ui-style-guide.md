@@ -6,7 +6,7 @@
 - 코드: `src/components/sample/catalog/` (스타일은 `Catalog.module.css` 하나에 모음)
 - 기준: 2026-11-17 `dev` 브랜치
 
-> **따를 기준은 7장(토큰) · 8장(표준 UI) · 9장(다크 모드)입니다.** 6장은 결정 사항과 화면 옮기는 순서 · 화면별 대응을 다룹니다. 1 ~ 5장과 통일 전 카탈로그는 **"지금 이렇게 되어 있다"** 를 남긴 현황 기록이라 따라 만들지 않습니다.
+> **따를 기준은 7장(토큰) · 8장(표준 UI) · 9장(다크 모드)입니다.** 6장은 결정 사항과 화면 옮기는 순서 · 화면별 대응을 다룹니다. 1 ~ 5장과 표준화 전 카탈로그는 **"표준화 전에는 이렇게 되어 있었다"** 를 남긴 기록이라 따라 만들지 않습니다.
 
 ---
 
@@ -17,7 +17,7 @@
 | 구역 | 색 | 내용 |
 | --- | --- | --- |
 | PART 1 **표준** | 강조색 | 새 화면이 쓰는 UI. 다크 모드를 따름 |
-| PART 2 **통일 전 (현재)** | 경고색 | 지금 화면들의 모양 그대로 (비교용). 다크 모드에서도 밝게 고정 |
+| PART 2 **표준화 전 (기록)** | 경고색 | 표준으로 옮기기 전 화면들의 모양 (기록). 표준을 적용한 화면은 [표준 적용] · [일부 적용] 표시. 다크 모드에서도 밝게 고정 |
 | PART 3 **기존 샘플** | 회색 | 처음부터 있던 `sample/` 컴포넌트 예시 |
 
 표준 탭은 **부품의 역할**로 일곱 묶음으로 나눕니다 (만든 순서가 아님). 기초 → 동작 · 입력 → 표시 · 상태 → 데이터 → 배치 · 탐색 → 내용 → 화면 예시 순서이고, 8장도 같은 순서입니다.
@@ -38,7 +38,7 @@
 | **배치 · 탐색** | 화면 머리 · 브레드크럼 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 3단 배치 · 팝업 창 틀 | `StandardLayoutCatalog.jsx` |
 | **내용** | 시험 문제 · 댓글 · 키-값 목록 · 타임라인 · 인용 · 세로 키-값 · 상자 목록 | `StandardContentCatalog.jsx` |
 | **화면 예시** | 부품을 조합한 화면: 목록 \| 상세 · 상세 · 대시보드 · 오류 화면 · 과정 등록 · 과정 상세 · 시험 문제 고르기 · 채점 · 시험 응시 · 시험지 보기 · 문제 은행 목록 · 문제 은행 문제 추가 · 수정 · 과제 상세(보기 ↔ 수정) · 주간 접속 기록 · 날짜별 시간표 · 목록 위 추가 폼 · 댓글 수정 · 설문 편집기 · 설문 결과(집계) · 메뉴 관리(순서 바꾸기) · 접근 관리 · 권한별 접근 권한 관리 · 환경 변수 관리 · 로그인 · 비밀번호 다시 확인 · 상담 기록 | `StandardScreenCatalog.jsx` + `ScreenStudyCatalog.jsx` · `ScreenSystemCatalog.jsx` · `ScreenMyCatalog.jsx` |
-| 토큰 (통일 전 값) | **통일 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
+| 토큰 (통일 전 값) | **표준화 전 탭** 맨 앞. 화면에 직접 적힌 색 · 글자 크기 · 모서리 · 컨트롤 높이 · 포커스 · 비활성 | `TokenCatalog.jsx` (`LegacyTokenCatalog`) |
 | 버튼 | 공통 컴포넌트 + 화면별 raw 버튼 13종 | `ButtonCatalog.jsx` |
 | 입력 · 폼 | 공통 Input 컴포넌트, 검색 툴바, 폼 필드 4종, textarea, 라디오 · 체크박스, react-select, 파일 | `FormCatalog.jsx` |
 | 리스트 · 표 | Grid, native table 3종, 3단 컬럼 리스트, 키-값 목록 4종, 타임라인, 문제 블록, 댓글 | `ListCatalog.jsx` |
@@ -56,7 +56,7 @@
 1. **표준(8장)에서 찾습니다.** 8장 "어떤 걸 쓰나" 표와 샘플 표준 탭을 봅니다.
 2. 없으면 **비슷한 부품을 조합**합니다 (8장 "화면 예시"가 조합하는 본).
 3. 그래도 없으면 **새 표준 부품을 제안**합니다. 위 묶음 중 역할이 맞는 표준 카탈로그 파일에 그룹 컴포넌트(`GroupTitle` + `Variants`, 상태는 그 그룹 안에)로 넣고 8장의 같은 묶음에 설명을 씁니다. 승인은 6장 "팀이 정할 것"을 따릅니다.
-4. 통일 전 카탈로그와 5장은 현황 기록용입니다. 새 코드의 모양을 여기에 추가하지 않습니다.
+4. 표준화 전 카탈로그와 5장은 기록용입니다. 새 코드의 모양을 여기에 추가하지 않습니다.
 
 카탈로그 칸(`Variant`)의 형식은 아래와 같습니다.
 
@@ -83,7 +83,7 @@
 | `Id` · `Password` · `TextField` · `NativeSelect` · `Textarea` · `Checkbox` · `Radio` · `FileField` · `Button` | `common/input/Input.jsx` | `NativeSelect` · `Textarea`는 스타일 클래스가 정의되어 있지 않아 브라우저 기본 모양 |
 | `Editor` | `common/Editor.jsx` | 리치 텍스트 에디터 (MyCourseData에서 사용). 카탈로그에는 넣지 않음 |
 | `NotFound` · `RouteError` | `common/error/` | 404 · 라우트 오류 화면. 표준 `StatusBox size="lg"`로 옮김 (2026-11-17) |
-| `Alert` · `Confirm` | `sample/Modal.jsx` | `ref.current.open()`. 새 코드는 `common/ui/Modal` · `useConfirm()`을 씀 (8장). 메뉴 관리는 2026-11-17에 옮겨서 화면에서 쓰는 곳은 없음 (샘플만). 샘플 통일 전 예시를 정리할 때 `sample/Modal` 삭제 |
+| `Alert` · `Confirm` | `sample/Modal.jsx` | `ref.current.open()`. 새 코드는 `common/ui/Modal` · `useConfirm()`을 씀 (8장). 메뉴 관리는 2026-11-17에 옮겨서 화면에서 쓰는 곳은 없음 (샘플만). 샘플 표준화 전 기록과 기존 샘플 탭이 쓰므로 남겨 둠 |
 | `Chart` · `PollList` · `DataGrid` | `sample/` | 샘플 전용. `Chart`(apexcharts)는 샘플에서만 사용 |
 
 ### sample / common 중복
@@ -322,7 +322,7 @@
    - ~~8차 (화면 전체 점검): 화면 파일마다 표준 대응을 분류(아래 "화면별 표준 대응")하고, 조합 규칙이 필요하거나 부품이 모자란 화면 13개의 예시와 부품(문항 번호 이동 · 가운데 카드 · 강조 행 · 왼쪽 좁은 배치)을 만듦~~ → 완료 (8장)
    - ~~9차 (PR 전 점검): 공통 부품 버그 · 접근성 수정(`Button` `loading` · `Modal` Esc · Tab · `Field` 자동 연결 · `SelectBox` 메뉴 · `Table` · `Tabs` · `TransferList` · 토스트 · `ListEditor`, 8장 각 부품) + 문서 보강(화면 옮기는 순서 · 기존 컴포넌트 대응 · 어떤 걸 쓰나 · 공통 규칙 · 팀이 정할 것)~~ → 완료
    - ~~10차 (보류 정리): 메뉴 관리 순서 바꾸기 예시(`Table` 순서 + 저장 바), 작은 화면 사이드바 서랍(실제 `SideMenu`), 설문 결과 집계 예시. 보류였던 세 가지를 모두 결정함~~ → 완료
-3. 화면들을 표준으로 옮기면서 카탈로그의 해당 `Variant`를 지웁니다 (아래 "화면 옮기는 순서"). 카탈로그가 비면 샘플 페이지가 곧 디자인 시스템 페이지가 됩니다.
+3. 화면들을 표준으로 옮기면 표준화 전 카탈로그에 [표준 적용]이 붙도록 `sample/catalog/standardization.js`의 `STANDARDIZED`에 화면 이름을 추가합니다 (아래 "화면 옮기는 순서"). 예시는 지우지 않고 기록으로 남깁니다.
 4. `sample/`의 중복 컴포넌트(`input/`, `Grid`, `Paginator`)를 쓰는 화면을 `common/`(가능하면 표준)으로 옮깁니다. `sample/Modal`은 쓰는 곳을 `common/ui/Modal` · `useConfirm`으로 바꾼 뒤 삭제합니다.
 
 차수 밖의 현황:
@@ -334,11 +334,11 @@
 ### 팀이 정할 것
 
 정한 것: 강조색 인디고 · 테마(사이드바) 네이비 (7장), 다크 모드는 앱 전체 · 기본 밝은 모드 · 화면별로 옮기면 켜짐 (9장). 모두 2026-11-17.
+표준화 전 예시는 지우지 않고 기록으로 남김: 탭 이름 "표준화 전 (기록)", 표준을 적용한 화면은 [표준 적용] 표시 (2026-11-18). 2026-11-17에 지웠던 메뉴 관리 · 권한 관리 · 404 · 오류 · 화면 틀 예시도 되살림.
 
 1. **새 표준 부품 · 토큰 승인**: 누가 어떻게 승인할지 (예: PR 리뷰 1명 이상 + 8장 · 7장에 추가).
-2. **통일 전 `Variant`를 지우는 시점과 담당**: 제안은 화면을 옮긴 사람이 같은 PR에서 지우는 것.
-3. **옛 컴포넌트를 지우는 시점**: `sample/` 중복 컴포넌트 · `common/input/Input.jsx` · `PageContainer` · `Section`.
-4. **메뉴 아이콘**: 메뉴 데이터에 아이콘을 넣을지. 넣으면 접힌 사이드바를 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿀 수 있습니다 (지금은 접힌 상태에서 메뉴를 표시하지 않음, 8장 "사이드 메뉴").
+2. **옛 컴포넌트를 지우는 시점**: `sample/` 중복 컴포넌트 · `common/input/Input.jsx` · `PageContainer` · `Section`. 표준화 전 기록 · 기존 샘플 탭이 이 컴포넌트를 직접 쓰는 곳(`common/Breadcrumb` · `sample/Modal` 등)이 있어서, 지우려면 그 예시를 복사본으로 바꾸거나 컴포넌트를 기록용으로 남겨야 합니다.
+3. **메뉴 아이콘**: 메뉴 데이터에 아이콘을 넣을지. 넣으면 접힌 사이드바를 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿀 수 있습니다 (지금은 접힌 상태에서 메뉴를 표시하지 않음, 8장 "사이드 메뉴").
 
 ### 화면 옮기는 순서
 
@@ -352,7 +352,7 @@
 6. 불러오는 중 · 빈 목록 · 오류 · 권한 없음 상태를 `StatusBox`로 넣습니다.
 7. 화면 CSS module에서 표준 클래스와 겹치는 규칙을 지웁니다 (8장 "공통 규칙").
 8. 사이드바 [☾]로 다크 모드를 켜고 확인한 뒤, 그 화면 라우트의 `handle`에 `darkReady: true`를 넣습니다 (`router/MainRouterProvider.jsx`). 넣기 전에는 다크 모드여도 그 화면은 밝게 보입니다 (9장).
-9. 옮긴 화면의 통일 전 `Variant`를 지웁니다 (위 "팀이 정할 것" 2번).
+9. `sample/catalog/standardization.js`의 `STANDARDIZED`에 옮긴 화면 이름(파일 이름, 확장자 없이)을 넣고, `REMAINING`에 있었으면 뺍니다. 표준화 전 탭의 그 화면 예시에 [표준 적용]이 붙습니다. 예시는 지우지 않습니다.
 
 ### 기존 컴포넌트 → 표준 대응
 
@@ -435,12 +435,12 @@
 | `admin/test/test/AddTest` · `UpdateTest` | 예시 | 문제 은행 문제 추가 · 수정 |
 | `admin/test/test/Test` | 예시 (8차) | 문제 은행 목록 (문항마다 펼치기 · 출제 통계). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
 | `admin/system/member/*` | 예시 | 목록 \| 상세. 등록 · 수정 · 비밀번호 초기화는 폼 모달, 역할 바꾸기는 `desc-list` 안 select + [역할 변경] + `useConfirm` |
-| `admin/system/role/Role` | 부품 · **옮김 (2026-11-17)** | `input-group`(접두어) + `Table` 순서 바꾸기(잠긴 행) · 칸 편집 + "순서가 변경되었습니다" `Callout` |
-| `role/RoleUserMoveModal` | 부품 · **옮김 (2026-11-17)** | `Modal` + `list-boxed` + `SelectBox` + `Callout`. 결과(일부만 성공 포함)는 토스트 |
+| `admin/system/role/Role` | 부품 · **표준 적용 (2026-11-17)** | `input-group`(접두어) + `Table` 순서 바꾸기(잠긴 행) · 칸 편집 + "순서가 변경되었습니다" `Callout` |
+| `role/RoleUserMoveModal` | 부품 · **표준 적용 (2026-11-17)** | `Modal` + `list-boxed` + `SelectBox` + `Callout`. 결과(일부만 성공 포함)는 토스트 |
 | `admin/system/access/Access` | 예시 (8차) | 접근 관리 (연쇄 선택 · 같은 폼으로 추가 · 수정) |
 | `access-role/AccessRole` | 예시 (8차) | 권한별 접근 권한 관리 (저장 전 변경 표시). 새 클래스 `layout-split-start` |
 | `admin/system/code/*` | 예시 (8차) | 환경 변수 관리 (패널 하나가 보기 · 수정 · 추가). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
-| `admin/system/menu/Menu` · `MenuColumn` | 예시 (10차) · **옮김 (2026-11-17)** | 메뉴 관리 (3단 `Table` + 순서 바꾸기 + 순서 저장 바). 상세는 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. 지금 화면의 "놓자마자 저장" 대신 저장 바로 한 번에 (역할 관리와 같게), 키보드(↑ ↓)로도 옮길 수 있게 됨 |
+| `admin/system/menu/Menu` · `MenuColumn` | 예시 (10차) · **표준 적용 (2026-11-17)** | 메뉴 관리 (3단 `Table` + 순서 바꾸기 + 순서 저장 바). 상세는 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. 지금 화면의 "놓자마자 저장" 대신 저장 바로 한 번에 (역할 관리와 같게), 키보드(↑ ↓)로도 옮길 수 있게 됨 |
 | `my/course/MyCourse` | 부품 | `Tabs` (고른 탭은 주소 `?tab=`에) |
 | `my/course/MyCourseData` | 예시 · 제외 1 | 목록 \| 상세 · 상세 화면. **제외**: 리치 텍스트 `Editor` (6장 "표준을 만들지 않기로 한 것") |
 | `my/course/MyTimetable` | 부품 + 예시 (8차) | 날짜별 시간표 (새 클래스 `tr.is-highlight`). 하루 보기는 `Table bordered`, 업로드는 `FilePicker` |
@@ -450,7 +450,7 @@
 | `my/info/MyInfoForm` · `MyPasswordForm` | 부품 | `Field` + `form-stack` + `desc-list`(읽기 전용 값). 성공은 토스트, 비밀번호 규칙(8~20자)은 처음부터 `hint`로 |
 | `main/Main` | 예시 | 대시보드 |
 | `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
-| `menu/MenuGuard` · `login/IsLogin` | 부품 · **`MenuGuard` 옮김 (2026-11-17)** | 로직. 화면은 `StatusBox` (loading · error · denied) |
+| `menu/MenuGuard` · `login/IsLogin` | 부품 · **`MenuGuard` 표준 적용 (2026-11-17)** | 로직. 화면은 `StatusBox` (loading · error · denied) |
 | `Section.jsx` | 부품 | `Panel` |
 | `my/course/MyCourseList` · `MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가 |
 
@@ -1134,7 +1134,7 @@ import TransferList from "../common/ui/TransferList";
 - `common/PageContainer`(`⌂ > 대 > 중`, 22px 제목)를 대신하는 모양입니다. 2026-11-17부터 `PageContainer`도 안에서 이 `PageHeader`를 그리므로 아직 옮기지 않은 화면도 머리 모양은 같습니다. `PageContainer`는 호환용으로 남겨 둔 것이고, 화면을 옮길 때는 `PageHeader`를 직접 씁니다 (`useBreadcrumbs`의 결과를 `crumbs`로, 필요하면 `description` · `actions`).
 - 브레드크럼은 `<ol>`이고 구분자 `›`는 CSS가 그립니다. 마지막 항목(현재 화면)은 링크 없이 `aria-current="page"`.
 - **`to`는 실제로 열 수 있는 화면에만** 넘깁니다 (URL이 있는 소메뉴 · 상세 화면의 목록). URL이 없는 대 · 중메뉴는 `to` 없이 글자라 마우스를 올려도 반응하지 않습니다. 링크 항목은 평소에도 글자 항목보다 조금 진합니다(`--color-text-secondary`).
-- `useBreadcrumbs()`는 이 규칙대로 URL이 있는 메뉴에만 `to`를 붙여 줍니다. 그대로 `crumbs`에 넘기면 됩니다. 라우트로만 만든 항목(메뉴에 없는 화면의 중간 단계)은 열 수 있는 화면인지 알 수 없어 `to`를 붙이지 않습니다. 기존 `common/Breadcrumb`(글자만, `to`를 쓰지 않음)은 이제 샘플의 통일 전 예시만 쓰며, 그 예시를 지울 때 함께 지웁니다.
+- `useBreadcrumbs()`는 이 규칙대로 URL이 있는 메뉴에만 `to`를 붙여 줍니다. 그대로 `crumbs`에 넘기면 됩니다. 라우트로만 만든 항목(메뉴에 없는 화면의 중간 단계)은 열 수 있는 화면인지 알 수 없어 `to`를 붙이지 않습니다. 기존 `common/Breadcrumb`(글자만, `to`를 쓰지 않음)은 이제 샘플의 표준화 전 기록만 씁니다 (기록용으로 남김).
 - `actions`에는 화면 전체에 걸리는 동작만 둡니다 (등록 · 내보내기). 목록 위 검색 · 필터는 `.toolbar` 클래스 (PageHeader 아래에 따로).
 
 #### 사이드 메뉴
@@ -1353,7 +1353,7 @@ import Comment from "../common/ui/Comment";
 
 #### 과정 · 시험 · 문제 은행 · 과제 · 설문 (admin/course · test · survey)
 
-샘플 "화면 예시"에 있습니다. 통일 전 탭 "과정 · 시험 · 문제 은행 · 과제 · 설문 화면"에 같은 화면의 지금 모양이 있어 나란히 비교할 수 있습니다.
+샘플 "화면 예시"에 있습니다. 표준화 전 탭 "과정 · 시험 · 문제 은행 · 과제 · 설문 화면"에 같은 화면의 옮기기 전 모양이 있어 나란히 비교할 수 있습니다.
 
 | 예시 | 부품 | 대신하는 것 | 메모 |
 | --- | --- | --- | --- |
@@ -1414,7 +1414,7 @@ import Comment from "../common/ui/Comment";
 - **앱 전체에서 켭니다**: 사이드바 머리의 [☾] 버튼 (샘플 페이지 목차의 버튼도 같은 값). 이 브라우저에 기억하고(`localStorage`의 `lms-color-scheme`), 기본은 밝은 모드입니다. 시스템 설정은 따르지 않습니다.
 - **화면별로 켜짐**: 표준으로 옮긴 화면만 다크를 따릅니다. `MainLayout`이 본문(`<main>`)을 밝은 섬으로 감싸고, 지금 라우트의 `handle`에 `darkReady: true`가 있으면 섬을 풉니다. 지금 `darkReady`인 화면: 샘플 페이지, 메뉴 관리, 권한 관리, 404 (2026-11-17). 라우트 오류 화면(`errorElement`)은 라우트가 아니라서 오류가 난 화면의 설정을 따릅니다.
 - 사이드바는 원래 어두운 색이라 모드와 상관없이 같습니다.
-- 샘플의 "통일 전" · "기존 샘플" 영역과 그 모달은 색을 직접 적어서 다크 모드에서도 **밝게 고정**됩니다 (아래 "밝은 섬").
+- 샘플의 "표준화 전" · "기존 샘플" 영역과 그 모달은 색을 직접 적어서 다크 모드에서도 **밝게 고정**됩니다 (아래 "밝은 섬").
 
 ```js
 // theme/colorScheme.js
