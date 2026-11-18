@@ -628,6 +628,7 @@
 | 전역 클래스 | `src/styles/button.css` · `form.css` · `badge.css` · `status.css` · `modal.css` · `toast.css` · `table.css` · `tabs.css` · `panel.css` · `nav.css` · `choice.css` · `content.css` (`index.css`가 `@import`). react-select만 `common/ui/selectStyles.js` (라이브러리가 CSS 대신 styles 객체를 받음) | **스타일의 원본.** 토큰만 사용 |
 | React 컴포넌트 | `src/components/common/ui/` `Button` · `Field` · `Badge` · `StatusBox` · `Modal` · `ConfirmDialog` · `FeedbackProvider` · `Table` · `Pagination` · `Tabs` · `TabPanel` · `Panel` · `StatCard` · `Callout` · `PageHeader` · `Breadcrumb` · `ChoiceGroup` · `Switch` · `FilePicker` · `FileList` · `Progress` · `SelectBox` · `QuestionBlock` · `Comment` · `TransferList` · `ListEditor` | 클래스를 붙여 주는 얇은 껍데기 + 동작(로딩 · 접근성 · 기본 문구 · 열고 닫기) |
 | 훅 | `src/components/common/ui/feedbackContext.js` `useToast` · `useConfirm` | `alert()` · `confirm()` 대신. `main.jsx`의 `FeedbackProvider`가 앱 전체를 감쌈 |
+| 앱에 하나뿐인 틀 | 사이드바 `src/components/menu/` (`SideMenu` · `UserProfile` · `LogoutButton`), `src/layout/MainLayout.jsx` | 표준 토큰 · 클래스(`--color-sidebar-*` · `sidebar-btn`)를 쓰지만 **`common/ui`에 넣지 않음**. `common/ui`는 여러 화면이 다시 쓰는 부품(props로만 데이터를 받고 store · API를 쓰지 않음)만 둠. 표준 적용 여부는 폴더가 아니라 `sample/catalog/standardization.js` · 6장 "화면별 표준 대응" 표로 관리 |
 
 - raw HTML에도 클래스만 붙이면 같은 모양이 됩니다 (`<button className="btn btn-primary">`). 동작이 필요하면 컴포넌트를 씁니다.
 - 클래스 이름은 짧은 접두어 + 하이픈(`btn-*`, `form-*`, `field-*`, `badge-*`, `status-box-*`)으로, `.input` · `.section` 같은 일반 단어는 쓰지 않습니다 (전역이라 다른 CSS와 부딪힘).
