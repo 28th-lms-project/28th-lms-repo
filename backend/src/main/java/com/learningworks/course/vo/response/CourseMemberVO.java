@@ -1,11 +1,16 @@
 package com.learningworks.course.vo.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
 public class CourseMemberVO {
 	private String id              ;
+	
+	@JsonIgnore
 	private String pwd             ;
+	
 	private String name            ;
 	private String githubUrl       ;
 	private String crtDt           ;
