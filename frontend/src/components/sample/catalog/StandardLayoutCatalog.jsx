@@ -4,7 +4,9 @@ import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
 import Button from "../../common/ui/Button.jsx";
 import Badge from "../../common/ui/Badge.jsx";
 import PageHeader, { Breadcrumb } from "../../common/ui/PageHeader.jsx";
-import SideNav from "../../common/ui/SideNav.jsx";
+// 사이드바 예시는 실제 사이드바의 CSS를 그대로 씀 (실제를 고치면 예시도 같이 바뀜)
+import sideMenuStyles from "../../menu/SideMenu.module.css";
+import userProfileStyles from "../../menu/UserProfile.module.css";
 import { useToast } from "../../common/ui/feedbackContext.js";
 import { icons } from "../../common/input/icons.js";
 import Table from "../../common/ui/Table.jsx";
@@ -19,23 +21,27 @@ import StatusBox from "../../common/ui/StatusBox.jsx";
  */
 
 /* ───── 예시 데이터 ───── */
-const NAV_GROUPS = [
-    {
-        key: "system",
-        title: "시스템 관리",
-        items: [
-            { key: "member", title: "회원 관리", icon: icons.setting },
-            { key: "role", title: "역할 관리", icon: icons.setting },
-            { key: "menu", title: "메뉴 관리", icon: icons.setting },
-        ],
-    },
+/** 사이드바 예시 메뉴 (실제는 DB 메뉴: 대분류 > 중분류 > 화면) */
+const SIDEBAR_SECTIONS = [
+    { key: "main", title: "Main", groups: [{ key: "home", title: "Home", links: [{ key: "dashboard", title: "Dashboard" }] }] },
     {
         key: "my",
-        title: "내 강의실",
-        items: [
-            { key: "timetable", title: "시간표", icon: icons.home },
-            { key: "data", title: "자료실", icon: icons.download },
-            { key: "counsel", title: "상담 기록", icon: icons.edit },
+        title: "My Page",
+        groups: [{ key: "course", title: "수강 과정", links: [{ key: "course-list", title: "과정 목록" }, { key: "my-info", title: "내 정보 수정" }] }],
+    },
+    {
+        key: "system",
+        title: "System Management",
+        groups: [
+            {
+                key: "system",
+                title: "시스템 관리",
+                links: [
+                    { key: "member", title: "회원 관리" },
+                    { key: "menu", title: "메뉴 관리" },
+                    { key: "role", title: "권한 관리" },
+                ],
+            },
         ],
     },
 ];
@@ -122,33 +128,113 @@ const PageHeaderGroup = () => {
     );
 };
 
-const SideNavGroup = () => {
-    /* 메뉴 */
+const SidebarGroup = () => {
+    /* 실제 사이드바(menu/SideMenu)와 같은 클래스로 그린 예시. 바깥 틀(폭 · 여백)만 샘플 전용 (서랍 · 접기 동작은 빼고) */
+    const sm = sideMenuStyles;
     const [currentMenu, setCurrentMenu] = useState("member");
+    const [closedGroups, setClosedGroups] = useState(() => new Set(["home"]));
+    const toggleGroup = (key) =>
+        setClosedGroups((prev) => {
+            const next = new Set(prev);
+            if (next.has(key)) next.delete(key);
+            else next.add(key);
+            return next;
+        });
 
     return (
         <>
             <GroupTitle>사이드 메뉴</GroupTitle>
             <Variants>
                 <Variant
-                    name="SideNav (그룹 접기 · 현재 화면)"
-                    source="styles/nav.css · common/ui/SideNav.jsx"
-                    note={"색은 --color-sidebar-* 토큰 (실제 menu/SideMenu와 같음). 배경 · 현재 메뉴 색은 옆의 테마를 따름.\n그룹 제목을 누르면 접힘. 현재 화면은 aria-current=\"page\" (강조 글자 + 왼쪽 선).\n다크 모드와 상관없이 항상 어두움"}
-                    code={`
-<SideNav
-  groups={menuGroups}        // [{ key, title, items: [{ key, title, icon }] }]
-  currentKey={currentMenuKey}
-  onSelect={(item) => navigate(item.path)}
-/>`}
+                    name="사이드바 (머리 · 프로필 · 메뉴)"
+                    source="menu/SideMenu.jsx · SideMenu.module.css · UserProfile · LogoutButton"
+                    note={"실제 사이드바의 CSS를 그대로 써서 그림 (앱에 하나, MainLayout이 그림. 다른 화면에서 다시 쓰지 않음).\n색은 --color-sidebar-* 토큰, 다크 모드와 상관없이 항상 어두움. 대분류 제목 > 중분류(누르면 접힘, aria-expanded) > 화면 링크(현재 화면은 강조 글자 + 배경, aria-current=\"page\").\n머리: 로고(첫 화면으로) | [☾ 다크 모드] [‹ 접기]. 접기 · 작은 화면 서랍은 실제 사이드바에서 확인"}
                 >
-                    <div style={{ width: "240px", borderRadius: "var(--radius-lg)", overflow: "hidden", border: "1px solid var(--color-border)" }}>
-                        <SideNav groups={NAV_GROUPS} currentKey={currentMenu} onSelect={(item) => setCurrentMenu(item.key)} ariaLabel="메뉴 (예시)" />
+                    <div className={styles.sidebarPreview}>
+                        <div className={sm.header}>
+                            <a href="/" className={sm.logo} title="첫 화면으로" onClick={(e) => e.preventDefault()}>
+                                Learning
+                                <br />
+                                Works
+                            </a>
+                            <div className={sm.headerActions}>
+                                <button type="button" className={sm.headerBtn} aria-label="다크 모드 (예시)" title="다크 모드로">
+                                    <span aria-hidden="true">☾</span>
+                                </button>
+                                <button type="button" className={sm.collapseBtn} aria-label="메뉴 접기 (예시)">
+                                    ‹
+                                </button>
+                            </div>
+                        </div>
+                        <nav className={sm.menuBody} aria-label="메뉴 (예시)">
+                            <div className={userProfileStyles.userProfile}>
+                                <span className={userProfileStyles.role}>관리자</span>
+                                <strong className={userProfileStyles.name}>홍길동</strong>
+                                <button type="button" className="sidebar-btn">
+                                    로그아웃
+                                </button>
+                            </div>
+                            {SIDEBAR_SECTIONS.map((section) => (
+                                <div key={section.key}>
+                                    <h4 className={sm.listTitle}>{section.title}</h4>
+                                    {section.groups.map((group) => {
+                                        const isOpen = !closedGroups.has(group.key);
+                                        return (
+                                            <div key={group.key}>
+                                                <button type="button" className={sm.listItemTitle} aria-expanded={isOpen} onClick={() => toggleGroup(group.key)}>
+                                                    <span className={`${sm.arrow} ${isOpen ? sm.arrowOpen : ""}`}>›</span>
+                                                    {group.title}
+                                                </button>
+                                                <div className={`${sm.submenuWrap} ${isOpen ? sm.submenuOpen : ""}`}>
+                                                    <ul className={sm.listSubmenu}>
+                                                        {group.links.map((link) => {
+                                                            const current = link.key === currentMenu;
+                                                            return (
+                                                                <li key={link.key} className={sm.listItem}>
+                                                                    <a
+                                                                        href="#"
+                                                                        className={current ? "active" : undefined}
+                                                                        aria-current={current ? "page" : undefined}
+                                                                        tabIndex={isOpen ? undefined : -1}
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            setCurrentMenu(link.key);
+                                                                        }}
+                                                                    >
+                                                                        {link.title}
+                                                                    </a>
+                                                                </li>
+                                                            );
+                                                        })}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ))}
+                        </nav>
+                    </div>
+                </Variant>
+                <Variant
+                    name="sidebar-btn (사이드바 안 버튼)"
+                    source="styles/nav.css"
+                    note={"사이드바처럼 어두운 배경 위 버튼: 로그아웃 · 메뉴를 못 불러왔을 때 [다시 시도].\n밝은 배경용 .btn은 사이드바 위에서 색이 맞지 않아 따로 둠. 아이콘 없이 글자만"}
+                    code={`<button type="button" className="sidebar-btn">로그아웃</button>`}
+                >
+                    <div className={styles.sidebarPreview}>
+                        <div className={sm.menuError}>
+                            <p>메뉴를 불러오지 못했습니다.</p>
+                            <button type="button" className="sidebar-btn">
+                                다시 시도
+                            </button>
+                        </div>
                     </div>
                 </Variant>
                 <Variant name="어떤 것을 쓸까" note="비슷해 보이는 내비게이션의 쓰임 구분">
                     <dl className="desc-list" style={{ "--desc-label-width": "120px", width: "100%" }}>
                         <dt>화면 이동</dt>
-                        <dd>SideNav (앱 왼쪽) · PageHeader 브레드크럼</dd>
+                        <dd>사이드바 (앱 왼쪽, menu/SideMenu 하나) · PageHeader 브레드크럼</dd>
                         <dt>화면 안 구역 전환</dt>
                         <dd>Tabs (세로 탭 · 회색 탭 바 대신)</dd>
                         <dt>목록에서 하나 고르기</dt>
@@ -521,7 +607,7 @@ export const StandardLayoutCatalog = () => (
     <div>
         <p className={styles.standardIntro}>화면 머리 · 사이드 메뉴 · 탭 · 패널 · 카드 · 선택 목록 · 배치 · 팝업 창 틀. 스타일 원본: styles/nav.css · tabs.css · panel.css</p>
         <PageHeaderGroup />
-        <SideNavGroup />
+        <SidebarGroup />
         <TabsGroup />
         <PanelGroup />
         <CardGroup />

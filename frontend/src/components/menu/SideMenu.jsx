@@ -164,7 +164,7 @@ export default function SideMenu() {
               <p>메뉴를 불러오지 못했습니다.</p>
               <button
                 type="button"
-                className={styles.retryBtn}
+                className="sidebar-btn"
                 onClick={() => dispatch(refreshMyMenus())}
               >
                 다시 시도
