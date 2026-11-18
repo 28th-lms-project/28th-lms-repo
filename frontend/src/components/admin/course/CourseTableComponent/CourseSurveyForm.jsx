@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { IconButton } from "../../../common/input/IconButton";
+import Select from "react-select";
+import style from "./CourseSurveyForm.module.css";
 import { createNewCourseSurvey } from "../../../../api/admin/system/survey/surveyApi";
 import { getCodeOptionList } from "../../../../api/admin/system/code/codeApi";
-import Button from "../../../common/ui/Button";
-import Field from "../../../common/ui/Field";
-import Panel from "../../../common/ui/Panel";
-import SelectBox from "../../../common/ui/SelectBox";
-import { useToast } from "../../../common/ui/feedbackContext";
 
 const GROUP_TYPES = [
   { value: "pre", label: "사전 설문" },
@@ -28,15 +26,13 @@ const toGroupOptions = (subjects) => {
   return options;
 };
 
-export default function CourseSurveyForm({ onSuccess, onCancel }) {
+export default function CourseSurveyForm({ onSuccess }) {
   const { id: courseId } = useParams();
-  const toast = useToast();
   const [groupOptions, setGroupOptions] = useState([]);
   const [title, setTitle] = useState("");
   const [surveyGroup, setSurveyGroup] = useState(null);
   const [surveySubject, setSurveySubject] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     let ignoreUpdateState = false;
@@ -47,37 +43,32 @@ export default function CourseSurveyForm({ onSuccess, onCancel }) {
           setGroupOptions(toGroupOptions(subjects));
         }
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
     return () => {
       ignoreUpdateState = true;
     };
-  }, [toast]);
+  }, []);
 
   const onChangeGroup = (option) => {
     setSurveyGroup(option);
     setSurveySubject(option.subjectName);
   };
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
+  const onClickSubmitButton = async () => {
     if (submitting) {
       return;
     }
 
-    const nextErrors = {};
     if (!title.trim()) {
-      nextErrors.title = "설문 제목을 입력해주세요.";
-    }
-    if (!surveyGroup) {
-      nextErrors.surveyGroup = "설문 항목을 선택해주세요.";
-    }
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
+      alert("설문 제목을 입력해주세요");
       return;
     }
-
+    if (!surveyGroup) {
+      alert("설문 항목을 선택해주세요");
+      return;
+    }
     setSubmitting(true);
     try {
       await createNewCourseSurvey(courseId, {
@@ -88,7 +79,7 @@ export default function CourseSurveyForm({ onSuccess, onCancel }) {
       });
       onSuccess();
     } catch (error) {
-      toast.error(error.message);
+      alert(error.message);
     } finally {
       setSubmitting(false);
     }
@@ -105,74 +96,40 @@ export default function CourseSurveyForm({ onSuccess, onCancel }) {
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate>
-      <Panel
-        title="설문 등록"
-        footer={
-          <>
-            <Button onClick={onCancel} disabled={submitting}>
-              취소
-            </Button>
-            <Button type="submit" variant="primary" loading={submitting}>
-              {submitText}
-            </Button>
-          </>
-        }
-      >
-        <div className="form-row">
-          <Field
-            label="설문 제목"
-            htmlFor="course-survey-title"
-            required
-            error={errors.title}
-          >
-            <input
-              id="course-survey-title"
-              type="text"
-              className="form-control"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              aria-invalid={!!errors.title}
-              aria-describedby="course-survey-title-msg"
-            />
-          </Field>
-          <Field
-            label="설문 항목"
-            htmlFor="course-survey-group"
-            required
-            error={errors.surveyGroup}
-          >
-            <SelectBox
-              inputId="course-survey-group"
-              options={groupOptions}
-              value={surveyGroup}
-              onChange={onChangeGroup}
-              placeholder="설문 항목을 선택하세요."
-              isSearchable
-              aria-invalid={!!errors.surveyGroup}
-            />
-          </Field>
-          <Field label="과목 명" htmlFor="course-survey-subject">
-            <input
-              id="course-survey-subject"
-              type="text"
-              className="form-control"
-              value={surveySubject}
-              onChange={(e) => setSurveySubject(e.target.value)}
-            />
-          </Field>
-          <Field label="설문 유형" htmlFor="course-survey-type">
-            <input
-              id="course-survey-type"
-              type="text"
-              className="form-control"
-              value={surveyTypeText}
-              placeholder="설문 항목을 고르면 정해집니다."
-              readOnly
-            />
-          </Field>
-        </div>
-      </Panel>
-    </form>
+    <div className={style.form}>
+      <input
+        type="text"
+        className={style.input}
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="설문 제목"
+      />
+      <Select
+        options={groupOptions}
+        value={surveyGroup}
+        onChange={onChangeGroup}
+        placeholder="설문 항목을 선택하세요."
+        isSearchable
+      />
+      <input
+        type="text"
+        className={style.input}
+        value={surveySubject}
+        onChange={(e) => setSurveySubject(e.target.value)}
+        placeholder="과목 명"
+      />
+      <input
+        type="text"
+        className={`${style.input} ${style.readOnly}`}
+        value={surveyTypeText}
+        placeholder="설문 유형"
+        readOnly
+      />
+      <div className={style.buttons}>
+        <IconButton onClick={onClickSubmitButton} disabled={submitting}>
+          {submitText}
+        </IconButton>
+      </div>
+    </div>
   );
 }

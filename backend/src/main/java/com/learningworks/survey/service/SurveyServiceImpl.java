@@ -1,6 +1,5 @@
 package com.learningworks.survey.service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -18,14 +17,10 @@ import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
 import com.learningworks.survey.vo.response.CourseSurveyQuestionVO;
 import com.learningworks.survey.vo.response.CourseSurveyResultVO;
-import com.learningworks.survey.vo.response.CourseSurveyStatisticsVO;
 import com.learningworks.survey.vo.response.SurveyStudentAnswerVO;
 import com.learningworks.survey.vo.response.CourseSurveyVO;
-import com.learningworks.survey.vo.response.SurveyCountVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
 import com.learningworks.survey.vo.response.SurveyListVO;
-import com.learningworks.survey.vo.response.SurveyOptionStatVO;
-import com.learningworks.survey.vo.response.SurveyQuestionStatVO;
 import com.learningworks.survey.vo.response.SurveyVO;
 
 import jakarta.validation.Valid;
@@ -215,7 +210,7 @@ public class SurveyServiceImpl implements SurveyService {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 
-		CourseSurveyVO courseSurvey = this.findCourseSurvey(courseId, courseSurveyId);
+		CourseSurveyVO courseSurvey = this.surveyDao.selectCourseSurvey(courseSurveyId);
 		if (courseSurvey == null) {
 			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
 		}
@@ -346,8 +341,6 @@ public class SurveyServiceImpl implements SurveyService {
 
 	/** 과정 설문이 있고, 요청한 과정의 설문인지 확인 */
 	private CourseSurveyVO findCourseSurvey(String courseId, String courseSurveyId) {
-		
-		
 		if (courseId == null || courseId.isBlank() || courseSurveyId == null || courseSurveyId.isBlank()) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
@@ -356,73 +349,6 @@ public class SurveyServiceImpl implements SurveyService {
 			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
 		}
 		return courseSurvey;
-	}
-	
-	@Override
-	public CourseSurveyStatisticsVO readCourseSurveyStatistics(String courseId, String courseSurveyId) {
-		CourseSurveyVO courseSurvey = this.findCourseSurvey(courseId, courseSurveyId);
-		List<SurveyVO> questions = this.surveyDao.selectAllSurveyByGroup(courseSurvey.getSurveyGroup());
-		List<SurveyCountVO> optionCounts = this.surveyDao.selectCourseSurveyOptionsCounts(courseSurveyId);
-		List<SurveyCountVO> questionCounts = this.surveyDao.selectCourseSurveyQuestionCount(courseSurveyId);
-		List<SurveyStudentAnswerVO> textAnswers = this.surveyDao.selectCourseSurveyTextAnswers(courseSurveyId);
-		
-		List<SurveyQuestionStatVO> questionStats = new ArrayList<>();
-		
-		for(SurveyVO question : questions) {
-			SurveyQuestionStatVO stat = new SurveyQuestionStatVO();
-			stat.setId(question.getId());
-			stat.setSubject(question.getSubject());
-			stat.setType(question.getType());
-			
-			int answerCount = 0;
-			for(SurveyCountVO qc : questionCounts) {
-				if(question.getId().equals(qc.getSurveyId())) {
-					answerCount = qc.getCount();
-					break;
-				}
-			}
-			stat.setAnswerCount(answerCount);
-			
-			List<SurveyOptionStatVO> options = new ArrayList<>();
-			if(question.getSurveyDataList() != null) {
-				for(SurveyDataVO data: question.getSurveyDataList()) {
-					if(data.getId() == null) {
-						continue;
-					}
-					SurveyOptionStatVO option = new SurveyOptionStatVO();
-					option.setId(data.getId());
-					option.setData(data.getData());
-					int count = 0;
-					for(SurveyCountVO sc : optionCounts){
-						if(data.getId().equals(sc.getDataId())) {
-							count= sc.getCount();
-							break;
-						}
-					}
-					option.setCount(count);
-					options.add(option);
-				}
-			}
-			stat.setOptions(options);
-			
-			List<String> texts = new ArrayList<>();
-			for(SurveyStudentAnswerVO ta : textAnswers) {
-				if(question.getId().equals(ta.getSurveyId())) {
-					texts.add(ta.getTextAnswer());
-				}
-			}
-			stat.setTextAnswers(texts);
-			
-			questionStats.add(stat);
-		}
-		
-		CourseSurveyStatisticsVO result = new CourseSurveyStatisticsVO();
-		result.setCourseSurvey(courseSurvey);
-		result.setResponseCount(this.surveyDao.selectCourseSurveyResponseCount(courseSurveyId));
-		result.setStudentCount(this.surveyDao.selectCourseStudentCount(courseId));
-		result.setQuestions(questionStats);
-		
-		return result;
 	}
 
 }

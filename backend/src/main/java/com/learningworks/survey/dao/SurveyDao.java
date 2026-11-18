@@ -12,7 +12,6 @@ import com.learningworks.survey.vo.request.RegistCourseSurveyVO;
 import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
 import com.learningworks.survey.vo.response.CourseSurveyVO;
-import com.learningworks.survey.vo.response.SurveyCountVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
 import com.learningworks.survey.vo.response.SurveyRespondentVO;
 import com.learningworks.survey.vo.response.SurveyStudentAnswerVO;
@@ -69,16 +68,6 @@ public interface SurveyDao {
 
 	List<SurveyStudentAnswerVO> selectCourseSurveyStudentAnswers(@Param("courseSurveyId") String courseSurveyId,
 			@Param("courseStudentId") String courseStudentId);
-
-	List<SurveyCountVO> selectCourseSurveyOptionsCounts(String courseSurveyId);
-
-	List<SurveyCountVO> selectCourseSurveyQuestionCount(String courseSurveyId);
-
-	List<SurveyStudentAnswerVO> selectCourseSurveyTextAnswers(String courseSurveyId);
-
-	int selectCourseSurveyResponseCount(String courseSurveyId);
-
-	int selectCourseStudentCount(String courseId);
 	
 	
 

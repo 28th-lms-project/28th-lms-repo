@@ -23,7 +23,6 @@ import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
 import com.learningworks.survey.vo.response.CourseSurveyQuestionVO;
 import com.learningworks.survey.vo.response.CourseSurveyResultVO;
-import com.learningworks.survey.vo.response.CourseSurveyStatisticsVO;
 import com.learningworks.survey.vo.response.SurveyStudentAnswerVO;
 import com.learningworks.survey.vo.response.CourseSurveyVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
@@ -154,11 +153,5 @@ public class SurveyController {
 			@PathVariable String courseSurveyId, @PathVariable String courseStudentId) {
 		return ApiResponse.OK(
 				this.surveyService.readCourseSurveyStudentAnswers(courseId, courseSurveyId, courseStudentId));
-	}
-	
-	@RequireAction(domain = "COURSE_SURVEY", action = "STAT_READ", description = "과정 설문 통계")
-	@GetMapping("/survey/{courseId}/{courseSurveyId}/statistics")
-	public ApiResponse<CourseSurveyStatisticsVO> getCourseSurveyStatistics(@PathVariable String courseId, @PathVariable String courseSurveyId){
-		return ApiResponse.OK(this.surveyService.readCourseSurveyStatistics(courseId, courseSurveyId));
 	}
 }
