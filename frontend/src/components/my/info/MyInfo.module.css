@@ -1,13 +1,4 @@
+/* 기본 정보 | 비밀번호 변경을 같은 너비로 (1024px 이하에서 한 줄로 바뀌는 건 layout-split 이 처리) */
 .layout {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: stretch;
-  gap: 2rem;
-}
-
-@media (max-width: 1000px) {
-  .layout {
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 520px;
-  }
+  --layout-aside-width: minmax(0, 1fr);
 }

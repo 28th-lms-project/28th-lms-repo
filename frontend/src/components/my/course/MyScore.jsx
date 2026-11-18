@@ -141,17 +141,14 @@ export default function MyScore({ courseId }) {
       </Panel>
 
       <Panel title="반 평균 비교">
-        {/* 차트(apexcharts) 글자색이 고정이라 다크 모드에서도 밝은 섬으로 보여 줌 */}
         {chartRows.length > 0 && (
-          <div data-color-scheme="light" className={styles.chart}>
-            <Chart
-              type="bar"
-              series={series}
-              categories={categories}
-              yText="점수(%)"
-              unit="%"
-            />
-          </div>
+          <Chart
+            type="bar"
+            series={series}
+            categories={categories}
+            yText="점수(%)"
+            unit="%"
+          />
         )}
         {chartRows.length === 0 && (
           <StatusBox
