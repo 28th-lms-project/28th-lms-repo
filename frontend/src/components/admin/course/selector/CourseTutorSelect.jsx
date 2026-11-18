@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import Select from "react-select";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
 import { getTutors } from "../../../../api/admin/course/courseApi";
+import SelectBox from "../../../common/ui/SelectBox";
+import { useToast } from "../../../common/ui/feedbackContext";
 
-export default function CourseTutorSelect() {
+/**
+ * 담당 강사 선택 (한 명). 선택값은 courseSlice.addSelectTutor 에 저장된다.
+ * Field 안에서 쓸 때는 inputId 를 Field htmlFor 와 맞춘다. 나머지 props(aria-invalid 등)는 SelectBox 로 전달
+ */
+export default function CourseTutorSelect({ inputId, ...rest }) {
   const [options, setOptions] = useState([]);
+  const toast = useToast();
 
   const dispatch = useDispatch();
   useEffect(() => {
@@ -20,33 +26,29 @@ export default function CourseTutorSelect() {
         setOptions(mappedOptions);
       } catch (error) {
         if (error.name !== "AbortError") {
-          alert(error.message);
+          toast.error(
+            `강사 목록을 불러오지 못했습니다. ${error.message ?? ""}`.trim(),
+          );
         }
       }
     })();
     return () => {
       controller.abort();
     };
-  }, []);
+  }, [toast]);
 
   const handleChange = (selectedOption) => {
     dispatch(courseActions.addSelectTutor(selectedOption));
   };
 
   return (
-    <div
-      style={{
-        display: "inline-block",
-        width: " 300px",
-        verticalAlign: "middle",
-      }}
-    >
-      <Select
-        options={options}
-        onChange={handleChange}
-        placeholder="강사 선택를 선택하세요"
-        isSearchable
-      />
-    </div>
+    <SelectBox
+      {...rest}
+      inputId={inputId}
+      options={options}
+      onChange={handleChange}
+      placeholder="강사 선택"
+      isSearchable
+    />
   );
 }

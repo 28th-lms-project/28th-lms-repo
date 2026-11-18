@@ -1,231 +1,31 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useSelector } from "react-redux";
 import {
   correctStudentTest,
   updateAnswerGrade,
 } from "../../../../api/admin/system/test/testApi";
-import ConfirmModal from "./ConfirmModal";
+import usePermission from "../../../../hooks/usePermission";
 
-const CORRECT_COLOR = "#1a7f37";
-const ACTIVE_COLOR = "#333";
+import Badge from "../../../common/ui/Badge";
+import Button from "../../../common/ui/Button";
+import Modal from "../../../common/ui/Modal";
+import QuestionBlock from "../../../common/ui/QuestionBlock";
+import StatusBox from "../../../common/ui/StatusBox";
+import { Tabs, TabPanel } from "../../../common/ui/Tabs";
+import { useConfirm, useToast } from "../../../common/ui/feedbackContext";
 
-const overlayStyle = {
-  position: "fixed",
-  inset: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.4)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-
-const boxStyle = {
-  width: "900px",
-  maxWidth: "94vw",
-  maxHeight: "90vh",
-  display: "flex",
-  flexDirection: "column",
-  backgroundColor: "#fff",
-  borderRadius: "8px",
-  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.2)",
-  overflow: "hidden",
-};
-
-const headerStyle = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "16px 24px",
-  borderBottom: "1px solid #e5e5e5",
-};
-
-const titleStyle = { margin: 0, fontSize: "18px", color: "#222" };
-
-const summaryStyle = { fontSize: "13px", color: "#666" };
-
-/** 수강생 탭 줄: 많으면 가로 스크롤 */
-const tabBarStyle = {
-  display: "flex",
-  gap: "4px",
-  padding: "8px 24px 0",
-  borderBottom: "1px solid #e5e5e5",
-  overflowX: "auto",
-  flexShrink: 0,
-};
-
-const tabStyle = {
-  padding: "8px 14px",
-  fontSize: "14px",
-  color: "#666",
-  backgroundColor: "#f7f7f7",
-  // border 축약형과 borderColor 를 섞으면 탭 전환 시 React 경고가 나므로 나눠서 지정
-  borderStyle: "solid",
-  borderWidth: "1px 1px 0", // 위 · 좌우만 (아래 없음)
-  borderColor: "#e5e5e5",
-  borderRadius: "6px 6px 0 0",
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-};
-
-const activeTabStyle = {
-  ...tabStyle,
-  color: "#fff",
-  backgroundColor: ACTIVE_COLOR,
-  borderColor: ACTIVE_COLOR,
-  fontWeight: "bold",
-};
-
-const bodyStyle = {
-  padding: "8px 24px 24px",
-  overflowY: "auto",
-};
-
-const emptyStyle = {
-  padding: "40px 0",
-  textAlign: "center",
-  color: "#666",
-};
-
-const questionStyle = {
-  padding: "20px 0",
-  borderBottom: "1px dashed #e5e5e5",
-};
-
-const questionTitleStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "12px",
-  margin: "0 0 12px",
-  fontSize: "15px",
-  fontWeight: "bold",
-  color: "#222",
-  lineHeight: 1.5,
-};
-
-const metaStyle = {
-  flexShrink: 0,
-  fontSize: "13px",
-  fontWeight: "normal",
-  color: "#666",
-};
-
-const subQuestionStyle = {
-  margin: "0 0 12px",
-  padding: "12px",
-  backgroundColor: "#f7f7f7",
-  border: "1px solid #e5e5e5",
-  borderRadius: "4px",
-  fontSize: "14px",
-  whiteSpace: "pre-wrap",
-};
-
-const choiceStyle = {
-  padding: "4px",
-  fontSize: "14px",
-  color: "#333",
-};
-
-const correctChoiceStyle = {
-  ...choiceStyle,
-  color: CORRECT_COLOR,
-  fontWeight: "bold",
-};
-
-const modelAnswerStyle = {
-  fontSize: "13px",
-  color: CORRECT_COLOR,
-};
-
-const studentAnswerStyle = {
-  marginTop: "12px",
-  padding: "12px",
-  border: "1px solid #e5e5e5",
-  borderRadius: "4px",
-  backgroundColor: "#fafafa",
-  fontSize: "14px",
-};
-
-const studentAnswerLabelStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: "6px",
-  fontSize: "13px",
-  fontWeight: "bold",
-  color: "#555",
-};
-
-const studentAnswerTextStyle = {
-  whiteSpace: "pre-wrap",
-  fontFamily: "Consolas, 'Courier New', monospace",
-  color: "#222",
-};
-
-const noAnswerStyle = { color: "#999" };
-
-const footerStyle = {
-  display: "flex",
-  justifyContent: "flex-end",
-  padding: "12px 24px",
-  borderTop: "1px solid #e5e5e5",
-};
-
-const closeButtonStyle = {
-  minWidth: "72px",
-  padding: "8px 16px",
-  fontSize: "14px",
-  border: "1px solid #ccc",
-  borderRadius: "4px",
-  backgroundColor: "#fff",
-  color: "#333",
-  cursor: "pointer",
-};
-
-/** 채점 결과 코드 → 화면 표시 */
+/** 채점 결과 코드 → 화면 표시 (배지 tone 은 가이드 배지 규칙) */
 const GRADE_LABELS = {
-  Y: { text: "정답", color: CORRECT_COLOR },
-  N: { text: "오답", color: "#d1242f" },
-  R: { text: "채점 중", color: "#9a6700" },
-  H: { text: "부분정답", color: "#0969da" },
+  Y: { text: "정답", tone: "success" },
+  N: { text: "오답", tone: "danger" },
+  R: { text: "채점 중", tone: "warning" },
+  H: { text: "부분정답", tone: "info" },
 };
 
 /** 강사가 누를 수 있는 채점 버튼 (R 채점 중 은 자동 채점 전용) */
 const GRADE_BUTTONS = ["Y", "N", "H"];
 
-const gradeButtonAreaStyle = {
-  display: "flex",
-  gap: "6px",
-  marginTop: "10px",
-};
-
-const gradeButtonStyle = {
-  minWidth: "72px",
-  padding: "6px 12px",
-  fontSize: "13px",
-  borderStyle: "solid",
-  borderWidth: "1px",
-  borderColor: "#ccc",
-  borderRadius: "4px",
-  backgroundColor: "#fff",
-  color: "#333",
-  cursor: "pointer",
-};
-
-/** 선택된 채점 버튼: 해당 결과 색으로 채움 */
-const selectedGradeButtonStyle = (grade) => ({
-  ...gradeButtonStyle,
-  borderColor: GRADE_LABELS[grade].color,
-  backgroundColor: GRADE_LABELS[grade].color,
-  color: "#fff",
-  fontWeight: "bold",
-});
-
-const disabledGradeButtonStyle = {
-  ...gradeButtonStyle,
-  color: "#bbb",
-  cursor: "not-allowed",
-};
-
-/** answerSheet1~5 중 내용이 있는 선택지만 { no: "1", text } 로 */
+/** answerSheet1~5 중 내용이 있는 선택지만 QuestionBlock 보기 { value: "1", label } 로 */
 const choicesOf = (question) =>
   [
     question.answerSheet1,
@@ -234,19 +34,24 @@ const choicesOf = (question) =>
     question.answerSheet4,
     question.answerSheet5,
   ]
-    .map((text, index) => ({ no: String(index + 1), text }))
-    .filter((choice) => choice.text);
+    .map((text, index) => ({ value: String(index + 1), label: text }))
+    .filter((choice) => choice.label);
 
-/** 정답 번호 목록. 단항 "2" → ["2"], 다항 "1,3" → ["1", "3"] */
-const correctNumbersOf = (question) =>
-  (question.correctAnswer ?? "")
+const OX_OPTIONS = [
+  { value: "O", label: "O" },
+  { value: "X", label: "X" },
+];
+
+/** "1,3" → ["1", "3"] (정답 · 다항 답안) */
+const splitNumbers = (value) =>
+  (value ?? "")
     .split(",")
-    .map((value) => value.trim())
+    .map((item) => item.trim())
     .filter(Boolean);
 
 /**
- * 시험 채점 화면.
- * 위쪽에 강의를 듣는 수강생 탭, 아래에 문제 · 정답과 선택한 수강생의 답안 자리를 보여준다.
+ * 시험 채점 화면 (Modal lg).
+ * 위쪽에 강의를 듣는 수강생 탭, 아래에 문제 · 정답과 선택한 수강생의 답안을 보여준다.
  *
  * @param title 시험 제목
  * @param questions 문제 목록 (ExamQuestionVO[])
@@ -264,6 +69,11 @@ export default function ExamGradeModal({
 }) {
   // 채점 중인 시험 세트 ID (ExamSetTable 에서 [채점] 클릭 시 slice 에 저장)
   const testSetId = useSelector((store) => store.test.gradeTestSetId);
+  const { can } = usePermission();
+  const canGrade = can("EXAM_COURSE_EXAM_GRADE");
+  const toast = useToast();
+  const confirm = useConfirm();
+  const tabsId = useId();
 
   // 선택한 수강생 ID (처음엔 첫 번째 수강생)
   const [selectedStudentId, setSelectedStudentId] = useState(
@@ -273,12 +83,18 @@ export default function ExamGradeModal({
     (student) => student.id === selectedStudentId,
   );
 
-  // 수강생별 답안. { [수강생ID]: { [문제ID]: { id: 답안ID, answer, isCorrect } } }
+  // 수강생별 답안.
+  // { [수강생ID]: { status: "loading" | "error" | "loaded", error, byQuestion: { [문제ID]: { id: 답안ID, answer, isCorrect } } } }
   const [studentAnswers, setStudentAnswers] = useState({});
-  const answersOfStudent = studentAnswers[selectedStudentId] ?? {};
+  const selectedEntry = studentAnswers[selectedStudentId];
+  const answersOfStudent = selectedEntry?.byQuestion ?? {};
 
   /** 수강생 답안 조회 → { [문제ID]: { id, answer, isCorrect } } 로 저장 */
   const loadStudentAnswers = async (studentId) => {
+    setStudentAnswers((prev) => ({
+      ...prev,
+      [studentId]: { status: "loading" },
+    }));
     try {
       const list = await correctStudentTest(testSetId, studentId);
       const byQuestion = Object.fromEntries(
@@ -287,71 +103,91 @@ export default function ExamGradeModal({
           { id: item.id, answer: item.answer, isCorrect: item.isCorrect },
         ]),
       );
-      setStudentAnswers((prev) => ({ ...prev, [studentId]: byQuestion }));
-    } catch (e) {
-      console.log(e);
-      alert("답안을 불러오지 못했습니다.");
+      setStudentAnswers((prev) => ({
+        ...prev,
+        [studentId]: { status: "loaded", byQuestion },
+      }));
+    } catch (error) {
+      setStudentAnswers((prev) => ({
+        ...prev,
+        [studentId]: { status: "error", error },
+      }));
     }
   };
 
   // 모달이 열릴 때 첫 번째 수강생의 답안 조회
   useEffect(() => {
     if (testSetId && students[0]?.id) {
-      // API 응답 후(await 뒤)에 setState 하므로 동기 호출이 아님 (Grid.jsx 와 같은 방식으로 규칙 해제)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadStudentAnswers(students[0].id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /** 수강생 탭 클릭 */
-  const onClickStudentTab = (studentId) => {
-    console.log("선택한 수강생 ID", studentId);
-    setSelectedStudentId(studentId);
-    // 이미 불러온 수강생이면 다시 부르지 않음
-    if (!studentAnswers[studentId]) {
-      loadStudentAnswers(studentId);
+  /** 수강생 탭 선택 (Tabs 의 id 는 문자열) */
+  const onChangeStudentTab = (tabId) => {
+    const student = students.find((s) => String(s.id) === tabId);
+    if (!student) {
+      return;
+    }
+    setSelectedStudentId(student.id);
+    // 이미 불러온 수강생이면 다시 부르지 않음 (실패했으면 다시 부름)
+    const entry = studentAnswers[student.id];
+    if (!entry || entry.status === "error") {
+      loadStudentAnswers(student.id);
     }
   };
 
-  /** [정답] [오답] [부분정답] 클릭: 서버에 저장 후 화면 반영 */
-  // 확인창을 띄울 채점 대상 { question, grade } (null이면 확인창 닫힘)
-  const [gradeTarget, setGradeTarget] = useState(null);
+  /** 채점한 문항 수 (정답 · 오답 · 부분정답) */
+  const gradedCountOf = (studentId) => {
+    const entry = studentAnswers[studentId];
+    if (entry?.status !== "loaded") {
+      return undefined;
+    }
+    return Object.values(entry.byQuestion).filter((answer) =>
+      GRADE_BUTTONS.includes(answer.isCorrect),
+    ).length;
+  };
 
-  /** 채점 버튼 클릭: 바로 저장하지 않고 확인창을 띄운다 */
-  const onClickGrade = (question, grade) => {
+  /** [정답] [오답] [부분정답] 클릭: 확인 → 서버에 저장 후 화면 반영 */
+  const onClickGrade = async (question, grade) => {
     const studentAnswer = answersOfStudent[question.id];
     if (!studentAnswer?.id || studentAnswer.isCorrect === grade) {
       return;
     }
-    setGradeTarget({ question, grade });
-  };
-
-  /** 확인창 문구. 예) 홍길동 학생의 3번 문제를 '정답'으로 채점하시겠습니까? */
-  const gradeConfirmMessage = (target) => {
-    const questionNo = questions.indexOf(target.question) + 1;
+    const questionNo = questions.indexOf(question) + 1;
     const studentName = selectedStudent?.name ?? "수강생";
-    return `${studentName} 학생의 ${questionNo}번 문제를 '${GRADE_LABELS[target.grade].text}'(으)로 채점하시겠습니까?`;
-  };
-
-  /** 확인창 [확인]: 서버에 저장 후 화면 반영 */
-  const onConfirmGrade = async () => {
-    const { question, grade } = gradeTarget;
-    setGradeTarget(null);
-    const studentAnswer = answersOfStudent[question.id];
+    const ok = await confirm({
+      title: "채점",
+      message: `${studentName} 학생의 ${questionNo}번 문제를 '${GRADE_LABELS[grade].text}'(으)로 채점할까요?`,
+      confirmText: "채점",
+    });
+    if (!ok) {
+      return;
+    }
     const studentId = selectedStudentId;
     try {
       await updateAnswerGrade(studentAnswer.id, grade);
-      setStudentAnswers((prev) => ({
-        ...prev,
-        [studentId]: {
-          ...prev[studentId],
-          [question.id]: { ...prev[studentId][question.id], isCorrect: grade },
-        },
-      }));
-    } catch (e) {
-      console.log(e);
-      alert("채점 결과를 저장하지 못했습니다.");
+      setStudentAnswers((prev) => {
+        const entry = prev[studentId];
+        return {
+          ...prev,
+          [studentId]: {
+            ...entry,
+            byQuestion: {
+              ...entry.byQuestion,
+              [question.id]: {
+                ...entry.byQuestion[question.id],
+                isCorrect: grade,
+              },
+            },
+          },
+        };
+      });
+      toast.success("채점 결과를 저장했습니다.");
+    } catch (error) {
+      toast.error(
+        `채점 결과를 저장하지 못했습니다. ${error.message ?? ""}`.trim(),
+      );
     }
   };
 
@@ -360,149 +196,163 @@ export default function ExamGradeModal({
     0,
   );
 
-  /** 정답 표시 (읽기 전용) */
-  const renderCorrectAnswer = (question) => {
-    if (["객관식-단항", "객관식-다항"].includes(question.answerType)) {
-      const correctNumbers = correctNumbersOf(question);
-      return choicesOf(question).map((choice) => {
-        const isCorrect = correctNumbers.includes(choice.no);
-        return (
-          <div
-            key={choice.no}
-            style={isCorrect ? correctChoiceStyle : choiceStyle}
-          >
-            {isCorrect ? "✔" : "○"} {choice.no}. {choice.text}
-          </div>
-        );
-      });
-    }
-    if (question.answerType === "O/X") {
-      return ["O", "X"].map((value) => {
-        const isCorrect = question.correctAnswer === value;
-        return (
-          <div key={value} style={isCorrect ? correctChoiceStyle : choiceStyle}>
-            {isCorrect ? "✔" : "○"} {value}
-          </div>
-        );
-      });
-    }
-    // 주관식 / 코드작성: 저장된 모범 답안이 있으면 표시
-    return question.correctAnswer ? (
-      <div style={modelAnswerStyle}>모범 답안: {question.correctAnswer}</div>
-    ) : null;
-  };
-
-  /** 선택한 수강생의 답안 */
-  const renderStudentAnswer = (question) => {
+  /** 문항 하나: 문제 · 정답 + 학생 답안 + 채점 버튼 */
+  const renderQuestion = (question, index) => {
     const studentAnswer = answersOfStudent[question.id];
+    const answered = Boolean(studentAnswer?.answer);
     const grade = GRADE_LABELS[studentAnswer?.isCorrect];
+    const studentName = selectedStudent?.name ?? "수강생";
+    const isChoice = ["객관식-단항", "객관식-다항"].includes(
+      question.answerType,
+    );
+    const isOx = question.answerType === "O/X";
+    const isCode = question.answerType === "코드작성";
+    const multiple = question.answerType === "객관식-다항";
+
+    // 객관식 · O/X: 학생이 고른 보기를 value 로, 정답을 answer 로 → 정답 초록 · 고른 오답 빨강
+    const blockProps = isChoice
+      ? {
+          options: choicesOf(question),
+          multiple,
+          value: multiple
+            ? splitNumbers(studentAnswer?.answer)
+            : (studentAnswer?.answer ?? ""),
+          answer: splitNumbers(question.correctAnswer),
+          showResult: true,
+        }
+      : isOx
+        ? {
+            options: OX_OPTIONS,
+            value: studentAnswer?.answer ?? "",
+            answer: question.correctAnswer ?? "",
+            showResult: true,
+          }
+        : {};
+
     return (
-      <div style={studentAnswerStyle}>
-        <div style={studentAnswerLabelStyle}>
-          <span>{selectedStudent?.name ?? "수강생"} 답안</span>
-          {grade && <span style={{ color: grade.color }}>{grade.text}</span>}
-        </div>
-        {studentAnswer?.answer ? (
-          <div style={studentAnswerTextStyle}>{studentAnswer.answer}</div>
-        ) : (
-          <div style={noAnswerStyle}>제출한 답안이 없습니다.</div>
+      <QuestionBlock
+        key={question.id}
+        no={index + 1}
+        title={
+          <>
+            {question.question}{" "}
+            <span className="tag">{question.answerType}</span>
+          </>
+        }
+        score={Number(question.pointAlloc) || 0}
+        body={!isCode ? question.subQuestion || undefined : undefined}
+        code={isCode ? question.subQuestion || undefined : undefined}
+        {...blockProps}
+      >
+        {/* 주관식 · 코드작성: 모범 답안 상자 */}
+        {!isChoice && !isOx && question.correctAnswer && (
+          <div className="answer-box answer-box-model">
+            <span className="answer-box-label">모범 답안</span>
+            {question.correctAnswer}
+          </div>
         )}
-        {/* 채점 버튼: 제출한 답안(행)이 없으면 저장할 대상이 없어 비활성 */}
-        <div style={gradeButtonAreaStyle}>
-          {GRADE_BUTTONS.map((buttonGrade) => {
-            const disabled = !studentAnswer?.id;
-            const selected = studentAnswer?.isCorrect === buttonGrade;
-            return (
-              <button
+        {/* 학생 답안 (객관식 · O/X 는 위 보기에 표시되므로 결과 배지만) */}
+        {answered ? (
+          <div
+            className={`answer-box${isCode ? " answer-box-code" : ""}`}
+          >
+            <span className="answer-box-label">
+              {studentName} 답안{" "}
+              {grade && <Badge tone={grade.tone}>{grade.text}</Badge>}
+            </span>
+            {!isChoice && !isOx && studentAnswer.answer}
+          </div>
+        ) : (
+          <div className="answer-box answer-box-empty">
+            제출한 답안이 없습니다.
+          </div>
+        )}
+        {/* 채점 버튼: 채점 권한(EXAM_COURSE_EXAM_GRADE)이 있을 때만. 제출한 답안(행)이 없으면 비활성 */}
+        {canGrade && (
+          <div
+            className="btn-group"
+            role="group"
+            aria-label={`${index + 1}번 채점`}
+          >
+            {GRADE_BUTTONS.map((buttonGrade) => (
+              <Button
                 key={buttonGrade}
-                type="button"
-                disabled={disabled}
-                style={
-                  disabled
-                    ? disabledGradeButtonStyle
-                    : selected
-                      ? selectedGradeButtonStyle(buttonGrade)
-                      : gradeButtonStyle
-                }
+                size="sm"
+                disabled={!studentAnswer?.id}
+                aria-pressed={studentAnswer?.isCorrect === buttonGrade}
                 onClick={() => onClickGrade(question, buttonGrade)}
               >
                 {GRADE_LABELS[buttonGrade].text}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div style={overlayStyle} onClick={onClose}>
-      <div style={boxStyle} onClick={(event) => event.stopPropagation()}>
-        {gradeTarget && (
-          <ConfirmModal
-            message={gradeConfirmMessage(gradeTarget)}
-            onConfirm={onConfirmGrade}
-            onCancel={() => setGradeTarget(null)}
-          />
-        )}
-        <div style={headerStyle}>
-          <h3 style={titleStyle}>{title} · 채점</h3>
-          <span style={summaryStyle}>
-            수강생 {students.length}명 · 총 {questions.length}문항 ·{" "}
-            {totalPoint}점
-          </span>
-        </div>
-
-        {students.length > 0 && (
-          <div style={tabBarStyle}>
-            {students.map((student) => (
-              <button
-                key={student.id}
-                type="button"
-                style={
-                  student.id === selectedStudentId ? activeTabStyle : tabStyle
-                }
-                onClick={() => onClickStudentTab(student.id)}
-              >
-                {student.name ?? student.id}
-              </button>
+              </Button>
             ))}
           </div>
         )}
+      </QuestionBlock>
+    );
+  };
 
-        <div style={bodyStyle}>
-          {students.length === 0 && (
-            <p style={emptyStyle}>이 강의를 듣는 수강생이 없습니다.</p>
-          )}
-          {students.length > 0 && questions.length === 0 && (
-            <p style={emptyStyle}>등록된 문제가 없습니다.</p>
-          )}
-          {students.length > 0 &&
-            questions.map((question, index) => (
-              <div key={question.id} style={questionStyle}>
-                <p style={questionTitleStyle}>
-                  <span style={{ whiteSpace: "pre-wrap" }}>
-                    {index + 1}. {question.question}
-                  </span>
-                  <span style={metaStyle}>
-                    {question.answerType} · {question.pointAlloc ?? 0}점
-                  </span>
-                </p>
-                {question.subQuestion && (
-                  <div style={subQuestionStyle}>{question.subQuestion}</div>
-                )}
-                {renderCorrectAnswer(question)}
-                {renderStudentAnswer(question)}
-              </div>
-            ))}
-        </div>
-
-        <div style={footerStyle}>
-          <button type="button" style={closeButtonStyle} onClick={onClose}>
-            닫기
-          </button>
-        </div>
+  let tabBody;
+  if (questions.length === 0) {
+    tabBody = (
+      <StatusBox type="empty" size="sm" title="등록된 문제가 없습니다." />
+    );
+  } else if (!selectedEntry || selectedEntry.status === "loading") {
+    tabBody = <StatusBox type="loading" size="sm" />;
+  } else if (selectedEntry.status === "error") {
+    tabBody = (
+      <StatusBox
+        type="error"
+        size="sm"
+        title="답안을 불러오지 못했습니다."
+        detail={selectedEntry.error?.message}
+        onRetry={() => loadStudentAnswers(selectedStudentId)}
+      />
+    );
+  } else {
+    tabBody = (
+      <div className="form-stack">
+        <p className="field-hint">
+          채점 {gradedCountOf(selectedStudentId)} / {questions.length}문항
+          (탭의 숫자 = 채점한 문항 수)
+        </p>
+        {questions.map(renderQuestion)}
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      size="lg"
+      title={`${title} · 채점`}
+      summary={`수강생 ${students.length}명 · ${questions.length}문항 · ${totalPoint}점`}
+      footer={<Button onClick={onClose}>닫기</Button>}
+    >
+      {students.length === 0 ? (
+        <StatusBox
+          type="empty"
+          size="sm"
+          title="이 과정을 듣는 수강생이 없습니다."
+        />
+      ) : (
+        <>
+          <Tabs
+            idBase={tabsId}
+            items={students.map((student) => ({
+              id: String(student.id),
+              label: student.name ?? student.id,
+              count: gradedCountOf(student.id),
+            }))}
+            value={String(selectedStudentId)}
+            onChange={onChangeStudentTab}
+            ariaLabel="수강생"
+          />
+          <TabPanel idBase={tabsId} tabId={String(selectedStudentId)}>
+            {tabBody}
+          </TabPanel>
+        </>
+      )}
+    </Modal>
   );
 }

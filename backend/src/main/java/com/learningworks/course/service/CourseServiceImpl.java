@@ -16,10 +16,12 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+import com.learningworks.course.vo.response.AttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
 import com.learningworks.course.vo.response.HomeworkVO;
+import com.learningworks.course.vo.response.StudentAttendanceVO;
 
 @Service
 public class CourseServiceImpl implements CourseService{
@@ -91,8 +93,8 @@ public class CourseServiceImpl implements CourseService{
 	}
 
 	@Override
-	public CourseVO readMyCourse(String courseId) {
-		CourseVO result = this.courseDao.readMyCourse(courseId);
+	public CourseVO readMyCourse(String courseId, String userId) {
+		CourseVO result = this.courseDao.readMyCourse(courseId, userId);
 		if (result == null) {
 			throw new LearningworksException(ErrorCode.COURSE_NOT_EXISTS);
 		}
@@ -344,6 +346,80 @@ public class CourseServiceImpl implements CourseService{
 			 }
 		}
 		return this.courseDao.readCourseMembers(courseId);
+	}
+
+	/** 이 비율(진행된 수업일 대비 출석 인정일 %) 미만이면 출석 경고 */
+	private static final double ATTENDANCE_WARNING_RATE = 80.0;
+
+	/** 지각 이 횟수마다 결석 1번 */
+	private static final int LATE_COUNT_PER_ABSENT = 3;
+
+	@Override
+	public AttendanceSummaryVO readAttendanceSummary(String courseId) {
+		this.findCourse(courseId);        // 없는 강의면 404
+		this.checkCourseAccess(courseId); // 관리자 또는 이 강의의 수강생 · 강사만
+
+		// 이 강의의 수강생으로 등록된 사람은 본인 것만, 그 외(관리자 · 강사)는 강의 전체 수강생 (userId 가 null 이면 전체)
+		// 역할 이름이 아니라 COURSE_STUDENT 등록 여부로 판단한다 (access-control-guide 9장)
+		String loginId = AuthUtil.getLoginId();
+		String userId = this.isCourseStudent(courseId, loginId) ? loginId : null;
+
+		AttendanceSummaryVO summary = this.courseDao.readCourseClassDays(courseId);
+		if (summary == null) {
+			summary = new AttendanceSummaryVO();
+		}
+		int total = summary.getTotalClassDays();
+		int passed = summary.getPassedClassDays();
+		summary.setProgressRate(this.toPercent(passed, total));
+
+		List<StudentAttendanceVO> students = this.courseDao.readStudentAttendanceCounts(courseId, userId);
+		int attendedSum = 0;
+		for (StudentAttendanceVO student : students) {
+			int attended = this.countAttendedDays(student, passed);
+			attendedSum += attended;
+			student.setAttendanceRate(this.toPercent(attended, total));
+			student.setWarning(this.isAttendanceWarning(attended, passed));
+		}
+		summary.setStudents(students);
+
+		if (!students.isEmpty()) {
+			double averageAttended = (double) attendedSum / students.size();
+			double averageRate = students.stream().mapToDouble(StudentAttendanceVO::getAttendanceRate).average().orElse(0);
+			summary.setAverageAttendanceRate(Math.round(averageRate * 10) / 10.0);
+			summary.setAverageWarning(this.isAttendanceWarning(averageAttended, passed));
+		}
+		return summary;
+	}
+
+	/** 이 강의의 수강생(COURSE_STUDENT)인지. (수강생 + 강사 수) - 강사 수 */
+	private boolean isCourseStudent(String courseId, String userId) {
+		int studentOrTutor = this.courseDao.countCourseStudentOrTutor(courseId, userId);
+		int tutor = this.courseDao.countCourseTutor(courseId, userId);
+		return studentOrTutor - tutor > 0;
+	}
+
+	/**
+	 * 출석 인정일 = 진행된 수업일 - 결석 수
+	 * 결석 수 = N + 기록 없는 수업일 + floor(L / 3)
+	 */
+	private int countAttendedDays(StudentAttendanceVO student, int passedClassDays) {
+		int recorded = student.getPresentCount() + student.getLateCount() + student.getAbsentCount();
+		int noRecordDays = Math.max(0, passedClassDays - recorded);
+		int absentDays = student.getAbsentCount() + noRecordDays + student.getLateCount() / LATE_COUNT_PER_ABSENT;
+		return Math.max(0, passedClassDays - absentDays);
+	}
+
+	/** 진행된 수업일 대비 출석 인정일이 80% 미만이면 true. 진행된 수업일이 0이면 false */
+	private boolean isAttendanceWarning(double attendedDays, int passedClassDays) {
+		return passedClassDays > 0 && attendedDays * 100.0 / passedClassDays < ATTENDANCE_WARNING_RATE;
+	}
+
+	/** part / total * 100 (소수 1자리). total 이 0이면 0 */
+	private double toPercent(int part, int total) {
+		if (total <= 0) {
+			return 0;
+		}
+		return Math.round(part * 1000.0 / total) / 10.0;
 	}
 
 }

@@ -1,0 +1,4 @@
+/* 댓글 속 긴 주소가 칸을 넘지 않게 */
+.link {
+  word-break: break-all;
+}

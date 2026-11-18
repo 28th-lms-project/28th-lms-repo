@@ -54,19 +54,20 @@
 	
 	<select
 	 id="readMyCourse"
-	 resultType="com.learningworks.course.vo.response.CourseVO" 
-	 parameterType="string">
+	 resultType="com.learningworks.course.vo.response.CourseVO">
 	 SELECT C."NO" 
           , C.COURSE_NAME 
           , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
           , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
           , C.ID 
-        FROM COURSE c 
-       WHERE C.ID = (SELECT COURSE_ID 
-                       FROM COURSE_STUDENT  
-                      WHERE USER_ID IN (SELECT ID 
-                                             FROM "USER"
-                                         WHERE ID = #{_parameter}))
+        FROM COURSE C
+       -- 요청한 강의(courseId)를 로그인 사용자가 수강 중일 때만 조회 (여러 강의를 들어도 하나만 나옴)
+       WHERE C.ID = #{courseId}
+         AND C.DEL_YN = 'N'
+         AND EXISTS (SELECT 1
+                       FROM COURSE_STUDENT CS
+                      WHERE CS.COURSE_ID = C.ID
+                        AND CS.USER_ID   = #{userId})
 	</select>
 	
 	<select id="courseMemeberList"
@@ -83,7 +84,8 @@
             , u.PWD_CHANGE_DT 
             , u.PWD_FAIL_CNT 
          FROM "USER" u 
-        WHERE U.BASE_ROLE =(SELECT R.ROLE_ID 
+        WHERE DEL_YN = 'N'
+          AND U.BASE_ROLE =(SELECT R.ROLE_ID 
                               FROM "ROLE" r 
                              WHERE R.ROLE_ID = 'ROLE_STUDENT')
 	</select>
@@ -103,7 +105,8 @@
             , u.PWD_CHANGE_DT 
             , u.PWD_FAIL_CNT 
          FROM "USER" u 
-        WHERE U.BASE_ROLE =(SELECT R.ROLE_ID 
+        WHERE DEL_YN = 'N'
+          AND U.BASE_ROLE =(SELECT R.ROLE_ID 
                               FROM "ROLE" r 
                              WHERE R.ROLE_ID = 'ROLE_TUTOR')
 	       
@@ -408,4 +411,46 @@
            AND CT.TUTOR_ID  = #{userId}
        </select>
 
+    <!--
+        출석률 요약: 전체 수업일 수 / 어제까지 진행된 수업일 수
+        COURSE 의 시작일 ~ 종료일 중 평일(월~금)만 센다. (시간표 · 공휴일은 보지 않음)
+        CONNECT BY LEVEL 로 시작일부터 하루씩 날짜를 만든다.
+    -->
+    <select id="readCourseClassDays"
+            resultType="com.learningworks.course.vo.response.AttendanceSummaryVO">
+        SELECT COUNT(*) AS TOTAL_CLASS_DAYS
+             , COUNT(CASE WHEN D.CLASS_DAY <![CDATA[ < ]]> TRUNC(SYSDATE) THEN 1 END) AS PASSED_CLASS_DAYS
+          FROM (SELECT TRUNC(C.START_DATE) + LEVEL - 1 AS CLASS_DAY
+                     , TRUNC(C.END_DATED) AS END_DAY
+                  FROM (SELECT START_DATE
+                             , END_DATED
+                          FROM COURSE
+                         WHERE ID = #{courseId}) C
+               CONNECT BY LEVEL <![CDATA[ <= ]]> TRUNC(C.END_DATED) - TRUNC(C.START_DATE) + 1) D
+         WHERE D.CLASS_DAY <![CDATA[ <= ]]> D.END_DAY
+           AND TO_CHAR(D.CLASS_DAY, 'DY', 'NLS_DATE_LANGUAGE=ENGLISH') NOT IN ('SAT', 'SUN')
+    </select>
+
+    <!-- 출석률 요약: 수강생별 Y / L / N 횟수 (어제까지). 기록이 없는 수강생도 0으로 나오도록 LEFT JOIN -->
+    <select id="readStudentAttendanceCounts"
+            resultType="com.learningworks.course.vo.response.StudentAttendanceVO">
+        SELECT CS.USER_ID
+             , U.NAME
+             , COUNT(CASE WHEN A.ATTEND_STATUS = 'Y' THEN 1 END) AS PRESENT_COUNT
+             , COUNT(CASE WHEN A.ATTEND_STATUS = 'L' THEN 1 END) AS LATE_COUNT
+             , COUNT(CASE WHEN A.ATTEND_STATUS = 'N' THEN 1 END) AS ABSENT_COUNT
+          FROM COURSE_STUDENT CS
+         INNER JOIN "USER" U
+            ON U.ID = CS.USER_ID
+          LEFT JOIN ATTENDANCE A
+            ON A.COURSE_ID = CS.COURSE_ID
+           AND A.USER_ID = CS.USER_ID
+           AND A.LGN_DT <![CDATA[ < ]]> TRUNC(SYSDATE)
+         WHERE CS.COURSE_ID = #{courseId}
+        <if test="userId != null">
+           AND CS.USER_ID = #{userId}
+        </if>
+         GROUP BY CS.USER_ID, U.NAME
+         ORDER BY U.NAME
+    </select>
 </mapper>

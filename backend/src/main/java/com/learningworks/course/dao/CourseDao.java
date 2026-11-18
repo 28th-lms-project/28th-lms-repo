@@ -12,10 +12,12 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+import com.learningworks.course.vo.response.AttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
 import com.learningworks.course.vo.response.HomeworkVO;
+import com.learningworks.course.vo.response.StudentAttendanceVO;
 
 @Mapper
 public interface CourseDao {
@@ -27,7 +29,8 @@ public interface CourseDao {
 
 	CourseVO readOneCourse(String courseId);
 
-	CourseVO readMyCourse(String courseId);
+	/** 로그인 사용자가 수강 중인 강의 1건. 수강하지 않거나 삭제된 강의면 null */
+	CourseVO readMyCourse(@Param("courseId") String courseId, @Param("userId") String userId);
 
 	List<CourseMemberVO> courseMemeberList();
 
@@ -64,5 +67,13 @@ public interface CourseDao {
 	int deleteHomeworkReply(@Param("homeworkId") String homeworkId, @Param("replyId") String replyId);
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
+
+	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐) */
+	AttendanceSummaryVO readCourseClassDays(@Param("courseId") String courseId);
+
+	/** 수강생별 Y / L / N 횟수 (어제까지). userId 가 null 이면 강의 전체 수강생 */
+	List<StudentAttendanceVO> readStudentAttendanceCounts(@Param("courseId") String courseId,
+			@Param("userId") String userId);
+
 
 }
