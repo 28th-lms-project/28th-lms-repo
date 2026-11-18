@@ -3,7 +3,6 @@ import styles from "./Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
 import { IconButton } from "../../common/input/IconButton.jsx";
 import { icons } from "../../common/input/icons.js";
-import errorStyles from "../../common/error/RouteError.module.css";
 
 export const FeedbackCatalog = () => {
     const [toast, setToast] = useState(null);
@@ -44,7 +43,7 @@ export const FeedbackCatalog = () => {
             <Variants>
                 <Variant
                     name="안내 상자 (권한 확인 · 권한 없음 · 불러오기 실패)"
-                    source="Role · Menu · Access · AccessRole · menu/MenuGuard (.notice, 각각 복사됨)"
+                    source="Access · AccessRole (.notice, 각각 복사됨)"
                     block
                 >
                     <p className={styles.notice}>권한이 없습니다.</p>
@@ -70,13 +69,6 @@ export const FeedbackCatalog = () => {
 
             <GroupTitle>오류 · 성공 · 힌트 문구</GroupTitle>
             <Variants>
-                <Variant name="오류 + 다시 시도" source="admin/system/menu/Menu.jsx · role/Role.jsx (.listErrorTitle · .listErrorMessage)" block>
-                    <div className={styles.errorBlock}>
-                        <p className={styles.errorTitle}>목록을 불러오지 못했습니다.</p>
-                        <p className={styles.errorDetail}>{"서버에 연결할 수 없습니다.\n잠시 후 다시 시도하세요."}</p>
-                        <IconButton icon={icons.refresh} iconSize={16} hoverIconRotate>다시 시도</IconButton>
-                    </div>
-                </Variant>
                 <Variant
                     name="필드 오류 문구 (5가지)"
                     source="MyInfoForm · AddTest · MyCourseData · MyCounsel · HomeworkItem"
@@ -93,10 +85,8 @@ export const FeedbackCatalog = () => {
                 <Variant name="성공 메시지" source="my/info/MyInfoForm · MyPasswordForm (.successMessage)" block>
                     <div className={styles.success}>정보가 수정되었습니다.</div>
                 </Variant>
-                <Variant name="힌트 문구 (3가지)" source="Role (.hint) · Menu (.fieldHint) · MyCounsel (.guide)">
+                <Variant name="힌트 문구" source="MyCounsel (.guide)">
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <p className={styles.hint13}>13px #777 — 역할 ID는 영문 대문자와 _만 쓸 수 있습니다.</p>
-                        <p className={styles.hint12}>12px #888 — 비워 두면 그룹 메뉴가 됩니다.</p>
                         <p className={styles.guide13}>13px #555 — 상담 내용은 수강생에게 보이지 않습니다.</p>
                     </div>
                 </Variant>
@@ -104,20 +94,8 @@ export const FeedbackCatalog = () => {
 
             <GroupTitle>경고 · 알림 바 · 토스트</GroupTitle>
             <Variants>
-                <Variant name="경고 문구 상자" source="admin/system/menu/Menu.module.css (.selfLockNotice)" block>
-                    <div className={styles.callout}>⚠ 이 역할을 빼면 지금 계정이 메뉴 관리에 들어올 수 없습니다.</div>
-                </Variant>
                 <Variant name="점선 주의 상자" source="my/course/MyCounsel.module.css (.notice)" block>
                     <div className={styles.calloutDashed}>저장하지 않은 내용이 있습니다.</div>
-                </Variant>
-                <Variant name="변경 안내 바 + 버튼" source="admin/system/role/Role.jsx (.orderBar)" block>
-                    <div className={styles.actionBar}>
-                        <span>순서가 변경되었습니다.</span>
-                        <span style={{ display: "flex", gap: "6px" }}>
-                            <IconButton icon={icons.ok} iconSize={16}>저장</IconButton>
-                            <IconButton icon={icons.close} iconSize={16}>되돌리기</IconButton>
-                        </span>
-                    </div>
                 </Variant>
                 <Variant name="토스트 (2초 후 사라짐)" source="my/course/MyCourseData.jsx (.toast · .toastError)">
                     <IconButton iconSize={16} icon={icons.ok} onClick={() => setToast({ text: "저장했습니다.", error: false })}>
@@ -139,22 +117,11 @@ export const FeedbackCatalog = () => {
                     <div className={styles.countFooter}>허용 권한 12건 / 3건 선택</div>
                     <span className={styles.totalCount}>전체 37건</span>
                 </Variant>
-                <Variant name="브라우저 alert / confirm" source="Member · Role · Code · course/* 여러 곳" note="성공 · 실패를 window.alert로 알리는 곳이 많음">
+                <Variant name="브라우저 alert / confirm" source="Member · Code · course/* 여러 곳" note="성공 · 실패를 window.alert로 알리는 곳이 많음">
                     <IconButton iconSize={16} icon={icons.ok} onClick={() => window.alert("저장되었습니다.")}>alert()</IconButton>
                 </Variant>
             </Variants>
 
-            <GroupTitle>오류 화면</GroupTitle>
-            <Variants wide>
-                <Variant name="404 · 라우트 오류 상자" source="common/error/NotFound.jsx · RouteError.jsx (RouteError.module.css)" block>
-                    <div className={errorStyles.box}>
-                        <p className={errorStyles.message}>요청한 페이지를 찾을 수 없습니다.</p>
-                        <p className={errorStyles.detail}>주소를 확인하거나 왼쪽 메뉴에서 이동해 주세요.</p>
-                        <pre className={errorStyles.devDetail}>TypeError: Cannot read properties of undefined (개발 환경에서만)</pre>
-                        <IconButton icon={icons.home} iconSize={16}>대시보드로</IconButton>
-                    </div>
-                </Variant>
-            </Variants>
         </div>
     );
 };
