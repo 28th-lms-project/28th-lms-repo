@@ -1,36 +1,36 @@
 import PageContainer from '../common/PageContainer';
-import { Chart } from "./Chart.jsx";
-import { PollList } from "./Poll.jsx";
+import { Chart } from "../archive/sample/Chart.jsx";
+import { PollList } from "../archive/sample/Poll.jsx";
 import { chartData } from "../../assets/mocks/chart.json.js";
 import { pollData } from "../../assets/mocks/poll.json.js";
-import { Grid } from "./Grid.jsx";
+import { Grid } from "../archive/sample/Grid.jsx";
 import { gridData } from "../../assets/mocks/grid.json.js";
 import { useId, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Alert, Confirm } from "./Modal.jsx";
-import { Button, FileField } from "./input/Input.jsx";
-import { Paginator } from "./Paginator.jsx";
+import { Alert, Confirm } from "../archive/sample/Modal.jsx";
+import { Button, FileField } from "../archive/sample/input/Input.jsx";
+import { Paginator } from "../archive/sample/Paginator.jsx";
 import { title } from "../../utils/window.js";
-import { Section } from "../Section.jsx";
-import { IconButton } from "./input/IconButton.jsx";
-import { icons } from "./input/icons.js";
+import { IconButton } from "../archive/sample/input/IconButton.jsx";
+import { icons } from "../archive/sample/input/icons.js";
 import catalogStyles from "./catalog/Catalog.module.css";
-import { LegacyTokenCatalog, TokenCatalog } from "./catalog/TokenCatalog.jsx";
-import { ButtonCatalog } from "./catalog/ButtonCatalog.jsx";
-import { FormCatalog } from "./catalog/FormCatalog.jsx";
-import { ListCatalog } from "./catalog/ListCatalog.jsx";
-import { NavigationCatalog } from "./catalog/NavigationCatalog.jsx";
-import { FeedbackCatalog } from "./catalog/FeedbackCatalog.jsx";
-import { LayoutCatalog } from "./catalog/LayoutCatalog.jsx";
-import { OverlayCatalog } from "./catalog/OverlayCatalog.jsx";
-import { CourseLegacyCatalog } from "./catalog/CourseLegacyCatalog.jsx";
+import { TokenCatalog } from "./catalog/TokenCatalog.jsx";
+import { LegacyTokenCatalog } from "./catalog/archive/LegacyTokenCatalog.jsx";
+import { ButtonCatalog } from "./catalog/archive/ButtonCatalog.jsx";
+import { FormCatalog } from "./catalog/archive/FormCatalog.jsx";
+import { ListCatalog } from "./catalog/archive/ListCatalog.jsx";
+import { NavigationCatalog } from "./catalog/archive/NavigationCatalog.jsx";
+import { FeedbackCatalog } from "./catalog/archive/FeedbackCatalog.jsx";
+import { LayoutCatalog } from "./catalog/archive/LayoutCatalog.jsx";
+import { OverlayCatalog } from "./catalog/archive/OverlayCatalog.jsx";
+import { CourseLegacyCatalog } from "./catalog/archive/CourseLegacyCatalog.jsx";
 import { StandardInputCatalog } from "./catalog/StandardInputCatalog.jsx";
 import { StandardFeedbackCatalog } from "./catalog/StandardFeedbackCatalog.jsx";
 import { StandardDataCatalog } from "./catalog/StandardDataCatalog.jsx";
 import { StandardLayoutCatalog } from "./catalog/StandardLayoutCatalog.jsx";
 import { StandardContentCatalog } from "./catalog/StandardContentCatalog.jsx";
 import { StandardScreenCatalog } from "./catalog/StandardScreenCatalog.jsx";
-import { PartHeader } from "./catalog/CatalogParts.jsx";
+import { CatalogSection, PartHeader } from "./catalog/CatalogParts.jsx";
 import { StandardizationContext } from "./catalog/standardization.js";
 import UiButton from "../common/ui/Button.jsx";
 import { Tabs, TabPanel } from "../common/ui/Tabs.jsx";
@@ -41,6 +41,8 @@ import { useColorScheme } from "../../theme/colorScheme.js";
  * - 표준: 새 화면이 쓰는 UI (토큰 · 공통 클래스 · common/ui). 다크 모드를 따른다.
  * - 표준화 전 (기록): 표준으로 옮기기 전 화면들의 모양을 남긴 기록. 표준을 적용한 화면은 [표준 적용] 표시 (catalog/standardization.js).
  *   다크 모드에서도 밝게 고정.
+ * - 기존 샘플: 처음부터 있던 sample/ 컴포넌트 예시 (기록).
+ * 표준화 전 · 기존 샘플이 쓰는 옛 컴포넌트는 components/archive/, 그 카탈로그는 catalog/archive/ (새 코드에서 import 금지, lint로 막음).
  * 가이드: frontend/docs/ui-style-guide.md
  */
 /**
@@ -174,9 +176,9 @@ const SampleDashboard = () => {
                 </PartHeader>
                 {STANDARD.map(({ id, title, Component }) => (
                     <div key={id} id={id} className={catalogStyles.anchor}>
-                        <Section title={title}>
+                        <CatalogSection title={title}>
                             <Component />
-                        </Section>
+                        </CatalogSection>
                     </div>
                 ))}
             </div>
@@ -191,9 +193,9 @@ const SampleDashboard = () => {
             <StandardizationContext.Provider value={true}>
             {CATALOG.map(({ id, title, Component }) => (
                 <div key={id} id={id} className={catalogStyles.anchor}>
-                    <Section title={title}>
+                    <CatalogSection title={title}>
                         <Component />
-                    </Section>
+                    </CatalogSection>
                 </div>
             ))}
             </StandardizationContext.Provider>
@@ -203,11 +205,11 @@ const SampleDashboard = () => {
             {part === "old" && (
             <div data-color-scheme="light">
             <PartHeader id="part-old" part="PART 3" title="기존 샘플" tone="old">
-                {"처음부터 있던 sample/ 컴포넌트 예시 (IconButton · Alert/Confirm · Grid · Paginator · Chart · Poll).\n일부 화면이 아직 이 컴포넌트를 씁니다."}
+                {"처음부터 있던 sample/ 컴포넌트 예시 (IconButton · Alert/Confirm · Grid · Paginator · Chart · Poll).\n화면에서는 더 이상 쓰지 않아 기록용으로 components/archive/sample/에 모았습니다. 새 코드에서 쓰지 마세요."}
             </PartHeader>
             <div>
                 <div id="sample-buttons" className={catalogStyles.anchor} />
-                <Section title="Sample Buttons">
+                <CatalogSection title="Sample Buttons">
                     <IconButton color="#666" icon={icons.add}>
                         추가
                     </IconButton>
@@ -264,10 +266,10 @@ const SampleDashboard = () => {
                     <IconButton color="#666" icon={icons.add} />
 
                     <IconButton color="#666">아이콘 없는 버튼</IconButton>
-                </Section>
+                </CatalogSection>
 
                 <div id="sample-modals" className={catalogStyles.anchor} />
-                <Section title="Sample Modals">
+                <CatalogSection title="Sample Modals">
                     <Alert
                         ref={alertRef}
                         title="Test Modal!"
@@ -329,10 +331,10 @@ const SampleDashboard = () => {
                             confirmRef2.current.open();
                         }}
                     />
-                </Section>
+                </CatalogSection>
 
                 <div id="sample-file" className={catalogStyles.anchor} />
-                <Section title="Sample FileInput">
+                <CatalogSection title="Sample FileInput">
                     <div>
                         <FileField
                             preview={true}
@@ -343,10 +345,10 @@ const SampleDashboard = () => {
                             labelText="첨부파일"
                         />
                     </div>
-                </Section>
+                </CatalogSection>
 
                 <div id="sample-grids" className={catalogStyles.anchor} />
-                <Section title="Sample Grids">
+                <CatalogSection title="Sample Grids">
                     <Grid
                         ref={editableGridRef}
                         title="Editable Test Grid"
@@ -433,10 +435,10 @@ const SampleDashboard = () => {
                             margin: "10px 0px",
                         }}
                     />
-                </Section>
+                </CatalogSection>
 
                 <div id="sample-paginator" className={catalogStyles.anchor} />
-                <Section title="Sample Paginator">
+                <CatalogSection title="Sample Paginator">
                     <Paginator
                         id="grid-paginator"
                         start={parseInt(activePage / 10) * 10}
@@ -445,35 +447,35 @@ const SampleDashboard = () => {
                         setActivePage={setActivePage}
                         totalPageCount={101}
                     />
-                </Section>
+                </CatalogSection>
 
                 <div id="sample-chart" className={catalogStyles.anchor} />
-                <Section title="Sample Chart">
+                <CatalogSection title="Sample Chart">
                     <Chart
                         type="bar"
                         height={350}
                         categories={chartData.categories}
                         series={chartData.series}
                     />
-                </Section>
+                </CatalogSection>
 
-                <Section title="Sample Chart">
+                <CatalogSection title="Sample Chart">
                     <Chart
                         type="line"
                         height={350}
                         categories={chartData.categories}
                         series={chartData.series}
                     />
-                </Section>
+                </CatalogSection>
 
                 <div id="sample-poll" className={catalogStyles.anchor} />
-                <Section title="Sample Poll">
+                <CatalogSection title="Sample Poll">
                     <PollList
                         title={pollData.title}
                         description={pollData.description}
                         pollItemList={pollData.pollItemList}
                     />
-                </Section>
+                </CatalogSection>
             </div>
             </div>
             )}

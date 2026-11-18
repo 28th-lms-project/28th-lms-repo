@@ -1,12 +1,15 @@
+/* 기록용: 샘플 "표준화 전 (기록)" 탭의 카탈로그. 표준화 전 모습을 남긴 것이라 새 예시를 더하지 않음 (표준 예시는 catalog/의 Standard*). */
 import { Fragment, useState } from "react";
 import Select from "react-select";
-import styles from "./Catalog.module.css";
-import { Variant, Variants } from "./CatalogParts.jsx";
-import { Grid } from "../Grid.jsx";
-import { IconButton } from "../input/IconButton.jsx";
-import { FileField } from "../input/Input.jsx";
-import { icons } from "../input/icons.js";
-import { PollItem } from "../Poll.jsx";
+import styles from "../Catalog.module.css";
+// 원본 화면이 className="section"(전역)을 써서, 그 모양을 내려고 옛 Section의 CSS를 직접 불러옴
+import "../../../archive/Section.css";
+import { Variant, Variants } from "../CatalogParts.jsx";
+import { Grid } from "../../../archive/sample/Grid.jsx";
+import { IconButton } from "../../../archive/sample/input/IconButton.jsx";
+import { FileField } from "../../../archive/sample/input/Input.jsx";
+import { icons } from "../../../archive/sample/input/icons.js";
+import { PollItem } from "../../../archive/sample/Poll.jsx";
 
 /*
  * admin/course · test · survey 화면의 현재 모양 (비교용). 원본의 인라인 스타일 · 클래스를 그대로 옮김.

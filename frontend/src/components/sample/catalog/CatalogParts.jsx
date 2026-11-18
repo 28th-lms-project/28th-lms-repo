@@ -64,5 +64,16 @@ export const PartHeader = ({ id, part, title, tone, children }) => (
     </header>
 );
 
+/**
+ * 샘플 페이지의 섹션 틀 (제목 + 흰 상자). 옛 Section(archive/Section.jsx)과 같은 모양, 색은 토큰.
+ * 샘플 페이지 전용 틀이라 표준 UI가 아님 (화면은 common/ui/Panel).
+ */
+export const CatalogSection = ({ title, children }) => (
+    <section className={styles.section}>
+        {title && <h3 className={styles.sectionTitle}>{title}</h3>}
+        <div className={styles.sectionContent}>{children}</div>
+    </section>
+);
+
 /** 섹션 안의 소제목 */
 export const GroupTitle = ({ children }) => <h4 className={styles.groupTitle}>{children}</h4>;

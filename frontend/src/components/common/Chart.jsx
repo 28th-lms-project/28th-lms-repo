@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import ApexCharts from "apexcharts";
 
 /**
- * 공통 차트 (apexcharts). sample/Chart.jsx 를 기반으로 다음을 고쳤다.
+ * 공통 차트 (apexcharts). sample/Chart.jsx(지금은 archive/sample/Chart.jsx) 를 기반으로 다음을 고쳤다.
  * - 데이터(series · categories 등)가 바뀌면 차트를 다시 그린다. (샘플은 처음 한 번만 그림)
  * - 컴포넌트가 사라질 때 chart.destroy() 로 정리한다.
  *

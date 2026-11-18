@@ -3,6 +3,7 @@
 import "./IconButton.css";
 import { useState } from "react";
 
+/** @deprecated 아이콘은 icons.js + 표준 Button(common/ui/Button.jsx)의 icon을 쓴다. 마지막으로 쓰는 화면에 표준을 적용할 때 components/archive/로 옮긴다 (archive/README.md). */
 export const Icon = ({
                          iconSize,
                          iconColor,
@@ -27,6 +28,7 @@ export const Icon = ({
     );
 };
 
+/** @deprecated 표준 Button(common/ui/Button.jsx)을 쓴다. 아직 환경 변수 관리(AddCode · UpdateCode)가 씀. 마지막으로 쓰는 화면에 표준을 적용할 때 components/archive/로 옮긴다 (archive/README.md). */
 export const IconButton = ({
                                children,
                                color = "#666",

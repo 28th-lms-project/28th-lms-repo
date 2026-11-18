@@ -1,7 +1,8 @@
-import styles from "./Catalog.module.css";
-import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
-import { IconButton } from "../../common/input/IconButton.jsx";
-import { icons } from "../../common/input/icons.js";
+/* 기록용: 샘플 "표준화 전 (기록)" 탭의 카탈로그. 표준화 전 모습을 남긴 것이라 새 예시를 더하지 않음 (표준 예시는 catalog/의 Standard*). */
+import styles from "../Catalog.module.css";
+import { GroupTitle, Variant, Variants } from "../CatalogParts.jsx";
+import { IconButton } from "../../../common/input/IconButton.jsx";
+import { icons } from "../../../common/input/icons.js";
 
 export const LayoutCatalog = () => (
     <div>

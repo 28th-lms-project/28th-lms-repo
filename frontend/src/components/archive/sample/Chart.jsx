@@ -1,3 +1,4 @@
+/* 기록용 (archive): 표준화 전 모습을 남긴 코드. 새 코드에서 import 금지(lint로 막음) · 고치지 않음. 대체: 표준 없음 (가이드 6장 "표준을 만들지 않기로 한 것"). 안내: components/archive/README.md */
 import { useEffect, useRef } from "react";
 import ApexCharts from "apexcharts";
 

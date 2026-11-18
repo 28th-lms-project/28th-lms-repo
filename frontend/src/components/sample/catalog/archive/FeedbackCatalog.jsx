@@ -1,9 +1,10 @@
+/* 기록용: 샘플 "표준화 전 (기록)" 탭의 카탈로그. 표준화 전 모습을 남긴 것이라 새 예시를 더하지 않음 (표준 예시는 catalog/의 Standard*). */
 import { useEffect, useState } from "react";
-import styles from "./Catalog.module.css";
-import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
-import { IconButton } from "../../common/input/IconButton.jsx";
-import { icons } from "../../common/input/icons.js";
-import errorStyles from "../../common/error/RouteError.module.css";
+import styles from "../Catalog.module.css";
+import { GroupTitle, Variant, Variants } from "../CatalogParts.jsx";
+import { IconButton } from "../../../common/input/IconButton.jsx";
+import { icons } from "../../../common/input/icons.js";
+import errorStyles from "../../../archive/common/error/RouteError.module.css";
 
 export const FeedbackCatalog = () => {
     const [toast, setToast] = useState(null);
