@@ -16,6 +16,7 @@ import { useToast } from "../../../common/ui/feedbackContext.js";
 import { icons } from "../../../common/input/icons.js";
 import MemberDetail from "./MemberDetail.jsx";
 import MemberCreateModal from "./MemberCreateModal.jsx";
+import styles from "./MemberManagement.module.css";
 
 export default function MemberManagement() {
   const { can, status } = usePermission();
@@ -183,7 +184,7 @@ function MemberManagementContent() {
     <>
       <div className="form-stack">
         <div className="toolbar">
-          <div className="form-row">
+          <div className={`form-row ${styles.filters}`}>
             {roles.length > 0 && (
               <Field label="역할" htmlFor={roleFilterId}>
                 <select

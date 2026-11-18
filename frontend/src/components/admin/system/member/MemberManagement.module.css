@@ -1,0 +1,7 @@
+.filters {
+  flex: 1 1 auto;
+}
+
+.filters > :global(.field) {
+  flex: 0 1 240px;
+}
