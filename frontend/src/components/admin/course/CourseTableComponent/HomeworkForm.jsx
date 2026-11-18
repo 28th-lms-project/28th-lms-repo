@@ -7,6 +7,14 @@ import Field from "../../../common/ui/Field";
 import Panel from "../../../common/ui/Panel";
 import { useToast } from "../../../common/ui/feedbackContext";
 
+/** 오늘 날짜 (yyyy-MM-dd, 브라우저 시간대 기준) */
+const getTodayText = () => {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${today.getFullYear()}-${month}-${day}`;
+};
+
 /**
  * 과제 등록 폼 (제목 · 제출마감일 · 내용)
  * @param {Function} onCancel 취소 버튼 클릭 시 호출
@@ -39,6 +47,9 @@ export default function HomeworkForm({ onCancel, onSuccess }) {
     }
     if (!endDate) {
       nextErrors.endDate = "제출 마감일을 고르세요.";
+    } else if (endDate < getTodayText()) {
+      // 달력의 min 은 직접 입력하면 우회되므로 등록할 때 한 번 더 검사 (yyyy-MM-dd 는 문자열 비교 = 날짜 비교)
+      nextErrors.endDate = "제출 마감일은 오늘 이후로 고르세요.";
     }
     if (!content.trim()) {
       nextErrors.content = "과제 내용을 입력하세요.";
@@ -106,6 +117,8 @@ export default function HomeworkForm({ onCancel, onSuccess }) {
                 id={endDateId}
                 type="date"
                 className="form-control"
+                // 지난 날짜는 달력에서 고를 수 없게
+                min={getTodayText()}
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />

@@ -40,6 +40,8 @@ export default function ExamPage() {
   // 칸별 입력 오류 ([등록]을 누를 때 검사)
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  // 고른 시험 종류 ({ value: 공통 코드 TEST_TYPE 의 ID, label }). 등록 요청의 testType 으로 보낸다
+  const [examType, setExamType] = useState(null);
 
   const baseId = useId();
   const subjectId = `${baseId}-subject`;
@@ -67,6 +69,7 @@ export default function ExamPage() {
   // 제목/공개여부 input은 폼이 사라졌다 다시 그려지므로 따로 비우지 않아도 된다.
   const onCancelAddExam = () => {
     dispatch(testActions.selectSubjectId(""));
+    setExamType(null);
     setErrors({});
     setShowAddExam(false);
   };
@@ -84,6 +87,9 @@ export default function ExamPage() {
     if (!selectSubjectId) {
       nextErrors.subject = "시험 과목을 고르세요.";
     }
+    if (!examType) {
+      nextErrors.type = "시험 종류를 고르세요.";
+    }
     if (!examTitle) {
       nextErrors.title = "시험 제목을 입력하세요.";
     }
@@ -97,7 +103,8 @@ export default function ExamPage() {
 
     const addTestSet = {
       courseId: id,
-      testType: selectSubjectId.value,
+      // 시험 종류: 공통 코드 TEST_TYPE 의 ID (TEST_SET.TEST_TYPE)
+      testType: examType.value,
       setName: examTitle,
       showYn: isPublic ? "Y" : "N",
       questeions: selectedQuestions,
@@ -118,6 +125,16 @@ export default function ExamPage() {
       setSaving(false);
     }
   };
+
+  // 시험 탭을 떠나면(폼을 [취소] 없이 떠난 경우 포함) 고른 과목 · 문제를 비운다
+  // (slice 에 남으면 다음에 폼을 열 때 이전 과목으로 문제 목록 · 등록이 이어짐)
+  useEffect(
+    () => () => {
+      dispatch(testActions.selectSubjectId(""));
+      dispatch(testActions.clearSelectedQuestions());
+    },
+    [dispatch],
+  );
 
   // 탭에 들어오면 시험 세트 목록 조회
   useEffect(() => {
@@ -154,7 +171,6 @@ export default function ExamPage() {
     (async () => {
       try {
         const response = await searchTest(selectSubjectId.value);
-        await searchTestSets(id);
         if (!ignoreUpdateState) {
           dispatch(testActions.setTestList(response));
         }
@@ -198,8 +214,17 @@ export default function ExamPage() {
               >
                 <TestSubjectSelect inputId={subjectId} />
               </Field>
-              <Field label="시험 종류" htmlFor={typeId}>
-                <ExamSubjectSelect inputId={typeId} />
+              <Field
+                label="시험 종류"
+                htmlFor={typeId}
+                required
+                error={errors.type}
+              >
+                <ExamSubjectSelect
+                  inputId={typeId}
+                  value={examType}
+                  onChange={setExamType}
+                />
               </Field>
               <Field
                 label="시험 제목"

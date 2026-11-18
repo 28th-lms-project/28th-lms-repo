@@ -2,15 +2,17 @@ import { useDispatch, useSelector } from "react-redux";
 import { Navigate, useNavigate } from "react-router-dom";
 import { loginSuccess, selectUser } from "../../store/slices/loginSliceStore";
 import { login } from "../../api/login/loginApi";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { decodeToken } from "../../utils/tokenStorage";
-import PageContainer from "../common/PageContainer";
-import styles from "./Login.module.css";
+import Field from "../common/ui/Field.jsx";
+import Callout from "../common/ui/Callout.jsx";
+import Button from "../common/ui/Button";
 
 export default function Login() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector(selectUser);
+  const baseId = useId();
 
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
@@ -46,44 +48,56 @@ export default function Login() {
       );
       navigate("/", { replace: true });
     } catch (error) {
+      setPassword("");
       setErrorMessage(error.message);
     } finally {
       setSubmitting(false);
     }
   };
 
+  let buttonLabel = "로그인";
+  if (submitting) {
+    buttonLabel = "로그인 중...";
+  }
+
   return (
-    <PageContainer>
-      <div className={styles.wrapper}>
-        <form className={styles.form} onSubmit={onSubmitLoginHandler}>
-          <label className={styles.field}>
-            <span className={styles.span}>아이디</span>
+    <div className="auth-page">
+      <form className="auth-card" onSubmit={onSubmitLoginHandler} noValidate>
+        <h2 className="auth-title">로그인</h2>
+        {errorMessage && (
+          <Callout tone="danger" icon={null}>
+            {errorMessage}
+          </Callout>
+        )}
+        <div className="form-stack">
+          <Field label="아이디" htmlFor={`${baseId}-id`}>
             <input
-              className={styles.input}
-              type="text"
-              placeholder="아이디"
+              id={`${baseId}-id`}
+              className="form-control"
               value={id}
               onChange={(event) => setId(event.target.value)}
               autoComplete="username"
+              autoFocus
             />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.span}>비밀번호</span>
+          </Field>
+          <Field label="비밀번호" htmlFor={`${baseId}-pw`}>
             <input
-              className={styles.input}
+              id={`${baseId}-pw`}
               type="password"
-              placeholder="비밀번호"
+              className="form-control"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
             />
-          </label>
-          {errorMessage && <p role="alert">{errorMessage}</p>}
-          <button type="submit" disabled={submitting}>
-            로그인
-          </button>
-        </form>
-      </div>
-    </PageContainer>
+          </Field>
+        </div>
+        <Button type="submit" variant="primary" block loading={submitting}>
+          {buttonLabel}
+        </Button>
+        <p className="auth-footer">
+          비밀번호 초기화는 관리자를 통해 가능합니다.
+        </p>
+      </form>
+    </div>
   );
 }

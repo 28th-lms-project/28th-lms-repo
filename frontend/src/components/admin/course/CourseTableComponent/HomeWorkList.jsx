@@ -7,6 +7,7 @@ import { courseActions } from "../../../../store/slices/courseSliceStore";
 import usePermission from "../../../../hooks/usePermission";
 
 import Button from "../../../common/ui/Button";
+import StatusBox from "../../../common/ui/StatusBox";
 import Table from "../../../common/ui/Table";
 import { useToast } from "../../../common/ui/feedbackContext";
 import { icons } from "../../../common/input/icons";
@@ -82,6 +83,11 @@ export default function HomeWorkList() {
       "width=1620,height=1080",
     );
   };
+
+  // 과제 목록 조회 권한 (CourseItem 이 이 권한이 있을 때만 목록을 불러온다)
+  if (!can("COURSE_HOMEWORK_READ")) {
+    return <StatusBox type="denied" />;
+  }
 
   return (
     <div className="form-stack">
