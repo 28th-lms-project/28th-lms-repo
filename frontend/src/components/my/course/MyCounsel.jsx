@@ -256,8 +256,9 @@ export default function MyCounsel({ courseId: courseIdProp }) {
 
 function CounselDetail({ courseId, courseStudentId, onBack, onOpinionSaved }) {
   const { can } = usePermission();
-  const canCreate = can("COUNSEL_CREATE");
-  const canUpdate = can("COUNSEL_UPDATE");
+  // 권한 코드는 @RequireAction(domain = "COURSE_COUNSEL", action = ...) → COURSE_COUNSEL_CREATE · COURSE_COUNSEL_UPDATE
+  const canCreate = can("COURSE_COUNSEL_CREATE");
+  const canUpdate = can("COURSE_COUNSEL_UPDATE");
 
   const fetchDetail = useCallback(
     (options) => getCounselDetail(courseId, courseStudentId, options),
