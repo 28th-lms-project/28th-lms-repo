@@ -71,6 +71,13 @@ public interface CourseDao {
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
 
+	/**
+	 * 삭제되지 않은 과정의 시간표 날짜 중 startDate ~ endDate(yyyy-MM-dd) 밖인 날짜 (yyyy-MM-dd, 오름차순, 중복 없음).
+	 * 과정 기간을 바꾸기 전에 검사한다
+	 */
+	List<String> selectTimetableDatesOutside(@Param("courseId") String courseId,
+			@Param("startDate") String startDate, @Param("endDate") String endDate);
+
 	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐). 수업일 = 과정 기간 안 시간표가 있는 날 */
 	AttendanceSummaryVO readCourseClassDays(@Param("courseId") String courseId);
 

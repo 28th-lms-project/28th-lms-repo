@@ -3,6 +3,7 @@ package com.learningworks.timetable.service;
 
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
+import com.learningworks.common.utils.DateListText;
 import com.learningworks.timetable.dao.TimetableDao;
 import com.learningworks.timetable.vo.response.CoursePeriodVO;
 import com.learningworks.timetable.vo.response.DailyScheduleResponseVO;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 public class TimetableServiceImpl implements TimetableService {
@@ -37,8 +37,6 @@ public class TimetableServiceImpl implements TimetableService {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");
 
-    /** 기간 밖 날짜 오류 메시지에 보여 줄 최대 날짜 수 */
-    private static final int OUT_OF_PERIOD_DATES_IN_MESSAGE = 5;
 
     private static final List<TimeSlotResponseVO> TIME_SLOTS = List.of(
             new TimeSlotResponseVO(1, "1교시", "09:00 ~ 10:00", false),
@@ -434,17 +432,9 @@ public class TimetableServiceImpl implements TimetableService {
             return;
         }
 
-        String shown = outOfPeriod.stream()
-                .limit(OUT_OF_PERIOD_DATES_IN_MESSAGE)
-                .map(LocalDate::toString)
-                .collect(Collectors.joining(", "));
-        String more = outOfPeriod.size() > OUT_OF_PERIOD_DATES_IN_MESSAGE
-                ? " 외 " + (outOfPeriod.size() - OUT_OF_PERIOD_DATES_IN_MESSAGE) + "일"
-                : "";
-
         throw new IllegalArgumentException(
                 "과정 기간(" + period.startDate() + " ~ " + period.endDate()
-                        + ") 밖의 날짜가 있습니다: " + shown + more
+                        + ") 밖의 날짜가 있습니다: " + DateListText.summarize(outOfPeriod)
                         + ". 엑셀의 날짜를 확인해 주세요."
         );
     }
