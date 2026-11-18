@@ -154,7 +154,6 @@ export default function ExamPage() {
     (async () => {
       try {
         const response = await searchTest(selectSubjectId.value);
-        await searchTestSets(id);
         if (!ignoreUpdateState) {
           dispatch(testActions.setTestList(response));
         }

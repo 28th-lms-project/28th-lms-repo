@@ -93,30 +93,30 @@ export default function CourseItem() {
 
   const canReadStudents = can("COURSE_STUDENT_READ");
   const canReadAttendance = can("COURSE_ATTENDANCE_READ");
+  const canReadHomeworks = can("COURSE_HOMEWORK_READ");
 
   // 과정 정보를 불러오지 못했을 때의 오류 (과정 정보 자리에 StatusBox로 보여 줌)
-  const [loadError, setLoadError] = useState(null);
+  // { courseId, error }: 오류가 난 과정을 같이 적어 두고, 지금 과정의 오류일 때만 보여 준다
+  // (다른 과정으로 이동하면 따로 비우지 않아도 이전 과정의 오류가 보이지 않음)
+  const [courseLoadError, setCourseLoadError] = useState(null);
+  const loadError =
+    courseLoadError?.courseId === id ? courseLoadError.error : null;
 
   useEffect(() => {
     const controller = new AbortController();
     const options = { signal: controller.signal };
-    dispatch(courseActions.startLoading());
-    // 다른 과정으로 이동했을 때 이전 과정의 출석률이 보이지 않도록 비운다
+    // 다른 과정으로 이동했을 때 이전 과정의 정보 · 수강생이 보이지 않도록 비운다 (비어 있는 동안 로딩 표시)
+    // isLoading(start/finishLoading)은 왼쪽 과정 목록(CourseMain) 전용이라 여기서는 건드리지 않는다
+    dispatch(courseActions.loadShowCourse(undefined));
     dispatch(courseActions.showStudents([]));
 
     (async () => {
       try {
-        const [course, homeworks] = await Promise.all([
-          getCourse(id, options),
-          getHomeworks(id, options),
-        ]);
+        const course = await getCourse(id, options);
         dispatch(courseActions.loadShowCourse(course));
-        dispatch(courseActions.loadhomeworks(homeworks));
-        dispatch(courseActions.finishLoading());
-        setLoadError(null);
       } catch (error) {
         if (error.name !== "AbortError") {
-          setLoadError(error);
+          setCourseLoadError({ courseId: id, error });
         }
       }
     })();
@@ -124,6 +124,21 @@ export default function CourseItem() {
       controller.abort();
     };
   }, [id, dispatch]);
+
+  // 과제 목록: 권한(COURSE_HOMEWORK_READ)이 확인된 뒤에만 호출. 과정 조회와 분리해서, 실패해도 과정 화면은 뜨도록 한다
+  useEffect(() => {
+    // 다른 과정으로 이동했을 때 이전 과정의 과제가 보이지 않도록 비운다
+    dispatch(courseActions.loadhomeworks([]));
+    if (!canReadHomeworks) {
+      return;
+    }
+    const controller = new AbortController();
+    getHomeworks(id, { signal: controller.signal })
+      .then((homeworks) => dispatch(courseActions.loadhomeworks(homeworks)))
+      // 실패하면 과제 없이 둔다 (과제 탭이 빈 상태를 보여 줌)
+      .catch(() => {});
+    return () => controller.abort();
+  }, [id, dispatch, canReadHomeworks]);
 
   // 수강생 목록: 권한(COURSE_STUDENT_READ)이 확인된 뒤에만 호출 (permission-guide 3-2)
   // Promise.all 과 분리해서, 이 API가 실패해도 과정 화면은 뜨도록 한다

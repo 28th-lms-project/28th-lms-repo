@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { testActions } from "../../../../store/slices/testSliceStore";
 import {
@@ -77,6 +77,16 @@ export default function ExamSetTable({
   // 시험 응시 모달 열림 여부 (내용은 testSlice.takeExam)
   const isTakeExamOpen = useSelector((store) => store.test.takeExam !== null);
   const dispatch = useDispatch();
+
+  // 시험 탭 · 과정을 떠나면 열려 있던 응시 · 채점 대상을 비운다
+  // (slice 에 남으면 다른 과정의 시험 탭에서 이전 시험 모달이 다시 뜨고, 제출이 이전 시험으로 감)
+  useEffect(
+    () => () => {
+      dispatch(testActions.closeTakeExam());
+      dispatch(testActions.clearGradeTestSetId());
+    },
+    [dispatch],
+  );
 
   // "Y"가 아니면(N, null) 공개로, "Y"면 비공개로 바꾼다
   const nextShowYn = (testSet) => (testSet.showYn === "Y" ? "N" : "Y");
