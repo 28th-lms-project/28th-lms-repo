@@ -5,6 +5,7 @@ import {
   getTodayAttendanceSummary,
 } from "../../api/admin/course/courseApi.js";
 import { getCourseSurvey } from "../../api/admin/system/survey/surveyApi.js";
+import { getInterviewList } from "../../api/my/course/interviewApi.js";
 import { getCourseScoreList } from "../../api/my/course/scoreApi.js";
 import { getDailyTimetable } from "../../api/my/course/timetableApi.js";
 import usePermission from "../../hooks/usePermission";
@@ -19,6 +20,7 @@ import useCourseDashboard, { settle, settleLessons } from "./useCourseDashboard.
  * - todayAttendance: 오늘 출석 현황 (COURSE_ATTENDANCE_READ)
  * - homeworks: 과제 목록과 제출 수 (COURSE_HOMEWORK_READ)
  * - surveys: 과정 설문과 응답 수 (COURSE_SURVEY_READ)
+ * - interviews: 과정 면접 일정 (COURSE_INTERVIEW_READ)
  *
  * @param {object[]} baseCourses  myRelation === "TUTOR"인 과정 (useMemo로 고정)
  */
@@ -29,6 +31,7 @@ export default function useTutorDashboard(baseCourses) {
   const canLessons = can("COURSE_SCHEDULE_READ_ONE");
   const canHomeworks = can("COURSE_HOMEWORK_READ");
   const canSurveys = can("COURSE_SURVEY_READ");
+  const canInterviews = can("COURSE_INTERVIEW_READ");
 
   const requests = useMemo(
     () => ({
@@ -42,8 +45,9 @@ export default function useTutorDashboard(baseCourses) {
         : null,
       homeworks: canHomeworks ? (id, options) => settle(getHomeworks(id, options)) : null,
       surveys: canSurveys ? (id) => settle(getCourseSurvey(id)) : null, // surveyApi는 signal을 받지 않음
+      interviews: canInterviews ? (id, options) => settle(getInterviewList(id, options)) : null,
     }),
-    [canAttendance, canScores, canLessons, canHomeworks, canSurveys],
+    [canAttendance, canScores, canLessons, canHomeworks, canSurveys, canInterviews],
   );
 
   const dashboard = useCourseDashboard(baseCourses, requests);
@@ -55,6 +59,7 @@ export default function useTutorDashboard(baseCourses) {
       lessons: canLessons,
       homeworks: canHomeworks,
       surveys: canSurveys,
+      interviews: canInterviews,
     },
   };
 }

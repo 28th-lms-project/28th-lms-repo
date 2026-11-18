@@ -369,6 +369,30 @@ export const collectSurveyResponses = (activeCourses) => {
 };
 
 /**
+ * 강사: 다가오는 면접 일정 (지금 이후, 가까운 순). interviewDateTime은 "YYYY-MM-DD HH:MM"이라 문자열 비교가 시간 비교와 같다.
+ * 항목: { key, course, interview, date, time }
+ * @param {string} now  "YYYY-MM-DD HH:MM"
+ */
+export const collectUpcomingInterviews = (activeCourses, now) => {
+  const items = [];
+  const flags = scan(activeCourses, "interviews", (interviews, course) => {
+    for (const interview of interviews ?? []) {
+      const at = interview.interviewDateTime ?? "";
+      if (at < now) continue;
+      items.push({
+        key: `${course.id}-${interview.id}`,
+        course,
+        interview,
+        date: at.slice(0, 10),
+        time: at.slice(11, 16),
+      });
+    }
+  });
+  items.sort((a, b) => a.interview.interviewDateTime.localeCompare(b.interview.interviewDateTime));
+  return { items, ...flags };
+};
+
+/**
  * 강사: 채점 대기. 과정 전체 성적(학생별 scoreList)을 시험별로 묶는다.
  * 항목: { key, course, testSetId, setName, pendingAnswers(채점 안 된 답안 수), pendingStudents, submitted(응시 학생), studentCount }
  * pendingAnswers가 있는 시험만, 많은 순. total: 전체 채점 대기 답안 수

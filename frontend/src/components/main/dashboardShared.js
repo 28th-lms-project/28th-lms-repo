@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { toTimeKey } from "./dashboardSummary";
 
 /** 과정 화면(/my/course/list/:id, CourseItem)의 탭 번호 (CourseItem의 TABS 순서) */
-export const COURSE_TAB = { attendance: 1, timetable: 2, homework: 3, test: 4, survey: 7, score: 9 };
+export const COURSE_TAB = { attendance: 1, timetable: 2, homework: 3, test: 4, interview: 5, survey: 7, score: 9 };
 export const courseUrl = (courseId, tab = 0) =>
   `/my/course/list/${encodeURIComponent(courseId)}?tab=${tab}`;
 

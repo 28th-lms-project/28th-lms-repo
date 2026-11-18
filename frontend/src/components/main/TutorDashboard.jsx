@@ -10,12 +10,14 @@ import {
   LOADING_HINT,
   TodayLessons,
 } from "./dashboardParts";
-import { COURSE_TAB, courseUrl } from "./dashboardShared";
+import { COURSE_TAB, courseUrl, useNowTime } from "./dashboardShared";
 import {
   collectAttendanceWarnings,
   collectGradingQueue,
   collectSurveyResponses,
   collectTutorHomeworks,
+  collectUpcomingInterviews,
+  daysBetween,
   homeworkDue,
   summarizeTodayAttendance,
   summarizeTutorAttendance,
@@ -23,9 +25,9 @@ import {
 
 /**
  * 강사 대시보드 (강사로 등록된 과정).
- * 수치 → 담당 과정 → 오늘 시간표 · 채점 대기 · 출석 주의 학생 → 마감 전 과제 · 설문 응답 → 종료된 과정(접힘).
+ * 수치 → 담당 과정 → 오늘 시간표 · 채점 대기 · 출석 주의 학생 → 마감 전 과제 · 설문 응답 · 다가오는 면접 → 종료된 과정(접힘).
  * 카드 · 패널은 권한이 있을 때만 보인다 (출석: COURSE_ATTENDANCE_READ, 채점: SCORE_READ_COURSE,
- * 시간표: COURSE_SCHEDULE_READ_ONE, 과제: COURSE_HOMEWORK_READ, 설문: COURSE_SURVEY_READ).
+ * 시간표: COURSE_SCHEDULE_READ_ONE, 과제: COURSE_HOMEWORK_READ, 설문: COURSE_SURVEY_READ, 면접: COURSE_INTERVIEW_READ).
  *
  * @param {{ courses: object[] }} props  myRelation === "TUTOR"인 과정 (useMemo로 고정)
  */
@@ -36,7 +38,7 @@ export default function TutorDashboard({ courses: baseCourses }) {
   const current = courses.filter((course) => course.phase !== "ended");
   const ended = courses.filter((course) => course.phase === "ended");
   const showToday = active.length > 0 && (can.lessons || can.scores || can.attendance);
-  const showFollowUp = active.length > 0 && (can.homeworks || can.surveys);
+  const showFollowUp = active.length > 0 && (can.homeworks || can.surveys || can.interviews);
 
   return (
     <div className="form-stack">
@@ -61,6 +63,7 @@ export default function TutorDashboard({ courses: baseCourses }) {
         <div className="layout-3col">
           {can.homeworks && <TutorHomeworks active={active} today={today} />}
           {can.surveys && <SurveyResponses active={active} />}
+          {can.interviews && <UpcomingInterviews active={active} today={today} />}
         </div>
       )}
       {ended.length > 0 && <EndedCourses courses={ended} today={today} showTutor={false} />}
@@ -278,6 +281,52 @@ function SurveyResponses({ active }) {
           </button>
         </li>
       )}
+    />
+  );
+}
+
+/** 다가오는 면접: 지금 이후 가까운 순, 오늘이면 "오늘", 아니면 D-day. 누르면 그 과정의 면접일정 탭 */
+function UpcomingInterviews({ active, today }) {
+  const navigate = useNavigate();
+  const nowTime = useNowTime();
+  const result = collectUpcomingInterviews(active, `${today} ${nowTime}`);
+  const showCourse = active.length > 1;
+
+  return (
+    <ListPanel
+      title="다가오는 면접"
+      subtitle={result.items.length > 0 ? `${result.items.length}건` : undefined}
+      result={result}
+      emptyTitle="예정된 면접이 없습니다."
+      renderItem={({ key, course, interview, date, time }) => {
+        const days = daysBetween(today, date);
+        return (
+          <li key={key}>
+            <button
+              type="button"
+              className="list-item"
+              onClick={() => navigate(courseUrl(course.id, COURSE_TAB.interview))}
+            >
+              <span>
+                {interview.studentName}
+                <span className="card-meta">
+                  {" "}
+                  · {interview.interviewCompany}
+                  {showCourse ? ` · ${course.courseName}` : ""}
+                </span>
+              </span>
+              <span className="list-item-end">
+                <span className="card-meta">
+                  {days === 0 ? time : `${date.slice(5)} ${time}`}
+                </span>
+                <Badge tone={days <= 1 ? "warning" : "neutral"}>
+                  {days === 0 ? "오늘" : `D-${days}`}
+                </Badge>
+              </span>
+            </button>
+          </li>
+        );
+      }}
     />
   );
 }
