@@ -146,11 +146,13 @@ class MenuControllerTest {
     this.mockMvc.perform(MockMvcRequestBuilders.put("/menus/order")
         .contentType(MediaType.APPLICATION_JSON)
         .content("""
-            {"parentId": null, "menuIds": ["MN-1", "MN-2"]}
+            {"orders": [{"parentId": null, "menuIds": ["MN-1", "MN-2"]}, {"parentId": "MN-1", "menuIds": ["MN-3"]}]}
             """))
         .andExpect(MockMvcResultMatchers.status().isOk());
 
-    Mockito.verify(this.menuService).updateMenuOrder(ArgumentMatchers.any());
+    Mockito.verify(this.menuService).updateMenuOrder(ArgumentMatchers.argThat(vo -> vo.getOrders().size() == 2
+        && vo.getOrders().get(0).getParentId() == null
+        && vo.getOrders().get(1).getMenuIds().equals(List.of("MN-3"))));
     Mockito.verify(this.menuService, Mockito.never())
         .updateMenu(ArgumentMatchers.any(), ArgumentMatchers.any(), ArgumentMatchers.any());
   }

@@ -663,84 +663,6 @@
   border-bottom: 2px solid #212529;
 }
 
-/* admin/system/role/Role.module.css (13px 계열) */
-.createForm {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 12px;
-  width: 100%;
-  padding: 20px;
-  background-color: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-}
-
-.smallField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.smallLabel {
-  font-size: 13px;
-  color: #666;
-}
-
-.smallInput,
-.smallSelect {
-  height: 35px;
-  padding: 0 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #333;
-  outline: 0;
-  background-color: #fff;
-  min-width: 0;
-}
-
-.smallInput:focus,
-.smallSelect:focus {
-  border-color: #888;
-}
-
-.smallInput:disabled,
-.smallSelect:disabled {
-  background-color: #f2f2f2;
-  color: #aaa;
-  border-color: #ddd;
-  cursor: not-allowed;
-}
-
-.createButtonCell {
-  padding-top: 22px;
-}
-
-.inputGroup {
-  display: flex;
-}
-
-.prefix {
-  display: flex;
-  align-items: center;
-  height: 35px;
-  padding: 0 8px;
-  border: 1px solid #ccc;
-  border-right: 0;
-  border-radius: 4px 0 0 4px;
-  background-color: #f2f2f2;
-  font-family: monospace;
-  font-size: 13px;
-  color: #666;
-}
-
-.inputGroup .smallInput {
-  flex: 1;
-  border-radius: 0 4px 4px 0;
-  font-family: monospace;
-}
-
 /* admin/system/access/Access.module.css */
 .codeView {
   display: flex;
@@ -994,78 +916,6 @@
 }
 
 /* ───────── 리스트 · 표 ───────── */
-/* admin/system/role/Role.module.css */
-.tableWrapper {
-  width: 100%;
-  overflow-x: auto;
-  background-color: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-}
-
-.roleTable {
-  width: 100%;
-  min-width: 600px;
-  border-collapse: collapse;
-  font-size: 13px;
-  color: #333;
-}
-
-.roleTable th {
-  height: 40px;
-  padding: 0 10px;
-  background-color: #f7f7f7;
-  border-bottom: 1px solid #ddd;
-  font-weight: 600;
-  color: #555;
-  text-align: left;
-}
-
-.roleTable td {
-  height: 48px;
-  padding: 0 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.handle {
-  font-size: 18px;
-  color: #999;
-  cursor: grab;
-}
-
-.dropAbove {
-  box-shadow: inset 0 2px 0 #4a7fd8;
-}
-
-.dragging {
-  opacity: 0.4;
-}
-
-.protectedRow {
-  background-color: #f2f2f2;
-  color: rgba(0, 0, 0, 0.4);
-  cursor: not-allowed;
-}
-
-.actions {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.actions > * + * {
-  margin-left: 6px;
-}
-
-.tdEmpty {
-  padding: 24px 10px !important;
-  color: #999;
-  text-align: center;
-}
-
-.mono {
-  font-family: monospace;
-}
-
 /* ExamSetTable.jsx (인라인 스타일) */
 .zebraTable {
   width: 100%;
@@ -1136,84 +986,6 @@
 
 .timetable .subjectRow td {
   background-color: #fff4f4;
-}
-
-/* admin/system/menu/Menu.module.css (컬럼 리스트) */
-.columns {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  width: 100%;
-}
-
-.column {
-  background-color: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  min-width: 0;
-}
-
-.columnHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 48px;
-  padding: 0 12px;
-  background-color: #f7f7f7;
-  border-bottom: 1px solid #ddd;
-  font-size: 14px;
-  font-weight: 600;
-  color: #555;
-}
-
-.list {
-  height: 200px;
-  overflow-y: auto;
-  font-size: 13px;
-}
-
-.listItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 12px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
-}
-
-.listItem:hover {
-  background-color: #fafafa;
-}
-
-.listItemSelected {
-  background-color: #eef3fd;
-  font-weight: 600;
-}
-
-.listItemSelected:hover {
-  background-color: #eef3fd;
-}
-
-.selectedMark {
-  margin-left: auto;
-  font-size: 11px;
-  color: #4a7fd8;
-}
-
-.unused {
-  color: rgba(0, 0, 0, 0.4);
-}
-
-.warning {
-  color: #d68a00;
-  cursor: help;
-}
-
-.listEmpty {
-  padding: 24px 12px;
-  color: #999;
-  text-align: center;
 }
 
 /* MemberDetail.module.css (.detailList) */
@@ -1332,19 +1104,6 @@
   font-size: 13px;
   line-height: 1.6;
   white-space: pre-wrap;
-}
-
-/* Role.module.css (.userList) */
-.userList {
-  max-height: 200px;
-  margin: 0;
-  padding: 8px 12px 8px 28px;
-  overflow-y: auto;
-  background-color: #f7f7f7;
-  border-radius: 4px;
-  list-style: disc;
-  font-size: 13px;
-  width: 100%;
 }
 
 /* Test.module.css (.answerList) */
@@ -1606,18 +1365,6 @@
   color: #f1f3f5;
 }
 
-/* PageContainer.module.css (헤더 재현용) */
-.pageHeader {
-  width: 100%;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #d0d0d0;
-}
-
-.pageHeaderTitle {
-  margin: 8px 0 0;
-  font-size: 22px;
-}
-
 /* Access.module.css (.pageTitle — 정의만 있고 쓰지 않음) */
 .pageTitleUnderline {
   width: 100%;
@@ -1772,29 +1519,6 @@
   font-size: 0.95rem;
 }
 
-/* Menu · Role (.listErrorTitle / .listErrorMessage) */
-.errorBlock {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 20px;
-  text-align: center;
-}
-
-.errorTitle {
-  margin: 0;
-  color: #555;
-}
-
-.errorDetail {
-  margin: 0;
-  font-size: 12px;
-  color: #d64545;
-  white-space: pre-line;
-}
-
 /* 필드 오류 문구 (화면마다 다름) */
 .errorRem {
   margin: 0;
@@ -1838,12 +1562,6 @@
 }
 
 /* 힌트 문구 */
-.hint13 {
-  margin: 0;
-  font-size: 13px;
-  color: #777;
-}
-
 .hint12 {
   margin: 0;
   font-size: 12px;
@@ -1856,17 +1574,6 @@
   color: #555;
 }
 
-/* Menu.module.css (.selfLockNotice) */
-.callout {
-  width: 100%;
-  padding: 8px 10px;
-  background-color: #fff8e6;
-  border: 1px solid #f0d79a;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #7a5b00;
-}
-
 /* MyCounsel.module.css (.notice) */
 .calloutDashed {
   width: 100%;
@@ -1875,22 +1582,6 @@
   border: 1px dashed #d8a800;
   border-radius: 4px;
   font-size: 13px;
-}
-
-/* Role.module.css (.orderBar) */
-.actionBar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 20px;
-  background-color: #f3f7ff;
-  border: 1px solid #c9d9f5;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #335;
 }
 
 /* MyCourseData.module.css (.toast) */
@@ -2460,9 +2151,7 @@
     grid-template-columns: 1fr;
   }
 
-  .createForm,
   .cascade,
-  .columns,
   .infoGrid,
   .cardGrid,
   .masterDetail,
@@ -2470,7 +2159,4 @@
     grid-template-columns: 1fr;
   }
 
-  .createButtonCell {
-    padding-top: 0;
   }
-}

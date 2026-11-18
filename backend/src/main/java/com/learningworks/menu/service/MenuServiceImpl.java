@@ -19,6 +19,7 @@ import com.learningworks.menu.dao.MenuDao;
 import com.learningworks.menu.vo.response.MenuRoleVO;
 import com.learningworks.menu.vo.response.MyMenuVO;
 import com.learningworks.role.RoleConstants;
+import com.learningworks.menu.vo.request.MenuOrderVO;
 import com.learningworks.menu.vo.request.ModifyMenuOrderVO;
 import com.learningworks.menu.vo.request.ModifyMenuParentVO;
 import com.learningworks.menu.vo.request.ModifyMenuVO;
@@ -310,20 +311,42 @@ public class MenuServiceImpl implements MenuService {
   }
 
   /**
-   * 메뉴 순서 변경 (같은 상위 메뉴 안). 받은 순서대로 MENU_ORDER를 1부터 다시 매긴다.
+   * 메뉴 순서 변경. 여러 상위 메뉴의 순서를 한 번에 받아(화면의 [순서 저장]) 각각 받은 순서대로 MENU_ORDER를 1부터 다시 매긴다.
+   * - 모두 검사한 뒤 저장한다. 하나라도 거부되면 아무것도 바꾸지 않는다 (한 트랜잭션)
+   * - orders가 비었거나 null 항목 · 같은 상위 메뉴가 두 번이면 MENU_ORDER_INVALID. 항목마다 menuIds는 비어 있지 않고 null · 중복 없음
    * - menuIds는 해당 상위 메뉴의 현재 하위 메뉴 전체여야 한다. 그 사이 추가 · 삭제되었으면 MENU_ORDER_OUTDATED
    * - MDFY_DT는 바꾸지 않는다 (열어 둔 다른 화면의 수정이 MENU_OUTDATED로 거부되지 않게)
    */
   @Transactional(rollbackFor = Exception.class)
   @Override
   public MenuListVO updateMenuOrder(ModifyMenuOrderVO modifyMenuOrderVO) {
-    List<String> menuIds = modifyMenuOrderVO.getMenuIds();
+    List<MenuOrderVO> orders = modifyMenuOrderVO.getOrders();
+    if (orders == null || orders.isEmpty() || orders.stream().anyMatch(Objects::isNull)) {
+      throw new LearningworksException(ErrorCode.MENU_ORDER_INVALID);
+    }
+    Set<String> parentIds = new HashSet<>();
+    for (MenuOrderVO order : orders) {
+      // 대메뉴(null)도 한 번만
+      if (!parentIds.add(Objects.requireNonNullElse(order.getParentId(), ""))) {
+        throw new LearningworksException(ErrorCode.MENU_ORDER_INVALID);
+      }
+      this.checkMenuOrder(order);
+    }
+
+    orders.forEach(order -> this.menuDao.updateMenuOrders(order.getMenuIds()));
+
+    return this.readMenuList();
+  }
+
+  /** 상위 메뉴 하나의 순서 검사 (저장하지 않음) */
+  private void checkMenuOrder(MenuOrderVO order) {
+    List<String> menuIds = order.getMenuIds();
     if (menuIds == null || menuIds.isEmpty() || menuIds.stream().anyMatch(Objects::isNull)
         || new HashSet<>(menuIds).size() != menuIds.size()) {
       throw new LearningworksException(ErrorCode.MENU_ORDER_INVALID);
     }
 
-    String parentId = modifyMenuOrderVO.getParentId();
+    String parentId = order.getParentId();
     if (parentId != null && this.menuDao.selectMenuById(parentId) == null) {
       throw new LearningworksException(ErrorCode.MENU_NOT_EXISTS);
     }
@@ -332,10 +355,6 @@ public class MenuServiceImpl implements MenuService {
     if (!currentChildIds.equals(new HashSet<>(menuIds))) {
       throw new LearningworksException(ErrorCode.MENU_ORDER_OUTDATED);
     }
-
-    this.menuDao.updateMenuOrders(menuIds);
-
-    return this.readMenuList();
   }
 
   /**

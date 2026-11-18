@@ -74,8 +74,7 @@
 
 | 컴포넌트 | 위치 | 주요 props · 메모 |
 | --- | --- | --- |
-| `PageContainer` | `common/PageContainer.jsx` | 브레드크럼 + 22px 제목 + 본문. `title`을 안 넘기면 브레드크럼 마지막 항목 |
-| `Breadcrumb` | `common/Breadcrumb.jsx` | `crumbs: {key, title}[]`. 항목 계산은 `useBreadcrumbs` |
+| `PageContainer` | `common/PageContainer.jsx` | 호환용 틀. 안쪽은 표준 `PageHeader` (2026-11-17). `title`을 안 넘기면 브레드크럼 마지막 항목. 새 화면은 `PageHeader`를 직접 씀 |
 | `Section` | `components/Section.jsx` | 흰 카드 + 1.2rem 제목. `title`, `nopadding`, `nomargin`, `direction`, `itemGap` |
 | `Grid` | `common/Grid.jsx` | CSS grid 표. `header`, `content`, `columnStyle`, `checkable`, `editable`, `clickableColumn`, `activeRows`, `footer` |
 | `Paginator` | `common/Paginator.jsx` | `start`, `countPerPageGroup`, `activePage`, `setActivePage`, `totalPageCount` |
@@ -83,8 +82,8 @@
 | `icons` | `common/input/icons.js` | edit, close, add, setting, fullStar, star, login, logout, download, downloadDone, progress, delete, refresh, sort, unchecked, checked, radioUnChecked, radioChecked, home, arrowRight, error, ok, full, exitFull |
 | `Id` · `Password` · `TextField` · `NativeSelect` · `Textarea` · `Checkbox` · `Radio` · `FileField` · `Button` | `common/input/Input.jsx` | `NativeSelect` · `Textarea`는 스타일 클래스가 정의되어 있지 않아 브라우저 기본 모양 |
 | `Editor` | `common/Editor.jsx` | 리치 텍스트 에디터 (MyCourseData에서 사용). 카탈로그에는 넣지 않음 |
-| `NotFound` · `RouteError` | `common/error/` | 404 · 라우트 오류 화면 |
-| `Alert` · `Confirm` | `sample/Modal.jsx` | `ref.current.open()`. 새 코드는 `common/ui/Modal` · `useConfirm()`을 씀 (8장). 쓰는 곳(`admin/system/menu/Menu.jsx`)을 `common/ui/Modal` · `useConfirm`으로 바꾼 뒤 `sample/Modal` 삭제 |
+| `NotFound` · `RouteError` | `common/error/` | 404 · 라우트 오류 화면. 표준 `StatusBox size="lg"`로 옮김 (2026-11-17) |
+| `Alert` · `Confirm` | `sample/Modal.jsx` | `ref.current.open()`. 새 코드는 `common/ui/Modal` · `useConfirm()`을 씀 (8장). 메뉴 관리는 2026-11-17에 옮겨서 화면에서 쓰는 곳은 없음 (샘플만). 샘플 통일 전 예시를 정리할 때 `sample/Modal` 삭제 |
 | `Chart` · `PollList` · `DataGrid` | `sample/` | 샘플 전용. `Chart`(apexcharts)는 샘플에서만 사용 |
 
 ### sample / common 중복
@@ -93,9 +92,9 @@
 | --- | --- |
 | `input/` (IconButton, Input, icons), `Paginator` | 두 폴더가 완전히 같음 |
 | `Grid.jsx` | common만 `activeRows`(선택 행 배경)가 있고, `clickableColumn` 콜백이 `(value, rowIndex)` (sample은 `(value)`) |
-| `Modal.jsx` | sample에만 있음 (`admin/system/menu/Menu.jsx`도 sample에서 가져다 씀). `common/ui/Modal` · `useConfirm`으로 바꾼 뒤 `sample/Modal` 삭제 |
+| `Modal.jsx` | sample에만 있음. 화면에서 쓰는 곳은 없음 (메뉴 관리는 2026-11-17에 `useConfirm`으로 옮김) |
 
-`sample/`에서 가져다 쓰는 화면: `admin/course/**` 전체, `admin/survey/Survey.jsx`, `admin/test/AddTest.jsx` · `UpdateTest.jsx`, `admin/system/menu/Menu.jsx`(Modal). 새 코드는 **`common/`에서** 가져옵니다.
+`sample/`에서 가져다 쓰는 화면: `admin/course/**` 전체, `admin/survey/Survey.jsx`, `admin/test/AddTest.jsx` · `UpdateTest.jsx`. 새 코드는 **`common/`에서** 가져옵니다.
 
 ---
 
@@ -176,7 +175,6 @@
 | 공통 Input (Id · Password · TextField · Checkbox · Radio · FileField) | `common/input/Input.jsx` | 43.5px, radius 7, 테두리 `#ddd` |
 | 검색 툴바 (셀렉트 + 검색어 + 버튼, 오른쪽 등록) | `admin/system/member/MemberManagement` | 36px, 툴바 radius 6 |
 | 라벨 위 필드 + 폼 카드 | `login/Login` · `my/info/*Form` · `Member*Modal` | 38px, 라벨 .875rem/600 |
-| 13px 라벨 필드 + 접두어 입력 (`ROLE_`) | `admin/system/role/Role` | 35px, 3열 grid |
 | 연쇄 셀렉트 (대 > 중 > 소) · 읽기 전용 코드 | `admin/system/access/Access` · `AccessRole` | 36 · 37px |
 | 줄바꿈 인라인 폼 | `my/course/MyInterview` | 34px, 회색 상자 |
 | 인라인 한 줄 폼 | `my/course/MyCounsel` (.inlineForm) | 34px |
@@ -194,14 +192,11 @@
 | 패턴 | 원본 | 핵심 값 |
 | --- | --- | --- |
 | Grid + 선택 행 | `MemberManagement` · `Code` · `AccessRole` · `Access` · my/course | 줄무늬 `#f7f7f7`, 선택 `#ddd` |
-| CSS 모듈 표 (드래그 · 보호 행 · 작업 칸) | `admin/system/role/Role` | th 40px `#f7f7f7`, td 48px, 13px |
 | 줄무늬 점선 표 | `.../ExamSetTable` (인라인) | 14px, 점선 `#e5e5e5` |
 | 시간표 | `my/course/MyTimetable` | 11px, 머리글 `#bfd4fa`, 오늘 `#e3f6d0` |
-| 3단 컬럼 리스트 | `admin/system/menu/MenuColumn` | 머리 48px, 선택 `#eef3fd` + ◀ |
 | 상세 목록 (점선) | `admin/system/member/MemberDetail` | 110px \| 1fr |
 | 상세 목록 (회색 상자) | `my/info/MyInfoForm` | 80px \| 1fr |
 | 3열 정보 | `my/course/MyCounsel` | dt 12px 위, dd 14px 아래 |
-| 회색 상자 글머리 목록 | `admin/system/role/RoleUserMoveModal` | max-height 200 |
 | 타임라인 | `my/course/MyCounsel` | 왼쪽 선 `#d6dfec`, 점 `#3f6fb5` |
 | 보기 선택 목록 | `admin/test/test/Test` | 선택 `#bbfdbb` |
 | 시험 문제 블록 | `Exam*Modal` (인라인) | 제목 15px, 문제 상자 `#f7f7f7` |
@@ -211,8 +206,6 @@
 
 | 패턴 | 원본 | 핵심 값 |
 | --- | --- | --- |
-| 브레드크럼 | `common/Breadcrumb` | 13px `#777`, `⌂ > 대 > 중 > 소` |
-| 화면 제목 | `common/PageContainer` | 22px, 아래 테두리 `#d0d0d0` |
 | 밑줄 제목 (미사용) | `admin/system/access/Access` (.pageTitle) | 20px/600 |
 | 회색 탭 바 | `admin/survey/survey/Survey` · `admin/test/test/Test` | `#f5f5f5`, 선택 `#fff`, 상자 radius 10 10 0 0 |
 | 세그먼트 탭 | `Survey` (.surveyList) | `#ccc`, padding 10px 50px |
@@ -230,19 +223,17 @@
 | 등급 배지 (상 · 중 · 하 · 미진단) | `my/course/MyCounsel` | 12px/700, radius 12, 배경만 |
 | 태그 칩 | `my/course/MyCounsel` (.typeTag) | 11px, `#e8eef7` / `#3f6fb5` |
 | 채점 결과 글자 | `.../ExamGradeModal` | Y `#1a7f37` · N `#d1242f` · H `#0969da` · R `#9a6700` |
-| 안내 상자 (권한 확인 · 권한 없음) | `Role` · `Menu` · `Access` · `AccessRole` · `menu/MenuGuard` | 같은 CSS가 5곳에 복사됨 |
-| 빈 상태 | `MemberManagement`(점선) · `AccessRole`(가운데) · `Menu` · `Role`(td) · my/course(12px 문구) | 5가지 이상 |
+| 안내 상자 (권한 확인 · 권한 없음) | `Access` · `AccessRole` | 같은 CSS가 2곳에 복사됨 |
+| 빈 상태 | `MemberManagement`(점선) · `AccessRole`(가운데) · my/course(12px 문구) | 3가지 이상 |
 | 로딩 | `MyInfoForm`(.loadingText) · my/course(.loading) · 버튼 문구 "저장 중..." | |
-| 오류 + 다시 시도 | `Menu` · `Role` · `SideMenu` | 오류 상세 12px `#d64545` + refresh 버튼 |
+| 오류 + 다시 시도 | `SideMenu` | 오류 상세 12px `#d64545` + refresh 버튼 |
 | 필드 오류 문구 | `MyInfoForm` · `AddTest` · `MyCourseData` · `MyCounsel` · `HomeworkItem` | 5가지 (색 · 크기 다름) |
 | 성공 메시지 | `my/info/*Form` | `#d1e7dd` / `#0f5132` |
-| 힌트 문구 | `Role` · `Menu` · `MyCounsel` | 13px `#777` · 12px `#888` · 13px `#555` |
-| 경고 상자 | `Menu` (.selfLockNotice) · `MyCounsel` (.notice) | 노랑 배경, 실선 / 점선 |
-| 변경 안내 바 | `admin/system/role/Role` (.orderBar) | `#f3f7ff` / `#c9d9f5` |
+| 힌트 문구 | `MyCounsel` | 13px `#555` |
+| 경고 상자 | `MyCounsel` (.notice) | 노랑 배경, 점선 |
 | 토스트 | `my/course/MyCourseData` | 아래 가운데, 어두운 배경, 오류는 빨강 |
 | 건수 표시 | `AccessRole` · `MyCourseData` | 12px |
-| 브라우저 alert / confirm | Member · Role · Code · course 여러 곳 | 토스트 · 모달로 바꿀 후보 |
-| 404 · 라우트 오류 화면 | `common/error/*` | 흰 상자, 개발 환경 오류 상세 |
+| 브라우저 alert / confirm | Member · Code · course 여러 곳 | 토스트 · 모달로 바꿀 후보 |
 
 ### 레이아웃
 
@@ -256,7 +247,7 @@
 | 상세 머리 · 메타 · 본문 · 첨부 칩 | `my/course/MyCourseData` | 메타 12px `#777` |
 | my/course 화면 틀 (.page > .content) | `MyCourseData` · `MyInterview` · `MyTimetable` · `MyCounsel` | 테두리 `#ccc` |
 | 목록 \| 상세 | `MemberManagement` | grid `1fr 380px` |
-| 3패널 | `AccessRole` · `Code` · `Menu` | grid 3열 |
+| 3패널 | `AccessRole` · `Code` | grid 3열 |
 | 대시보드 카드 | `main/Main` | Section과 같은 제목 여백 |
 
 ### 오버레이
@@ -264,7 +255,6 @@
 | 패턴 | 원본 | 핵심 값 | 닫기 |
 | --- | --- | --- | --- |
 | 폼 모달 | `admin/system/member/Member*Modal` (MemberModal.module.css) | 460px, radius 6, 머리 · 바닥 구분선 | 버튼만 |
-| 역할 이동 모달 | `admin/system/role/RoleUserMoveModal` | 460px, `role="dialog"` | 바깥 클릭 · Esc |
 | 확인 모달 | `.../ConfirmModal` (인라인) | min 300px, radius 8, 가운데 정렬 | 바깥 클릭 = 취소 |
 | 큰 내용 모달 | `ExamQuestionViewModal` · `ExamTakeModal` · `ExamGradeModal` (인라인) | 800 · 900px, 88 · 90vh | 모달마다 다름 |
 | Alert · Confirm | `sample/Modal.jsx` | radius 10, 제목 1.4rem, 배경 `#000d` | 버튼 |
@@ -285,7 +275,7 @@
 
 - `App.jsx` · `App.css`: Vite 템플릿 잔재입니다. `App.css`는 `App.jsx`만 import하고, `App.jsx`는 아무 데서도 쓰지 않습니다.
 - `index.css`의 `.main_container` · `.sidebar_container` · `.main_content`: 쓰는 곳이 없습니다 (`MainLayout.module.css`가 대신함).
-- 같은 CSS 복사본: `.notice`(5곳), 모달 인라인 스타일 객체(`overlayStyle` · `boxStyle` · `headerStyle` … 4개 모달)
+- 같은 CSS 복사본: `.notice`(2곳: `Access` · `AccessRole`), 모달 인라인 스타일 객체(`overlayStyle` · `boxStyle` · `headerStyle` … 4개 모달)
 - `@fullcalendar/*` 패키지: 설치만 되어 있고 쓰는 곳이 없습니다.
 
 ### 결정 사항 (2026-11-16)
@@ -445,12 +435,12 @@
 | `admin/test/test/AddTest` · `UpdateTest` | 예시 | 문제 은행 문제 추가 · 수정 |
 | `admin/test/test/Test` | 예시 (8차) | 문제 은행 목록 (문항마다 펼치기 · 출제 통계). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
 | `admin/system/member/*` | 예시 | 목록 \| 상세. 등록 · 수정 · 비밀번호 초기화는 폼 모달, 역할 바꾸기는 `desc-list` 안 select + [역할 변경] + `useConfirm` |
-| `admin/system/role/Role` | 부품 | `input-group`(접두어) + `Table` 순서 바꾸기(잠긴 행) · 칸 편집 + "순서가 변경되었습니다" `Callout` |
-| `role/RoleUserMoveModal` | 부품 | `Modal` + `list-boxed` + `SelectBox` + `Callout`. 결과(일부만 성공 포함)는 토스트 |
+| `admin/system/role/Role` | 부품 · **옮김 (2026-11-17)** | `input-group`(접두어) + `Table` 순서 바꾸기(잠긴 행) · 칸 편집 + "순서가 변경되었습니다" `Callout` |
+| `role/RoleUserMoveModal` | 부품 · **옮김 (2026-11-17)** | `Modal` + `list-boxed` + `SelectBox` + `Callout`. 결과(일부만 성공 포함)는 토스트 |
 | `admin/system/access/Access` | 예시 (8차) | 접근 관리 (연쇄 선택 · 같은 폼으로 추가 · 수정) |
 | `access-role/AccessRole` | 예시 (8차) | 권한별 접근 권한 관리 (저장 전 변경 표시). 새 클래스 `layout-split-start` |
 | `admin/system/code/*` | 예시 (8차) | 환경 변수 관리 (패널 하나가 보기 · 수정 · 추가). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
-| `admin/system/menu/Menu` · `MenuColumn` | 예시 (10차) | 메뉴 관리 (3단 `Table` + 순서 바꾸기 + 순서 저장 바). 상세는 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. 지금 화면의 "놓자마자 저장" 대신 저장 바로 한 번에 (역할 관리와 같게), 키보드(↑ ↓)로도 옮길 수 있게 됨 |
+| `admin/system/menu/Menu` · `MenuColumn` | 예시 (10차) · **옮김 (2026-11-17)** | 메뉴 관리 (3단 `Table` + 순서 바꾸기 + 순서 저장 바). 상세는 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. 지금 화면의 "놓자마자 저장" 대신 저장 바로 한 번에 (역할 관리와 같게), 키보드(↑ ↓)로도 옮길 수 있게 됨 |
 | `my/course/MyCourse` | 부품 | `Tabs` (고른 탭은 주소 `?tab=`에) |
 | `my/course/MyCourseData` | 예시 · 제외 1 | 목록 \| 상세 · 상세 화면. **제외**: 리치 텍스트 `Editor` (6장 "표준을 만들지 않기로 한 것") |
 | `my/course/MyTimetable` | 부품 + 예시 (8차) | 날짜별 시간표 (새 클래스 `tr.is-highlight`). 하루 보기는 `Table bordered`, 업로드는 `FilePicker` |
@@ -460,7 +450,7 @@
 | `my/info/MyInfoForm` · `MyPasswordForm` | 부품 | `Field` + `form-stack` + `desc-list`(읽기 전용 값). 성공은 토스트, 비밀번호 규칙(8~20자)은 처음부터 `hint`로 |
 | `main/Main` | 예시 | 대시보드 |
 | `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
-| `menu/MenuGuard` · `login/IsLogin` | 부품 | 로직. 화면은 `StatusBox` (loading · error · denied) |
+| `menu/MenuGuard` · `login/IsLogin` | 부품 · **`MenuGuard` 옮김 (2026-11-17)** | 로직. 화면은 `StatusBox` (loading · error · denied) |
 | `Section.jsx` | 부품 | `Panel` |
 | `my/course/MyCourseList` · `MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가 |
 
@@ -475,7 +465,8 @@
 - **다크 모드**: 사이드바 머리(로고와 접기 버튼 사이)에 [☾] 버튼이 생깁니다. 켜면 사이드바 · 샘플 페이지(그리고 `darkReady`를 넣은 화면)만 어두워지고, 아직 옮기지 않은 화면은 지금처럼 밝게 보입니다. 기본은 밝은 모드입니다.
 - 본문 배경(`body`)을 토큰(`--color-bg-page` = gray-2 `#e9ecef`)으로 바꿨습니다. 예전 `#e9e9e9`와 거의 같습니다.
 - 화면 폭 768px 이하에서는 사이드바가 숨고 왼쪽 위 [☰ 메뉴] 버튼으로 여는 서랍이 됩니다. 본문 여백도 그 폭에서 `64px 16px 24px`로 바뀝니다 (`layout/MainLayout.module.css`).
-- 그 밖의 기존 화면 모양은 그대로입니다. 표준 클래스는 새 코드(샘플 페이지)에서만 씁니다.
+- **화면 머리 (2026-11-17)**: `common/PageContainer`의 안쪽 머리를 표준 `PageHeader`로 바꿨습니다. 아직 옮기지 않은 화면(`PageContainer`를 쓰는 화면)도 머리가 표준 모양이 됩니다: 집 아이콘 + `›` 구분자 브레드크럼(URL이 있는 메뉴는 링크), 토큰 색 · 크기, 아래 회색 선 없음, 머리 아래 간격 24px → 20px. 제목 크기(22px)와 제목을 정하는 규칙은 그대로입니다. 각 화면 파일은 바뀌지 않았습니다.
+- 그 밖의 기존 화면 모양은 그대로입니다. 표준 클래스는 새 코드(샘플 페이지 · 옮긴 화면)에서만 씁니다.
 
 ---
 
@@ -1140,10 +1131,10 @@ import TransferList from "../common/ui/TransferList";
 <Breadcrumb crumbs={[...]} />   {/* 브레드크럼만 */}
 ```
 
-- 기존 `common/PageContainer`(`⌂ > 대 > 중`, 22px 제목)를 대신할 모양입니다. `PageContainer`는 아직 그대로이며, 옮길 때 안쪽 머리를 `PageHeader`로 바꾸면 됩니다 (`useBreadcrumbs`의 결과를 `crumbs`로).
+- `common/PageContainer`(`⌂ > 대 > 중`, 22px 제목)를 대신하는 모양입니다. 2026-11-17부터 `PageContainer`도 안에서 이 `PageHeader`를 그리므로 아직 옮기지 않은 화면도 머리 모양은 같습니다. `PageContainer`는 호환용으로 남겨 둔 것이고, 화면을 옮길 때는 `PageHeader`를 직접 씁니다 (`useBreadcrumbs`의 결과를 `crumbs`로, 필요하면 `description` · `actions`).
 - 브레드크럼은 `<ol>`이고 구분자 `›`는 CSS가 그립니다. 마지막 항목(현재 화면)은 링크 없이 `aria-current="page"`.
 - **`to`는 실제로 열 수 있는 화면에만** 넘깁니다 (URL이 있는 소메뉴 · 상세 화면의 목록). URL이 없는 대 · 중메뉴는 `to` 없이 글자라 마우스를 올려도 반응하지 않습니다. 링크 항목은 평소에도 글자 항목보다 조금 진합니다(`--color-text-secondary`).
-- `useBreadcrumbs()`는 이 규칙대로 URL이 있는 메뉴에만 `to`를 붙여 줍니다. 그대로 `crumbs`에 넘기면 됩니다. 라우트로만 만든 항목(메뉴에 없는 화면의 중간 단계)은 열 수 있는 화면인지 알 수 없어 `to`를 붙이지 않습니다. 기존 `common/Breadcrumb`은 `to`를 쓰지 않으므로 지금 화면은 그대로입니다.
+- `useBreadcrumbs()`는 이 규칙대로 URL이 있는 메뉴에만 `to`를 붙여 줍니다. 그대로 `crumbs`에 넘기면 됩니다. 라우트로만 만든 항목(메뉴에 없는 화면의 중간 단계)은 열 수 있는 화면인지 알 수 없어 `to`를 붙이지 않습니다. 기존 `common/Breadcrumb`(글자만, `to`를 쓰지 않음)은 이제 샘플의 통일 전 예시만 쓰며, 그 예시를 지울 때 함께 지웁니다.
 - `actions`에는 화면 전체에 걸리는 동작만 둡니다 (등록 · 내보내기). 목록 위 검색 · 필터는 `.toolbar` 클래스 (PageHeader 아래에 따로).
 
 #### 사이드 메뉴
@@ -1421,7 +1412,7 @@ import Comment from "../common/ui/Comment";
 
 - 토큰 · 표준 UI(8장)는 다크 모드를 지원합니다.
 - **앱 전체에서 켭니다**: 사이드바 머리의 [☾] 버튼 (샘플 페이지 목차의 버튼도 같은 값). 이 브라우저에 기억하고(`localStorage`의 `lms-color-scheme`), 기본은 밝은 모드입니다. 시스템 설정은 따르지 않습니다.
-- **화면별로 켜짐**: 표준으로 옮긴 화면만 다크를 따릅니다. `MainLayout`이 본문(`<main>`)을 밝은 섬으로 감싸고, 지금 라우트의 `handle`에 `darkReady: true`가 있으면 섬을 풉니다. 지금은 샘플 페이지만 `darkReady`입니다.
+- **화면별로 켜짐**: 표준으로 옮긴 화면만 다크를 따릅니다. `MainLayout`이 본문(`<main>`)을 밝은 섬으로 감싸고, 지금 라우트의 `handle`에 `darkReady: true`가 있으면 섬을 풉니다. 지금 `darkReady`인 화면: 샘플 페이지, 메뉴 관리, 권한 관리, 404 (2026-11-17). 라우트 오류 화면(`errorElement`)은 라우트가 아니라서 오류가 난 화면의 설정을 따릅니다.
 - 사이드바는 원래 어두운 색이라 모드와 상관없이 같습니다.
 - 샘플의 "통일 전" · "기존 샘플" 영역과 그 모달은 색을 직접 적어서 다크 모드에서도 **밝게 고정**됩니다 (아래 "밝은 섬").
 
@@ -1478,5 +1469,5 @@ const [scheme, setColorScheme] = useColorScheme(); // "light" | "dark"
 3. 라우트 `handle`에 `darkReady: true`를 넣습니다. 하위 라우트도 같은 화면이면 부모 하나에만 넣어도 됩니다 (지금 라우트 중 하나라도 `darkReady`면 켜짐).
 4. 모든 화면이 `darkReady`가 되면 `MainLayout`의 밝은 섬과 `darkReady` 표시를 지웁니다.
 
-- `PageContainer` · `Breadcrumb` · `Section`은 아직 색을 직접 적어서, 이것을 쓰는 화면은 `PageHeader` · `Panel`로 바꾼 뒤 `darkReady`를 넣습니다.
+- `Section`은 아직 색을 직접 적어서, 이것을 쓰는 화면은 `Panel`로 바꾼 뒤 `darkReady`를 넣습니다. `PageContainer`는 2026-11-17부터 안쪽이 표준 `PageHeader`라 다크 모드를 따릅니다 (화면의 나머지 부분만 확인하면 됨).
 - 표준 `Modal` · 토스트는 `<body>`에 그려져서, 다크 모드에서 밝은 섬 안(아직 안 옮긴 화면)에서 열어도 어둡게 보입니다. 옮기기 전 화면에서 밝게 보여야 하면 모달 최상위에 `data-color-scheme="light"`를 붙입니다.

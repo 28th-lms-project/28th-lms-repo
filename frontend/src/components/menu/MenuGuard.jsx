@@ -4,13 +4,14 @@ import { Navigate, useLocation, useMatches } from "react-router-dom";
 import { selectUser } from "../../store/slices/loginSliceStore";
 import {
   fetchMyMenus,
+  refreshMyMenus,
   selectGuardUrls,
   selectIsMenuSuperAdmin,
   selectMyMenus,
   selectMyMenuStatus,
 } from "../../store/slices/menuSliceStore";
 import { findGuardUrl, getGuardTarget } from "../../router/routeUtils";
-import styles from "./MenuGuard.module.css";
+import StatusBox from "../common/ui/StatusBox";
 
 // 항상 열리는 경로 (대시보드 · 로그인)
 const OPEN_PATHS = ["/", "/login"];
@@ -50,10 +51,18 @@ export default function MenuGuard({ children }) {
   // 2. 비로그인이면 로그인 화면으로
   if (!user) return <Navigate to="/login" replace />;
 
-  // 3. 내 메뉴를 받는 중이면 비워 두고, 실패하면 안내
-  if (status === "idle" || status === "loading") return null;
+  // 3. 내 메뉴를 받는 중이면 안내, 실패하면 오류 + [다시 시도] (사이드바와 같은 refreshMyMenus)
+  if (status === "idle" || status === "loading") {
+    return <StatusBox type="loading" title="메뉴 정보를 불러오는 중..." />;
+  }
   if (status === "failed") {
-    return <p className={styles.notice}>메뉴 정보를 불러오지 못했습니다. 새로고침해 주세요.</p>;
+    return (
+      <StatusBox
+        type="error"
+        title="메뉴 정보를 불러오지 못했습니다."
+        onRetry={() => dispatch(refreshMyMenus())}
+      />
+    );
   }
 
   // 4. SUPER_ADMIN은 통과
@@ -63,5 +72,5 @@ export default function MenuGuard({ children }) {
   const menuUrl = findGuardUrl(guardUrls, getGuardTarget(matches, pathname));
   if (menuUrl && myMenus.some((menu) => menu.menuUrl === menuUrl)) return children;
 
-  return <p className={styles.notice}>권한이 없습니다.</p>;
+  return <StatusBox type="denied" />;
 }

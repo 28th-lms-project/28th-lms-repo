@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { Grid } from "../../../common/Grid";
-import { IconButton } from "../../../common/input/IconButton";
 import { icons } from "../../../common/input/icons";
 import { useParams } from "react-router-dom";
 import {
@@ -8,25 +6,22 @@ import {
   getCourseSurvey,
 } from "../../../../api/admin/system/survey/surveyApi";
 import CourseSurveyForm from "./CourseSurveyForm";
-
-const SURVEY_HEADER = [
-  { id: "no", title: "번호" },
-  { id: "title", title: "설문 명" },
-  { id: "surveySubject", title: "과목 명" },
-  { id: "surveyType", title: "설문 유형" },
-  { id: "count", title: "항목 수" },
-  { id: "participation", title: "참여 수" },
-  { id: "result", title: "결과" },
-  { id: "delete", title: "삭제" },
-];
-
-const GRID_COLUMN_STYLE = "80px 5fr 120px 120px 80px 100px 90px 70px";
+import usePermission from "../../../../hooks/usePermission";
+import Button from "../../../common/ui/Button";
+import StatusBox from "../../../common/ui/StatusBox";
+import Table from "../../../common/ui/Table";
+import { useConfirm, useToast } from "../../../common/ui/feedbackContext";
 
 export default function StudentSurvey() {
   const { id: courseId } = useParams();
   const [surveys, setSurveys] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const { can } = usePermission();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   useEffect(() => {
     let ignoreUpdateState = false;
@@ -39,10 +34,15 @@ export default function StudentSurvey() {
           } else {
             setSurveys([]);
           }
+          setLoadError(null);
         }
       } catch (e) {
         if (!ignoreUpdateState) {
-          alert(e.message);
+          setLoadError(e);
+        }
+      } finally {
+        if (!ignoreUpdateState) {
+          setLoading(false);
         }
       }
     })();
@@ -53,34 +53,15 @@ export default function StudentSurvey() {
 
   // 목록 다시 불러오기
   const reloadSurveys = () => {
+    setLoading(true);
     setReloadKey((prev) => prev + 1);
   };
 
   const onSuccessAdd = () => {
     setIsAdding(false);
+    toast.success("설문을 등록했습니다.");
     reloadSurveys();
   };
-
-  const content = surveys.map((survey, index) => {
-    const values = {
-      no: index + 1,
-      title: (
-        <div onClick={() => onClickName(survey.id, survey.courseId)}>
-          {survey.title}
-        </div>
-      ),
-      surveySubject: survey.surveySubject,
-      surveyType: survey.surveyType,
-      count: survey.count,
-      participation: `${survey.answerCount} / ${survey.studentCount}`,
-      result: <div onClick={() => onClickResult(survey.id)}>결과보기</div>,
-      delete: <div onClick={() => onClickDelete(survey)}>삭제</div>,
-    };
-    return SURVEY_HEADER.map((col) => ({
-      id: `${survey.id}-${col.id}`,
-      value: values[col.id],
-    }));
-  });
 
   const onClickName = (courseSurveyId, courseId) => {
     window.open(
@@ -98,36 +79,145 @@ export default function StudentSurvey() {
     );
   };
 
+  const onClickStatistics = (courseSurveyId) => {
+    window.open(
+      `/survey/statistics/${courseId}/${courseSurveyId}`,
+      "courseSurveyStatistics",
+      "width=1620,height=1080",
+    );
+  };
+
   const onClickDelete = async (survey) => {
-    if (!confirm(`'${survey.title}' 설문을 삭제할까요?`)) {
+    const ok = await confirm({
+      title: "설문 삭제",
+      message: `'${survey.title}' 설문을 삭제할까요?`,
+      confirmText: "삭제",
+      danger: true,
+    });
+    if (!ok) {
       return;
     }
     try {
       await deleteCourseSurvey(courseId, survey.id);
+      toast.success("설문을 삭제했습니다.");
       reloadSurveys();
     } catch (e) {
-      alert(e.message);
+      toast.error(e.message);
     }
   };
 
-  let addIcon = icons.add;
-  let addText = "설문 추가";
-  if (isAdding) {
-    addIcon = icons.close;
-    addText = "취소";
+  const columns = [
+    { key: "no", title: "번호", width: 70, align: "center", render: (row, index) => index + 1 },
+    {
+      key: "title",
+      title: "설문 명",
+      render: (survey) => (
+        <Button
+          variant="text"
+          onClick={() => onClickName(survey.id, survey.courseId)}
+        >
+          {survey.title}
+        </Button>
+      ),
+    },
+    { key: "surveySubject", title: "과목 명", width: 120 },
+    { key: "surveyType", title: "설문 유형", width: 110 },
+    { key: "count", title: "항목 수", width: 80, align: "num" },
+    {
+      key: "participation",
+      title: "참여 수",
+      width: 100,
+      align: "num",
+      render: (survey) => `${survey.answerCount} / ${survey.studentCount}`,
+    },
+    {
+      key: "result",
+      title: "결과",
+      width: 100,
+      align: "center",
+      render: (survey) => (
+        <Button size="sm" onClick={() => onClickResult(survey.id)}>
+          결과보기
+        </Button>
+      ),
+    },
+  ];
+
+  // 통계 권한이 있는 사람에게만 통계 칸을 보여준다
+  if (can("COURSE_SURVEY_STAT_READ")) {
+    columns.push({
+      key: "statistics",
+      title: "통계",
+      width: 100,
+      align: "center",
+      render: (survey) => (
+        <Button size="sm" onClick={() => onClickStatistics(survey.id)}>
+          통계보기
+        </Button>
+      ),
+    });
+  }
+
+  columns.push({
+    key: "delete",
+    title: "삭제",
+    width: 90,
+    align: "center",
+    render: (survey) => (
+      <Button
+        size="sm"
+        variant="danger"
+        icon={icons.delete}
+        onClick={() => onClickDelete(survey)}
+      >
+        삭제
+      </Button>
+    ),
+  });
+
+  let list;
+  if (loadError) {
+    list = (
+      <StatusBox
+        type="error"
+        detail={loadError.message}
+        onRetry={reloadSurveys}
+      />
+    );
+  } else {
+    list = (
+      <Table
+        ariaLabel="과정 설문 목록"
+        columns={columns}
+        rows={surveys}
+        rowKey="id"
+        loading={loading}
+        emptyText="등록된 설문이 없습니다."
+      />
+    );
   }
 
   return (
-    <>
-      <IconButton icon={addIcon} onClick={() => setIsAdding((prev) => !prev)}>
-        {addText}
-      </IconButton>
-      {isAdding && <CourseSurveyForm onSuccess={onSuccessAdd} />}
-      <Grid
-        header={SURVEY_HEADER}
-        content={content}
-        columnStyle={GRID_COLUMN_STYLE}
-      />
-    </>
+    <div className="form-stack">
+      <div className="toolbar">
+        <span className="field-hint">설문 {surveys.length}건</span>
+        {!isAdding && (
+          <Button
+            variant="primary"
+            icon={icons.add}
+            onClick={() => setIsAdding(true)}
+          >
+            설문 추가
+          </Button>
+        )}
+      </div>
+      {isAdding && (
+        <CourseSurveyForm
+          onSuccess={onSuccessAdd}
+          onCancel={() => setIsAdding(false)}
+        />
+      )}
+      {list}
+    </div>
   );
 }
