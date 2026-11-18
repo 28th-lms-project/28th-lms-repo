@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { testActions } from "../../../../store/slices/testSliceStore";
 import { getCodeOptionList } from "../../../../api/admin/system/code/codeApi";
 import SelectBox from "../../../common/ui/SelectBox";
@@ -12,6 +12,8 @@ import { useToast } from "../../../common/ui/feedbackContext";
  */
 export default function TestSubjectSelect({ inputId, ...rest }) {
   const dispatch = useDispatch();
+  // 화면 값도 slice 값으로 그린다 (slice 에 남은 과목과 화면이 어긋나지 않도록)
+  const selectSubjectId = useSelector((store) => store.test.selectSubjectId);
   const toast = useToast();
   const [subjectOptions, setSubjectOptions] = useState([]);
   // 과목 목록을 불러오는 동안은 고를 수 없게 하고 안내 문구를 보여 준다
@@ -50,6 +52,7 @@ export default function TestSubjectSelect({ inputId, ...rest }) {
       {...rest}
       inputId={inputId}
       options={subjectOptions}
+      value={selectSubjectId || null}
       onChange={handleChange}
       isDisabled={loading}
       placeholder={loading ? "과목 불러오는 중..." : "과목 선택"}

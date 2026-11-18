@@ -5,8 +5,8 @@ import { useToast } from "../../../common/ui/feedbackContext";
 
 /**
  * 시험 종류 선택. 종류 목록은 공통 코드(TEST_TYPE)에서 불러온다.
- * TODO 고른 값은 아직 어디에도 저장 · 전송하지 않음 (등록 요청의 testType 에는 지금 시험 과목이 들어감, 담당자 확인 필요)
- * Field 안에서 쓸 때는 inputId 를 Field htmlFor 와 맞춘다. 나머지 props 는 SelectBox 로 전달
+ * 고른 값은 부모가 value · onChange 로 관리한다 (ExamPage → 등록 요청의 testType)
+ * Field 안에서 쓸 때는 inputId 를 Field htmlFor 와 맞춘다. 나머지 props(value · onChange 등)는 SelectBox 로 전달
  */
 export default function ExamSubjectSelect({ inputId, ...rest }) {
   const toast = useToast();
