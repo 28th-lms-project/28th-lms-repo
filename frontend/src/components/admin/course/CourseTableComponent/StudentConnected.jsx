@@ -55,6 +55,16 @@ export default function StudentConnected() {
   if (!attendanceSummary) {
     return <StatusBox type="empty" title="출석 정보가 없습니다." />;
   }
+  // 수업일 = 과정 기간 안에서 시간표가 있는 날. 시간표가 없으면 출석률을 계산할 수 없다
+  if (attendanceSummary.totalClassDays === 0) {
+    return (
+      <StatusBox
+        type="empty"
+        title="시간표가 등록되지 않았습니다."
+        detail="출석률은 시간표가 있는 날을 수업일로 계산합니다. 시간표 탭에서 먼저 시간표를 올려 주세요."
+      />
+    );
+  }
 
   const { progressRate, students = [] } = attendanceSummary;
 

@@ -174,20 +174,28 @@
 	</select>
 	
 	
+	<!-- 과제 목록. SUBMITTED_YN: 로그인 사용자(userId)가 삭제되지 않은 댓글(제출)을 남겼으면 Y -->
 	<select id="readHomeworkList"
-	       parameterType="string"
 	       resultType="com.learningworks.course.vo.response.HomeworkVO">
 	SELECT CH.CONTENT 
     , CH.COURSE_ID 
-    , TO_CHAR(CRT_DT,'YYYY-MM-DD') AS CRT_DT 
-    , TO_CHAR(END_DATE,'YYYY-MM-DD') AS END_DATE 
+    , TO_CHAR(CH.CRT_DT,'YYYY-MM-DD') AS CRT_DT 
+    , TO_CHAR(CH.END_DATE,'YYYY-MM-DD') AS END_DATE 
     , CH.ID 
-    , TO_CHAR(MDFY_DT, 'YYYY-MM-DD') AS MDFY_DT  
+    , TO_CHAR(CH.MDFY_DT, 'YYYY-MM-DD') AS MDFY_DT  
     , CH.SUBJECT 
+    , CASE WHEN EXISTS (SELECT 1
+                          FROM COURSE_HOMEWORK_REPLY CHR
+                         WHERE CHR.HOMEWORK_ID = CH.ID
+                           AND CHR.COURSE_STUDENT_ID = #{userId}
+                           AND CHR.DEL_YN = 'N')
+           THEN 'Y'
+           ELSE 'N'
+      END AS SUBMITTED_YN
   FROM COURSE_HOMEWORK CH
  WHERE CH.COURSE_ID IN (SELECT C.ID 
                       FROM COURSE C 
-                     WHERE C.ID = #{_parameter})
+                     WHERE C.ID = #{courseId})
    AND CH.DEL_YN = 'N'
    </select>
    
@@ -460,23 +468,28 @@
 
 
     <!--
-        출석률 요약: 전체 수업일 수 / 어제까지 진행된 수업일 수
-        COURSE 의 시작일 ~ 종료일 중 평일(월~금)만 센다. (시간표 · 공휴일은 보지 않음)
-        CONNECT BY LEVEL 로 시작일부터 하루씩 날짜를 만든다.
+        수업일 기준 (한 곳에서만 정의): 과정 기간 안에서 시간표(COURSE_TIME_TABLE)가 있는 날짜.
+        공휴일 · 휴강은 시간표가 없으니 빠지고, 보강(주말 수업)은 시간표가 있으면 들어간다.
+        파라미터 #{courseId}. 출석 체크 · 오늘 내 출결(AttendanceDaoMapper)도 이 조각을 include 한다.
+    -->
+    <sql id="courseClassDays">
+        SELECT DISTINCT TRUNC(TT.DATETIME) AS CLASS_DAY
+          FROM COURSE_TIME_TABLE TT
+         INNER JOIN COURSE C
+            ON C.ID = TT.COURSE_ID
+         WHERE TT.COURSE_ID = #{courseId}
+           AND TRUNC(TT.DATETIME) BETWEEN TRUNC(C.START_DATE) AND TRUNC(C.END_DATED)
+    </sql>
+
+    <!--
+        출석률 요약: 전체 수업일 수 / 어제까지 진행된 수업일 수 (수업일 기준은 위 courseClassDays)
+        시간표가 없는 과정은 둘 다 0
     -->
     <select id="readCourseClassDays"
             resultType="com.learningworks.course.vo.response.AttendanceSummaryVO">
         SELECT COUNT(*) AS TOTAL_CLASS_DAYS
              , COUNT(CASE WHEN D.CLASS_DAY <![CDATA[ < ]]> TRUNC(SYSDATE) THEN 1 END) AS PASSED_CLASS_DAYS
-          FROM (SELECT TRUNC(C.START_DATE) + LEVEL - 1 AS CLASS_DAY
-                     , TRUNC(C.END_DATED) AS END_DAY
-                  FROM (SELECT START_DATE
-                             , END_DATED
-                          FROM COURSE
-                         WHERE ID = #{courseId}) C
-               CONNECT BY LEVEL <![CDATA[ <= ]]> TRUNC(C.END_DATED) - TRUNC(C.START_DATE) + 1) D
-         WHERE D.CLASS_DAY <![CDATA[ <= ]]> D.END_DAY
-           AND TO_CHAR(D.CLASS_DAY, 'DY', 'NLS_DATE_LANGUAGE=ENGLISH') NOT IN ('SAT', 'SUN')
+          FROM (<include refid="courseClassDays"/>) D
     </select>
 
     <!-- 출석률 요약: 수강생별 Y / L / N 횟수 (어제까지). 기록이 없는 수강생도 0으로 나오도록 LEFT JOIN -->
