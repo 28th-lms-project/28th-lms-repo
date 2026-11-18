@@ -2,6 +2,8 @@ import { useState } from "react";
 import styles from "./Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
 import { Grid } from "../../common/Grid.jsx";
+import { IconButton } from "../../common/input/IconButton.jsx";
+import { icons } from "../../common/input/icons.js";
 
 const MEMBERS = [
     ["student01", "홍길동", "학생", "2026-03-02"],
@@ -9,8 +11,22 @@ const MEMBERS = [
     ["admin", "관리자", "관리자", "2026-01-01"],
 ];
 
+const ROLES = [
+    { id: "ROLE_SUPER_ADMIN", name: "최고 관리자", users: 1, protectedRow: true },
+    { id: "ROLE_ADMIN", name: "관리자", users: 2 },
+    { id: "ROLE_TUTOR", name: "강사", users: 5 },
+    { id: "ROLE_STUDENT", name: "학생", users: 120 },
+];
+
+const MENU_COLUMNS = [
+    { title: "대메뉴", items: ["시스템 관리", "과정 관리", "내 강의실"] },
+    { title: "중메뉴", items: ["회원 관리", "메뉴 관리", "코드 관리 (미사용)"] },
+    { title: "소메뉴", items: [] },
+];
+
 export const ListCatalog = () => {
     const [activeRow, setActiveRow] = useState(0);
+    const [selectedMenu, setSelectedMenu] = useState("시스템 관리");
     const [answer, setAnswer] = useState(1);
     const [openReply, setOpenReply] = useState(false);
 
@@ -43,6 +59,65 @@ export const ListCatalog = () => {
 
             <GroupTitle>native table</GroupTitle>
             <Variants wide>
+                <Variant
+                    name="CSS 모듈 표 (드래그 손잡이 · 보호 행 · 작업 칸 · 빈 행)"
+                    source="admin/system/role/Role.jsx (.roleTable)"
+                    note="드래그 중 행은 .dragging(opacity .4), 놓을 위치는 .dropAbove/.dropBelow(파란 inset 선)"
+                    block
+                >
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.roleTable}>
+                            <colgroup>
+                                <col style={{ width: 44 }} />
+                                <col style={{ width: 60 }} />
+                                <col style={{ width: "30%" }} />
+                                <col />
+                                <col style={{ width: 200 }} />
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th />
+                                    <th>순위</th>
+                                    <th>역할 ID</th>
+                                    <th>이름 (회원 수)</th>
+                                    <th className={styles.actions}>작업</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {ROLES.map((role, i) => (
+                                    <tr
+                                        key={role.id}
+                                        className={`${role.protectedRow ? styles.protectedRow : ""} ${i === 2 ? styles.dropAbove : ""} ${i === 3 ? styles.dragging : ""}`}
+                                    >
+                                        <td>
+                                            {!role.protectedRow && (
+                                                <span className={styles.handle} title="드래그해서 순서 변경">≡</span>
+                                            )}
+                                        </td>
+                                        <td>{i + 1}</td>
+                                        <td className={styles.mono}>{role.id}</td>
+                                        <td>
+                                            {role.name} ({role.users})
+                                        </td>
+                                        <td className={styles.actions}>
+                                            {!role.protectedRow && (
+                                                <>
+                                                    <IconButton icon={icons.edit} iconSize={16}>수정</IconButton>
+                                                    <IconButton icon={icons.delete} iconSize={16}>삭제</IconButton>
+                                                </>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                <tr>
+                                    <td colSpan={5} className={styles.tdEmpty}>
+                                        (빈 행 예시) 등록된 역할이 없습니다.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </Variant>
                 <Variant
                     name="줄무늬 · 점선 표 (텍스트 칸이 버튼 역할)"
                     source="admin/course/CourseTableComponent/ExamSetTable.jsx (인라인)"
@@ -116,6 +191,50 @@ export const ListCatalog = () => {
                 </Variant>
             </Variants>
 
+            <GroupTitle>선택 리스트</GroupTitle>
+            <Variants wide>
+                <Variant
+                    name="3단 컬럼 리스트 (대 > 중 > 소)"
+                    source="admin/system/menu/MenuColumn.jsx · Menu.jsx"
+                    note="선택 행 #eef3fd + ◀, 미사용 흐리게, ⚠ 경고 아이콘(title 툴팁), 빈 목록"
+                    block
+                >
+                    <div className={styles.columns}>
+                        {MENU_COLUMNS.map((col) => (
+                            <div key={col.title} className={styles.column}>
+                                <div className={styles.columnHeader}>
+                                    <span>{col.title}</span>
+                                    <IconButton icon={icons.add} iconSize={16}>추가</IconButton>
+                                </div>
+                                <ul className={styles.list}>
+                                    {col.items.length === 0 && (
+                                        <li className={styles.listEmpty}>중메뉴를 선택하세요.</li>
+                                    )}
+                                    {col.items.map((item) => {
+                                        const unused = item.includes("(미사용)");
+                                        const selected = selectedMenu === item;
+                                        return (
+                                            <li
+                                                key={item}
+                                                className={`${styles.listItem} ${selected ? styles.listItemSelected : ""} ${unused ? styles.unused : ""}`}
+                                                onClick={() => setSelectedMenu(item)}
+                                            >
+                                                <span className={styles.handle} title="드래그해서 순서 변경">≡</span>
+                                                {item}
+                                                {item === "메뉴 관리" && (
+                                                    <span className={styles.warning} title="URL이 라우트에 없습니다">⚠</span>
+                                                )}
+                                                {selected && <span className={styles.selectedMark}>◀</span>}
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        ))}
+                    </div>
+                </Variant>
+            </Variants>
+
             <GroupTitle>상세 · 키-값 목록</GroupTitle>
             <Variants>
                 <Variant name="점선 구분 상세 목록 (110px | 1fr)" source="admin/system/member/MemberDetail.jsx (.detailList)" block>
@@ -139,6 +258,13 @@ export const ListCatalog = () => {
                         <div><dt>과정</dt><dd>풀스택 28기</dd></div>
                         <div><dt>연락처</dt><dd>010-0000-0000</dd></div>
                     </dl>
+                </Variant>
+                <Variant name="회색 상자 글머리 목록" source="admin/system/role/RoleUserMoveModal.jsx (.userList)" block>
+                    <ul className={styles.userList}>
+                        <li>홍길동 (student01)</li>
+                        <li>김철수 (student02)</li>
+                        <li>이영희 (student03)</li>
+                    </ul>
                 </Variant>
             </Variants>
 

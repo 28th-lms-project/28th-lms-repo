@@ -1,6 +1,7 @@
 import { useState } from "react";
 import styles from "./Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "./CatalogParts.jsx";
+import Breadcrumb from "../../common/Breadcrumb.jsx";
 import { Paginator } from "../../common/Paginator.jsx";
 import { IconButton } from "../../common/input/IconButton.jsx";
 
@@ -21,6 +22,25 @@ export const NavigationCatalog = () => {
         <div>
             <GroupTitle>브레드크럼 · 화면 제목</GroupTitle>
             <Variants>
+                <Variant
+                    name="Breadcrumb"
+                    source="common/Breadcrumb.jsx"
+                    note="항목은 useBreadcrumbs가 계산 (메뉴 화면은 DB 메뉴 이름). 여기서는 고정 값"
+                >
+                    <Breadcrumb
+                        crumbs={[
+                            { key: "a", title: "시스템 관리" },
+                            { key: "b", title: "회원 관리" },
+                            { key: "c", title: "회원 상세" },
+                        ]}
+                    />
+                </Variant>
+                <Variant name="PageContainer 머리 (브레드크럼 + 22px 제목)" source="common/PageContainer.jsx" note="이 페이지 맨 위에 실제 컴포넌트가 있음" block>
+                    <div className={styles.pageHeader}>
+                        <Breadcrumb crumbs={[{ key: "a", title: "내 강의실" }, { key: "b", title: "시간표" }]} />
+                        <h2 className={styles.pageHeaderTitle}>시간표</h2>
+                    </div>
+                </Variant>
                 <Variant name="밑줄 제목 (20px, 정의만 있고 미사용)" source="admin/system/access/Access.module.css (.pageTitle)" block>
                     <h2 className={styles.pageTitleUnderline}>접근 관리</h2>
                 </Variant>

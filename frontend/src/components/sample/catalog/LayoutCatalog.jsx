@@ -110,7 +110,7 @@ export const LayoutCatalog = () => (
                     <div className={styles.layoutBlock}>상세 패널</div>
                 </div>
             </Variant>
-            <Variant name="3패널 (1fr 1.1fr 1.1fr)" source="admin/system/access-role/AccessRole.jsx · admin/system/code/Code.jsx" block>
+            <Variant name="3패널 (1fr 1.1fr 1.1fr)" source="admin/system/access-role/AccessRole.jsx · admin/system/code/Code.jsx · menu/Menu.jsx" block>
                 <div className={styles.threePanel}>
                     <div className={styles.layoutBlock}>역할</div>
                     <div className={styles.layoutBlock}>허용 권한</div>
