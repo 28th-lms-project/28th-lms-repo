@@ -18,9 +18,8 @@
          ON C.ID = CT.COURSE_ID
       INNER JOIN "USER" U
          ON CT.TUTOR_ID = U.ID
-      WHERE C.DEL_YN = 'N'
       <if test="userId != null">
-        AND C.ID IN (SELECT CS.COURSE_ID
+      WHERE C.ID IN (SELECT CS.COURSE_ID
                        FROM COURSE_STUDENT CS
                       WHERE CS.USER_ID = #{userId}
                       UNION
@@ -48,9 +47,8 @@
       INNER JOIN COURSE_TUTOR CT
          ON C.ID = CT.COURSE_ID
       INNER JOIN "USER" U
-         ON CT.TUTOR_ID = U.ID
+         ON CT.TUTOR_ID = U.ID 
       WHERE C.ID = #{_parameter}
-        AND C.DEL_YN = 'N'
 	</select>
 	
 	
@@ -413,6 +411,7 @@
            AND CT.TUTOR_ID  = #{userId}
        </select>
 
+<<<<<<< HEAD
        <!-- 과정 목록 검색 (관리자 과정 목록): 삭제되지 않은 과정만, 입력된 조건만 적용 -->
        <select id="searchCourseList"
                parameterType="com.learningworks.course.vo.request.SearchCourseVO"
@@ -502,4 +501,6 @@
          GROUP BY CS.USER_ID, U.NAME
          ORDER BY U.NAME
     </select>
+=======
+>>>>>>> dev
 </mapper>

@@ -5,7 +5,6 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseStudentVO;
@@ -13,8 +12,10 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+
 import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
+
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
@@ -70,6 +71,7 @@ public interface CourseDao {
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
 
+<<<<<<< HEAD
 	/** 과정 목록 검색 (DEL_YN = 'N'). 비어 있는 조건은 제외 */
 	List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO);
 
@@ -86,4 +88,6 @@ public interface CourseDao {
 	List<StudentAttendanceVO> readStudentAttendanceCounts(@Param("courseId") String courseId,
 			@Param("userId") String userId);
 
+=======
+>>>>>>> dev
 }

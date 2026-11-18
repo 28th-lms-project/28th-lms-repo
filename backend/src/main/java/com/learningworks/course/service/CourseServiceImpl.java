@@ -9,7 +9,6 @@ import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.AuthUtil;
 import com.learningworks.course.dao.CourseDao;
-import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseStudentVO;
@@ -17,8 +16,10 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+
 import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
+
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
@@ -350,6 +351,7 @@ public class CourseServiceImpl implements CourseService{
 		return this.courseDao.readCourseMembers(courseId);
 	}
 
+<<<<<<< HEAD
 	@Override
 	public List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO) {
 		// 결과가 없으면 MyBatis가 빈 리스트를 반환한다.
@@ -454,4 +456,6 @@ public class CourseServiceImpl implements CourseService{
 		return Math.round(part * 1000.0 / total) / 10.0;
 	}
 
+=======
+>>>>>>> dev
 }

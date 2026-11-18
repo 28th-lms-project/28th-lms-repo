@@ -2,14 +2,16 @@ package com.learningworks.course.service;
 
 import java.util.List;
 
-import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+<<<<<<< HEAD
 import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
+=======
+>>>>>>> dev
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
@@ -52,6 +54,7 @@ public interface CourseService {
 
 	List<CourseMemberVO> addCourseMember(String courseId, List<String> studentId);
 
+<<<<<<< HEAD
 	List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO);
 
 	String updateCourse(String courseId, ModifyCourseVO modifyCourseVO);
@@ -61,6 +64,8 @@ public interface CourseService {
 	/** 강의 진행률 · 출석률 요약 (어제까지 기준). 수강생은 본인만 */
 	AttendanceSummaryVO readAttendanceSummary(String courseId);
 
+=======
+>>>>>>> dev
 	
 
 }

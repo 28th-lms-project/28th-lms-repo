@@ -16,14 +16,16 @@ import org.springframework.web.bind.annotation.RestController;
 import com.learningworks.common.action.RequireAction;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.course.service.CourseService;
-import com.learningworks.course.vo.request.ModifyCourseVO;
 import com.learningworks.course.vo.request.ModifyHomeworkReplyVO;
 import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+<<<<<<< HEAD
 import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
+=======
+>>>>>>> dev
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
@@ -246,6 +248,7 @@ public class CourseController {
 		List<CourseMemberVO> memberList = this.courseService.addCourseMember(courseId,studentId);
 		return ApiResponse.OK(null);
 	}
+<<<<<<< HEAD
 
 	/**
 	 * 과정 목록 검색 (관리자 과정 목록 화면, 삭제되지 않은 과정만)
@@ -294,4 +297,7 @@ public class CourseController {
 		return ApiResponse.OK(this.courseService.readAttendanceSummary(courseId));
 	}
 
+=======
+	
+>>>>>>> dev
 }
