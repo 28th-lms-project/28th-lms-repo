@@ -39,7 +39,7 @@ export default function MainLayout() {
 
   // 내 이름 조회 (사이드바 프로필용): 로그인 직후 · 새로고침 모두 토큰에는 이름이 없어 여기서 채운다.
   // 사용자가 바뀌거나 로그아웃하면 이전 요청을 취소해, 이전 사용자의 이름이 들어가지 않게 한다.
-  // 실패하면 이름 대신 아이디를 보여 준다 (UserProfile).
+  // 실패하면 nameFailed를 표시해, UserProfile이 그때만 이름 대신 아이디를 보여 준다.
   const userId = user?.id;
   const hasName = Boolean(user?.name);
   useEffect(() => {
@@ -49,9 +49,11 @@ export default function MainLayout() {
     const controller = new AbortController();
     getMyInfo({ signal: controller.signal })
       .then((info) => {
-        if (info?.name) dispatch(setUser({ name: info.name }));
+        dispatch(info?.name ? setUser({ name: info.name }) : setUser({ nameFailed: true }));
       })
-      .catch(() => {});
+      .catch((error) => {
+        if (error?.name !== "AbortError") dispatch(setUser({ nameFailed: true }));
+      });
     return () => controller.abort();
   }, [dispatch, userId, hasName]);
 
