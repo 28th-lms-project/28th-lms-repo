@@ -5,6 +5,7 @@ import {
   deleteTestSet,
   updateTestSetShowYn,
   viewTestSetQuestions,
+  viewTestSetQuestionsForTake,
 } from "../../../../api/admin/system/test/testApi";
 import ExamQuestionViewModal from "./ExamQuestionViewModal";
 import ExamTakeModal from "./ExamTakeModal";
@@ -20,9 +21,9 @@ import { icons } from "../../../common/input/icons";
 /**
  * 버튼별 권한 코드 (백엔드 ExamController 의 @RequireAction).
  * 역할 이름이 아니라 권한 코드로 판단한다 (frontend/docs/permission-guide.md 6장).
- * - 문제 보기: 호출 API(questionlist)는 EXAM_COURSE_SET_READ 지만, 응시하는 수강생도 그 권한이 필요해
- *   정답이 보이는 문제 보기는 강사 · 관리자용인 답안 조회 권한으로 판단한다.
- *   TODO: 정답 없는 수강생용 문제 조회 API가 생기면 다시 정리
+ * - 응시: 정답이 빠진 수강생용 API(my/test/{id}/questions, EXAM_COURSE_EXAM_SUBMIT)로 문제를 받는다.
+ * - 문제 보기 · 채점: 정답이 들어 있는 API(questionlist, EXAM_COURSE_SET_READ)를 쓰므로
+ *   강사 · 관리자용인 답안 조회 권한으로 판단한다.
  */
 const PERMISSION = {
   TAKE_TEST: "EXAM_COURSE_EXAM_SUBMIT",
@@ -101,9 +102,7 @@ export default function ExamSetTable({
     }
   };
 
-  // TODO: 시험 응시 화면이 생기면 여기서 연다
-  // 문제 목록을 불러와 시험 응시 모달을 연다
-  // TODO: 정답이 빠진 수강생용 문제 조회 API가 생기면 교체 (지금 API는 정답까지 내려줌)
+  // 문제 목록(정답 제외)을 불러와 시험 응시 모달을 연다
   const onClickTestName = async (testSet) => {
     if (!canTakeTest) {
       toast.error("시험 응시 권한이 없습니다.");
@@ -120,7 +119,7 @@ export default function ExamSetTable({
       return;
     }
     try {
-      const result = await viewTestSetQuestions(testSet.id);
+      const result = await viewTestSetQuestionsForTake(testSet.id);
       dispatch(
         testActions.openTakeExam({
           testSetId: testSet.id,

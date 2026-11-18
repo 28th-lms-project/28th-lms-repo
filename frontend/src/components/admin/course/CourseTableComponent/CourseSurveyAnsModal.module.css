@@ -1,0 +1,14 @@
+/* 문항 번호로 이동했을 때 위에 붙은 번호 막대에 가리지 않게 (ExamTakeModal과 같음) */
+.question {
+  scroll-margin-top: 72px;
+}
+
+/* 바닥: "답함 n / N" + 막대가 남는 폭을 차지 */
+.progress {
+  flex: 1;
+  min-width: 0;
+}
+
+.progressText {
+  white-space: nowrap;
+}

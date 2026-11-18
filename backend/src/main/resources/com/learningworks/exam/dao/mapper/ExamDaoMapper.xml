@@ -103,7 +103,8 @@
 			 , T.MDFY_DT
 			 , T.CRTR_ID
 			 , T.MDFYR_ID
-			 , T.CORRECT_ANSWER
+			 <!-- 정답(CORRECT_ANSWER)은 넣지 않는다: 수강생도 이 목록을 받는다.
+			      정답이 필요한 문제 보기 · 채점은 viewTestSetQuestions 로 따로 조회 -->
 			 , T.SUB_QUESTION
 		FROM TEST_SET TS
 		INNER JOIN TEST_SET_TESTS TST
@@ -313,6 +314,30 @@
           FROM TESTS T
          <!-- 문제 은행에서 지운 문제도 이미 낸 시험에는 그대로 보인다 -->
          WHERE T.ID IN (SELECT TST.TEST_ID
+                          FROM TEST_SET_TESTS TST
+                         WHERE TST.TEST_SET_ID = #{parameter})
+         ORDER BY T.ID
+     </select>
+
+    <!-- 응시용 문제 조회: viewTestSetQuestions 와 같지만 정답(CORRECT_ANSWER)을 뺀다 (수강생에게 정답이 내려가지 않도록) -->
+    <select id="viewTestSetQuestionsForTake"
+            parameterType="string"
+            resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
+        SELECT T.ID
+             , T.SUBJECT_ID
+             , T.QUESTION
+             , T.ANSWER_TYPE
+             , T.ANSWER_SHEET_1
+             , T.ANSWER_SHEET_2
+             , T.ANSWER_SHEET_3
+             , T.ANSWER_SHEET_4
+             , T.ANSWER_SHEET_5
+             , T.ANSWER_COUNT
+             , T.POINT_ALLOC
+             , T.SUB_QUESTION
+          FROM TESTS T
+         WHERE DEL_YN = 'N'
+           AND T.ID IN (SELECT TST.TEST_ID
                           FROM TEST_SET_TESTS TST
                          WHERE TST.TEST_SET_ID = #{parameter})
          ORDER BY T.ID
