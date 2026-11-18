@@ -10,6 +10,11 @@ import QuestionBlock from "../../../common/ui/QuestionBlock";
 import StatusBox from "../../../common/ui/StatusBox";
 import { useConfirm, useToast } from "../../../common/ui/feedbackContext";
 import styles from "./ExamTakeModal.module.css";
+import {
+  ANSWER_TYPE,
+  toAnswerTypeCode,
+  useAnswerTypeName,
+} from "../../../../utils/examAnswerType";
 
 /** answerSheet1~5 중 내용이 있는 선택지만 QuestionBlock 보기 { value: "1", label } 로 */
 const choicesOf = (question) =>
@@ -53,6 +58,7 @@ export default function ExamTakeModal({ onSubmitted = () => {} }) {
     questions = [],
   } = useSelector((store) => store.test.takeExam ?? {});
   const onClose = () => dispatch(testActions.closeTakeExam());
+  const toAnswerTypeName = useAnswerTypeName();
 
   // key: 문제 ID, value: 답안 (다항은 선택한 번호 배열)
   const [answers, setAnswers] = useState({});
@@ -135,22 +141,24 @@ export default function ExamTakeModal({ onSubmitted = () => {} }) {
   const answerPropsOf = (question) => {
     const value = answers[question.id];
     const onChange = (next) => setAnswer(question.id, next);
-    switch (question.answerType) {
-      case "객관식-단항":
+    // 저장 값이 코드 · 옛 한글 이름 어느 쪽이어도 코드로 바꿔서 비교
+    const answerType = toAnswerTypeCode(question.answerType);
+    switch (answerType) {
+      case ANSWER_TYPE.SELECT:
         return { options: choicesOf(question), value: value ?? "", onChange };
-      case "객관식-다항":
+      case ANSWER_TYPE.MULTIPLE:
         return {
           options: choicesOf(question),
           multiple: true,
           value: value ?? [],
           onChange,
         };
-      case "O/X":
+      case ANSWER_TYPE.CHECK:
         return { options: OX_OPTIONS, value: value ?? "", onChange };
-      case "코드작성":
-      case "주관식":
+      case ANSWER_TYPE.CODE:
+      case ANSWER_TYPE.WRITE:
       default: {
-        const isCode = question.answerType === "코드작성";
+        const isCode = answerType === ANSWER_TYPE.CODE;
         return {
           children: (
             <textarea
@@ -223,7 +231,8 @@ export default function ExamTakeModal({ onSubmitted = () => {} }) {
             </ol>
           </nav>
           {questions.map((question, index) => {
-            const isCode = question.answerType === "코드작성";
+            const isCode =
+              toAnswerTypeCode(question.answerType) === ANSWER_TYPE.CODE;
             return (
               <div
                 key={question.id}
@@ -236,7 +245,9 @@ export default function ExamTakeModal({ onSubmitted = () => {} }) {
                   title={
                     <>
                       {question.question}{" "}
-                      <span className="tag">{question.answerType}</span>
+                      <span className="tag">
+                        {toAnswerTypeName(question.answerType)}
+                      </span>
                     </>
                   }
                   score={Number(question.pointAlloc) || 0}

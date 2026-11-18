@@ -5,6 +5,7 @@ import { testActions } from "../../../../store/slices/testSliceStore";
 import StatusBox from "../../../common/ui/StatusBox";
 import TransferList from "../../../common/ui/TransferList";
 import styles from "./ExamQuestionPicker.module.css";
+import { useAnswerTypeName } from "../../../../utils/examAnswerType";
 
 const toKey = (question) => String(question.id);
 
@@ -15,6 +16,7 @@ const toKey = (question) => String(question.id);
  */
 export default function ExamQuestionPicker() {
   const dispatch = useDispatch();
+  const toAnswerTypeName = useAnswerTypeName();
   const { questions, selectSubjectId, selectedQuestions } = useSelector(
     (store) => store.test,
   );
@@ -73,7 +75,7 @@ export default function ExamQuestionPicker() {
         <span className={styles.item}>
           <span>{question.question}</span>
           <span className={styles.meta}>
-            <span className="tag">{question.answerType}</span>
+            <span className="tag">{toAnswerTypeName(question.answerType)}</span>
             <span className="field-hint">{question.pointAlloc}점</span>
           </span>
         </span>

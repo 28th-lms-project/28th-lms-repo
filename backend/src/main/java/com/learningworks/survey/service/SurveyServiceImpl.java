@@ -78,7 +78,7 @@ public class SurveyServiceImpl implements SurveyService {
 
 		SurveyVO updateSurvey = this.surveyDao.selectSurveyById(surveyId);
 		if (updateSurvey == null) {
-			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+			throw new LearningworksException(ErrorCode.SURVEY_FAILURE_UPDATE);
 		}
 		return updateSurvey;
 	}
@@ -87,16 +87,19 @@ public class SurveyServiceImpl implements SurveyService {
 	@Transactional
 	public SurveyDataVO createSurveyData(@Valid RegistSurveyDataVO registSurveyDataVO, String surveyId) {
 
-		if (registSurveyDataVO == null) {
+		if (registSurveyDataVO == null || surveyId == null || surveyId.isBlank()) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 
+		// 없는 문항에는 보기를 등록하지 않음 (SURVEY_DATA.SURVEY_ID 에 FK 가 없어 DB 가 막지 않음)
 		SurveyVO survey = this.surveyDao.selectSurveyById(surveyId);
+		if (survey == null) {
+			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+		}
 
 		int insertCount = this.surveyDao.insertNewSurveyData(surveyId, registSurveyDataVO);
 
 		if (insertCount > 0) {
-			System.out.println("설문 답변이 등록되었습니다.");
 			SurveyDataVO surveyData = this.surveyDao.selectSurveyDataById(registSurveyDataVO.getId());
 			if (surveyData == null) {
 				throw new LearningworksException(ErrorCode.SURVEY_DATA_FAILURE_CREATE);
@@ -115,11 +118,8 @@ public class SurveyServiceImpl implements SurveyService {
 		}
 		SurveyDataVO surveyData = this.surveyDao.selectSurveyDataById(surveyDataId);
 
-		if (surveyId == null) {
-			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
-		}
-
-		if (surveyData == null) {
+		// 보기가 없거나, 주소의 문항(surveyId)에 속한 보기가 아니면 수정하지 않음
+		if (surveyData == null || !surveyId.equals(surveyData.getSurveyId())) {
 			throw new LearningworksException(ErrorCode.SURVEY_DATA_NOT_EXISTS);
 		}
 
@@ -129,7 +129,7 @@ public class SurveyServiceImpl implements SurveyService {
 		}
 		SurveyDataVO updateSurveyData = this.surveyDao.selectSurveyDataById(surveyDataId);
 		if (updateSurveyData == null) {
-			throw new LearningworksException(ErrorCode.SURVEY_DATA_NOT_EXISTS);
+			throw new LearningworksException(ErrorCode.SURVEY_DATA_FAILURE_UPDATE);
 		}
 		return updateSurveyData;
 	}
@@ -151,7 +151,6 @@ public class SurveyServiceImpl implements SurveyService {
 		this.surveyDao.deleteSurveyDatas(surveyId);
 		int deletedRows = this.surveyDao.deleteOneSurvey(surveyId);
 		if (deletedRows == 0) {
-			System.out.println("설문 문항을 삭제하는데 실패했습니다.");
 			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
 		}
 
@@ -162,6 +161,10 @@ public class SurveyServiceImpl implements SurveyService {
 	@Transactional
 	public String deleteSurveyData(String surveyId, String surveyDataId) {
 		int deleteRow = this.surveyDao.deleteOneSurveyData(surveyId, surveyDataId);
+		// 0건: 없는 보기이거나 이 문항의 보기가 아님
+		if (deleteRow == 0) {
+			throw new LearningworksException(ErrorCode.SURVEY_DATA_NOT_EXISTS);
+		}
 
 		return surveyDataId;
 	}
@@ -185,7 +188,7 @@ public class SurveyServiceImpl implements SurveyService {
 		}
 		CourseSurveyVO courseSurvey = this.surveyDao.selectCourseSurvey(registCourseSurvey.getId());
 		if (courseSurvey == null) {
-			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
+			throw new LearningworksException(ErrorCode.SURVEY_FAILURE_CREATE);
 		}
 
 		return courseSurvey;
@@ -216,18 +219,16 @@ public class SurveyServiceImpl implements SurveyService {
 		}
 
 		CourseSurveyVO courseSurvey = this.findCourseSurvey(courseId, courseSurveyId);
-		if (courseSurvey == null) {
-			throw new LearningworksException(ErrorCode.SURVEY_NOT_EXISTS);
-		}
+
 
 		String courseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
 		if (courseStudentId == null) {
-			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+			throw new LearningworksException(ErrorCode.STUDENT_NOT_IN_COURSE);
 		}
 
 		int answerCount = this.surveyDao.selectCourseSurveyAnswerCount(courseSurveyId, courseStudentId);
 		if (answerCount > 0) {
-			throw new LearningworksException(ErrorCode.GLOBAL_DUPLICATED);
+			throw new LearningworksException(ErrorCode.SURVEY_DUPLICATED);
 		}
 
 		List<SurveyVO> questions = this.surveyDao.selectAllSurveyByGroup(courseSurvey.getSurveyGroup());
@@ -247,7 +248,7 @@ public class SurveyServiceImpl implements SurveyService {
 
 			int insertCount = this.surveyDao.insertNewCourseSurveyAnswer(courseSurveyId, courseStudentId, ans);
 			if (insertCount != 1) {
-				throw new LearningworksException(ErrorCode.SURVEY_FAILURE_CREATE);
+				throw new LearningworksException(ErrorCode.SURVEY_ANSWER_FAILURE_CREATE);
 			}
 
 			if ("text".equals(question.getType())) {
@@ -286,13 +287,15 @@ public class SurveyServiceImpl implements SurveyService {
 	
 	@Override
 	public boolean isAnswered(String courseId, String courseSurveyId, String userId) {
+		// 없는 설문 · 다른 과정의 설문이면 SURVEY_NOT_EXISTS
+		this.findCourseSurvey(courseId, courseSurveyId);
+
 		String courseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
-		
-		if(courseStudentId == null) {
-			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		if (courseStudentId == null) {
+			throw new LearningworksException(ErrorCode.STUDENT_NOT_IN_COURSE);
 		}
 		int count = this.surveyDao.selectCourseSurveyAnswerCount(courseSurveyId, courseStudentId);
-		if(count > 0) {
+		if (count > 0) {
 			return true;
 		}
 		return false;
@@ -308,7 +311,7 @@ public class SurveyServiceImpl implements SurveyService {
 		// 이 과정의 수강생만 조회 가능
 		String courseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
 		if (courseStudentId == null) {
-			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+			throw new LearningworksException(ErrorCode.STUDENT_NOT_IN_COURSE);
 		}
 
 		// 과정 설문이 있고, 요청한 과정의 설문인지 확인

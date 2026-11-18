@@ -16,11 +16,12 @@ public interface ExamService {
 	/** 과정의 시험 세트 목록. userId(로그인 사용자) 기준 응시 여부(submittedYn)를 함께 담는다 */
 	List<ExamSetVO> readAllExamInExamSet(String courseId, String userId);
 
-	ExamQuestionVO createNewExam(RegistExamQuestionVO registExamQuestionVO);
+	/** userId: 로그인 사용자 (생성자 · 수정자로 저장) */
+	ExamQuestionVO createNewExam(RegistExamQuestionVO registExamQuestionVO, String userId);
 
-	String deleteExamQuestion(String examId);
+	String deleteExamQuestion(String examId, String userId);
 
-	ExamQuestionVO updateExamQuestion(String examId, ModifyExamQuestionVO modifyExamQuestionVO);
+	ExamQuestionVO updateExamQuestion(String examId, ModifyExamQuestionVO modifyExamQuestionVO, String userId);
 
 	ExamQuestionListVO readAllExamQuestion(String subjectId);
 

@@ -32,4 +32,7 @@ public interface CodeDao {
 
 	List<CodeOptionVO> searchCodeByParentId(String parentId);
 
+	/** 이 코드를 쓰고 있는 데이터 수 (그룹 parentId 마다 확인하는 테이블이 다름) */
+	int countCodeInUse(@Param("codeId") String codeId, @Param("parentId") String parentId);
+
 }

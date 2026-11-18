@@ -24,6 +24,8 @@ export default function UpdateTest({ questionId, answerTypes, children }) {
   const [fieldErrors, setFieldErrors] = useState({});
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
+  // 이 문제로 이미 제출된 답안 수 (있으면 저장 전에 경고)
+  const [submittedCount, setSubmittedCount] = useState(0);
 
   const dispatch = useDispatch();
   const toast = useToast();
@@ -43,6 +45,7 @@ export default function UpdateTest({ questionId, answerTypes, children }) {
         if (!ignoreUpdateState) {
           dispatch(questActions.setViewQuestion(response));
           setForm(toQuestionForm(response));
+          setSubmittedCount(Number(response.submittedAnswerCount) || 0);
         }
       } catch (e) {
         if (!ignoreUpdateState) {
@@ -78,10 +81,23 @@ export default function UpdateTest({ questionId, answerTypes, children }) {
     setFieldErrors({});
     setModifying(false);
     setForm(null);
+    setSubmittedCount(0);
     dispatch(questActions.clearViewQuestion());
   };
 
-  const onClickUpdateHandler = () => {
+  const onClickUpdateHandler = async () => {
+    // 이미 응시한 답안이 있으면: 저장된 답안 · 채점 결과는 옛 문제 기준으로 남는다는 것을 알리고 확인
+    if (submittedCount > 0) {
+      const ok = await confirm({
+        title: "응시한 문제 수정",
+        message: `이 문제로 제출된 답안이 ${submittedCount}건 있습니다.\n수정해도 이미 제출된 답안과 채점 결과는 바뀌지 않아, 채점 화면에서 답안과 문제가 맞지 않을 수 있습니다.\n그래도 수정할까요?`,
+        confirmText: "수정",
+        danger: true,
+      });
+      if (!ok) {
+        return;
+      }
+    }
     setFieldErrors({});
 
     // 백엔드 ModifyExamQuestionVO 필드 이름과 똑같이 맞춤

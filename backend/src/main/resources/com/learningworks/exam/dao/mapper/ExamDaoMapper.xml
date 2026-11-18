@@ -57,9 +57,22 @@
 			 , T.DEL_YN
 			 , T.CORRECT_ANSWER
 			 , T.SUB_QUESTION
+			 <!-- 이 문제로 제출된 답안 수: 수정 화면에서 경고용 -->
+			 , (SELECT COUNT(*)
+			      FROM TEST_ANSWERS TA
+			     WHERE TA.TEST_ID = T.ID) AS SUBMITTED_ANSWER_COUNT
 		FROM TESTS T
 		WHERE T.ID = #{_parameter}
 		AND T.DEL_YN = 'N'
+	</select>
+
+	<!-- 시험 과목이 공통 코드(TEST_SUBJECT)에 있고 사용 중인지 -->
+	<select id="countTestSubject" resultType="_int">
+		SELECT COUNT(*)
+		  FROM CODE
+		 WHERE ID = #{subjectId}
+		   AND PARENT_ID = 'TEST_SUBJECT'
+		   AND USE_YN = 'Y'
 	</select>
 
 	<select id="selectAllExamInExamSet"
@@ -98,8 +111,8 @@
 		ON TS.ID = TST.TEST_SET_ID
 		INNER JOIN TESTS T
 		ON TST.TEST_ID = T.ID
-		WHERE T.DEL_YN = 'N'
-		  AND TS.COURSE_ID = #{courseId}
+		<!-- 문제 은행에서 지운(DEL_YN = 'Y') 문제도 이미 낸 시험에는 그대로 남긴다 -->
+		WHERE TS.COURSE_ID = #{courseId}
 		ORDER BY TS.ID DESC
 	</select>
 
@@ -140,9 +153,9 @@
 	</resultMap>
 
 
-	<insert id="insertNewExam"
-		parameterType="com.learningworks.exam.vo.request.RegistExamQuestionVO">
-		<selectKey order="BEFORE" keyProperty="id" resultType="string">
+	<!-- 파라미터: question(RegistExamQuestionVO), userId(로그인 사용자 = 생성자 · 수정자) -->
+	<insert id="insertNewExam">
+		<selectKey order="BEFORE" keyProperty="question.id" resultType="string">
 			SELECT ('TT-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') ||
 		LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
 			FROM DUAL
@@ -167,32 +180,32 @@
 		, CORRECT_ANSWER 
 		, SUB_QUESTION) 
 		VALUES 
-		( #{id} 
-		, #{subjectId} 
-		, #{question} 
-		, #{answerType} 
-		, #{answerSheet1} 
-		, #{answerSheet2} 
-		, #{answerSheet3} 
-		, #{answerSheet4} 
-		, #{answerSheet5} 
-		, #{answerCount} 
-		, #{pointAlloc} 
+		( #{question.id} 
+		, #{question.subjectId} 
+		, #{question.question} 
+		, #{question.answerType} 
+		, #{question.answerSheet1} 
+		, #{question.answerSheet2} 
+		, #{question.answerSheet3} 
+		, #{question.answerSheet4} 
+		, #{question.answerSheet5} 
+		, #{question.answerCount} 
+		, #{question.pointAlloc} 
 		, SYSDATE 
 		, SYSDATE 
-		, 'admin' 
-		, 'admin' 
+		, #{userId} 
+		, #{userId} 
 		, 'N' 
-		, #{correctAnswer} 
-		, #{subQuestion} ) 
+		, #{question.correctAnswer} 
+		, #{question.subQuestion} ) 
 		</insert>
 
-	<delete id="deleteExamQuestion"
-		parameterType="string">
+	<delete id="deleteExamQuestion">
 		UPDATE TESTS
 		SET DEL_YN = 'Y'
 		, MDFY_DT = SYSDATE
-		WHERE ID = #{_parameter}
+		, MDFYR_ID = #{userId}
+		WHERE ID = #{examId}
 		AND DEL_YN = 'N'
 	</delete>
 
@@ -208,7 +221,7 @@
 			 , ANSWER_COUNT = #{modifyExamQuestionVO.answerCount}
 			 , POINT_ALLOC = #{modifyExamQuestionVO.pointAlloc}
 			 , MDFY_DT = SYSDATE
-			 , MDFYR_ID = 'admin'
+			 , MDFYR_ID = #{userId}
 			 , CORRECT_ANSWER = #{modifyExamQuestionVO.correctAnswer}
 			 , SUB_QUESTION = #{modifyExamQuestionVO.subQuestion}
 		WHERE ID = #{examId}
@@ -299,8 +312,8 @@
              , T.CORRECT_ANSWER
              , T.SUB_QUESTION
           FROM TESTS T
-         WHERE DEL_YN = 'N'
-           AND T.ID IN (SELECT TST.TEST_ID
+         <!-- 문제 은행에서 지운 문제도 이미 낸 시험에는 그대로 보인다 -->
+         WHERE T.ID IN (SELECT TST.TEST_ID
                           FROM TEST_SET_TESTS TST
                          WHERE TST.TEST_SET_ID = #{parameter})
          ORDER BY T.ID
@@ -341,7 +354,7 @@
          INNER JOIN TESTS T
             ON T.ID = TST.TEST_ID
          WHERE TST.TEST_SET_ID = #{_parameter}
-           AND T.DEL_YN = 'N'
+           <!-- 지운 문제도 채점해야 제출이 막히지 않는다 (DEL_YN 조건 없음) -->
     </select>
 
     <!-- TODO: 답안 테이블 이름(TEST_ANSWERS)이 실제와 다르면 아래 두 쿼리 수정 -->
