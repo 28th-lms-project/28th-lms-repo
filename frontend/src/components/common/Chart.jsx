@@ -1,10 +1,13 @@
 import { useEffect, useRef } from "react";
 import ApexCharts from "apexcharts";
+import { useColorScheme } from "../../theme/colorScheme";
 
 /**
  * 공통 차트 (apexcharts). sample/Chart.jsx(지금은 archive/sample/Chart.jsx) 를 기반으로 다음을 고쳤다.
  * - 데이터(series · categories 등)가 바뀌면 차트를 다시 그린다. (샘플은 처음 한 번만 그림)
  * - 컴포넌트가 사라질 때 chart.destroy() 로 정리한다.
+ * - 색은 차트가 놓인 자리의 색 토큰을 읽어 밝은 · 다크 모드를 따른다. 모드를 바꾸면 다시 그린다.
+ *   (theme.mode 는 다크에서 막대 팔레트가 바뀌어 쓰지 않음)
  *
  * 주의: series · categories 는 useMemo 로 만들어 넘길 것.
  *       렌더링마다 새 배열을 넘기면 그때마다 차트를 새로 그린다.
@@ -27,6 +30,7 @@ export default function Chart({
   unit = "점",
 }) {
   const chartRef = useRef(null);
+  const [scheme] = useColorScheme();
 
   useEffect(() => {
     const formatDataLabel = (value) => {
@@ -43,11 +47,23 @@ export default function Chart({
       return `${value}${unit}`;
     };
 
+    // 차트가 놓인 자리의 색 토큰을 읽는다.
+    // 밝은 섬(data-color-scheme="light") 안이면 밝은 값, 다크를 따르는 화면이면 다크 값
+    const style = getComputedStyle(chartRef.current);
+    const readToken = (name) => style.getPropertyValue(name).trim();
+
+    // 툴팁은 색 대신 테마 이름을 받는다. color-scheme 도 index.css 가 모드에 맞춰 둠
+    let tooltipTheme = "light";
+    if (style.colorScheme === "dark") {
+      tooltipTheme = "dark";
+    }
+
     const options = {
       series,
       chart: {
         type,
         height,
+        foreColor: readToken("--color-text-secondary"), // 축 글자 · 축 제목 · 범례
         toolbar: {
           show: false,
         },
@@ -64,18 +80,23 @@ export default function Chart({
         enabled: true,
         formatter: formatDataLabel,
         style: {
-          colors: ["#333"],
+          colors: [readToken("--color-text")],
         },
       },
       stroke: {
         show: true,
         width: series.map(() => 2),
       },
+      grid: {
+        borderColor: readToken("--color-border-light"), // 새로 추가. 가로 격자선 (기본 #e0e0e0)
+      },
       xaxis: {
         categories,
         labels: {
           trim: true,
         },
+        axisBorder: { color: readToken("--color-border") }, // x축 선 (기본 #e0e0e0)
+        axisTicks: { color: readToken("--color-border") }, // x축 눈금
       },
       yaxis: {
         min: 0,
@@ -93,6 +114,7 @@ export default function Chart({
       },
       tooltip: {
         enabled: true,
+        theme: tooltipTheme,
         y: {
           formatter: formatTooltipValue,
         },
@@ -111,7 +133,7 @@ export default function Chart({
     return () => {
       chart.destroy();
     };
-  }, [type, height, series, categories, max, tickAmount, yText, unit]);
+  }, [type, height, series, categories, max, tickAmount, yText, unit, scheme]);
 
   return <div ref={chartRef}></div>;
 }
