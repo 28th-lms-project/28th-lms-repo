@@ -1,12 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { getMyInfo, updateInfo } from "../../../api/my/info/myInfoApi";
-import styles from "./MyInfoForm.module.css";
+import Panel from "../../common/ui/Panel";
+import Field from "../../common/ui/Field";
+import Button from "../../common/ui/Button";
+import StatusBox from "../../common/ui/StatusBox";
+import { useToast } from "../../common/ui/feedbackContext";
 
 export default function MyInfoForm({ password }) {
+  const toast = useToast();
+  const nameId = useId();
+  const githubId = useId(); // 훅은 모두 early return 위에
+  const [loadError, setLoadError] = useState(null); // 불러오기 실패
+  const [submitting, setSubmitting] = useState(false);
   const [info, setInfo] = useState(null);
   const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -19,7 +26,7 @@ export default function MyInfoForm({ password }) {
         if (error.name === "AbortError") {
           return;
         }
-        setErrors({ form: [error.message] });
+        setLoadError(error);
       }
     };
 
@@ -53,7 +60,6 @@ export default function MyInfoForm({ password }) {
 
   const onSubmitHandler = async (event) => {
     event.preventDefault();
-    setSuccessMessage("");
 
     const formData = new FormData(event.currentTarget);
     const name = (formData.get("name") || "").toString().trim();
@@ -72,28 +78,30 @@ export default function MyInfoForm({ password }) {
       });
 
       setInfo(updated);
-      setSuccessMessage("성공적으로 수정되었습니다.");
+      toast.success("수정이 완료되었습니다.");
       setErrors({});
     } catch (error) {
       if (error.validations) {
         setErrors(error.validations);
       } else {
-        setErrors({ form: [error.message || "수정에 실패했습니다."] });
+        toast.error(error.message || "수정에 실패했습니다.");
       }
     } finally {
       setSubmitting(false);
     }
   };
+  if (loadError) {
+    return (
+      <StatusBox
+        type="error"
+        title="내 정보를 불러오지 못했습니다."
+        detail={loadError.message}
+      />
+    );
+  }
 
   if (!info) {
-    if (errors.form) {
-      return (
-        <div className={styles.form}>
-          <p className={styles.errorMessage}>{errors.form[0]}</p>
-        </div>
-      );
-    }
-    return <p className={styles.loadingText}>불러오는 중...</p>;
+    return <StatusBox type="loading" />;
   }
 
   let formattedDate = "";
@@ -106,45 +114,62 @@ export default function MyInfoForm({ password }) {
     githubValue = info.githubUrl;
   }
 
+  let saveLabel = "저장";
+  if (submitting) {
+    saveLabel = "저장중...";
+  }
+
   return (
-    <form className={styles.form} onSubmit={onSubmitHandler}>
-      <h3 className={styles.title}>내 정보 수정</h3>
+    <form onSubmit={onSubmitHandler} noValidate>
+      <Panel
+        title="기본 정보"
+        footer={
+          <Button type="submit" variant="primary" loading={submitting}>
+            {saveLabel}
+          </Button>
+        }
+      >
+        <div className="form-stack">
+          <dl className="desc-list">
+            <dt>아이디</dt>
+            <dd>{info.id}</dd>
+            <dt>역할</dt>
+            <dd>{info.baseRole}</dd>
+            <dt>가입일</dt>
+            <dd>{formattedDate}</dd>
+          </dl>
 
-      <dl className={styles.infoList}>
-        <dt>아이디</dt>
-        <dd>{info.id}</dd>
-        <dt>역할</dt>
-        <dd>{info.baseRole}</dd>
-        <dt>가입일</dt>
-        <dd>{formattedDate}</dd>
-      </dl>
+          <Field
+            label="이름"
+            htmlFor={nameId}
+            required
+            hint="10자 이하"
+            error={errors.name?.[0]}
+          >
+            <input
+              id={nameId}
+              name="name"
+              className="form-control"
+              defaultValue={info.name}
+              maxLength={10}
+            />
+          </Field>
 
-      <label className={styles.field}>
-        <span>이름</span>
-        <input name="name" defaultValue={info.name} maxLength={10} />
-        {errors.name && <p className={styles.errorMessage}>{errors.name[0]}</p>}
-      </label>
-
-      <label className={styles.field}>
-        <span>Github 주소</span>
-        <input
-          name="githubUrl"
-          defaultValue={githubValue}
-          placeholder="https://github.com/아이디"
-        />
-        {errors.githubUrl && (
-          <p className={styles.errorMessage}>{errors.githubUrl[0]}</p>
-        )}
-      </label>
-
-      {errors.form && <p className={styles.errorMessage}>{errors.form[0]}</p>}
-      {successMessage && (
-        <p className={styles.successMessage}>{successMessage}</p>
-      )}
-
-      <button type="submit" disabled={submitting}>
-        저장
-      </button>
+          <Field
+            label="GitHub 주소"
+            htmlFor={githubId}
+            error={errors.githubUrl?.[0]}
+          >
+            <input
+              id={githubId}
+              name="githubUrl"
+              className="form-control"
+              defaultValue={githubValue}
+              placeholder="https://github.com/아이디"
+            />
+          </Field>
+        </div>
+      </Panel>
     </form>
   );
 }
