@@ -1,11 +1,16 @@
-import { createPortal } from "react-dom";
-import styles from "./MemberModal.module.css";
-import { useState } from "react";
+import { useId, useState } from "react";
+import Modal from "../../../common/ui/Modal.jsx";
+import Field from "../../../common/ui/Field.jsx";
+import Button from "../../../common/ui/Button.jsx";
+import { useToast } from "../../../common/ui/feedbackContext.js";
 import { modifyMember } from "../../../../api/admin/system/member/memberApi.js";
 
 export default function MemberFormModal({ member, onClose, onCompleted }) {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const toast = useToast();
+  const nameId = useId();
+  const githubId = useId();
 
   const validate = (name, githubUrl) => {
     const newErrors = {};
@@ -46,56 +51,73 @@ export default function MemberFormModal({ member, onClose, onCompleted }) {
         githubUrl,
       });
 
+      toast.success("회원 정보를 수정했습니다."); // ← 추가
       onCompleted(updated);
     } catch (error) {
       if (error.validations) {
         setErrors(error.validations);
       } else {
-        setErrors({ form: [error.message || "수정에 실패했습니다."] });
+        toast.error(error.message || "수정에 실패했습니다.");
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  return createPortal(
-    <div className={styles.modalOverlay}>
-      <form className={styles.modal} onSubmit={onSubmitHandler}>
-        <h3 className={styles.modalTitle}>회원 정보 수정</h3>
+  let submitLabel = "저장";
+  if (submitting) {
+    submitLabel = "저장 중...";
+  }
 
-        <div className={styles.modalContent}>
-          <label className={styles.field}>
-            <span>이름</span>
-            <input name="name" defaultValue={member.name} maxLength={10} />
-            {errors.name && (
-              <p className={styles.errorMessage}>{errors.name[0]}</p>
-            )}
-          </label>
-          <label className={styles.field}>
-            <span>GitHub 주소</span>
-            <input
-              name="githubUrl"
-              defaultValue={member.githubUrl ?? ""}
-              placeholder="https://github.com/아이디"
-            />
-            {errors.githubUrl && (
-              <p className={styles.errorMessage}>{errors.githubUrl[0]}</p>
-            )}
-          </label>
-          {errors.form && (
-            <p className={styles.errorMessage}>{errors.form[0]}</p>
-          )}
-        </div>
-        <div className={styles.modalButtons}>
-          <button type="button" onClick={onClose}>
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="회원 정보 수정"
+      description={`${member.name}(${member.id})`}
+      onSubmit={onSubmitHandler}
+      dismissible={!submitting}
+      footer={
+        <>
+          <Button onClick={onClose} disabled={submitting}>
             취소
-          </button>
-          <button type="submit" disabled={submitting}>
-            저장
-          </button>
-        </div>
-      </form>
-    </div>,
-    document.body,
+          </Button>
+          <Button type="submit" variant="primary" loading={submitting}>
+            {submitLabel}
+          </Button>
+        </>
+      }
+    >
+      <div className="form-stack">
+        <Field
+          label="이름"
+          htmlFor={nameId}
+          required
+          hint="10자 이하"
+          error={errors.name?.[0]}
+        >
+          <input
+            id={nameId}
+            name="name"
+            className="form-control"
+            defaultValue={member.name}
+            maxLength={10}
+          />
+        </Field>
+        <Field
+          label="GitHub 주소"
+          htmlFor={githubId}
+          error={errors.githubUrl?.[0]}
+        >
+          <input
+            id={githubId}
+            name="githubUrl"
+            className="form-control"
+            defaultValue={member.githubUrl ?? ""}
+            placeholder="https://github.com/아이디"
+          />
+        </Field>
+      </div>
+    </Modal>
   );
 }
