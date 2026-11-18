@@ -55,19 +55,22 @@
 	  WHERE ID = #{_parameter}
 	</select>
 	
+	<!-- 과정 하나 조회. 강사 이름은 서브쿼리로 합쳐서(2명이면 "A, B") 과정당 항상 한 행.
+	     강사가 없는 과정도 조회되고(NAME 은 null), 삭제된 과정은 조회되지 않는다(없으면 서비스가 404) -->
 	<select id="readOneCourse" resultType="com.learningworks.course.vo.response.CourseVO" parameterType="string">
-	 SELECT C.ID 
-          , COURSE_NAME 
-          , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
-          , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
-          , "NO"
-          , U.NAME
+	 SELECT C.ID
+          , C.COURSE_NAME
+          , TO_CHAR(C.START_DATE, 'YYYY-MM-DD') AS START_DATE
+          , TO_CHAR(C.END_DATED, 'YYYY-MM-DD') AS END_DATED
+          , C."NO"
+          , (SELECT LISTAGG(U.NAME, ', ') WITHIN GROUP (ORDER BY U.NAME)
+               FROM COURSE_TUTOR CT
+              INNER JOIN "USER" U
+                 ON U.ID = CT.TUTOR_ID
+              WHERE CT.COURSE_ID = C.ID) AS NAME
        FROM COURSE C
-      INNER JOIN COURSE_TUTOR CT
-         ON C.ID = CT.COURSE_ID
-      INNER JOIN "USER" U
-         ON CT.TUTOR_ID = U.ID 
       WHERE C.ID = #{_parameter}
+        AND C.DEL_YN = 'N'
 	</select>
 	
 	
