@@ -90,7 +90,8 @@
 			 , T.MDFY_DT
 			 , T.CRTR_ID
 			 , T.MDFYR_ID
-			 , T.CORRECT_ANSWER
+			 <!-- 정답(CORRECT_ANSWER)은 넣지 않는다: 수강생도 이 목록을 받는다.
+			      정답이 필요한 문제 보기 · 채점은 viewTestSetQuestions 로 따로 조회 -->
 			 , T.SUB_QUESTION
 		FROM TEST_SET TS
 		INNER JOIN TEST_SET_TESTS TST
