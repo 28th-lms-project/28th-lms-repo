@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import HomeworkReply from "./HomeworkReply.jsx/HomeworkReply";
 import ReplyForm from "./ReplyForm";
@@ -112,10 +112,20 @@ export default function HomeworkItem() {
   const dirty =
     editContent !== (showHomework?.content ?? "") ||
     editEndDate !== (showHomework?.endDate ?? "");
+  // 마감일이 오늘보다 앞이면 날짜 칸 아래에 빨간 안내 문구를 보여주고 [저장]을 막는다
+  // 지난 날짜로 저장하면 바로 마감되어 수정 · 삭제 · 댓글을 되돌릴 수 없기 때문
+  // (달력의 min 은 직접 입력하면 우회되므로 여기서 한 번 더 검사. yyyy-MM-dd 는 문자열 비교 = 날짜 비교)
+  const endDateError =
+    editEndDate && editEndDate < todayText
+      ? "오늘 이후의 날짜를 고르세요."
+      : "";
+  const endDateErrorId = useId();
   // [저장]을 못 누르는 이유 (없으면 저장 가능)
   let saveBlockedReason = "";
   if (!editEndDate) {
     saveBlockedReason = "제출 마감일을 고르세요.";
+  } else if (endDateError) {
+    saveBlockedReason = endDateError;
   } else if (!editContent.trim()) {
     saveBlockedReason = "과제 내용을 입력하세요.";
   } else if (!dirty) {
@@ -269,8 +279,12 @@ export default function HomeworkItem() {
                 type="date"
                 className={`form-control form-control-sm ${styles.dateInput}`}
                 aria-label="제출 마감일"
+                // 지난 날짜는 달력에서 고를 수 없게
+                min={todayText}
                 value={editEndDate}
                 onChange={(e) => setEditEndDate(e.target.value)}
+                aria-invalid={endDateError ? true : undefined}
+                aria-describedby={endDateError ? endDateErrorId : undefined}
               />
             ) : (
               <>
@@ -279,6 +293,12 @@ export default function HomeworkItem() {
               </>
             )}
           </div>
+          {/* 지난 날짜를 고르면 날짜 줄 아래에 빨간 안내 (표준 field-error) */}
+          {editing && endDateError && (
+            <p id={endDateErrorId} className="field-error">
+              {endDateError}
+            </p>
+          )}
         </div>
         {headerActions && <div className="popup-actions">{headerActions}</div>}
       </header>
