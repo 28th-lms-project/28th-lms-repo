@@ -1,26 +1,22 @@
 import { useEffect, useState } from "react";
-import PageContainer from "../../../common/PageContainer";
-import { Grid } from "../../../common/Grid";
-import style from "./Code.module.css";
+import PageHeader from "../../../common/ui/PageHeader";
+import Panel from "../../../common/ui/Panel";
+import Table from "../../../common/ui/Table";
+import Button from "../../../common/ui/Button";
+import StatusBox from "../../../common/ui/StatusBox";
+import { useToast } from "../../../common/ui/feedbackContext";
+import { icons } from "../../../common/input/icons";
 import { getCodeList } from "../../../../api/admin/system/code/codeApi";
 import AddCode from "./AddCode";
 import UpdateCode from "./UpdateCode";
 import usePermission from "../../../../hooks/usePermission";
+import useBreadcrumbs from "../../../../hooks/useBreadcrumbs";
 
-const CODE_HEADER = [
-  { id: "id", title: "ID" },
-  { id: "name", title: "이름" },
-  { id: "order", title: "정렬" },
+const CODE_COLUMNS = [
+  { key: "id", title: "코드", mono: true, ellipsis: true },
+  { key: "name", title: "이름", ellipsis: true },
+  { key: "order", title: "순서", width: "56px", align: "num" },
 ];
-
-const GRID_COLUMN_STYLE = "minmax(0, 1fr) minmax(0, 2fr) 60px";
-
-const toGridContent = (codes) =>
-  codes.map((code) => [
-    { id: `${code.id}_id`, value: code.id },
-    { id: `${code.id}_name`, value: code.name },
-    { id: `${code.id}_order`, value: code.order },
-  ]);
 
 // 폼을 새로 만들지 판단할 key (코드가 없으면 "empty")
 const toFormKey = (code) => {
@@ -30,28 +26,54 @@ const toFormKey = (code) => {
   return code.id;
 };
 
+// 브레드크럼 마지막 항목의 제목 (없으면 기본 제목)
+const pageTitleOf = (crumbs) => {
+  const last = crumbs.at(-1);
+  if (last && last.title) {
+    return last.title;
+  }
+  return "환경 변수 관리";
+};
+
 export default function Code() {
   const { isSuperAdmin, status } = usePermission();
-
-  if (status === "loaded" && isSuperAdmin) return <CodeManagement />;
+  const crumbs = useBreadcrumbs();
 
   // idle: 비로그인(조회하지 않음) → 표시 없음
   let content = null;
   if (status === "loading") {
-    content = <p className={style.notice}>권한 확인 중...</p>;
+    content = <StatusBox type="loading" title="권한 확인 중..." />;
   } else if (status === "failed") {
     content = (
-      <p className={style.notice}>
-        권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
-      </p>
+      <StatusBox
+        type="error"
+        title="권한 정보를 불러오지 못했습니다."
+        detail="새로고침 후 다시 시도해 주세요."
+      />
     );
   } else if (status === "loaded") {
-    content = <p className={style.notice}>권한이 없습니다.</p>;
+    if (isSuperAdmin) {
+      content = <CodeManagement />;
+    } else {
+      content = <StatusBox type="denied" />;
+    }
   }
-  return <PageContainer>{content}</PageContainer>;
+
+  return (
+    <>
+      <PageHeader
+        crumbs={crumbs}
+        title={pageTitleOf(crumbs)}
+        description="대 · 중 · 소 분류의 환경 변수(코드)를 관리합니다."
+      />
+      {content}
+    </>
+  );
 }
 
 function CodeManagement() {
+  const toast = useToast();
+
   //환경 변수들을 저장할 state
   const [topCodes, setTopCodes] = useState([]);
   const [midCodes, setMidCodes] = useState([]);
@@ -68,6 +90,10 @@ function CodeManagement() {
   const [addingTop, setAddingTop] = useState(false);
   const [addingMid, setAddingMid] = useState(false);
   const [addingLow, setAddingLow] = useState(false);
+
+  // 처음 불러오기 상태: loading | loaded | failed
+  const [listStatus, setListStatus] = useState("loading");
+  const [listError, setListError] = useState("");
 
   const idOf = (code) => {
     if (!code) {
@@ -121,7 +147,7 @@ function CodeManagement() {
   };
 
   const failCodes = (e) => {
-    alert(e.message);
+    toast.error(e.message);
   };
 
   // 행 클릭 · 저장 후에 사용 (기존과 같은 이름이라 호출하는 쪽은 그대로)
@@ -129,32 +155,61 @@ function CodeManagement() {
     fetchCodes(topId, midId, lowId).then(applyCodes).catch(failCodes);
   };
 
+  // 처음 불러오기 (실패하면 화면에 오류 + 다시 시도)
+  const requestFirst = () => {
+    fetchCodes()
+      .then((result) => {
+        applyCodes(result);
+        setListStatus("loaded");
+      })
+      .catch((e) => {
+        setListError(e.message);
+        setListStatus("failed");
+      });
+  };
+
+  // [다시 시도]
+  const retryFirst = () => {
+    setListStatus("loading");
+    requestFirst();
+  };
+
   useEffect(() => {
-    fetchCodes().then(applyCodes).catch(failCodes);
+    requestFirst();
   }, []);
 
-  const onSelectTop = (value, rowIndex) => {
+  const onSelectTop = (row) => {
     setAddingTop(false);
     setAddingMid(false);
     setAddingLow(false);
-    loadCodes(topCodes[rowIndex].id);
-  };
-  const onSelectMid = (value, rowIndex) => {
-    setAddingMid(false);
-    setAddingLow(false);
-    loadCodes(idOf(selectedTopCode), midCodes[rowIndex].id);
+    loadCodes(row.id);
   };
 
-  const onSelectLow = (value, rowIndex) => {
+  const onSelectMid = (row) => {
+    setAddingMid(false);
     setAddingLow(false);
-    setSelectedLow(rowIndex);
+    loadCodes(idOf(selectedTopCode), row.id);
   };
-  const toActiveRows = (selected) => {
-    if (selected === undefined) {
-      return [];
-    } else {
-      return [selected];
+
+  const onSelectLow = (row) => {
+    setAddingLow(false);
+    setSelectedLow(lowCodes.findIndex((code) => code.id === row.id));
+  };
+
+  // 추가 중이면 표에서 선택 표시를 끔
+  const selectedKeyOf = (adding, code) => {
+    if (adding || !code) {
+      return undefined;
     }
+    return code.id;
+  };
+
+  // 상위 코드가 없으면 그 안내, 있으면 빈 목록 안내
+  const emptyTextOf = (hasParent) => {
+    if (!hasParent) {
+      return "상위 분류가 없습니다.";
+    }
+    return "코드가 없습니다.";
   };
 
   const onSavedTop = (saved) => {
@@ -172,113 +227,130 @@ function CodeManagement() {
     loadCodes(idOf(selectedTopCode), idOf(selectedMidCode), saved.id);
   };
 
-  return (
-    <PageContainer>
-      <div className={style.container}>
-        <div>Code</div>
+  if (listStatus === "loading") {
+    return <StatusBox type="loading" title="목록을 불러오는 중..." />;
+  }
 
-        <div className={style.codeListContainer}>
-          <div className={style.codeList}>
-            <div className={style.gridContainer}>
-              <Grid
-                className={style.codeGrid}
-                title="대 분류"
-                columnStyle={GRID_COLUMN_STYLE}
-                header={CODE_HEADER}
-                content={toGridContent(topCodes)}
-                clickableColumn={{
-                  0: onSelectTop,
-                  1: onSelectTop,
-                  2: onSelectTop,
-                }}
-                activeRows={toActiveRows(selectedTop)}
-              />
-            </div>
-            {addingTop && (
-              <AddCode
-                onSaved={onSavedTop}
-                onCancel={() => setAddingTop(false)}
-              />
-            )}
-            {!addingTop && (
-              <UpdateCode
-                key={toFormKey(selectedTopCode)}
-                code={selectedTopCode}
-                onSaved={onSavedTop}
-                onAddClick={() => setAddingTop(true)}
-              />
-            )}
-          </div>
-          <div className={style.codeList}>
-            <div className={style.gridContainer}>
-              <Grid
-                className={style.codeGrid}
-                title="중 분류"
-                columnStyle={GRID_COLUMN_STYLE}
-                header={CODE_HEADER}
-                content={toGridContent(midCodes)}
-                clickableColumn={{
-                  0: onSelectMid,
-                  1: onSelectMid,
-                  2: onSelectMid,
-                }}
-                activeRows={toActiveRows(selectedMid)}
-              />
-            </div>
-            {addingMid && (
-              <AddCode
-                parentOptions={topCodes}
-                defaultParentId={idOf(selectedTopCode)}
-                onSaved={onSavedMid}
-                onCancel={() => setAddingMid(false)}
-              />
-            )}
-            {!addingMid && (
-              <UpdateCode
-                key={toFormKey(selectedMidCode)}
-                code={selectedMidCode}
-                parentOptions={topCodes}
-                onSaved={onSavedMid}
-                onAddClick={() => setAddingMid(true)}
-              />
-            )}
-          </div>
-          <div className={style.codeList}>
-            <div className="gridContainer">
-              <Grid
-                className={style.codeGrid}
-                title="소 분류"
-                columnStyle={GRID_COLUMN_STYLE}
-                header={CODE_HEADER}
-                content={toGridContent(lowCodes)}
-                clickableColumn={{
-                  0: onSelectLow,
-                  1: onSelectLow,
-                  2: onSelectLow,
-                }}
-                activeRows={toActiveRows(selectedLow)}
-              />
-            </div>
-            {addingLow && (
-              <AddCode
-                parentOptions={midCodes}
-                defaultParentId={idOf(selectedMidCode)}
-                onSaved={onSavedLow}
-                onCancel={() => setAddingLow(false)}
-              />
-            )}
-            {!addingLow && (
-              <UpdateCode
-                key={toFormKey(selectedLowCode)}
-                code={selectedLowCode}
-                parentOptions={midCodes}
-                onSaved={onSavedLow}
-                onAddClick={() => setAddingLow(true)}
-              />
-            )}
-          </div>
-        </div>
+  if (listStatus === "failed") {
+    return (
+      <StatusBox
+        type="error"
+        title="목록을 불러오지 못했습니다."
+        detail={listError}
+        onRetry={retryFirst}
+      />
+    );
+  }
+
+  const addButton = (adding, onClick) => (
+    <Button size="sm" icon={icons.add} disabled={adding} onClick={onClick}>
+      추가
+    </Button>
+  );
+
+  return (
+    <div className="layout-3col">
+      <div className="form-stack">
+        <Panel
+          title="대 분류"
+          subtitle={`${topCodes.length}건`}
+          flush
+          actions={addButton(addingTop, () => setAddingTop(true))}
+        >
+          <Table
+            ariaLabel="대 분류 코드 목록"
+            columns={CODE_COLUMNS}
+            rows={topCodes}
+            size="sm"
+            selectedKey={selectedKeyOf(addingTop, selectedTopCode)}
+            onRowClick={onSelectTop}
+            isRowMuted={(code) => code.useYn === "N"}
+            emptyText={emptyTextOf(true)}
+          />
+        </Panel>
+        {addingTop && (
+          <AddCode onSaved={onSavedTop} onCancel={() => setAddingTop(false)} />
+        )}
+        {!addingTop && (
+          <UpdateCode
+            key={toFormKey(selectedTopCode)}
+            code={selectedTopCode}
+            onSaved={onSavedTop}
+          />
+        )}
       </div>
-    </PageContainer>
+
+      <div className="form-stack">
+        <Panel
+          title="중 분류"
+          subtitle={`${midCodes.length}건`}
+          flush
+          actions={addButton(addingMid, () => setAddingMid(true))}
+        >
+          <Table
+            ariaLabel="중 분류 코드 목록"
+            columns={CODE_COLUMNS}
+            rows={midCodes}
+            size="sm"
+            selectedKey={selectedKeyOf(addingMid, selectedMidCode)}
+            onRowClick={onSelectMid}
+            isRowMuted={(code) => code.useYn === "N"}
+            emptyText={emptyTextOf(!!selectedTopCode)}
+          />
+        </Panel>
+        {addingMid && (
+          <AddCode
+            parentOptions={topCodes}
+            defaultParentId={idOf(selectedTopCode)}
+            onSaved={onSavedMid}
+            onCancel={() => setAddingMid(false)}
+          />
+        )}
+        {!addingMid && (
+          <UpdateCode
+            key={toFormKey(selectedMidCode)}
+            code={selectedMidCode}
+            parentOptions={topCodes}
+            onSaved={onSavedMid}
+          />
+        )}
+      </div>
+
+      <div className="form-stack">
+        <Panel
+          title="소 분류"
+          subtitle={`${lowCodes.length}건`}
+          flush
+          actions={addButton(addingLow, () => setAddingLow(true))}
+        >
+          <Table
+            ariaLabel="소 분류 코드 목록"
+            columns={CODE_COLUMNS}
+            rows={lowCodes}
+            size="sm"
+            selectedKey={selectedKeyOf(addingLow, selectedLowCode)}
+            onRowClick={onSelectLow}
+            isRowMuted={(code) => code.useYn === "N"}
+            emptyText={emptyTextOf(!!selectedMidCode)}
+          />
+        </Panel>
+        {addingLow && (
+          <AddCode
+            parentOptions={midCodes}
+            defaultParentId={idOf(selectedMidCode)}
+            onSaved={onSavedLow}
+            onCancel={() => setAddingLow(false)}
+          />
+        )}
+        {!addingLow && (
+          <UpdateCode
+            key={toFormKey(selectedLowCode)}
+            code={selectedLowCode}
+            parentOptions={midCodes}
+            onSaved={onSavedLow}
+          />
+        )}
+      </div>
+    </div>
   );
 }
