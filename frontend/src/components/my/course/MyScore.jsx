@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Chart from "../../common/Chart.jsx";
 import { getMyScoreList } from "../../../api/my/course/scoreApi.js";
-import styles from "./MyScore.module.css";
 import {
   formatAveragePoint,
   formatPoint,
@@ -11,19 +10,15 @@ import {
   toPercent,
 } from "../../../utils/scoreFormat.js";
 import StatusBox from "../../common/ui/StatusBox.jsx";
+import Badge from "../../common/ui/Badge.jsx";
+import Panel from "../../common/ui/Panel.jsx";
+import styles from "./MyScore.module.css";
 
-const STATUS_CLASS = {
-  unsubmitted: styles.statusUnsubmitted,
-  pending: styles.statusPending,
-  done: styles.statusDone,
+const STATUS_TONE = {
+  unsubmitted: "neutral",
+  pending: "warning",
+  done: "success",
 };
-
-function getRowClassName(index) {
-  if (index % 2 === 0) {
-    return styles.rowEven;
-  }
-  return styles.rowOdd;
-}
 
 export default function MyScore({ courseId }) {
   const [scores, setScores] = useState([]);
@@ -97,23 +92,17 @@ export default function MyScore({ courseId }) {
     return <StatusBox type="loading" />;
   }
   if (status === "failed") {
-    return (
-      <section className={styles.section}>
-        <h3 className={styles.title}>내 성적</h3>
-        <p className={styles.notice}>성적을 불러오지 못했습니다.</p>
-      </section>
-    );
+    return <StatusBox type="error" title="성적을 불러오지 못했습니다." />;
+  }
+  if (scores.length === 0) {
+    return <StatusBox type="empty" title="공개된 시험이 없습니다." />;
   }
 
   return (
-    <section className={styles.section}>
-      <h3 className={styles.title}>내 성적</h3>
-      {scores.length === 0 && (
-        <p className={styles.notice}>공개된 시험이 없습니다.</p>
-      )}
-      {scores.length > 0 && (
-        <div className={styles.layout}>
-          <table className={styles.table}>
+    <div className={`layout-split ${styles.layout}`}>
+      <Panel title="내 성적" flush>
+        <div className="table-wrap">
+          <table className="table table-striped">
             <thead>
               <tr>
                 <th>시험명</th>
@@ -124,51 +113,51 @@ export default function MyScore({ courseId }) {
               </tr>
             </thead>
             <tbody>
-              {scores.map((row, index) => {
+              {scores.map((row) => {
                 const scoreStatus = getScoreStatus(row);
                 return (
-                  <tr key={row.testSetId} className={getRowClassName(index)}>
+                  <tr key={row.testSetId}>
                     <td>{row.setName}</td>
-                    <td className={styles.cellCenter}>
+                    <td className="col-center">
                       {formatTestType(row.testType)}
                     </td>
-                    <td className={styles.cellScore}>
+                    <td className="col-num">
                       {formatPoint(row.score, row.totalPoint)}
                     </td>
-                    <td className={styles.cellScore}>
+                    <td className="col-num">
                       {formatAveragePoint(row.averageScore, row.totalPoint)}
                     </td>
-                    <td className={styles.cellCenter}>
-                      <span
-                        className={`${styles.badge} ${STATUS_CLASS[scoreStatus.key]}`}
-                      >
+                    <td className="col-center">
+                      <Badge tone={STATUS_TONE[scoreStatus.key]}>
                         {scoreStatus.label}
-                      </span>
+                      </Badge>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-
-          {chartRows.length > 0 && (
-            <div className={styles.chartWrap}>
-              <Chart
-                type="bar"
-                series={series}
-                categories={categories}
-                yText="점수(%)"
-                unit="%"
-              />
-            </div>
-          )}
-          {chartRows.length === 0 && (
-            <p className={styles.notice}>
-              표시할 성적 데이터가 없어 차트를 표시할 수 없습니다.
-            </p>
-          )}
         </div>
-      )}
-    </section>
+      </Panel>
+
+      <Panel title="반 평균 비교">
+        {chartRows.length > 0 && (
+          <Chart
+            type="bar"
+            series={series}
+            categories={categories}
+            yText="점수(%)"
+            unit="%"
+          />
+        )}
+        {chartRows.length === 0 && (
+          <StatusBox
+            type="empty"
+            size="sm"
+            title="표시할 성적 데이터가 없어 차트를 표시할 수 없습니다."
+          />
+        )}
+      </Panel>
+    </div>
   );
 }
