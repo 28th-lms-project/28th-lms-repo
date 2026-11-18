@@ -37,10 +37,10 @@ export default function Login() {
       dispatch(
         loginSuccess({
           token,
+          // name은 MainLayout이 /members/me로 채운다 (역할 이름은 권한 정보에서)
           user: {
             id: payload.sub,
             name: null,
-            roleName: payload.roles?.[0] ?? null,
           },
         }),
       );
