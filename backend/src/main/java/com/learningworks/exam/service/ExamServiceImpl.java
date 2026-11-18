@@ -285,6 +285,25 @@ public class ExamServiceImpl implements ExamService {
 		return list;
 	}
 
+	@Override
+	public ExamQuestionListVO viewTestSetQuestionsForTake(String testSetId, String userId) {
+		// 답안 제출(createTestAnswerByTestSetId)과 같은 조건: 존재 · 공개(Y) · 아직 제출 안 함
+		RegistTestSetVO testSet = this.examDao.selectExamsetById(testSetId);
+		if (testSet == null) {
+			throw new LearningworksException(ErrorCode.EXAM_NOT_EXISTS);
+		}
+		if (!"Y".equals(testSet.getShowYn())) {
+			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+		}
+		if (this.examDao.countSubmittedAnswers(testSetId, userId) > 0) {
+			throw new LearningworksException(ErrorCode.GLOBAL_BAD_REQUEST);
+		}
+
+		ExamQuestionListVO list = new ExamQuestionListVO();
+		list.setExamList(this.examDao.viewTestSetQuestionsForTake(testSetId));
+		return list;
+	}
+
 	/** 채점 결과: 채점 중(주관식 · 코드작성) */
 	private static final String GRADE_PENDING = "R";
 	/** 채점 결과: 정답 */

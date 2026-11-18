@@ -46,6 +46,9 @@ public interface ExamDao {
 
 	List<ExamQuestionVO> viewTestSetQuestions(String testSetId);
 
+	/** 응시용 문제 목록 (정답 CORRECT_ANSWER 제외) */
+	List<ExamQuestionVO> viewTestSetQuestionsForTake(String testSetId);
+
 	/** 시험 세트 문제들의 정답 · 유형 (채점용, 한 번에 조회) */
 	List<ExamQuestionVO> selectAnswerKeysByTestSetId(String testSetId);
 

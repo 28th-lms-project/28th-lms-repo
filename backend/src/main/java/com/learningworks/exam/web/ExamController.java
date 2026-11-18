@@ -126,6 +126,19 @@ public class ExamController {
 	}
 	
 	/**
+	 * 시험 응시용 문제 조회 (정답 제외).
+	 * 권한은 답안 제출과 같은 EXAM_COURSE_EXAM_SUBMIT: 응시할 수 있는 사람만 문제를 받는다.
+	 * 정답이 들어 있는 admin/system/{testSetId}/questionlist 는 강사 · 관리자용 (문제 보기 · 채점).
+	 */
+	@RequireAction(domain = "EXAM", action = "COURSE_EXAM_SUBMIT", description = "시험 답안 제출")
+	@GetMapping("my/test/{testSetId}/questions")
+	public ApiResponse<ExamQuestionListVO> viewTestSetQuestionsForTake(@PathVariable String testSetId,
+													Authentication authentication) {
+		String userId = authentication.getName();
+		return ApiResponse.OK(this.examService.viewTestSetQuestionsForTake(testSetId, userId));
+	}
+
+	/**
 	 * 시험 답안 제출.
 	 * 권한 코드 EXAM_SUBMIT: SUPER_ADMIN은 항상 허용, 수강생(ROLE_STUDENT)은 권한 관리 화면에서 부여해야 한다.
 	 * 응시자 ID는 요청 body가 아니라 로그인 정보(JWT)에서 꺼낸다.
