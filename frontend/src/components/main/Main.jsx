@@ -75,7 +75,8 @@ export default function Main() {
 }
 
 /**
- * 수강생 대시보드: 수치 → 오늘 출결 → 오늘 할 일(시간표 · 시험 · 남은 과제) → 내 과정 → 종료된 과정(접힘).
+ * 수강생 대시보드: 수치 → 내 과정 → 오늘 출결 → 오늘 할 일(시간표 · 시험 · 남은 과제) → 종료된 과정(접힘).
+ * 내 과정 카드(기간 · 진행률)를 먼저 보여 줘서 아래 오늘 할 일이 어느 과정 얘기인지 맥락을 준다.
  * 과정 목록이 오면 바로 그리고, 각 카드 · 패널은 자기 데이터가 오는 대로 채운다.
  */
 function StudentDashboard() {
@@ -110,14 +111,6 @@ function StudentDashboard() {
   return (
     <div className="form-stack">
       <SummaryCards active={active} total={courses.length} today={today} />
-      {active.length > 0 && <TodayAttendance active={active} patchResult={patchResult} />}
-      {active.length > 0 && (
-        <div className="layout-3col">
-          <TodayLessons active={active} today={today} />
-          <PendingTests active={active} />
-          <OpenHomeworks active={active} today={today} />
-        </div>
-      )}
       {current.length > 0 && (
         <Panel title="내 과정" subtitle={`${current.length}개`}>
           <div className="card-grid">
@@ -126,6 +119,14 @@ function StudentDashboard() {
             ))}
           </div>
         </Panel>
+      )}
+      {active.length > 0 && <TodayAttendance active={active} patchResult={patchResult} />}
+      {active.length > 0 && (
+        <div className="layout-3col">
+          <TodayLessons active={active} today={today} />
+          <PendingTests active={active} />
+          <OpenHomeworks active={active} today={today} />
+        </div>
       )}
       {ended.length > 0 && <EndedCourses courses={ended} today={today} />}
     </div>
