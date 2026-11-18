@@ -135,6 +135,7 @@ export const routes = [
                             <CourseItem />
                           </>
                         ),
+                        handle: { darkReady: true },
                       },
                     ],
                   },
@@ -182,7 +183,7 @@ export const routes = [
                     path: "add",
                     element: <CourseAdd />,
 
-                    handle: { crumb: "과정 등록", menu: true },
+                    handle: { crumb: "과정 등록", menu: true, darkReady: true },
                   },
                 ],
               },
