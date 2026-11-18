@@ -351,7 +351,6 @@ public class CourseServiceImpl implements CourseService{
 		return this.courseDao.readCourseMembers(courseId);
 	}
 
-<<<<<<< HEAD
 	@Override
 	public List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO) {
 		// 결과가 없으면 MyBatis가 빈 리스트를 반환한다.
@@ -456,6 +455,4 @@ public class CourseServiceImpl implements CourseService{
 		return Math.round(part * 1000.0 / total) / 10.0;
 	}
 
-=======
->>>>>>> dev
 }

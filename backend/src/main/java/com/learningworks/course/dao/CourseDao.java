@@ -71,7 +71,7 @@ public interface CourseDao {
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
 
-<<<<<<< HEAD
+
 	/** 과정 목록 검색 (DEL_YN = 'N'). 비어 있는 조건은 제외 */
 	List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO);
 
@@ -88,6 +88,5 @@ public interface CourseDao {
 	List<StudentAttendanceVO> readStudentAttendanceCounts(@Param("courseId") String courseId,
 			@Param("userId") String userId);
 
-=======
->>>>>>> dev
+
 }
