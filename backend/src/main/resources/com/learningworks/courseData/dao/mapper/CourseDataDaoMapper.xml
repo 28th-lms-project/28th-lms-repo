@@ -65,7 +65,7 @@
 	<!-- 교육 자료 등록 (CRT_DT, MDFY_DT 는 등록 시점으로 저장) -->
 	<insert id="insertCourseData" parameterType="com.learningworks.courseData.vo.request.CourseDataRequestVO">
 		<selectKey order="BEFORE" keyProperty="id" resultType="string">
-		SELECT 'CD-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_DATA_PK.NEXTVAL, 6, '0')
+		SELECT 'CR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_DATA_PK.NEXTVAL, 6, '0')
 		  FROM DUAL
 		</selectKey>
 		INSERT INTO COURSE_DATA

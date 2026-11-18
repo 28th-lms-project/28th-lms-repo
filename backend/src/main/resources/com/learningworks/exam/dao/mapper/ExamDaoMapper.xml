@@ -231,7 +231,7 @@
     
     <insert id="makeNewTestSet" parameterType="com.learningworks.exam.vo.request.RegistTestSetVO">
         <selectKey keyProperty="RegistTestSetVO.id" order="BEFORE" resultType="string">
-        SELECT ('TS-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+        SELECT ('TS-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TEST_SET_PK.NEXTVAL, 6, '0'))
           FROM DUAL
         </selectKey>
         INSERT INTO TEST_SET
@@ -252,7 +252,7 @@
     
     <insert id="makeNewTestSetTest" parameterType="string">
         <selectKey keyProperty="id" order="BEFORE" resultType="string">
-        SELECT ('TE-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+        SELECT ('TE-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TEST_SET_TESTS_PK.NEXTVAL, 6, '0'))
           FROM DUAL
         </selectKey>
         INSERT INTO TEST_SET_TESTS
@@ -368,7 +368,7 @@
     <insert id="insertTestAnswer"
             parameterType="com.learningworks.exam.vo.request.RegistTestAnswersVO">
         <selectKey keyProperty="id" order="BEFORE" resultType="string">
-        SELECT ('TN-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+        SELECT ('TN-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TEST_ANSWERS_PK.NEXTVAL, 6, '0'))
           FROM DUAL
         </selectKey>
         INSERT INTO TEST_ANSWERS

@@ -52,7 +52,7 @@
 	<!-- 면접 일정 등록 (PASS_YN, HIRE_YN 은 DB 기본값 'N', HIRE_DATE 는 NULL) -->
 	<insert id="insertInterview" parameterType="com.learningworks.interview.vo.request.InterviewRequestVO">
 		<selectKey order="BEFORE" keyProperty="id" resultType="string">
-		SELECT 'CI-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_STUDENT_INTERVIEWS_PK.NEXTVAL, 6, '0')
+		SELECT 'SI-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_STUDENT_INTERVIEWS_PK.NEXTVAL, 6, '0')
 		  FROM DUAL
 		</selectKey>
 		INSERT INTO COURSE_STUDENT_INTERVIEWS
