@@ -24,7 +24,7 @@ LearningWorks는 이 업무를 **과정 단위로 묶어** 한 화면에서 처�
 | [이동욱]| (https://github.com/fustarc)    | 회원 관리, 로그인 · 보안, 출결, 성적               |
 | [이태훈]| (https://github.com/dlxogns03)  | 과정 관리, 시험 출제 · 응시 · 채점                 |
 | [장규나]| (https://github.com/Jang-s-git) | 접근 권한 관리, 시간표, 면접 일정, 교육 자료, 상담 |
-| [임창진]| @Hebeon     | 설문, 시험 문제 관리, 환경 변수 관리               |
+| [임창진]| (https://github.com/Hebeon)     | 설문, 시험 문제 관리, 환경 변수 관리               |
 
 <br>
 
