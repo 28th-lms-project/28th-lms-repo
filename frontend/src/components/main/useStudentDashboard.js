@@ -7,6 +7,7 @@ import {
 import { getMyScoreList } from "../../api/my/course/scoreApi.js";
 import { getDailyTimetable } from "../../api/my/course/timetableApi.js";
 import { searchTestSets } from "../../api/admin/system/test/testApi.js";
+import { getTodayAttendance } from "../../api/my/course/attendanceApi.js";
 import { coursePhase, sortCourses, toDateKey } from "./dashboardSummary.js";
 
 /** 실패해도 다른 카드는 그리도록 결과를 { ok, value | error }로 감싼다 */
@@ -42,6 +43,7 @@ const ACTIVE_REQUESTS = {
   tests: (id) => settle(searchTestSets(id)), // testApi는 signal을 받지 않음
   homeworks: (id, options) => settle(getHomeworks(id, options)),
   lessons: (id, options, today) => settleLessons(getDailyTimetable(id, today, options)),
+  attendance: (id, options) => settle(getTodayAttendance(id, options)),
 };
 
 /**
@@ -51,7 +53,9 @@ const ACTIVE_REQUESTS = {
  * 각 결과는 undefined(불러오는 중) → { ok, value | error }. 부르지 않는 결과는 null.
  *
  * @param {boolean} enabled  false면 부르지 않음 (수강생이 아닐 때)
- * @returns {{ status: "loading"|"loaded"|"failed", courses: object[], today: string, reload: () => void }}
+ * @returns {{ status: "loading"|"loaded"|"failed", courses: object[], today: string, reload: () => void,
+ *            patchResult: (courseId: string, key: string, result: object) => void }}
+ *   patchResult: 한 과정의 결과 하나를 바꾼다 (출석 버튼을 누른 뒤 오늘 출결을 갱신할 때)
  */
 export default function useStudentDashboard(enabled) {
   const [state, setState] = useState({ status: "loading", courses: [], today: "" });
@@ -106,10 +110,19 @@ export default function useStudentDashboard(enabled) {
     return () => controller.abort();
   }, [enabled, reloadKey]);
 
+  const patchResult = useCallback((courseId, key, result) => {
+    setState((prev) => ({
+      ...prev,
+      courses: prev.courses.map((course) =>
+        course.id === courseId ? { ...course, [key]: result } : course,
+      ),
+    }));
+  }, []);
+
   const reload = useCallback(() => {
     setState((prev) => ({ ...prev, status: "loading" }));
     setReloadKey((key) => key + 1);
   }, []);
 
-  return { ...state, reload };
+  return { ...state, reload, patchResult };
 }

@@ -176,20 +176,60 @@ export const collectPendingTests = (activeCourses) => {
 };
 
 /**
- * 마감 전 과제: 마감일이 오늘 이후인 과제를 마감 순으로.
- * 내가 냈는지는 백엔드가 아직 알려 주지 않아 표시하지 않는다 (대시보드 2단계).
+ * 남은 과제: 마감일이 오늘 이후이고 아직 내지 않은(submittedYn !== "Y") 과제를 마감 순으로.
+ * submitted: 마감 전인데 이미 낸 과제 수 (목록에서는 빼고 수만 보여 줌)
  */
 export const collectOpenHomeworks = (activeCourses, today) => {
   const items = [];
+  let submitted = 0;
   const flags = scan(activeCourses, "homeworks", (homeworks, course) => {
     for (const homework of homeworks ?? []) {
-      if (homework.endDate && homework.endDate >= today) {
-        items.push({ key: `${course.id}-${homework.id}`, course, homework });
+      if (!homework.endDate || homework.endDate < today) continue;
+      if (homework.submittedYn === "Y") {
+        submitted += 1;
+        continue;
       }
+      items.push({ key: `${course.id}-${homework.id}`, course, homework });
     }
   });
   items.sort((a, b) => a.homework.endDate.localeCompare(b.homework.endDate));
+  return { items, submitted, ...flags };
+};
+
+/** 오늘 출결 상태 → 배지 */
+export const ATTEND_STATUS = {
+  Y: { tone: "success", label: "출석" },
+  L: { tone: "warning", label: "지각" },
+  N: { tone: "danger", label: "결석" },
+};
+
+/**
+ * 오늘 출결: 진행 중 과정 중 오늘 수업일이거나 이미 기록이 있는 과정만.
+ * 각 항목 { key, course, attendance(응답) }
+ */
+export const collectTodayAttendance = (activeCourses) => {
+  const items = [];
+  const flags = scan(activeCourses, "attendance", (attendance, course) => {
+    if (attendance?.classDay || attendance?.attendStatus) {
+      items.push({ key: course.id, course, attendance });
+    }
+  });
   return { items, ...flags };
+};
+
+/**
+ * 지금 누르면 어떻게 처리되는지 (lateTime · absentTime은 서버 설정 HH:mm)
+ * @returns {{ status: "Y"|"L"|"N", hint: string }}
+ */
+export const attendNowRule = (attendance, nowTime) => {
+  const { lateTime, absentTime } = attendance ?? {};
+  if (!lateTime || nowTime <= lateTime) {
+    return { status: "Y", hint: lateTime ? `${lateTime}까지 출석` : "" };
+  }
+  if (!absentTime || nowTime <= absentTime) {
+    return { status: "L", hint: `지금 누르면 지각 (${absentTime}까지)` };
+  }
+  return { status: "N", hint: "지금 누르면 결석으로 기록됩니다" };
 };
 
 /**
