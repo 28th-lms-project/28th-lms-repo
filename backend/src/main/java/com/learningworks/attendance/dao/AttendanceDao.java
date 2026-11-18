@@ -9,6 +9,10 @@ public interface AttendanceDao {
   String selectCourseStudentIdForUpdate(@Param("courseId") String courseId,
       @Param("userId") String userId);
 
+  /** 이 과정의 수강생이면 COURSE_STUDENT.ID, 아니면 null (조회용, 잠금 없음) */
+  String selectCourseStudentId(@Param("courseId") String courseId,
+      @Param("userId") String userId);
+
   int selectTodayClassDayCount(String courseId);
 
   int insertTodayAttendance(@Param("courseId") String courseId, @Param("userId") String userId,

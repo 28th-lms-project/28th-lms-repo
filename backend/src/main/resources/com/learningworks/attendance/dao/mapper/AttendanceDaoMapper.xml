@@ -11,6 +11,14 @@
 		   FOR UPDATE
 	</select>
 	
+	<!-- 오늘 내 출결 조회용 수강생 확인 (출석 체크와 달리 잠금 없음) -->
+	<select id="selectCourseStudentId" resultType="string">
+		SELECT ID
+		  FROM COURSE_STUDENT
+		 WHERE COURSE_ID = #{courseId}
+		   AND USER_ID = #{userId}
+	</select>
+	
 	<select id="selectTodayClassDayCount" parameterType="string" resultType="int">
 		SELECT COUNT(TT.COURSE_ID)
 		  FROM COURSE_TIME_TABLE TT
