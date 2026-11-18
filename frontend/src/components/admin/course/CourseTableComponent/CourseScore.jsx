@@ -8,6 +8,9 @@ import {
   formatTestType,
   hasScoreValue,
 } from "../../../../utils/scoreFormat.js";
+import StatusBox from "../../../common/ui/StatusBox.jsx";
+import Panel from "../../../common/ui/Panel.jsx";
+import Badge from "../../../common/ui/Badge.jsx";
 
 export default function CourseScore() {
   const { id } = useParams();
@@ -21,15 +24,16 @@ export default function CourseScore() {
   // 권한 조회 자체가 실패 (서버 오류 등)
   if (status === "failed") {
     return (
-      <p className={styles.notice}>
-        권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도 해주세요.
-      </p>
+      <StatusBox
+        type="error"
+        title="권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요."
+      />
     );
   }
 
   // 과정 관리에는 들어오지만 성적 권한이 없는 역할 (ROLE_READONLY 등)
   if (!can("SCORE_READ_COURSE")) {
-    return <p className={styles.notice}>성적을 볼 권한이 없습니다.</p>;
+    return <StatusBox type="denied" title="성적을 볼 권한이 없습니다." />;
   }
 
   return <CourseScoreContent courseId={id} />;
@@ -47,9 +51,9 @@ function ScoreCell({ row }) {
     return (
       <>
         {row.score}
-        <span className={`${styles.badge} ${styles.statusPending}`}>
+        <Badge tone="warning" className={styles.badgeGap}>
           {scoreStatus.label}
-        </span>
+        </Badge>
       </>
     );
   }
@@ -96,30 +100,33 @@ function CourseScoreContent({ courseId }) {
   }, [courseId]);
 
   if (status === "loading") {
-    return <p className={styles.notice}>성적을 불러오는 중입니다.</p>;
+    return <StatusBox type="loading" />;
   }
   if (status === "denied") {
     return (
-      <p className={styles.notice}>이 과정의 성적을 조회할 권한이 없습니다.</p>
+      <StatusBox
+        type="denied"
+        title="이 과정의 성적을 조회할 권한이 없습니다."
+      />
     );
   }
   if (status === "failed") {
-    return <p className={styles.notice}>성적을 불러오지 못했습니다.</p>;
+    return <StatusBox type="error" title="성적을 불러오지 못했습니다." />;
   }
   if (students.length === 0) {
     return (
-      <p className={styles.notice}>
-        수강생이나 시험이 없어 표시할 성적이 없습니다.
-      </p>
+      <StatusBox
+        type="empty"
+        title="수강생이나 시험이 없어 표시할 성적이 없습니다."
+      />
     );
   }
   const testSets = students[0].scoreList ?? [];
 
   return (
-    <section className={styles.section}>
-      <h3 className={styles.title}>과정 성적</h3>
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
+    <Panel title="과정 성적" flush className={styles.section}>
+      <div className="table-wrap">
+        <table className="table">
           <thead>
             <tr>
               <th className={styles.studentCol}>수강생</th>
@@ -142,7 +149,7 @@ function CourseScoreContent({ courseId }) {
                     (score) => score.testSetId === test.testSetId,
                   );
                   return (
-                    <td key={test.testSetId} className={styles.cellScore}>
+                    <td key={test.testSetId} className="col-num">
                       <ScoreCell row={row} />
                     </td>
                   );
@@ -154,7 +161,7 @@ function CourseScoreContent({ courseId }) {
             <tr className={styles.averageRow}>
               <td className={styles.studentCol}>반 평균</td>
               {testSets.map((test) => (
-                <td key={test.testSetId} className={styles.cellScore}>
+                <td key={test.testSetId} className="col-num">
                   <AverageCell value={test.averageScore} />
                 </td>
               ))}
@@ -162,6 +169,6 @@ function CourseScoreContent({ courseId }) {
           </tfoot>
         </table>
       </div>
-    </section>
+    </Panel>
   );
 }
