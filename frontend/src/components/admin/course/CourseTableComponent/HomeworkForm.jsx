@@ -1,17 +1,11 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useParams } from "react-router-dom";
-import { IconButton } from "../../../sample/input/IconButton";
 import { createHomework } from "../../../../api/admin/course/courseApi";
 
-const inputStyle = {
-  width: "100%",
-  padding: "8px 10px",
-  border: "1px solid #ddd",
-  borderRadius: "7px",
-  fontSize: "14px",
-  boxSizing: "border-box",
-  outline: "0",
-};
+import Button from "../../../common/ui/Button";
+import Field from "../../../common/ui/Field";
+import Panel from "../../../common/ui/Panel";
+import { useToast } from "../../../common/ui/feedbackContext";
 
 /**
  * 과제 등록 폼 (제목 · 제출마감일 · 내용)
@@ -25,21 +19,32 @@ export default function HomeworkForm({ onCancel, onSuccess }) {
   const [endDate, setEndDate] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // 칸별 입력 오류 ([등록]을 누를 때 검사)
+  const [errors, setErrors] = useState({});
+  const toast = useToast();
 
-  const onClickSubmit = async () => {
+  const baseId = useId();
+  const subjectId = `${baseId}-subject`;
+  const endDateId = `${baseId}-end`;
+  const contentId = `${baseId}-content`;
+
+  const onSubmit = async (event) => {
+    event.preventDefault();
     if (submitting) {
       return;
     }
+    const nextErrors = {};
     if (!subject.trim()) {
-      alert("과제 제목을 입력해주세요.");
-      return;
+      nextErrors.subject = "과제 제목을 입력하세요.";
     }
     if (!endDate) {
-      alert("제출마감일을 선택해주세요.");
-      return;
+      nextErrors.endDate = "제출 마감일을 고르세요.";
     }
     if (!content.trim()) {
-      alert("과제 내용을 입력해주세요.");
+      nextErrors.content = "과제 내용을 입력하세요.";
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
@@ -50,10 +55,10 @@ export default function HomeworkForm({ onCancel, onSuccess }) {
     } catch (error) {
       // 입력값 검증 실패면 필드별 메시지를 함께 보여준다.
       const validationMessages = Object.values(error.validations ?? {}).flat();
-      alert(
+      toast.error(
         validationMessages.length > 0
-          ? validationMessages.join("\n")
-          : error.message,
+          ? `과제를 등록하지 못했습니다.\n${validationMessages.join("\n")}`
+          : `과제를 등록하지 못했습니다. ${error.message ?? ""}`.trim(),
       );
     } finally {
       setSubmitting(false);
@@ -61,47 +66,67 @@ export default function HomeworkForm({ onCancel, onSuccess }) {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-        padding: "15px",
-        margin: "10px 0",
-        backgroundColor: "#fff",
-        border: "1px solid #eee",
-        borderRadius: "7px",
-      }}
-    >
-      <input
-        type="text"
-        value={subject}
-        onChange={(e) => setSubject(e.target.value)}
-        placeholder="과제 제목을 입력하세요."
-        style={inputStyle}
-      />
-      <input
-        type="date"
-        value={endDate}
-        onChange={(e) => setEndDate(e.target.value)}
-        style={inputStyle}
-      />
-      <textarea
-        rows={10}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="과제 내용을 입력하세요."
-        style={{ ...inputStyle, resize: "vertical" }}
-      />
-
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "5px" }}>
-        <IconButton onClick={onClickSubmit} disabled={submitting}>
-          {submitting ? "등록 중..." : "등록"}
-        </IconButton>
-        <IconButton onClick={onCancel} disabled={submitting}>
-          취소
-        </IconButton>
-      </div>
-    </div>
+    <form onSubmit={onSubmit} noValidate>
+      <Panel
+        title="과제 등록"
+        footer={
+          <>
+            <Button onClick={onCancel} disabled={submitting}>
+              취소
+            </Button>
+            <Button type="submit" variant="primary" loading={submitting}>
+              {submitting ? "등록 중..." : "등록"}
+            </Button>
+          </>
+        }
+      >
+        <div className="form-stack">
+          <div className="form-row">
+            <Field
+              label="과제 제목"
+              htmlFor={subjectId}
+              required
+              error={errors.subject}
+            >
+              <input
+                id={subjectId}
+                type="text"
+                className="form-control"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+              />
+            </Field>
+            <Field
+              label="제출 마감일"
+              htmlFor={endDateId}
+              required
+              error={errors.endDate}
+            >
+              <input
+                id={endDateId}
+                type="date"
+                className="form-control"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </Field>
+          </div>
+          <Field
+            label="과제 내용"
+            htmlFor={contentId}
+            required
+            error={errors.content}
+          >
+            <textarea
+              id={contentId}
+              rows={10}
+              className="form-control"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+          </Field>
+        </div>
+      </Panel>
+    </form>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import {
@@ -12,20 +12,39 @@ import TestSubjectSelect from "../selector/TestSubjectSelect";
 import ExamSubjectSelect from "../selector/ExamSubjectSelect";
 import ExamQuestionPicker from "./ExamQuestionPicker";
 import ExamSetTable from "./ExamSetTable";
-import { IconButton } from "../../../sample/input/IconButton";
-import { icons } from "../../../sample/input/icons";
+import usePermission from "../../../../hooks/usePermission";
+
+import Button from "../../../common/ui/Button";
+import Field from "../../../common/ui/Field";
+import Panel from "../../../common/ui/Panel";
+import StatusBox from "../../../common/ui/StatusBox";
+import { useToast } from "../../../common/ui/feedbackContext";
+import { icons } from "../../../common/input/icons";
 
 export default function ExamPage() {
   const { id } = useParams();
-  console.log(id);
   const dispatch = useDispatch();
-  const { questions, selectSubjectId, selectedQuestions } = useSelector(
+  const toast = useToast();
+  const { selectSubjectId, selectedQuestions } = useSelector(
     (store) => store.test,
   );
   // 시험 추가 폼 열림 여부
   const [showAddExam, setShowAddExam] = useState(false);
+  // [시험 등록]: POST addTestSet 의 권한
+  const { can } = usePermission();
+  const canAddExam = can("EXAM_COURSE_SET_CREATE");
   // 이 강좌의 시험 세트 목록 (ExamSetTable)
   const [testSets, setTestSets] = useState([]);
+  // 시험 세트 목록을 불러오지 못했을 때의 오류 (표 자리에 StatusBox로 보여 줌)
+  const [loadError, setLoadError] = useState(null);
+  // 칸별 입력 오류 ([등록]을 누를 때 검사)
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  const baseId = useId();
+  const subjectId = `${baseId}-subject`;
+  const typeId = `${baseId}-type`;
+  const titleId = `${baseId}-title`;
 
   // 공개 여부 수정 성공: 목록에서 해당 시험 세트의 값만 바꾼다
   const onChangeShowYn = (testSetId, showYn) => {
@@ -34,6 +53,10 @@ export default function ExamPage() {
         testSet.id === testSetId ? { ...testSet, showYn } : testSet,
       ),
     );
+  };
+  // 삭제 성공: 목록에서 해당 시험 세트를 뺀다
+  const onDeleteTestSet = (testSetId) => {
+    setTestSets((prev) => prev.filter((testSet) => testSet.id !== testSetId));
   };
   // 시험 제목 input (RegistExamSetVO.setName)
   const examTitleRef = useRef();
@@ -44,24 +67,31 @@ export default function ExamPage() {
   // 제목/공개여부 input은 폼이 사라졌다 다시 그려지므로 따로 비우지 않아도 된다.
   const onCancelAddExam = () => {
     dispatch(testActions.selectSubjectId(""));
+    setErrors({});
     setShowAddExam(false);
   };
 
-  const onClickAddExam = async () => {
+  const onSubmitAddExam = async (event) => {
+    event.preventDefault();
+    if (saving) {
+      return;
+    }
     const examTitle = examTitleRef.current.value.trim();
     const isPublic = isPublicRef.current.checked;
 
     // 입력값 검사를 통과한 경우에만 API 호출
+    const nextErrors = {};
     if (!selectSubjectId) {
-      alert("시험과목을 선택하세요.");
-      return;
+      nextErrors.subject = "시험 과목을 고르세요.";
     }
     if (!examTitle) {
-      alert("시험 제목을 입력하세요.");
-      return;
+      nextErrors.title = "시험 제목을 입력하세요.";
     }
     if (selectedQuestions.length === 0) {
-      alert("문제를 선택하세요.");
+      nextErrors.questions = "시험 문제를 고르세요.";
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
@@ -72,20 +102,20 @@ export default function ExamPage() {
       showYn: isPublic ? "Y" : "N",
       questeions: selectedQuestions,
     };
-    console.log(addTestSet);
-    console.log("선택된 문제", selectedQuestions);
 
+    setSaving(true);
     try {
-      const result = await makeNewTestSet(id, addTestSet);
+      await makeNewTestSet(id, addTestSet);
       const tests = await searchTestSets(id);
-      console.log(result);
-      console.log(tests);
       setTestSets(tests);
+      setLoadError(null);
+      toast.success("시험을 등록했습니다.");
       // 등록 성공: 추가 폼 닫기 (선택한 과목도 함께 비움)
       onCancelAddExam();
     } catch (e) {
-      console.log(e);
-      alert("등록에 실패했습니다.");
+      toast.error(`시험을 등록하지 못했습니다. ${e.message ?? ""}`.trim());
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -101,10 +131,11 @@ export default function ExamPage() {
         const result = await searchTestSets(id);
         if (!ignoreUpdateState) {
           setTestSets(result);
+          setLoadError(null);
         }
       } catch (e) {
         if (!ignoreUpdateState) {
-          alert(e.message);
+          setLoadError(e);
         }
       }
     })();
@@ -121,83 +152,109 @@ export default function ExamPage() {
     let ignoreUpdateState = false;
 
     (async () => {
-      // const controller = new AbortController();
-      // const options = { signal: controller.signal };
       try {
         const response = await searchTest(selectSubjectId.value);
-        const searchTestSet = await searchTestSets(id);
+        await searchTestSets(id);
         if (!ignoreUpdateState) {
-          console.log(response);
-
-          console.log(searchTestSet);
-          console.log(questions);
           dispatch(testActions.setTestList(response));
         }
       } catch (e) {
         if (!ignoreUpdateState) {
-          alert(e.message);
+          toast.error(
+            `문제 목록을 불러오지 못했습니다. ${e.message ?? ""}`.trim(),
+          );
         }
       }
     })();
     return () => {
       ignoreUpdateState = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 기존 동작 유지: 과목이 바뀔 때만 조회
   }, [dispatch, selectSubjectId]);
 
+  if (showAddExam) {
+    return (
+      <form onSubmit={onSubmitAddExam} noValidate>
+        <Panel
+          title="시험 등록"
+          footer={
+            <>
+              <Button onClick={onCancelAddExam} disabled={saving}>
+                취소
+              </Button>
+              <Button type="submit" variant="primary" loading={saving}>
+                {saving ? "등록 중..." : "등록"}
+              </Button>
+            </>
+          }
+        >
+          <div className="form-stack">
+            <div className="form-row">
+              <Field
+                label="시험 과목"
+                htmlFor={subjectId}
+                required
+                error={errors.subject}
+              >
+                <TestSubjectSelect inputId={subjectId} />
+              </Field>
+              <Field label="시험 종류" htmlFor={typeId}>
+                <ExamSubjectSelect inputId={typeId} />
+              </Field>
+              <Field
+                label="시험 제목"
+                htmlFor={titleId}
+                required
+                error={errors.title}
+              >
+                <input
+                  id={titleId}
+                  type="text"
+                  className="form-control"
+                  ref={examTitleRef}
+                />
+              </Field>
+            </div>
+            <label className="form-check">
+              <input type="checkbox" ref={isPublicRef} /> 수강생에게 공개
+            </label>
+            <Field group label="시험 문제" required error={errors.questions}>
+              <ExamQuestionPicker />
+            </Field>
+          </div>
+        </Panel>
+      </form>
+    );
+  }
+
   return (
-    <>
-      {!showAddExam && (
-        <>
-          <IconButton
-            color="#666"
+    <div className="form-stack">
+      <div className="toolbar">
+        <span className="field-hint">시험 {testSets.length}건</span>
+        {canAddExam && (
+          <Button
+            variant="primary"
             icon={icons.add}
             onClick={() => setShowAddExam(true)}
-            // 가로로 늘어나지 않고, hover 시 글씨가 굵어져도 크기가 변하지 않도록 고정
-            style={{ width: "120px", flexShrink: 0 }}
+            className="toolbar-end"
           >
-            시험 추가
-          </IconButton>
-          <div style={{ marginTop: "8px" }}>
-            <ExamSetTable testSets={testSets} onChangeShowYn={onChangeShowYn} />
-          </div>
-        </>
+            시험 등록
+          </Button>
+        )}
+      </div>
+      {loadError ? (
+        <StatusBox
+          type="error"
+          title="시험 목록을 불러오지 못했습니다."
+          detail={loadError.message}
+        />
+      ) : (
+        <ExamSetTable
+          testSets={testSets}
+          onChangeShowYn={onChangeShowYn}
+          onDelete={onDeleteTestSet}
+        />
       )}
-      {showAddExam && (
-        <>
-          <ExamSubjectSelect />
-          <TestSubjectSelect />
-          <input
-            type="text"
-            ref={examTitleRef}
-            placeholder="시험 제목을 입력하세요"
-            style={{ width: "100%", marginTop: "8px", boxSizing: "border-box" }}
-          />
-          <label
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-              marginTop: "8px",
-            }}
-          >
-            <input type="checkbox" ref={isPublicRef} />
-            시험 공개
-          </label>
-          <div style={{ display: "flex", gap: "8px", margin: "8px 0" }}>
-            <IconButton color="#666" icon={icons.add} onClick={onClickAddExam}>
-              추가
-            </IconButton>
-            <IconButton
-              color="#666"
-              icon={icons.close}
-              onClick={onCancelAddExam}
-            >
-              취소
-            </IconButton>
-          </div>
-          <ExamQuestionPicker />
-        </>
-      )}
-    </>
+    </div>
   );
 }

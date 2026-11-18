@@ -12,6 +12,10 @@ export const courseSlice = createSlice({
     homeworks: [],
     homeworkReplies: [],
     showHomework: undefined,
+    // 과정 진행률 · 출석률 요약 (GET /{courseId}/attendance/summary 결과). 불러오기 전이면 null
+    // { totalClassDays, passedClassDays, progressRate, averageAttendanceRate, averageWarning,
+    //   students: [{ userId, name, presentCount, lateCount, absentCount, attendanceRate, warning }] }
+    attendanceSummary: null,
   },
   reducers: {
     load(state, action) {
@@ -43,6 +47,10 @@ export const courseSlice = createSlice({
     },
     loadHomeworkReplies(state, action) {
       state.homeworkReplies = [...(action.payload ?? [])];
+    },
+    // payload: 출석률 요약 객체 (지울 때는 null)
+    loadAttendanceSummary(state, action) {
+      state.attendanceSummary = action.payload ?? null;
     },
   },
 });

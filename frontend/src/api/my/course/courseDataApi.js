@@ -80,3 +80,7 @@ export const downloadCourseDataFile = (courseId, fileId, options) =>
     undefined,
     options,
   );
+
+/** 수강생 출결 조회 api */
+export const attendanceDate = (courseId) =>
+  api.get(`admin/course/${courseId}/attendance`);

@@ -11,6 +11,7 @@ public class CourseVO {
 	private String no;
 	private String startDate;
 	private String endDated;
+	private String delYn;
 	
 	private String name;
 	

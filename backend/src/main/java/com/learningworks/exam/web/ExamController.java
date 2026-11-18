@@ -46,8 +46,11 @@ public class ExamController {
 
 	@RequireAction(domain = "EXAM", action = "SET_READ", description = "시험 세트 조회")
 	@GetMapping("admin/system/{courseId}/testSet")
-	public ApiResponse<List<ExamSetVO>> getAllExamInExamSet(@PathVariable String courseId) {
-		return ApiResponse.OK(this.examService.readAllExamInExamSet(courseId));
+	public ApiResponse<List<ExamSetVO>> getAllExamInExamSet(@PathVariable String courseId,
+															Authentication authentication) {
+		// 응시 여부(submittedYn)는 로그인 사용자 기준 (답안 제출의 중복 검사와 같은 조건)
+		String userId = authentication.getName();
+		return ApiResponse.OK(this.examService.readAllExamInExamSet(courseId, userId));
 	}
 	
 	@RequireAction(domain = "EXAM", action = "QUESTION_READ", description = "시험 문제 조회")

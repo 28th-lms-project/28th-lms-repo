@@ -13,7 +13,8 @@ import com.learningworks.exam.vo.response.ExamSetVO;
 
 public interface ExamService {
 
-	List<ExamSetVO> readAllExamInExamSet(String courseId);
+	/** 과정의 시험 세트 목록. userId(로그인 사용자) 기준 응시 여부(submittedYn)를 함께 담는다 */
+	List<ExamSetVO> readAllExamInExamSet(String courseId, String userId);
 
 	ExamQuestionVO createNewExam(RegistExamQuestionVO registExamQuestionVO);
 

@@ -130,7 +130,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 | `GET /menus` | `MENU_READ` "메뉴 목록 조회" | — | `{ roles, menus }` (4-2) |
 | `POST /menus` | `MENU_CREATE` "메뉴 등록" | `{ parentId, title, useYn, spread, menuUrl, roleIds }` | 만든 메뉴 1건 |
 | `PUT /menus/{menuId}` | `MENU_UPDATE` "메뉴 수정" | `{ title, useYn, spread, menuUrl, roleIds, mdfyDt }` | 수정한 메뉴 1건 |
-| `PUT /menus/order` | `MENU_UPDATE` "메뉴 수정" | `{ parentId, menuIds }` | `{ roles, menus }` (변경 후 전체) |
+| `PUT /menus/order` | `MENU_UPDATE` "메뉴 수정" | `{ orders: [{ parentId, menuIds }, …] }` (여러 상위 메뉴를 한 번에) | `{ roles, menus }` (변경 후 전체) |
 | `PUT /menus/{menuId}/parent` | `MENU_UPDATE` "메뉴 수정" | `{ parentId, mdfyDt }` | `{ roles, menus }` (변경 후 전체, 4-7) |
 | `DELETE /menus/{menuId}` | `MENU_DELETE` "메뉴 삭제" | — | 삭제한 메뉴 1건 |
 
@@ -187,7 +187,8 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 | `menuUrl` | 소메뉴면 필수, `/`로 시작, 공백 없음, 100자 이하. 그 외에는 무시하고 null 저장 | "메뉴 URL을 입력해주세요." / "메뉴 URL은 '/'로 시작해야 합니다." / "메뉴 URL에는 공백을 넣을 수 없습니다." / "메뉴 URL은 100자 이하로 입력해주세요." |
 | `roleIds` | 배열(빈 배열 허용, null 불가). 없는 역할이 있으면 거부. SUPER_ADMIN과 중복은 저장하지 않고 건너뜀 | null이면 "역할 목록을 입력해주세요." / 없는 역할은 `MENU_ROLE_INVALID` |
 | `parentId` (등록) | null(대메뉴) 또는 존재하는 대 · 중메뉴 | 없으면 `MENU_NOT_EXISTS` / 소메뉴면 `MENU_PARENT_INVALID` |
-| `menuIds` (순서 변경) | 비어 있지 않고 null · 중복 없음. `parentId`는 null(대메뉴) 또는 존재하는 메뉴 | 빈 목록 · null · 중복은 `MENU_ORDER_INVALID` / 없는 `parentId`는 `MENU_NOT_EXISTS` |
+| `orders` (순서 변경) | 비어 있지 않고 null 항목 없음, 같은 `parentId`(대메뉴 null 포함)는 한 번만 | `MENU_ORDER_INVALID` |
+| `menuIds` (순서 변경, 항목마다) | 비어 있지 않고 null · 중복 없음. `parentId`는 null(대메뉴) 또는 존재하는 메뉴 | 빈 목록 · null · 중복은 `MENU_ORDER_INVALID` / 없는 `parentId`는 `MENU_NOT_EXISTS` |
 | `mdfyDt` (수정) | 화면이 받은 값 그대로 (생성 후 수정된 적 없으면 null) | 서버 값과 다르면 `MENU_OUTDATED` |
 
 백엔드는 프론트 라우트를 알 수 없으므로 `menuUrl`은 **형식만** 검사합니다. 실제 화면이 있는 URL만 고르게 하는 것은 프론트가 합니다.
@@ -201,7 +202,7 @@ SELECT 'MR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_MENU_ROLE_PK.NEXTVAL, 
 - **등록**: 새 메뉴는 같은 상위 메뉴의 맨 뒤(`MAX(MENU_ORDER) + 1`)에 추가. `CRT_DT = SYSDATE`, `MDFY_DT = null`. `MENU_ROLE`을 함께 저장.
 - **수정**: 메뉴 행을 `SELECT ... FOR UPDATE`로 잠그고(비교와 저장 사이에 다른 요청이 끼지 않게), 입력값 · 자기 잠금(4-6) 검사 뒤 요청의 `mdfyDt`와 DB의 `MDFY_DT`를 비교합니다 (둘 다 null이면 같음). 다르면 `MENU_OUTDATED`. 같으면 `MDFY_DT = SYSDATE`로 저장하고, `MENU_ROLE`은 해당 메뉴 행을 모두 지우고 `roleIds`로 다시 넣습니다 (물리 삭제라 행이 쌓이지 않음). 한 트랜잭션.
   - 이 검사가 없으면 두 관리자가 같은 메뉴를 열어 두었을 때 나중에 저장한 쪽이 먼저 저장한 변경(특히 역할 체크)을 말없이 덮어씁니다.
-- **순서 변경**: `menuIds`는 해당 상위 메뉴의 **현재 하위 메뉴 전체**여야 합니다. 개수 · 구성이 다르면 `MENU_ORDER_OUTDATED`. 받은 순서대로 1부터 다시 매깁니다 (역할 순서 변경과 같은 방식). `MDFY_DT`는 바꾸지 않습니다 (열어 둔 다른 화면의 수정이 `MENU_OUTDATED`로 거부되지 않게).
+- **순서 변경**: 화면의 [순서 저장]이 바뀐 상위 메뉴들의 순서를 한 번에 보냅니다 (2026-11-17, 이전에는 상위 메뉴 하나씩 놓자마자 저장). **모두 검사한 뒤 저장하고, 하나라도 거부되면 아무것도 바꾸지 않습니다** (한 트랜잭션). 항목마다 `menuIds`는 해당 상위 메뉴의 **현재 하위 메뉴 전체**여야 합니다. 개수 · 구성이 다르면 `MENU_ORDER_OUTDATED`. 받은 순서대로 1부터 다시 매깁니다 (역할 순서 변경과 같은 방식). `MDFY_DT`는 바꾸지 않습니다 (열어 둔 다른 화면의 수정이 `MENU_OUTDATED`로 거부되지 않게).
 - **삭제**: 하위 메뉴가 있으면 `MENU_HAS_CHILDREN`, ACTION의 `TOP_MENU_ID` · `MID_MENU_ID` · `BTM_MENU_ID` 중 하나라도 참조하면 `MENU_IN_USE`. 통과하면 `MENU_ROLE` 행 삭제 → `MENU` 삭제 → 같은 상위 메뉴의 순서를 1부터 다시 매김. 한 트랜잭션.
   - 검사 전에 메뉴 행을 `SELECT ... FOR UPDATE`로 잠급니다. ACTION 저장도 같은 소메뉴 행을 잠그므로(7장 "ACTION 저장 시 메뉴 검증"), 검사와 삭제 사이에 이 메뉴를 쓰는 ACTION이 저장되지 않습니다.
 - 역할 삭제 시 `MENU_ROLE` 물리 삭제는 이미 `RoleDaoMapper.deleteMenuRoleByRoleId`가 합니다 (변경 없음).
@@ -358,3 +359,4 @@ ACTION의 메뉴 컬럼 3개는 구조를 바꾸지 않습니다. 지금은 메�
 | B21 | 중메뉴를 다른 대메뉴로 이동 | 성공, 그 아래 소메뉴를 참조하는 ACTION의 `TOP_MENU_ID`도 바뀜 |
 | B22 | 소메뉴를 대메뉴 아래로 / 같은 상위 메뉴로 이동 | `MENU_MOVE_INVALID` |
 | B23 | ADMIN이 메뉴 관리 소메뉴를 ADMIN이 허용되지 않은 중메뉴로 이동 | `MENU_SELF_LOCK` |
+| B24 | 두 상위 메뉴의 순서를 한 번에 저장, 그중 하나가 그 사이 바뀜 | `MENU_ORDER_OUTDATED`, 다른 하나도 저장되지 않음 |

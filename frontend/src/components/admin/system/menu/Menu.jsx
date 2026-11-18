@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useBlocker } from "react-router-dom";
 
-import PageContainer from "../../../common/PageContainer";
-import { IconButton } from "../../../common/input/IconButton";
-import { icons } from "../../../common/input/icons";
-import { Confirm } from "../../../sample/Modal";
+import PageHeader from "../../../common/ui/PageHeader";
+import StatusBox from "../../../common/ui/StatusBox";
+import Callout from "../../../common/ui/Callout";
+import Button from "../../../common/ui/Button";
+import { useConfirm, useToast } from "../../../common/ui/feedbackContext";
 import usePermission from "../../../../hooks/usePermission";
+import useBreadcrumbs from "../../../../hooks/useBreadcrumbs";
 import { refreshMyMenus } from "../../../../store/slices/menuSliceStore";
 import { routes } from "../../../../router/MainRouterProvider";
 import { getMenuUrlOptions } from "../../../../router/routeUtils";
@@ -47,36 +49,43 @@ import {
   validateMove,
 } from "./menuUtils";
 
-import styles from "./Menu.module.css";
-
 const EMPTY_SELECTION = { top: null, mid: null, btm: null };
 const EMPTY_FORMS = { top: null, mid: null, btm: null };
 const EMPTY_ERRORS = { top: EMPTY_FORM_ERRORS, mid: EMPTY_FORM_ERRORS, btm: EMPTY_FORM_ERRORS };
+const NOT_EDITING = { top: false, mid: false, btm: false };
 
 const UNSAVED_CHANGES_MESSAGE = "저장하지 않은 변경사항이 있습니다. 이동할까요?";
 const MOVE_CONFIRM_MESSAGE =
   "메뉴를 옮기면 이 메뉴를 쓰는 접근 권한(ACTION)의 메뉴도 함께 바뀝니다. 옮길까요?";
 
+/** 순서 초안의 키 (대메뉴는 상위 메뉴가 null) */
+const ROOT_KEY = "ROOT";
+const orderKeyOf = (parentId) => parentId ?? ROOT_KEY;
+const parentIdOfKey = (key) => (key === ROOT_KEY ? null : key);
+const sameIds = (a, b) => a.length === b.length && a.every((id, index) => id === b[index]);
+
 /**
  * 메뉴 관리 화면. 설계: frontend/docs/design/menu-page-design.md 6장
+ * 표준: frontend/docs/ui-style-guide.md 8장 "화면 예시" › 메뉴 관리
  *
- * - 권한 조회 중: "권한 확인 중..."
- * - 권한 조회 실패: 안내 문구
- * - MENU_READ 없음: "권한이 없습니다."
- * - MENU_READ 있음: 화면 표시. 추가 MENU_CREATE, 저장 · 순서 변경 MENU_UPDATE, 삭제 MENU_DELETE
+ * - 권한 조회 중 · 실패 · MENU_READ 없음: StatusBox
+ * - MENU_READ 있음: 화면 표시. 추가 MENU_CREATE, 수정 · 순서 변경 · 옮기기 MENU_UPDATE, 삭제 MENU_DELETE
  */
 export default function Menu() {
   const { can, isSuperAdmin, status } = usePermission();
+  const crumbs = useBreadcrumbs();
 
   // idle: 비로그인(조회하지 않음) → 표시 없음
   let content = null;
   if (status === "loading") {
-    content = <p className={styles.notice}>권한 확인 중...</p>;
+    content = <StatusBox type="loading" title="권한 확인 중..." />;
   } else if (status === "failed") {
     content = (
-      <p className={styles.notice}>
-        권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
-      </p>
+      <StatusBox
+        type="error"
+        title="권한 정보를 불러오지 못했습니다."
+        detail="새로고침 후 다시 시도해 주세요."
+      />
     );
   } else if (status === "loaded") {
     content = can("MENU_READ") ? (
@@ -87,19 +96,30 @@ export default function Menu() {
         canDelete={can("MENU_DELETE")}
       />
     ) : (
-      <p className={styles.notice}>권한이 없습니다.</p>
+      <StatusBox type="denied" />
     );
   }
 
-  return <PageContainer>{content}</PageContainer>;
+  return (
+    <>
+      <PageHeader
+        crumbs={crumbs}
+        title={crumbs.at(-1)?.title ?? "메뉴 관리"}
+        description="사이드바 메뉴의 구조 · 순서와 메뉴마다 볼 수 있는 역할을 관리합니다."
+      />
+      {content}
+    </>
+  );
 }
 
 /**
- * 메뉴 목록 · 등록 · 수정 · 순서 변경 · 삭제
+ * 메뉴 목록 · 등록 · 수정 · 순서 변경 · 옮기기 · 삭제
  * MENU_READ가 있을 때만 마운트되므로, 권한 없이 목록 API를 호출하지 않는다.
  */
 function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
   const dispatch = useDispatch();
+  const toast = useToast();
+  const confirm = useConfirm();
 
   // 첫 조회 상태 ("loading" | "loaded" | "failed")와 실패 메시지
   const [listStatus, setListStatus] = useState("loading");
@@ -108,21 +128,17 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
   const [roles, setRoles] = useState([]);
   const [menus, setMenus] = useState([]);
 
-  // 열별 선택 메뉴 ID / 상세 입력값 / 입력 오류
+  // 열별 선택 메뉴 ID / 상세 입력값 / 입력 오류 / 수정 중인지 (보기 ↔ 수정)
   const [selectedIds, setSelectedIds] = useState(EMPTY_SELECTION);
   const [forms, setForms] = useState(EMPTY_FORMS);
   const [formErrors, setFormErrors] = useState(EMPTY_ERRORS);
+  const [editing, setEditing] = useState(NOT_EDITING);
 
-  // 저장 · 삭제 · 순서 변경 진행 중 (버튼 비활성)
+  // 저장하지 않은 순서 { 상위 메뉴 키: 메뉴 ID 목록 }. [순서 저장]으로 한 번에 저장 (바뀐 열만 들어 있음)
+  const [orderDraft, setOrderDraft] = useState({});
+
+  // 저장 · 삭제 · 순서 저장 진행 중 (버튼 비활성)
   const [saving, setSaving] = useState(false);
-
-  // 드래그 중인 메뉴 { level, id } / 놓을 위치로 표시할 메뉴 ID
-  const [dragging, setDragging] = useState(null);
-  const [dropTargetId, setDropTargetId] = useState(null);
-
-  // 확인 창 (삭제 · 저장하지 않은 변경)
-  const confirmRef = useRef(null);
-  const [confirmState, setConfirmState] = useState({ message: "", onOk: null, onCancel: null });
 
   // 조회 결과를 반영할 때 "지금 화면 상태"가 필요해서 최신 값을 ref로도 들고 있는다
   const latest = useRef({ menus, selectedIds, forms, formErrors });
@@ -141,24 +157,20 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
     [selectedIds],
   );
 
-  const isDirty = (level) => isFormDirty(forms[level], menus);
-  const anyDirty = LEVELS.some((level) => isFormDirty(forms[level], menus));
+  const isEditing = (level) => editing[level] || forms[level]?.mode === "new";
+  const anyEditing = LEVELS.some((level) => isEditing(level));
+  const orderChanged = Object.keys(orderDraft).length > 0;
+  const anyDirty = orderChanged || LEVELS.some((level) => isFormDirty(forms[level], menus));
 
   // ───────── 확인 창 ─────────
 
-  const askConfirm = (message, onOk, onCancel) => {
-    setConfirmState({ message, onOk, onCancel });
-    confirmRef.current?.open();
-  };
-
   /** level 열과 그 오른쪽 열에 저장하지 않은 변경이 있으면 확인 후 action 실행 */
-  const runAfterDiscardConfirm = (level, action) => {
+  const runAfterDiscardConfirm = async (level, action) => {
     const levels = LEVELS.slice(LEVELS.indexOf(level));
     if (levels.some((item) => isFormDirty(forms[item], menus))) {
-      askConfirm(UNSAVED_CHANGES_MESSAGE, action);
-    } else {
-      action();
+      if (!(await confirm({ message: UNSAVED_CHANGES_MESSAGE, confirmText: "이동" }))) return;
     }
+    action();
   };
 
   // ───────── 조회 결과 반영 ─────────
@@ -167,7 +179,8 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
    * 새 목록을 반영하고, 열 선택 · 상세를 새 목록에 맞춘다.
    * - 없어진 메뉴의 선택은 풀고, 상위 선택이 없으면 오른쪽 열도 비운다
    * - 변경이 없는 상세는 서버 값으로 바꾸고, 변경 중인 상세는 그대로 둔다
-   * - select가 있으면 그 열에서 그 메뉴를 선택하고 상세를 서버 값으로 바꾼다 (배열이면 여러 열)
+   * - select가 있으면 그 열에서 그 메뉴를 선택하고 상세를 서버 값(보기)으로 바꾼다 (배열이면 여러 열)
+   * - 저장하지 않은 순서는 버린다 (서버 목록이 기준)
    * @param {{ roles?: object[], menus?: object[] }} data
    * @param {{ level: string, id: string } | { level: string, id: string }[]} [select]
    */
@@ -179,6 +192,7 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
     const nextSelected = { ...prevSelected };
     const nextForms = { ...prevForms };
     const nextErrors = { ...prevErrors };
+    const stopEditing = {};
 
     const selects = select ? [].concat(select) : [];
     selects.forEach((item) => (nextSelected[item.level] = item.id));
@@ -191,6 +205,7 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
         nextSelected[level] = null;
         nextForms[level] = null;
         nextErrors[level] = EMPTY_FORM_ERRORS;
+        stopEditing[level] = false;
         return;
       }
 
@@ -203,10 +218,12 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       if (selects.some((item) => item.level === level) && selectedMenu) {
         nextForms[level] = menuToForm(selectedMenu);
         nextErrors[level] = EMPTY_FORM_ERRORS;
+        stopEditing[level] = false;
       } else if (form?.mode === "view") {
         if (!selectedMenu) {
           nextForms[level] = null;
           nextErrors[level] = EMPTY_FORM_ERRORS;
+          stopEditing[level] = false;
         } else if (!isFormDirty(form, prevMenus)) {
           nextForms[level] = menuToForm(selectedMenu);
         }
@@ -218,6 +235,8 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
     setSelectedIds(nextSelected);
     setForms(nextForms);
     setFormErrors(nextErrors);
+    setEditing((prev) => ({ ...prev, ...stopEditing }));
+    setOrderDraft({});
     setListStatus("loaded");
     setListError("");
   }, []);
@@ -228,10 +247,10 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       try {
         applyMenuList(await getMenus(), select);
       } catch (error) {
-        alert(getErrorMessage(error));
+        toast.error(getErrorMessage(error));
       }
     },
-    [applyMenuList],
+    [applyMenuList, toast],
   );
 
   const failMenuList = useCallback((error) => {
@@ -267,21 +286,19 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       anyDirty && currentLocation.pathname !== nextLocation.pathname,
   );
 
-  // 이동이 막히면 확인 창을 연다. 확인 창의 내용 · 동작은 아래 activeConfirm에서 blocker 기준으로 정한다
+  // 이동이 막히면 확인 창을 연다. blocker는 렌더마다 바뀌므로 ref로 최신 값을 쓴다
+  const blockerRef = useRef(blocker);
+  useEffect(() => {
+    blockerRef.current = blocker;
+  });
+
   const isNavigationBlocked = blocker.state === "blocked";
   useEffect(() => {
-    if (isNavigationBlocked) {
-      confirmRef.current?.open();
-    }
-  }, [isNavigationBlocked]);
-
-  const activeConfirm = isNavigationBlocked
-    ? {
-        message: UNSAVED_CHANGES_MESSAGE,
-        onOk: () => blocker.proceed?.(),
-        onCancel: () => blocker.reset?.(),
-      }
-    : confirmState;
+    if (!isNavigationBlocked) return;
+    confirm({ message: UNSAVED_CHANGES_MESSAGE, confirmText: "이동" }).then((ok) =>
+      ok ? blockerRef.current.proceed?.() : blockerRef.current.reset?.(),
+    );
+  }, [isNavigationBlocked, confirm]);
 
   useEffect(() => {
     if (!anyDirty) return undefined;
@@ -295,11 +312,12 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [anyDirty]);
 
-  // ───────── 선택 · 추가 · 입력 · 취소 ─────────
+  // ───────── 선택 · 추가 · 수정 · 입력 · 취소 ─────────
 
-  /** level 열의 선택 · 상세를 바꾸고, 오른쪽 열은 비운다 */
+  /** level 열의 선택 · 상세를 바꾸고(보기 상태), 오른쪽 열은 비운다 */
   const replaceColumn = (level, selectedId, form) => {
     const index = LEVELS.indexOf(level);
+    const levels = LEVELS.slice(index);
     const rightLevels = LEVELS.slice(index + 1);
 
     setSelectedIds((prev) => {
@@ -313,8 +331,13 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       return next;
     });
     setFormErrors((prev) => {
-      const next = { ...prev, [level]: EMPTY_FORM_ERRORS };
-      rightLevels.forEach((right) => (next[right] = EMPTY_FORM_ERRORS));
+      const next = { ...prev };
+      levels.forEach((item) => (next[item] = EMPTY_FORM_ERRORS));
+      return next;
+    });
+    setEditing((prev) => {
+      const next = { ...prev };
+      levels.forEach((item) => (next[item] = false));
       return next;
     });
   };
@@ -332,6 +355,11 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
     runAfterDiscardConfirm(level, () =>
       replaceColumn(level, null, createNewForm(selectedIds[level] ?? forms[level]?.prevId)),
     );
+  };
+
+  /** 보기 → 수정 */
+  const handleEdit = (level) => {
+    setEditing((prev) => ({ ...prev, [level]: true }));
   };
 
   const handleChange = (level, patch) => {
@@ -359,9 +387,11 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       return;
     }
 
+    // 수정 → 보기, 입력값은 마지막 저장 값으로
     const savedMenu = findMenu(menus, form.id);
     setForms((prev) => ({ ...prev, [level]: savedMenu ? menuToForm(savedMenu) : null }));
     setFormErrors((prev) => ({ ...prev, [level]: EMPTY_FORM_ERRORS }));
+    setEditing((prev) => ({ ...prev, [level]: false }));
   };
 
   // ───────── 저장 ─────────
@@ -401,14 +431,11 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       dispatch(refreshMyMenus());
 
       // 사이드바는 소메뉴가 없는 그룹 · 섹션을 그리지 않으므로, 저장이 실패한 것처럼 보이지 않게 안내
+      const done = form.mode === "new" ? "등록했습니다." : "저장했습니다.";
       const needsBottomMenu = level !== "btm" && !hasBottomMenu(data?.menus ?? [], saved.id, level);
-      alert(
-        needsBottomMenu
-          ? "저장되었습니다.\n소메뉴를 추가해야 사이드바에 표시됩니다."
-          : "저장되었습니다.",
-      );
+      toast.success(needsBottomMenu ? `${done}\n소메뉴를 추가해야 사이드바에 표시됩니다.` : done);
     } catch (error) {
-      alert(`저장되었지만 목록을 다시 불러오지 못했습니다.\n${getErrorMessage(error)}`);
+      toast.error(`저장했지만 목록을 다시 불러오지 못했습니다.\n${getErrorMessage(error)}`);
     } finally {
       setSaving(false);
     }
@@ -421,7 +448,7 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       return;
     }
 
-    alert(getErrorMessage(error));
+    toast.error(getErrorMessage(error));
 
     if (error.errorCode === "MENU_OUTDATED") {
       // 다른 사용자가 먼저 저장함 → 같은 메뉴를 선택한 채 서버 값으로 바꾼다 (내 입력은 버려짐)
@@ -435,7 +462,7 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
 
   // ───────── 옮기기 (상위 메뉴 변경) ─────────
 
-  const handleMove = (level, form) => {
+  const handleMove = async (level, form) => {
     const errors = validateMove(form, menus);
     setFormErrors((prev) => ({ ...prev, [level]: errors }));
     if (hasErrors(errors)) return;
@@ -444,28 +471,31 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
     const leftDirty = LEVELS.slice(0, LEVELS.indexOf(level)).some((item) =>
       isFormDirty(forms[item], menus),
     );
-    const message = leftDirty
-      ? `${MOVE_CONFIRM_MESSAGE} 다른 열의 저장하지 않은 변경사항은 사라집니다.`
-      : MOVE_CONFIRM_MESSAGE;
-
-    askConfirm(message, async () => {
-      setSaving(true);
-      try {
-        const data = await moveMenu(form.id, form.parentId, form.mdfyDt);
-        // 옮긴 메뉴가 보이도록 대메뉴부터 옮긴 메뉴까지 새 경로로 선택
-        const path = getSelfAndAncestors(data?.menus ?? [], form.id).reverse();
-        applyMenuList(
-          data,
-          path.map((menu, index) => ({ level: LEVELS[index], id: menu.id })),
-        );
-        dispatch(refreshMyMenus());
-        alert("메뉴를 옮겼습니다.");
-      } catch (error) {
-        await handleMoveError(level, form, error);
-      } finally {
-        setSaving(false);
-      }
+    const ok = await confirm({
+      title: "메뉴 옮기기",
+      message: leftDirty
+        ? `${MOVE_CONFIRM_MESSAGE}\n다른 열의 저장하지 않은 변경사항은 사라집니다.`
+        : MOVE_CONFIRM_MESSAGE,
+      confirmText: "옮기기",
     });
+    if (!ok) return;
+
+    setSaving(true);
+    try {
+      const data = await moveMenu(form.id, form.parentId, form.mdfyDt);
+      // 옮긴 메뉴가 보이도록 대메뉴부터 옮긴 메뉴까지 새 경로로 선택
+      const path = getSelfAndAncestors(data?.menus ?? [], form.id).reverse();
+      applyMenuList(
+        data,
+        path.map((menu, index) => ({ level: LEVELS[index], id: menu.id })),
+      );
+      dispatch(refreshMyMenus());
+      toast.success("메뉴를 옮겼습니다.");
+    } catch (error) {
+      await handleMoveError(level, form, error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleMoveError = async (level, form, error) => {
@@ -477,7 +507,7 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
       return;
     }
 
-    alert(getErrorMessage(error));
+    toast.error(getErrorMessage(error));
 
     if (error.errorCode === "MENU_OUTDATED") {
       await reloadMenus({ level, id: form.id });
@@ -489,79 +519,84 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
 
   // ───────── 삭제 ─────────
 
-  const handleDelete = (level) => {
+  const handleDelete = async (level) => {
     const form = forms[level];
     const menu = findMenu(menus, form?.id);
     if (!menu || saving) return;
 
-    askConfirm(`'${menu.title}' 메뉴를 삭제하시겠습니까?`, async () => {
-      setSaving(true);
-      try {
-        await deleteMenu(menu.id);
-        await reloadMenus();
-        dispatch(refreshMyMenus());
-        alert("삭제되었습니다.");
-      } catch (error) {
-        alert(getErrorMessage(error));
-        if (error.errorCode === "MENU_NOT_EXISTS") {
-          await reloadMenus();
-        }
-      } finally {
-        setSaving(false);
-      }
+    const ok = await confirm({
+      title: "메뉴 삭제",
+      message: `'${menu.title}' 메뉴를 삭제할까요?`,
+      confirmText: "삭제",
+      danger: true,
     });
-  };
-
-  // ───────── 순서 변경 (HTML5 Drag and Drop, 같은 열 안에서만) ─────────
-
-  const canDrag = canUpdate && !saving && listStatus === "loaded";
-
-  const clearDrag = () => {
-    setDragging(null);
-    setDropTargetId(null);
-  };
-
-  const handleDragStart = (event, level, menuId) => {
-    setDragging({ level, id: menuId });
-    event.dataTransfer.effectAllowed = "move";
-    // Firefox는 setData가 있어야 드래그가 시작됨
-    event.dataTransfer.setData("text/plain", menuId);
-  };
-
-  const handleDragOver = (event, level, menuId) => {
-    // 다른 열에는 놓을 수 없음 (preventDefault를 호출하지 않으면 drop 안 됨)
-    if (!dragging || dragging.level !== level) {
-      if (dropTargetId !== null) setDropTargetId(null);
-      return;
-    }
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-    if (dropTargetId !== menuId) setDropTargetId(menuId);
-  };
-
-  const handleDrop = async (event, level, targetId) => {
-    event.preventDefault();
-
-    const from = dragging;
-    clearDrag();
-    if (!from || from.level !== level || from.id === targetId) return;
-
-    const parentId = parentIdOf(level);
-    const ids = getChildMenus(menus, parentId).map((menu) => menu.id);
-    const fromIndex = ids.indexOf(from.id);
-    const toIndex = ids.indexOf(targetId);
-    if (fromIndex < 0 || toIndex < 0) return;
-
-    ids.splice(fromIndex, 1);
-    ids.splice(toIndex, 0, from.id);
+    if (!ok) return;
 
     setSaving(true);
     try {
-      applyMenuList(await modifyMenuOrder(parentId, ids));
+      await deleteMenu(menu.id);
+      await reloadMenus();
       dispatch(refreshMyMenus());
+      toast.success("삭제했습니다.");
     } catch (error) {
-      alert(getErrorMessage(error));
+      toast.error(getErrorMessage(error));
+      if (error.errorCode === "MENU_NOT_EXISTS") {
+        await reloadMenus();
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ───────── 순서 바꾸기 (손잡이 끌기 · ↑ ↓ 키, [순서 저장]으로 한 번에) ─────────
+
+  // 상세를 수정 중이면 순서를 바꿀 수 없다 (저장 뒤 받은 목록이 저장하지 않은 순서를 덮어쓰므로)
+  const canReorder = canUpdate && !saving && !anyEditing;
+
+  /** 열에 보이는 메뉴: 저장하지 않은 순서가 있으면 그 순서 */
+  const columnItems = (parentId) => {
+    const children = getChildMenus(menus, parentId);
+    const draft = orderDraft[orderKeyOf(parentId)];
+    if (!draft) return children;
+    return draft.map((id) => children.find((menu) => menu.id === id)).filter(Boolean);
+  };
+
+  const handleReorder = (level, fromIndex, toIndex) => {
+    const parentId = parentIdOf(level);
+    const ids = columnItems(parentId).map((menu) => menu.id);
+    const [moved] = ids.splice(fromIndex, 1);
+    ids.splice(toIndex, 0, moved);
+
+    const savedIds = getChildMenus(menus, parentId).map((menu) => menu.id);
+    const key = orderKeyOf(parentId);
+    setOrderDraft((prev) => {
+      const next = { ...prev };
+      if (sameIds(ids, savedIds)) delete next[key];
+      else next[key] = ids;
+      return next;
+    });
+  };
+
+  const changedOrderNames = Object.keys(orderDraft).map((key) =>
+    key === ROOT_KEY ? "대메뉴" : (findMenu(menus, key)?.title ?? key),
+  );
+
+  const handleSaveOrder = async () => {
+    if (saving || !orderChanged) return;
+
+    setSaving(true);
+    try {
+      const orders = Object.entries(orderDraft).map(([key, menuIds]) => ({
+        parentId: parentIdOfKey(key),
+        menuIds,
+      }));
+      applyMenuList(await modifyMenuOrder(orders));
+      dispatch(refreshMyMenus());
+      toast.success("순서를 저장했습니다.");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
       if (error.errorCode === "MENU_ORDER_OUTDATED" || error.errorCode === "MENU_NOT_EXISTS") {
+        // 그 사이 메뉴가 추가 · 삭제됨 → 서버 목록으로 다시 (저장하지 않은 순서는 버려짐)
         await reloadMenus();
       }
     } finally {
@@ -572,24 +607,41 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
   // ───────── 화면 ─────────
 
   if (listStatus === "loading") {
-    return <p className={styles.notice}>목록을 불러오는 중입니다...</p>;
+    return <StatusBox type="loading" title="목록을 불러오는 중..." />;
   }
 
   if (listStatus === "failed") {
     return (
-      <div className={styles.notice}>
-        <p className={styles.listErrorTitle}>목록을 불러오지 못했습니다.</p>
-        {listError && <p className={styles.listErrorMessage}>{listError}</p>}
-        <IconButton icon={icons.refresh} iconSize={16} onClick={retryLoadMenus}>
-          다시 시도
-        </IconButton>
-      </div>
+      <StatusBox
+        type="error"
+        title="목록을 불러오지 못했습니다."
+        detail={listError}
+        onRetry={retryLoadMenus}
+      />
     );
   }
 
   return (
-    <>
-      <div className={styles.menuPage}>
+    <div className="form-stack">
+      {orderChanged && (
+        <Callout
+          tone="info"
+          actions={
+            <>
+              <Button size="sm" disabled={saving} onClick={() => setOrderDraft({})}>
+                되돌리기
+              </Button>
+              <Button size="sm" variant="primary" loading={saving} onClick={handleSaveOrder}>
+                {saving ? "저장 중..." : "순서 저장"}
+              </Button>
+            </>
+          }
+        >
+          순서가 변경되었습니다: {changedOrderNames.join(" · ")}
+        </Callout>
+      )}
+
+      <div className="layout-3col">
         {LEVELS.map((level, index) => {
           const parentId = parentIdOf(level);
           const active = index === 0 || parentId !== null;
@@ -611,11 +663,14 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
               key={level}
               level={level}
               active={active}
-              items={active ? getChildMenus(menus, parentId) : []}
+              parentTitle={findMenu(menus, parentId)?.title ?? ""}
+              items={active ? columnItems(parentId) : []}
+              menus={menus}
               selectedId={selectedIds[level]}
               form={form}
+              editing={isEditing(level)}
               errors={formErrors[level]}
-              dirty={isDirty(level)}
+              dirty={isFormDirty(form, menus)}
               fieldsDirty={isFieldsDirty(form, menus)}
               parentChanged={isParentChanged(form, menus)}
               parentOptions={canUpdate ? getParentOptions(menus, level) : []}
@@ -630,35 +685,23 @@ function MenuManagement({ isSuperAdmin, canCreate, canUpdate, canDelete }) {
               routeUrls={routeUrls}
               editable={editable}
               canCreate={canCreate}
+              canUpdate={canUpdate}
               canDelete={canDelete}
-              canDrag={canDrag}
+              canReorder={canReorder}
+              orderPending={orderChanged}
               saving={saving}
-              dragging={dragging}
-              dropTargetId={dropTargetId}
               onSelect={handleSelect}
               onAdd={handleAdd}
+              onEdit={handleEdit}
               onChange={handleChange}
               onSave={handleSave}
               onCancel={handleCancel}
               onDelete={handleDelete}
-              onDragStart={handleDragStart}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onDragEnd={clearDrag}
+              onReorder={handleReorder}
             />
           );
         })}
       </div>
-
-      <Confirm
-        ref={confirmRef}
-        title="확인"
-        content={<p className={styles.confirmMessage}>{activeConfirm.message}</p>}
-        positiveButtonText="확인"
-        negativeButtonText="취소"
-        onClickPositive={() => activeConfirm.onOk?.()}
-        onClickNegative={() => activeConfirm.onCancel?.()}
-      />
-    </>
+    </div>
   );
 }

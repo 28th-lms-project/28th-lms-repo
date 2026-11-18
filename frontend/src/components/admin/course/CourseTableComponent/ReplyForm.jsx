@@ -1,39 +1,39 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { IconButton } from "../../../sample/input/IconButton";
 import { createHomeworkReply } from "../../../../api/admin/course/courseApi";
 
+import Button from "../../../common/ui/Button";
+import { useToast } from "../../../common/ui/feedbackContext";
+
 /**
- * 과제 댓글 작성 폼
+ * 과제 댓글 작성 폼 (comment-form)
  * - 본문(textarea)에 링크를 그냥 붙여넣는 방식
- * @param {Function} onCancel 취소 버튼 클릭 시 호출
- * @param {Function} onSuccess 등록 성공 시 호출
+ * @param {Function} [onCancel] 있으면 [취소] 버튼을 보여주고 클릭 시 호출
+ * @param {Function} onSuccess 등록 성공 시 호출 (입력 칸은 비운다)
  */
 export default function ReplyForm({ onCancel, onSuccess }) {
   const { courseId, homeworkId } = useParams();
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const toast = useToast();
 
   const onClickSubmit = async () => {
-    if (submitting) {
-      return;
-    }
-    if (!content.trim()) {
-      alert("댓글 내용을 입력해주세요.");
+    if (submitting || !content.trim()) {
       return;
     }
 
     setSubmitting(true);
     try {
       await createHomeworkReply(courseId, homeworkId, { content });
+      setContent("");
       onSuccess();
     } catch (error) {
       // 입력값 검증 실패면 필드별 메시지를 함께 보여준다.
       const validationMessages = Object.values(error.validations ?? {}).flat();
-      alert(
+      toast.error(
         validationMessages.length > 0
-          ? validationMessages.join("\n")
-          : error.message,
+          ? `댓글을 등록하지 못했습니다.\n${validationMessages.join("\n")}`
+          : `댓글을 등록하지 못했습니다. ${error.message ?? ""}`.trim(),
       );
     } finally {
       setSubmitting(false);
@@ -41,35 +41,30 @@ export default function ReplyForm({ onCancel, onSuccess }) {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "5px",
-        width: "100%",
-      }}
-    >
+    <div className="comment-form">
       <textarea
+        className="form-control"
         rows={3}
+        aria-label="댓글 내용"
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="댓글 입력... (링크도 그냥 붙여넣기)"
-        style={{
-          width: "100%",
-          resize: "none",
-          fontSize: "12px",
-          padding: "5px",
-          boxSizing: "border-box",
-        }}
+        placeholder="제출 내용 · 링크를 입력하세요."
       />
-
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "5px" }}>
-        <IconButton onClick={onClickSubmit} disabled={submitting}>
+      <div className="btn-group btn-group-end">
+        {onCancel && (
+          <Button size="sm" onClick={onCancel} disabled={submitting}>
+            취소
+          </Button>
+        )}
+        <Button
+          size="sm"
+          variant="primary"
+          loading={submitting}
+          disabled={!content.trim()}
+          onClick={onClickSubmit}
+        >
           {submitting ? "등록 중..." : "등록"}
-        </IconButton>
-        <IconButton onClick={onCancel} disabled={submitting}>
-          취소
-        </IconButton>
+        </Button>
       </div>
     </div>
   );

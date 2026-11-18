@@ -10,6 +10,7 @@ import com.learningworks.survey.vo.request.RegistSurveyDataVO;
 import com.learningworks.survey.vo.request.RegistSurveyVO;
 import com.learningworks.survey.vo.response.CourseSurveyQuestionVO;
 import com.learningworks.survey.vo.response.CourseSurveyResultVO;
+import com.learningworks.survey.vo.response.CourseSurveyStatisticsVO;
 import com.learningworks.survey.vo.response.SurveyStudentAnswerVO;
 import com.learningworks.survey.vo.response.CourseSurveyVO;
 import com.learningworks.survey.vo.response.SurveyDataVO;
@@ -50,5 +51,7 @@ public interface SurveyService {
 
 	List<SurveyStudentAnswerVO> readCourseSurveyStudentAnswers(String courseId, String courseSurveyId,
 			String courseStudentId);
+
+	CourseSurveyStatisticsVO readCourseSurveyStatistics(String courseId, String courseSurveyId);
 
 }

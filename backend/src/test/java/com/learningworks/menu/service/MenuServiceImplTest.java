@@ -14,6 +14,7 @@ import com.learningworks.common.action.dao.ActionCodeDao;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.ValidationFailedException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
+import com.learningworks.menu.vo.request.MenuOrderVO;
 import com.learningworks.menu.vo.request.ModifyMenuOrderVO;
 import com.learningworks.menu.vo.request.ModifyMenuParentVO;
 import com.learningworks.menu.vo.request.ModifyMenuVO;
@@ -555,10 +556,16 @@ class MenuServiceImplTest {
     }
   }
 
-  static ModifyMenuOrderVO order(String parentId, String... menuIds) {
-    ModifyMenuOrderVO vo = new ModifyMenuOrderVO();
+  static MenuOrderVO order(String parentId, String... menuIds) {
+    MenuOrderVO vo = new MenuOrderVO();
     vo.setParentId(parentId);
-    vo.setMenuIds(menuIds == null ? null : List.of(menuIds));
+    vo.setMenuIds(menuIds == null ? null : java.util.Arrays.asList(menuIds));
+    return vo;
+  }
+
+  static ModifyMenuOrderVO orders(MenuOrderVO... orders) {
+    ModifyMenuOrderVO vo = new ModifyMenuOrderVO();
+    vo.setOrders(orders == null ? null : java.util.Arrays.asList(orders));
     return vo;
   }
 
@@ -570,8 +577,8 @@ class MenuServiceImplTest {
       return MenuServiceImplTest.this.menuDao;
     }
 
-    MenuListVO reorder(ModifyMenuOrderVO vo) {
-      return MenuServiceImplTest.this.menuService.updateMenuOrder(vo);
+    MenuListVO reorder(MenuOrderVO... items) {
+      return MenuServiceImplTest.this.menuService.updateMenuOrder(orders(items));
     }
 
     @Test
@@ -623,6 +630,46 @@ class MenuServiceImplTest {
       Assertions.assertThat(errorCodeOf(() -> this.reorder(order("M3", "B4", "B2"))))
           .isEqualTo(ErrorCode.MENU_ORDER_OUTDATED);
       Assertions.assertThat(this.dao().menus.get("B4").getMenuOrder()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("여러 상위 메뉴의 순서를 한 번에 바꾼다 (화면의 [순서 저장])")
+    void reordersSeveralParents() {
+      this.reorder(order("M3", "B5", "B4"), order(null, "T2", "T1"), order("M2", "B3", "B2"));
+
+      Assertions.assertThat(this.dao().menus.get("B5").getMenuOrder()).isEqualTo(1);
+      Assertions.assertThat(this.dao().menus.get("T2").getMenuOrder()).isEqualTo(1);
+      Assertions.assertThat(this.dao().menus.get("B3").getMenuOrder()).isEqualTo(1);
+      Assertions.assertThat(this.dao().menus.get("B2").getMenuOrder()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("하나라도 거부되면 아무것도 바꾸지 않는다 (먼저 모두 검사한 뒤 저장)")
+    void allOrNothing() {
+      Assertions
+          .assertThat(errorCodeOf(() -> this.reorder(order("M3", "B5", "B4"), order("M2", "B2"))))
+          .isEqualTo(ErrorCode.MENU_ORDER_OUTDATED);
+      Assertions.assertThat(errorCodeOf(() -> this.reorder(order("M3", "B5", "B4"), order("NOPE", "B1"))))
+          .isEqualTo(ErrorCode.MENU_NOT_EXISTS);
+
+      Assertions.assertThat(this.dao().menus.get("B4").getMenuOrder()).isEqualTo(1);
+      Assertions.assertThat(this.dao().menus.get("B5").getMenuOrder()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("orders가 비었거나 null 항목 · 같은 상위 메뉴가 두 번이면 MENU_ORDER_INVALID")
+    void rejectsInvalidOrders() {
+      Assertions.assertThat(errorCodeOf(() -> MenuServiceImplTest.this.menuService
+          .updateMenuOrder(orders((MenuOrderVO[]) null)))).isEqualTo(ErrorCode.MENU_ORDER_INVALID);
+      Assertions.assertThat(errorCodeOf(() -> this.reorder()))
+          .isEqualTo(ErrorCode.MENU_ORDER_INVALID);
+      Assertions.assertThat(errorCodeOf(() -> this.reorder(order("M3", "B5", "B4"), null)))
+          .isEqualTo(ErrorCode.MENU_ORDER_INVALID);
+      Assertions
+          .assertThat(errorCodeOf(() -> this.reorder(order("M3", "B5", "B4"), order("M3", "B4", "B5"))))
+          .isEqualTo(ErrorCode.MENU_ORDER_INVALID);
+      Assertions.assertThat(errorCodeOf(() -> this.reorder(order(null, "T2", "T1"), order(null, "T1", "T2"))))
+          .isEqualTo(ErrorCode.MENU_ORDER_INVALID);
     }
 
     @Test

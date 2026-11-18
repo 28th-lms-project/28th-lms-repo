@@ -49,13 +49,13 @@ export const createMenu = (menu) => api.post("/menus", menu);
 export const modifyMenu = (menuId, menu) => api.put(menuPath(menuId), menu);
 
 /**
- * 메뉴 순서 변경 (MENU_UPDATE). 같은 상위 메뉴의 하위 메뉴 전체를 순서대로 보낸다.
- * @param {string|null} parentId 대메뉴의 순서를 바꿀 때는 null
- * @param {string[]} menuIds
+ * 메뉴 순서 변경 (MENU_UPDATE). 화면의 [순서 저장]으로 바뀐 상위 메뉴들의 순서를 한 번에 보낸다.
+ * 서버는 모두 검사한 뒤 저장하고, 하나라도 거부되면 아무것도 바꾸지 않는다.
+ * @param {{ parentId: string|null, menuIds: string[] }[]} orders 상위 메뉴마다 하위 메뉴 전체를 순서대로 (대메뉴는 parentId null)
  * @returns {Promise<{ roles: object[], menus: object[] }>} 변경 후 전체
  * errorCode: MENU_ORDER_INVALID, MENU_ORDER_OUTDATED(그 사이 추가 · 삭제됨 → 목록 다시 조회), MENU_NOT_EXISTS
  */
-export const modifyMenuOrder = (parentId, menuIds) => api.put("/menus/order", { parentId, menuIds });
+export const modifyMenuOrder = (orders) => api.put("/menus/order", { orders });
 
 /**
  * 상위 메뉴 변경 = 메뉴 옮기기 (MENU_UPDATE). 소메뉴는 다른 중메뉴로, 중메뉴는 다른 대메뉴로.

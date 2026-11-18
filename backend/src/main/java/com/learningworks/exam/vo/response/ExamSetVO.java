@@ -12,7 +12,9 @@ public class ExamSetVO {
 	private String testType;
 	private String setName;
 	private String showYn;
-	
+	/** 로그인 사용자가 이 시험에 답안을 제출했는지 ("Y" / "N") */
+	private String submittedYn;
+
 	private ExamQuestionListVO questionList;
 
 }

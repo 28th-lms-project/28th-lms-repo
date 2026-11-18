@@ -63,13 +63,18 @@
 	</select>
 
 	<select id="selectAllExamInExamSet"
-	   parameterType="string"
 		resultMap="ExamSetVOMap">
 		SELECT TS.ID AS SET_ID
 			 , TS.COURSE_ID
 			 , TS.TEST_TYPE
 			 , TS.SET_NAME
 			 , TS.SHOW_YN
+			 <!-- 로그인 사용자의 응시 여부: countSubmittedAnswers 와 같은 조건 -->
+			 , CASE WHEN EXISTS (SELECT 1
+			                       FROM TEST_ANSWERS TA
+			                      WHERE TA.TEST_SET_ID = TS.ID
+			                        AND TA.COURSE_STUDENT_ID = #{userId})
+			        THEN 'Y' ELSE 'N' END AS SUBMITTED_YN
 			 , T.ID AS TEST_ID
 			 , T.SUBJECT_ID
 			 , T.QUESTION

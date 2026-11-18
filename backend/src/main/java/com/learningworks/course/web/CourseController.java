@@ -3,6 +3,7 @@ package com.learningworks.course.web;
 
 import java.util.List;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -20,12 +21,14 @@ import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
+import com.learningworks.course.vo.response.AttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
 import com.learningworks.course.vo.response.HomeworkVO;
 
 import jakarta.validation.Valid;
+
 
 @RestController
 public class CourseController {
@@ -78,9 +81,11 @@ public class CourseController {
 	 * @return CourseVO
 	 */
 
+	@RequireAction(domain = "COURSE", action = "READ", description = "강의 조회")
 	@GetMapping("/my/course/list/{courseId}")
-	public ApiResponse<CourseVO> readMyCourse(@PathVariable String courseId) {
-		CourseVO course = this.courseService.readMyCourse(courseId);
+	public ApiResponse<CourseVO> readMyCourse(@PathVariable String courseId, Authentication authentication) {
+		
+		CourseVO course = this.courseService.readMyCourse(courseId, authentication.getName());
 		return ApiResponse.OK(course);
 	}
 
@@ -200,6 +205,7 @@ public class CourseController {
 	 * 전체 학생 목록 조회 query문에서 WHERE BASE_ROLE = 'ROLE_STUDENT'
 	 * @return List<CourseMemberVO>
 	 */
+	@RequireAction(domain = "COURSE", action = "MEMBER_READ", description = "강의 회원 선택 목록 조회")
 	@GetMapping("/student/list")
 	public ApiResponse<List<CourseMemberVO>> courseMemberList() {
 		List<CourseMemberVO> courseMemberVO = this.courseService.courseMemberList();
@@ -213,6 +219,7 @@ public class CourseController {
 	 * @return List<CourseMemberVO>
 	 */
 
+	@RequireAction(domain = "COURSE", action = "MEMBER_READ", description = "강의 회원 선택 목록 조회")
 	@GetMapping("/tutor/list")
 	public ApiResponse<List<CourseMemberVO>> courseTutorList(){
 		List<CourseMemberVO> courseMemberVO = this.courseService.courseTutorList();
@@ -224,16 +231,30 @@ public class CourseController {
 	 * @param registCourseVO
 	 * @return ApiResponse.CREATED
 	 */
+	@RequireAction(domain = "COURSE", action = "CREATE", description = "강의 등록")
 	@PostMapping("/admin/course/add")
 	public ApiResponse<CourseVO> addCourse(@Valid @ModelAttribute RegistCourseVO registCourseVO) {
 		return ApiResponse.CREATED(this.courseService.addCourse(registCourseVO));
 	}
 	
+	@RequireAction(domain = "COURSE", action = "STUDENT_CREATE", description = "강의 수강생 추가")
 	@PostMapping("admin/course/list/{courseId}")
 	public ApiResponse<List<CourseMemberVO>> addCourseMember (@PathVariable String courseId 
 							,@RequestBody  List<String> studentId){
 		List<CourseMemberVO> memberList = this.courseService.addCourseMember(courseId,studentId);
 		return ApiResponse.OK(null);
 	}
-	
+
+	/**
+	 * 강의 진행률 · 출석률 요약 (어제까지 기준)
+	 * 관리자 · 강사는 강의 전체 수강생, 수강생은 본인만 조회된다.
+	 * @param courseId
+	 * @return AttendanceSummaryVO
+	 */
+	@RequireAction(domain = "COURSE", action = "ATTENDANCE_READ", description = "강의 출석률 조회")
+	@GetMapping("/{courseId}/attendance/summary")
+	public ApiResponse<AttendanceSummaryVO> readAttendanceSummary(@PathVariable String courseId) {
+		return ApiResponse.OK(this.courseService.readAttendanceSummary(courseId));
+	}
+
 }

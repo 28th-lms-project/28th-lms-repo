@@ -21,7 +21,9 @@ public interface ExamDao {
 
 	long selectQuestionsCount(@Param("subjectId") String subjectId);
 
-	List<ExamSetVO> selectAllExamInExamSet(String courseId);
+	/** 과정의 시험 세트 목록. userId 는 응시 여부(submittedYn) 계산용 로그인 사용자 */
+	List<ExamSetVO> selectAllExamInExamSet(@Param("courseId") String courseId,
+			@Param("userId") String userId);
 	
 	int insertNewExam(RegistExamQuestionVO registExamQuestionVO);
 

@@ -1,66 +1,79 @@
 import { useSelector } from "react-redux";
-import { Grid } from "../../../sample/Grid";
+import usePermission from "../../../../hooks/usePermission";
 
-// 표에 보여줄 요일 수 (월 ~ 금)
-const WEEKDAY_COUNT = 5;
+import Badge from "../../../common/ui/Badge";
+import Progress from "../../../common/ui/Progress";
+import StatusBox from "../../../common/ui/StatusBox";
+import Table from "../../../common/ui/Table";
 
-/** 이번 주 월요일 ~ 금요일 날짜. key: "YYYY-MM-DD", label: "MM-DD" */
-function getThisWeekdays() {
-  const today = new Date();
-  const day = today.getDay(); // 0(일) ~ 6(토)
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+/** 0 ~ 100 으로 자르고, 숫자가 아니면 0 */
+const clampRate = (rate) => Math.min(100, Math.max(0, Number(rate) || 0));
 
-  return Array.from({ length: WEEKDAY_COUNT }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + i);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return {
-      key: `${yyyy}-${mm}-${dd}`,
-      label: `${mm}-${dd}`,
-    };
-  });
-}
+const ATTENDANCE_COLUMNS = [
+  { key: "userId", title: "아이디", width: 140, mono: true },
+  { key: "name", title: "이름", width: 140 },
+  {
+    key: "attendanceRate",
+    title: "출석률",
+    render: (student) => (
+      <Progress
+        label={`${student.name} 출석률`}
+        value={clampRate(student.attendanceRate)}
+        tone={student.warning ? "danger" : "success"}
+        showValue
+      />
+    ),
+  },
+  {
+    key: "warning",
+    title: "상태",
+    width: 90,
+    align: "center",
+    // warning: 진행된 기간 대비 출석 80% 미만 (서버가 계산)
+    render: (student) =>
+      student.warning ? (
+        <Badge tone="danger">주의</Badge>
+      ) : (
+        <Badge tone="success">정상</Badge>
+      ),
+  },
+];
 
+/**
+ * 출석률 탭. 수강생별 전체 기간 기준 출석률.
+ * 데이터는 CourseItem 이 불러와 둔 courseSlice.attendanceSummary 를 쓴다.
+ * (수강생은 서버가 본인 한 줄만 내려주므로 같은 화면을 그대로 쓸 수 있다)
+ */
 export default function StudentConnected() {
-  const WEEK = getThisWeekdays();
-  const CONNECTED_HEADER = [
-    { id: "id", title: "수강생 ID" },
-    { id: "name", title: "수강생 이름" },
-    ...WEEK.map((w) => ({ id: w.key, title: w.label })),
-  ];
-  const { showStudents } = useSelector((store) => store.courses);
+  const { attendanceSummary } = useSelector((store) => store.courses);
+  // 출석률 요약 조회 권한 (CourseItem 이 이 권한이 있을 때만 불러온다)
+  const { can } = usePermission();
 
-  // TODO(API): 날짜별 첫 요청 시각 조회
-  //   GET /{courseId}/connected?startDate=WEEK[0].key&endDate=WEEK[WEEK.length - 1].key
-  //   응답 예) [{ id, name, logins: { "2026-11-10": "09:02:11", ... } }]
-  //   응답을 받으면 아래 connectedTimes 를 { [수강생 ID]: logins } 형태로 채운다.
-  //   (수강생은 서버가 본인 한 줄만 내려주므로, 그때는 행도 showStudents 대신 응답으로 만든다)
-  const connectedTimes = {};
+  if (!can("COURSE_ATTENDANCE_READ")) {
+    return <StatusBox type="denied" />;
+  }
+  if (!attendanceSummary) {
+    return <StatusBox type="empty" title="출석 정보가 없습니다." />;
+  }
 
-  const content = showStudents.map((student) =>
-    CONNECTED_HEADER.map((col) => ({
-      id: `${student.id}-${col.id}`, // 셀마다 고유한 값
-      value:
-        col.id === "id" || col.id === "name"
-          ? student[col.id]
-          : // 접속하지 않은 날은 "-"
-            (connectedTimes[student.id]?.[col.id] ?? "-"),
-    })),
-  );
+  const { progressRate, students = [] } = attendanceSummary;
 
   return (
-    <>
-      <Grid
-        header={CONNECTED_HEADER}
-        content={content}
-        style={{
-          margin: "10px 0px",
-        }}
-        columnStyle={`120px 120px repeat(${WEEKDAY_COUNT}, 1fr)`}
+    <div className="form-stack">
+      <div className="toolbar">
+        <span className="field-hint">
+          수강생 {students.length}명 · 과정 진행률{" "}
+          {clampRate(progressRate).toFixed(1)}% (어제 기준)
+        </span>
+      </div>
+      <Table
+        ariaLabel="수강생 출석률"
+        columns={ATTENDANCE_COLUMNS}
+        rows={students}
+        rowKey="userId"
+        size="sm"
+        emptyText="수강생이 없습니다."
       />
-    </>
+    </div>
   );
 }

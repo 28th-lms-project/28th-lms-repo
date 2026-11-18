@@ -1,35 +1,17 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Grid } from "../../../sample/Grid";
 import { testActions } from "../../../../store/slices/testSliceStore";
 
-const QUESTION_HEADER = [
-  { id: "no", title: "번호" },
-  { id: "question", title: "문제" },
-  { id: "answerType", title: "유형" },
-  { id: "pointAlloc", title: "배점" },
-];
-const COLUMN_STYLE = "60px 1fr 100px 70px";
+import StatusBox from "../../../common/ui/StatusBox";
+import TransferList from "../../../common/ui/TransferList";
+import styles from "./ExamQuestionPicker.module.css";
 
-/** Grid content 형식으로 변환. 번호 칸은 화면 순번 */
-const toContent = (questions) =>
-  questions.map((question, index) =>
-    QUESTION_HEADER.map((col) => ({
-      id: `${question.id}-${col.id}`,
-      value: col.id === "no" ? index + 1 : question[col.id],
-    })),
-  );
-
-/** 클릭한 셀의 행 번호. 행이 아닌 곳을 클릭하면 -1 */
-const clickedRowIndex = (event) => {
-  const cell = event.target.closest("li[data-row-index]");
-  return cell ? Number(cell.dataset.rowIndex) : -1;
-};
+const toKey = (question) => String(question.id);
 
 /**
- * 시험 문제 선택.
- * 왼쪽: 선택한 과목의 문제 (클릭하면 오른쪽으로 이동)
- * 오른쪽: 선택된 문제 (클릭하면 선택 해제)
+ * 시험 문제 선택 (TransferList).
+ * 왼쪽: 선택한 과목의 문제, 오른쪽: 시험에 넣을 문제.
+ * 선택값은 testSlice.selectedQuestions 에 저장된다 (addSelectedQuestion · removeSelectedQuestion).
  */
 export default function ExamQuestionPicker() {
   const dispatch = useDispatch();
@@ -43,57 +25,59 @@ export default function ExamQuestionPicker() {
     dispatch(testActions.clearSelectedQuestions());
   }, [dispatch, subjectId]);
 
-  const selectedIds = new Set(selectedQuestions.map((question) => question.id));
-  const subjectQuestions = questions.filter(
-    (question) =>
-      question.subjectId === subjectId && !selectedIds.has(question.id),
-  );
-
-  const onClickSubjectQuestion = (event) => {
-    const question = subjectQuestions[clickedRowIndex(event)];
-    if (question) {
-      dispatch(testActions.addSelectedQuestion(question));
-    }
-  };
-
-  const onClickSelectedQuestion = (event) => {
-    const question = selectedQuestions[clickedRowIndex(event)];
-    if (question) {
-      dispatch(testActions.removeSelectedQuestion(question.id));
-    }
-  };
-
   if (!subjectId) {
-    return <div>시험과목을 선택하세요.</div>;
+    return <StatusBox type="empty" size="sm" title="시험 과목을 고르세요." />;
   }
 
+  const subjectQuestions = questions.filter(
+    (question) => question.subjectId === subjectId,
+  );
+  const selectedKeys = selectedQuestions.map(toKey);
+  const totalPoint = selectedQuestions.reduce(
+    (sum, question) => sum + (Number(question.pointAlloc) || 0),
+    0,
+  );
+
+  // 옮긴 결과(keys)와 지금 선택을 비교해서 늘어난 것은 추가, 빠진 것은 해제
+  const onChangeSelected = (keys) => {
+    const nextKeys = new Set(keys);
+    const currentKeys = new Set(selectedKeys);
+    for (const key of keys) {
+      if (!currentKeys.has(key)) {
+        const question = subjectQuestions.find((q) => toKey(q) === key);
+        if (question) {
+          dispatch(testActions.addSelectedQuestion(question));
+        }
+      }
+    }
+    for (const question of selectedQuestions) {
+      if (!nextKeys.has(toKey(question))) {
+        dispatch(testActions.removeSelectedQuestion(question.id));
+      }
+    }
+  };
+
   return (
-    <div
-      style={{
-        display: "grid",
-        gridTemplateColumns: "1fr 1fr",
-        gap: "16px",
-        alignItems: "start",
-      }}
-    >
-      <div onClick={onClickSubjectQuestion}>
-        <h4>
-          {subjectId} 문제 ({subjectQuestions.length})
-        </h4>
-        <Grid
-          header={QUESTION_HEADER}
-          content={toContent(subjectQuestions)}
-          columnStyle={COLUMN_STYLE}
-        />
-      </div>
-      <div onClick={onClickSelectedQuestion}>
-        <h4>선택된 문제 ({selectedQuestions.length})</h4>
-        <Grid
-          header={QUESTION_HEADER}
-          content={toContent(selectedQuestions)}
-          columnStyle={COLUMN_STYLE}
-        />
-      </div>
-    </div>
+    <TransferList
+      items={subjectQuestions}
+      selectedKeys={selectedKeys}
+      onChange={onChangeSelected}
+      rowKey={toKey}
+      leftTitle={`${selectSubjectId.label} 문제`}
+      rightTitle="시험 문제"
+      rightSummary={`총 ${totalPoint}점`}
+      filter={(question, text) =>
+        String(question.question ?? "").includes(text)
+      }
+      renderItem={(question) => (
+        <span className={styles.item}>
+          <span>{question.question}</span>
+          <span className={styles.meta}>
+            <span className="tag">{question.answerType}</span>
+            <span className="field-hint">{question.pointAlloc}점</span>
+          </span>
+        </span>
+      )}
+    />
   );
 }
