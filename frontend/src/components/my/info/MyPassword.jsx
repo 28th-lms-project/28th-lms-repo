@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useId, useState } from "react";
+import { Link } from "react-router-dom";
 import { verifyPassword } from "../../../api/my/info/myInfoApi";
-import styles from "./MyPassword.module.css";
+import Field from "../../common/ui/Field.jsx";
+import Callout from "../../common/ui/Callout.jsx";
+import Button from "../../common/ui/Button.jsx";
 
 export default function MyPassword({ onVerified }) {
+  const passwordId = useId();
+
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -35,33 +40,43 @@ export default function MyPassword({ onVerified }) {
     }
   };
 
+  let buttonLabel = "확인";
+  if (submitting) {
+    buttonLabel = "확인중...";
+  }
+
   return (
-    <div className={styles.container}>
+    <div className="auth-page">
       <form
-        className={styles.formWrapper}
+        className="auth-card"
         onSubmit={onSubmitPasswordVerifyHandler}
+        noValidate
       >
-        <input
-          type="password"
-          className={styles.passwordInput}
-          placeholder="현재 비밀번호를 입력해주세요."
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          autoComplete="current-password" //브라우저에서 패스워드 입력창을 인식하는 방식.
-          autoFocus
-        />
+        <h2 className="auth-title">비밀번호 확인</h2>
+        {errorMessage && (
+          <Callout tone="danger" icon={null}>
+            {errorMessage}
+          </Callout>
+        )}
+        <Field label="비밀번호" htmlFor={passwordId}>
+          <input
+            id={passwordId}
+            type="password"
+            className="form-control"
+            placeholder="현재 비밀번호를 입력해주세요."
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password" //브라우저에서 패스워드 입력창을 인식하는 방식.
+            autoFocus
+          />
+        </Field>
 
-        {errorMessage && <p className={styles.errorMessage}>{errorMessage}</p>}
-
-        <div className={styles.buttonWrap}>
-          <button
-            type="submit"
-            disabled={submitting}
-            style={{ width: "100%", justifyContent: "center" }}
-          >
-            검증
-          </button>
-        </div>
+        <Button type="submit" variant="primary" block loading={submitting}>
+          {buttonLabel}
+        </Button>
+        <p className="auth-footer">
+          <Link to="/">처음화면으로</Link>
+        </p>
       </form>
     </div>
   );

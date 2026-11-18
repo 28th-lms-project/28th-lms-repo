@@ -26,6 +26,8 @@ export const STANDARDIZED = new Set([
   "Test", "AddTest", "UpdateTest", "Survey",
   // 수강 과정 탭
   "MyTimetable", "MyInterview", "MyCourseData", "MyCounsel",
+  // 내 정보
+  "MyInfo", "MyPassword", "MyInfoForm", "MyPasswordForm",
   // 사이드바 (토큰 · 테마로 바꿈)
   "SideMenu", "UserProfile", "LogoutButton",
   // 화면에서 더 이상 쓰지 않는 옛 부품 (PageContainer는 머리를 표준 PageHeader로 그림)
@@ -35,7 +37,7 @@ export const STANDARDIZED = new Set([
 /** 아직 옮기지 않은 화면 · 아직 화면에서 쓰는 옛 부품 */
 export const REMAINING = new Set([
   "Member", "MemberManagement", "MemberDetail", "MemberCreateModal", "MemberFormModal", "MemberPasswordResetModal",
-  "Code", "Login", "MyInfoForm", "MyPasswordForm", "Main", "MyCourse",
+  "Code", "Login", "Main", "MyCourse",
   "IconButton", "Paginator",
 ]);
 

@@ -89,7 +89,7 @@ export const routes = [
               {
                 path: "info",
                 element: <MyInfo />,
-                handle: { crumb: "내 정보 수정", menu: true },
+                handle: { crumb: "내 정보 수정", menu: true, darkReady: true },
               },
               {
                 path: "course",
