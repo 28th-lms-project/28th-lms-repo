@@ -46,7 +46,8 @@ public interface CourseDao {
 
 	List<CourseMemberVO> readCourseMembers(String courseId);
 
-	List<HomeworkVO> readHomeworkList(String courseId);
+	/** 과제 목록. submittedYn은 userId가 삭제되지 않은 댓글(제출)을 남겼는지 */
+	List<HomeworkVO> readHomeworkList(@Param("courseId") String courseId, @Param("userId") String userId);
 
 	HomeworkVO getOneHomework(String courseId, String homeworkId);
 

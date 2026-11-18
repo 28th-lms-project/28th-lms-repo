@@ -156,7 +156,8 @@ public class CourseServiceImpl implements CourseService{
 	@Override
 	public List<HomeworkVO> courseHomeworkList(String courseId) {
 		this.checkCourseAccess(courseId);
-		return this.courseDao.readHomeworkList(courseId);
+		// 제출 여부(submittedYn)는 로그인 사용자 기준 (시험 세트 목록의 submittedYn과 같은 방식)
+		return this.courseDao.readHomeworkList(courseId, AuthUtil.getLoginId());
 	}
 
 	@Override

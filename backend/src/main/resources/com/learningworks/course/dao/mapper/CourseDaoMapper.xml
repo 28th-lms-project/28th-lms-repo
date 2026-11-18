@@ -174,20 +174,28 @@
 	</select>
 	
 	
+	<!-- 과제 목록. SUBMITTED_YN: 로그인 사용자(userId)가 삭제되지 않은 댓글(제출)을 남겼으면 Y -->
 	<select id="readHomeworkList"
-	       parameterType="string"
 	       resultType="com.learningworks.course.vo.response.HomeworkVO">
 	SELECT CH.CONTENT 
     , CH.COURSE_ID 
-    , TO_CHAR(CRT_DT,'YYYY-MM-DD') AS CRT_DT 
-    , TO_CHAR(END_DATE,'YYYY-MM-DD') AS END_DATE 
+    , TO_CHAR(CH.CRT_DT,'YYYY-MM-DD') AS CRT_DT 
+    , TO_CHAR(CH.END_DATE,'YYYY-MM-DD') AS END_DATE 
     , CH.ID 
-    , TO_CHAR(MDFY_DT, 'YYYY-MM-DD') AS MDFY_DT  
+    , TO_CHAR(CH.MDFY_DT, 'YYYY-MM-DD') AS MDFY_DT  
     , CH.SUBJECT 
+    , CASE WHEN EXISTS (SELECT 1
+                          FROM COURSE_HOMEWORK_REPLY CHR
+                         WHERE CHR.HOMEWORK_ID = CH.ID
+                           AND CHR.COURSE_STUDENT_ID = #{userId}
+                           AND CHR.DEL_YN = 'N')
+           THEN 'Y'
+           ELSE 'N'
+      END AS SUBMITTED_YN
   FROM COURSE_HOMEWORK CH
  WHERE CH.COURSE_ID IN (SELECT C.ID 
                       FROM COURSE C 
-                     WHERE C.ID = #{_parameter})
+                     WHERE C.ID = #{courseId})
    AND CH.DEL_YN = 'N'
    </select>
    
