@@ -326,7 +326,7 @@ export default function ExamGradeModal({
       onClose={onClose}
       size="lg"
       title={`${title} · 채점`}
-      summary={`수강생 ${students.length}명 · ${questions.length}문항 · ${totalPoint}점`}
+      summary={`수강생 ${students.length}명 · 문제 ${questions.length}개 · 총 ${totalPoint}점`}
       footer={<Button onClick={onClose}>닫기</Button>}
     >
       {students.length === 0 ? (

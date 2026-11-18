@@ -14,6 +14,8 @@ export default function TestSubjectSelect({ inputId, ...rest }) {
   const dispatch = useDispatch();
   const toast = useToast();
   const [subjectOptions, setSubjectOptions] = useState([]);
+  // 과목 목록을 불러오는 동안은 고를 수 없게 하고 안내 문구를 보여 준다
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let ignore = false;
@@ -28,6 +30,10 @@ export default function TestSubjectSelect({ inputId, ...rest }) {
       } catch (e) {
         if (!ignore) {
           toast.error(`시험 과목을 불러오지 못했습니다. ${e.message ?? ""}`.trim());
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
         }
       }
     })();
@@ -45,7 +51,8 @@ export default function TestSubjectSelect({ inputId, ...rest }) {
       inputId={inputId}
       options={subjectOptions}
       onChange={handleChange}
-      placeholder="과목 선택"
+      isDisabled={loading}
+      placeholder={loading ? "과목 불러오는 중..." : "과목 선택"}
       isSearchable
     />
   );

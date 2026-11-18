@@ -24,10 +24,10 @@ import usePermission from "../../../../hooks/usePermission";
 import CourseSurvey from "../CourseTableComponent/CourseSurvey.jsx";
 
 import Badge from "../../../common/ui/Badge";
-import Panel from "../../../common/ui/Panel";
 import Progress from "../../../common/ui/Progress";
 import StatusBox from "../../../common/ui/StatusBox";
 import { Tabs, TabPanel } from "../../../common/ui/Tabs";
+import styles from "./CourseItem.module.css";
 
 const TABS = [
   { label: "수강생", Component: <CourseStudentList /> }, // <CourseStudentList/>
@@ -62,7 +62,7 @@ const getDateProgress = (courseStartDate, courseEndDated) => {
 };
 
 export default function CourseItem() {
-  const { showCourse, attendanceSummary } = useSelector(
+  const { showCourse, showStudents, attendanceSummary } = useSelector(
     (store) => store.courses,
   );
   const { id } = useParams();
@@ -169,10 +169,14 @@ export default function CourseItem() {
     );
     const finished = dateProgress >= 100;
 
+    // 과정 상세 머리: card(과정명 + desc-list-stacked + Progress). 화면 머리(PageHeader)는 CourseMain이 그린다
     courseInfo = (
-      <Panel title={showCourse.courseName}>
+      <div className="card">
+        <div className="card-header">
+          <h3 className="card-title">{showCourse.courseName}</h3>
+        </div>
         <div className="form-stack">
-          <dl className="desc-list-stacked">
+          <dl className={`desc-list-stacked ${styles.summary}`}>
             <div>
               <dt>기간</dt>
               <dd>
@@ -183,6 +187,13 @@ export default function CourseItem() {
               <dt>담당 강사</dt>
               <dd>{showCourse.name}</dd>
             </div>
+            {/* 수강생 수: 수강생 목록 권한이 있을 때 이미 불러온 목록으로 센다 */}
+            {canReadStudents && (
+              <div>
+                <dt>수강생</dt>
+                <dd>{(showStudents ?? []).length}명</dd>
+              </div>
+            )}
             <div>
               <dt>상태</dt>
               <dd>
@@ -211,7 +222,7 @@ export default function CourseItem() {
             <Progress label="과정 진행률" value={dateProgress} showValue />
           )}
         </div>
-      </Panel>
+      </div>
     );
   }
 
