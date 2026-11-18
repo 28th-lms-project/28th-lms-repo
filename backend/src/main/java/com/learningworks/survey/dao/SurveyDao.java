@@ -45,7 +45,9 @@ public interface SurveyDao {
 	
 	int deleteSurveyDatas(String surveyId);
 
-	List<CourseSurveyVO> selectAllCourseSurvey(String courseId);
+	/** userId: 로그인 사용자 (answeredYn 계산용) */
+	List<CourseSurveyVO> selectAllCourseSurvey(@Param("courseId") String courseId,
+			@Param("userId") String userId);
 
 	int insertNewCourseSurvey(RegistCourseSurveyVO registCourseSurvey);
 

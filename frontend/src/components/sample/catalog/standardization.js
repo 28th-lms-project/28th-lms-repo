@@ -17,7 +17,7 @@ export const STANDARDIZED = new Set([
   "NotFound", "RouteError",
   // 과정 관리 (admin/course 전체)
   "course/*", "CourseAdd", "CourseMain", "CourseItem", "CourseStudentList", "StudentConnected",
-  "CourseSurvey", "CourseSurveyForm", "CourseSurveyAns", "CourseSurveyResult",
+  "CourseSurvey", "CourseSurveyForm", "CourseSurveyAns", "CourseSurveyAnsModal", "CourseSurveyResult",
   "ExamPage", "ExamQuestionPicker", "ExamSetTable", "ExamGradeModal", "ExamTakeModal", "ExamQuestionViewModal", "ConfirmModal",
   "HomeWorkList", "HomeworkForm", "HomeworkItem", "HomeworkSubmitStatus", "HomeworkReply", "ReplyForm",
   "CourseTutorSelect", "CourseStudentSelect", "ExamSubjectSelect", "TestSubjectSelect",

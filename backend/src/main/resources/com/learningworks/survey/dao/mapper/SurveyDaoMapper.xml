@@ -128,8 +128,8 @@
  		 WHERE SURVEY_ID = #{_parameter}
  	</delete>
 	 
+	<!-- 파라미터: courseId, userId(로그인 사용자 → ANSWERED_YN) -->
 	<select id="selectAllCourseSurvey"
-		parameterType="string"
 		resultType="com.learningworks.survey.vo.response.CourseSurveyVO">
 		SELECT CS.ID
 			 , CS.COURSE_ID 
@@ -140,20 +140,29 @@
 			 , CS."COUNT"
 			 , NVL(ANS.ANSWER_COUNT , 0) AS ANSWER_COUNT
 			 , STU.STUDENT_COUNT 
+			 <!-- 로그인 사용자의 참여 여부: 응답 제출의 중복 검사(selectCourseSurveyAnswerCount)와 같은 조건 -->
+			 , CASE WHEN EXISTS (SELECT 1
+			                       FROM COURSE_SURVEY_ANSWER A
+			                      INNER JOIN COURSE_STUDENT S
+			                         ON S.ID = A.COURSE_STUDENT_ID
+			                      WHERE A.COURSE_SURVEY_ID = CS.ID
+			                        AND S.COURSE_ID = #{courseId}
+			                        AND S.USER_ID = #{userId})
+			        THEN 'Y' ELSE 'N' END AS ANSWERED_YN
 		  FROM COURSE_SURVEY CS
 		 INNER JOIN (SELECT COUNT(ID) AS STUDENT_COUNT
 		 			   FROM COURSE_STUDENT
-		 			  WHERE COURSE_ID = #{_parameter}) STU
+		 			  WHERE COURSE_ID = #{courseId}) STU
 		 	ON 1 = 1
 		  LEFT OUTER JOIN (SELECT COURSE_SURVEY_ID
 		  						, COUNT(DISTINCT COURSE_STUDENT_ID) AS ANSWER_COUNT
 		  					 FROM COURSE_SURVEY_ANSWER
 		  					WHERE COURSE_SURVEY_ID IN (SELECT ID
 		  												 FROM COURSE_SURVEY
-		  												WHERE COURSE_ID = #{_parameter})
+		  												WHERE COURSE_ID = #{courseId})
 		  					GROUP BY COURSE_SURVEY_ID) ANS
 		  	ON ANS.COURSE_SURVEY_ID  = CS.ID 
-		 WHERE CS.COURSE_ID = #{_parameter}
+		 WHERE CS.COURSE_ID = #{courseId}
 		 ORDER BY CS.ID
 	</select>
 	
