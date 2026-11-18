@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAttendanceSummary,
-  getCourses,
   getHomeworks,
 } from "../../api/admin/course/courseApi.js";
 import { getMyScoreList } from "../../api/my/course/scoreApi.js";
@@ -48,81 +47,61 @@ const ACTIVE_REQUESTS = {
 
 /**
  * 수강생 대시보드 데이터.
- * 내 과정 목록을 먼저 받아 화면을 그리고, 진행 중 과정의 출석 요약 · 성적 · 시험 · 과제 · 오늘 시간표는
- * 각각 도착하는 대로 채운다 (느린 API 하나가 화면 전체를 붙잡지 않게).
- * 각 결과는 undefined(불러오는 중) → { ok, value | error }. 부르지 않는 결과는 null.
+ * 과정 목록은 Main이 불러와 넘긴다 (수강생으로 등록된 과정만). 진행 중 과정의 출석 요약 · 성적 · 시험 · 과제 ·
+ * 오늘 시간표 · 오늘 출결은 각각 도착하는 대로 채운다 (느린 API 하나가 화면 전체를 붙잡지 않게).
+ * 각 결과는 undefined(불러오는 중) → { ok, value | error }. 부르지 않는 결과(시작 전 · 종료 과정)는 null.
+ * Main이 과정 목록을 다시 불러오면 이 컴포넌트가 새로 그려져 결과도 처음부터 다시 받는다.
  *
- * @param {boolean} enabled  false면 부르지 않음 (수강생이 아닐 때)
- * @returns {{ status: "loading"|"loaded"|"failed", courses: object[], today: string, reload: () => void,
+ * @param {object[]} baseCourses  수강생으로 등록된 과정 (/course/view 응답 중 myRelation === "STUDENT")
+ * @returns {{ courses: object[], today: string,
  *            patchResult: (courseId: string, key: string, result: object) => void }}
  *   patchResult: 한 과정의 결과 하나를 바꾼다 (출석 버튼을 누른 뒤 오늘 출결을 갱신할 때)
  */
-export default function useStudentDashboard(enabled) {
-  const [state, setState] = useState({ status: "loading", courses: [], today: "" });
-  const [reloadKey, setReloadKey] = useState(0);
+export default function useStudentDashboard(baseCourses) {
+  const [today] = useState(() => toDateKey(new Date()));
+  // courseId → { summary, scores, ... } (도착한 결과만)
+  const [results, setResults] = useState({});
 
-  useEffect(() => {
-    if (!enabled) {
-      return;
-    }
-    const controller = new AbortController();
-    const { signal } = controller;
-    const options = { signal };
-    const today = toDateKey(new Date());
-
-    const putResult = (courseId, key, result) => {
-      if (signal.aborted) return;
-      setState((prev) => ({
-        ...prev,
-        courses: prev.courses.map((course) =>
-          course.id === courseId ? { ...course, [key]: result } : course,
-        ),
-      }));
-    };
-
-    getCourses(options)
-      .then((list) => {
-        if (signal.aborted) return;
-        const courses = sortCourses(
-          uniqueById(list ?? []).map((course) => {
-            const phase = coursePhase(course, today);
-            const notRequested = phase === "active" ? undefined : null;
-            const results = Object.fromEntries(
-              Object.keys(ACTIVE_REQUESTS).map((key) => [key, notRequested]),
-            );
-            return { ...course, phase, ...results };
-          }),
-        );
-        setState({ status: "loaded", courses, today });
-
-        for (const course of courses) {
-          if (course.phase !== "active") continue;
-          for (const [key, request] of Object.entries(ACTIVE_REQUESTS)) {
-            request(course.id, options, today).then((result) => putResult(course.id, key, result));
-          }
-        }
-      })
-      .catch((error) => {
-        if (signal.aborted || error?.name === "AbortError") return;
-        setState({ status: "failed", courses: [], today });
-      });
-
-    return () => controller.abort();
-  }, [enabled, reloadKey]);
+  const listed = useMemo(
+    () =>
+      sortCourses(
+        uniqueById(baseCourses ?? []).map((course) => ({
+          ...course,
+          phase: coursePhase(course, today),
+        })),
+      ),
+    [baseCourses, today],
+  );
 
   const patchResult = useCallback((courseId, key, result) => {
-    setState((prev) => ({
-      ...prev,
-      courses: prev.courses.map((course) =>
-        course.id === courseId ? { ...course, [key]: result } : course,
-      ),
-    }));
+    setResults((prev) => ({ ...prev, [courseId]: { ...prev[courseId], [key]: result } }));
   }, []);
 
-  const reload = useCallback(() => {
-    setState((prev) => ({ ...prev, status: "loading" }));
-    setReloadKey((key) => key + 1);
-  }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    const options = { signal: controller.signal };
+    for (const course of listed) {
+      if (course.phase !== "active") continue;
+      for (const [key, request] of Object.entries(ACTIVE_REQUESTS)) {
+        request(course.id, options, today).then((result) => {
+          if (!controller.signal.aborted) patchResult(course.id, key, result);
+        });
+      }
+    }
+    return () => controller.abort();
+  }, [listed, today, patchResult]);
 
-  return { ...state, reload, patchResult };
+  const courses = useMemo(
+    () =>
+      listed.map((course) => {
+        const notRequested = course.phase === "active" ? undefined : null;
+        const defaults = Object.fromEntries(
+          Object.keys(ACTIVE_REQUESTS).map((key) => [key, notRequested]),
+        );
+        return { ...course, ...defaults, ...results[course.id] };
+      }),
+    [listed, results],
+  );
+
+  return { courses, today, patchResult };
 }
