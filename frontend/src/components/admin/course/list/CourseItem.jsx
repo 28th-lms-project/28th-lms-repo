@@ -1,17 +1,11 @@
 import { useEffect, useId, useState } from "react";
 
 import { useDispatch, useSelector } from "react-redux";
-import {
-  useLocation,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
 import CourseStudentList from "../CourseTableComponent/CourseStudentList";
 import StudentConnected from "../CourseTableComponent/StudentConnected";
 import {
-  deleteCourse,
   getAttendanceSummary,
   getCourse,
   getCourseStudents,
@@ -25,19 +19,15 @@ import ExamPage from "../CourseTableComponent/ExamPage.jsx";
 import MyCourseData from "../../../my/course/MyCourseData.jsx";
 import MyCounsel from "../../../my/course/MyCounsel.jsx";
 
-import CourseEditModal from "./CourseEditModal";
 import usePermission from "../../../../hooks/usePermission";
 
 import CourseSurvey from "../CourseTableComponent/CourseSurvey.jsx";
 
 import Badge from "../../../common/ui/Badge";
-import Button from "../../../common/ui/Button";
 import Panel from "../../../common/ui/Panel";
 import Progress from "../../../common/ui/Progress";
 import StatusBox from "../../../common/ui/StatusBox";
 import { Tabs, TabPanel } from "../../../common/ui/Tabs";
-import { useConfirm, useToast } from "../../../common/ui/feedbackContext";
-import { icons } from "../../../common/input/icons";
 
 const TABS = [
   { label: "수강생", Component: <CourseStudentList /> }, // <CourseStudentList/>
@@ -79,8 +69,6 @@ export default function CourseItem() {
   const dispatch = useDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabsId = useId();
-  const toast = useToast();
-  const confirm = useConfirm();
 
   // 버튼 · 조회 권한 (백엔드 @RequireAction 의 권한 코드)
   const { can } = usePermission();
@@ -102,42 +90,9 @@ export default function CourseItem() {
 
   const canReadStudents = can("COURSE_STUDENT_READ");
   const canReadAttendance = can("COURSE_ATTENDANCE_READ");
-  const canUpdateCourse = can("COURSE_UPDATE");
-  // 수정: 강사 · 관리자 (강사는 담당 과정만 — 서버가 검사), 삭제: 관리자에게만 부여
-  const canDeleteCourse = can("COURSE_DELETE");
 
-  // 과정 수정 모달 열림 여부
-  const [showEditCourse, setShowEditCourse] = useState(false);
   // 과정 정보를 불러오지 못했을 때의 오류 (과정 정보 자리에 StatusBox로 보여 줌)
   const [loadError, setLoadError] = useState(null);
-
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
-
-  // [삭제] → 확인 창 → DEL_YN = 'Y' 로 삭제 → 과정 목록으로 이동 (첫 번째 과정으로 다시 이동됨)
-  const onClickDeleteCourse = async () => {
-    const ok = await confirm({
-      title: "과정 삭제",
-      message: `${showCourse.courseName} 과정을 삭제할까요?`,
-      confirmText: "삭제",
-      danger: true,
-    });
-    if (!ok) {
-      return;
-    }
-    try {
-      await deleteCourse(id);
-      toast.success("과정을 삭제했습니다.");
-      // 수강 과정(/my/...) 화면에서 열었으면 그 목록으로, 아니면 과정 관리 목록으로
-      navigate(
-        pathname.startsWith("/my/") ? "/my/course/list" : "/admin/course/list",
-      );
-    } catch (error) {
-      toast.error(
-        `과정을 삭제하지 못했습니다. ${error.message ?? ""}`.trim(),
-      );
-    }
-  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -221,34 +176,7 @@ export default function CourseItem() {
     const finished = dateProgress >= 100;
 
     courseInfo = (
-      <Panel
-        title={showCourse.courseName}
-        actions={
-          (canUpdateCourse || canDeleteCourse) && (
-            <>
-              {canUpdateCourse && (
-                <Button
-                  size="sm"
-                  icon={icons.edit}
-                  onClick={() => setShowEditCourse(true)}
-                >
-                  수정
-                </Button>
-              )}
-              {canDeleteCourse && (
-                <Button
-                  size="sm"
-                  variant="danger"
-                  icon={icons.delete}
-                  onClick={onClickDeleteCourse}
-                >
-                  삭제
-                </Button>
-              )}
-            </>
-          )
-        }
-      >
+      <Panel title={showCourse.courseName}>
         <div className="form-stack">
           <dl className="desc-list-stacked">
             <div>
@@ -296,12 +224,6 @@ export default function CourseItem() {
   return (
     <div className="form-stack">
       {courseInfo}
-      {showCourse && showEditCourse && (
-        <CourseEditModal
-          course={showCourse}
-          onClose={() => setShowEditCourse(false)}
-        />
-      )}
       <div>
         <Tabs
           idBase={tabsId}

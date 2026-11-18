@@ -7,7 +7,6 @@ import com.learningworks.course.vo.request.ModifyHomeworkVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
-import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
@@ -50,12 +49,6 @@ public interface CourseService {
 	String deleteHomeworkReply(String courseId, String homeworkId, String replyId);
 
 	List<CourseMemberVO> addCourseMember(String courseId, List<String> studentId);
-
-	List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO);
-
-	String updateCourse(String courseId, ModifyCourseVO modifyCourseVO);
-
-	String deleteCourse(String courseId);
 
 	/** 강의 진행률 · 출석률 요약 (어제까지 기준). 수강생은 본인만 */
 	AttendanceSummaryVO readAttendanceSummary(String courseId);

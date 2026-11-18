@@ -12,10 +12,7 @@ import com.learningworks.course.vo.request.RegistCourseTutorVO;
 import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
-
-//import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
-
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
@@ -70,16 +67,6 @@ public interface CourseDao {
 	int deleteHomeworkReply(@Param("homeworkId") String homeworkId, @Param("replyId") String replyId);
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
-
-
-	/** 과정 목록 검색 (DEL_YN = 'N'). 비어 있는 조건은 제외 */
-	List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO);
-
-	/** 과정 정보 수정 (기수 · 과정명 · 시작일 · 종료일) */
-	int updateCourse(ModifyCourseVO modifyCourseVO);
-
-	/** 과정 삭제 (DEL_YN = 'Y') */
-	int deleteCourse(String courseId);
 
 	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐) */
 	AttendanceSummaryVO readCourseClassDays(@Param("courseId") String courseId);
