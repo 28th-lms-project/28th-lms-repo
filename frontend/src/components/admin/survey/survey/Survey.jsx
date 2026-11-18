@@ -1,8 +1,9 @@
 import { useDispatch, useSelector } from "react-redux";
 import PageContainer from "../../../common/PageContainer";
-import { useEffect, useId, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { getCourses } from "../../../../api/admin/course/courseApi";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
+import style from "./Survey.module.css";
 import {
   createSurvey,
   createSurveyData,
@@ -13,28 +14,39 @@ import {
   updateSurveyData,
 } from "../../../../api/admin/system/survey/surveyApi";
 import { surveyActions } from "../../../../store/slices/surveySliceStore";
+import Select from "react-select";
+import { IconButton } from "../../../sample/input/IconButton";
 import { getCodeOptionList } from "../../../../api/admin/system/code/codeApi";
 import usePermission from "../../../../hooks/usePermission";
-import Button from "../../../common/ui/Button";
-import ChoiceGroup from "../../../common/ui/ChoiceGroup";
-import Field from "../../../common/ui/Field";
-import Panel from "../../../common/ui/Panel";
-import StatusBox from "../../../common/ui/StatusBox";
-import { Tabs, TabPanel } from "../../../common/ui/Tabs";
-import { useConfirm, useToast } from "../../../common/ui/feedbackContext";
-import { icons } from "../../../common/input/icons";
+import { PollItem } from "../../../sample/Poll";
 
-/** 설문 타입: 단일 · 다중 · 직접 입력 */
-const SURVEY_TYPES = [
-  { value: "radio", label: "단일 선택" },
-  { value: "checkBox", label: "다중 선택" },
-  { value: "text", label: "직접 입력" },
-];
-
-const GROUP_TABS = [
-  { id: "pre", label: "사전 설문" },
-  { id: "post", label: "사후 설문" },
-];
+function toPollItem(survey, index) {
+  let pollType = survey.type;
+  if (survey.type === "checkBox") {
+    pollType = "checkbox";
+  }
+  let answers = [];
+  if (pollType === "text") {
+    answers = [
+      { id: `${survey.id}-text`, name: survey.id, title: "", value: "" },
+    ];
+  } else {
+    answers = survey.surveyDataList.map((data) => ({
+      id: data.id,
+      name: survey.id,
+      title: data.data,
+      value: data.data,
+    }));
+  }
+  return {
+    id: survey.id,
+    number: index + 1,
+    title: survey.subject,
+    type: pollType,
+    required: false,
+    answers,
+  };
+}
 
 export default function Survey() {
   const { isSuperAdmin, status } = usePermission();
@@ -44,35 +56,39 @@ export default function Survey() {
   // idle: 비로그인(조회하지 않음) → 표시 없음
   let content = null;
   if (status === "loading") {
-    content = <StatusBox type="loading" title="권한 확인 중..." />;
+    content = <p className={style.notice}>권한 확인 중...</p>;
   } else if (status === "failed") {
     content = (
-      <StatusBox
-        type="error"
-        title="권한 정보를 불러오지 못했습니다."
-        detail="새로고침 후 다시 시도해주세요."
-      />
+      <p className={style.notice}>
+        권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
+      </p>
     );
   } else if (status === "loaded") {
-    content = <StatusBox type="denied" />;
+    content = <p className={style.notice}>권한이 없습니다.</p>;
   }
   return <PageContainer>{content}</PageContainer>;
 }
-
 function SurveyManagement() {
+  /** 설문 타입에 단일, 다중, 직접입력 3가지가 있어
+   *  해당 사항 선택하기 위한 배열
+   */
+  const options = [
+    { value: "radio", label: "단일 선택" },
+    { value: "checkBox", label: "다중 선택" },
+    { value: "text", label: "직접 입력" },
+  ];
+
   const { courseList } = useSelector((state) => state.courses);
   const { surveyList } = useSelector((state) => state.survey);
   const dispatch = useDispatch();
-  const toast = useToast();
-  const confirm = useConfirm();
-  const subjectTabId = useId();
-  const groupTabId = useId();
 
   const [subjectList, setSubjectList] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectGroup, setSelectGroup] = useState("pre");
 
   const currentCourse = selectedSubject;
+
+  const surveyRef = useRef();
 
   let currGroup = null;
   if (currentCourse) {
@@ -92,13 +108,13 @@ function SurveyManagement() {
           }
         }
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
     return () => {
       ignoreUpdateState = true;
     };
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     if (courseList.length > 0) {
@@ -112,13 +128,13 @@ function SurveyManagement() {
           dispatch(courseActions.load(result));
         }
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
     return () => {
       ignoreUpdateState = true;
     };
-  }, [dispatch, courseList.length, toast]);
+  }, [dispatch, courseList.length]);
 
   useEffect(() => {
     if (!currGroup) {
@@ -129,18 +145,19 @@ function SurveyManagement() {
     (async () => {
       try {
         const result = await getSurvey(currGroup);
+        console.log(result);
 
         if (!ignoreUpdateState) {
           dispatch(surveyActions.load(result));
         }
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
     return () => {
       ignoreUpdateState = true;
     };
-  }, [currGroup, dispatch, toast]);
+  }, [currGroup, dispatch]);
 
   const onInputUpdateHandler = (surveyId, e) => {
     const subject = e.target.value;
@@ -152,8 +169,9 @@ function SurveyManagement() {
     (async () => {
       try {
         const updateResult = await updateSurvey(surveyId, modifySurvey);
+        console.log(updateResult);
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
   };
@@ -175,22 +193,25 @@ function SurveyManagement() {
           surveyDataId,
           updateData,
         );
+        console.log(updateResult);
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
   };
 
-  const onTypeChangeHandler = (survey, type) => {
-    const modifySurvey = { type };
+  const onTypeChangeHandler = (survey, option) => {
+    const modifySurvey = { type: option.value };
 
     (async () => {
       try {
         await updateSurvey(survey.id, modifySurvey);
 
-        dispatch(surveyActions.updateSurvey({ id: survey.id, type }));
+        dispatch(
+          surveyActions.updateSurvey({ id: survey.id, type: option.value }),
+        );
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
   };
@@ -200,42 +221,36 @@ function SurveyManagement() {
       try {
         const deleteResult = await deletedSurveyData(surveyId, dataId);
         dispatch(surveyActions.deleteSurveyData({ surveyId, dataId }));
+        console.log(deleteResult);
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
   };
 
-  const deleteButtonHandler = async (surveyId, index) => {
-    const ok = await confirm({
-      title: "문항 삭제",
-      message: `${index + 1}번 문항을 삭제할까요?`,
-      confirmText: "삭제",
-      danger: true,
-    });
-    if (!ok) {
-      return;
-    }
-    try {
-      await deleteSurvey(surveyId);
-      dispatch(surveyActions.deleteSurvey({ surveyId }));
-    } catch (e) {
-      toast.error(e.message);
-    }
+  const deleteButtonHandler = (surveyId) => {
+    (async () => {
+      try {
+        await deleteSurvey(surveyId);
+        dispatch(surveyActions.deleteSurvey({ surveyId }));
+      } catch (e) {
+        alert(e.message);
+      }
+    })();
   };
 
   const onClickAddSurveyHandler = () => {
     const registSurvey = {
       subject: " ",
       group: currGroup,
-      type: SURVEY_TYPES[0].value,
+      type: options[0].value,
     };
     (async () => {
       try {
         const createResult = await createSurvey(registSurvey);
         dispatch(surveyActions.addSurvey(createResult));
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
   };
@@ -246,189 +261,149 @@ function SurveyManagement() {
         const createResult = await createSurveyData(surveyId, surveyData);
         dispatch(surveyActions.addSurveyData(createResult));
       } catch (e) {
-        toast.error(e.message);
+        alert(e.message);
       }
     })();
   };
 
-  const subjectTabs = [{ id: "Course", label: "수강" }];
-  subjectList.forEach((subject) => {
-    subjectTabs.push({ id: subject.id, label: subject.name });
-  });
-
-  let questionList;
-  if (surveyList.length === 0) {
-    questionList = (
-      <StatusBox type="empty" size="sm" title="등록된 문항이 없습니다." />
-    );
-  } else {
-    questionList = surveyList.map((survey, index) => (
-      <Panel
-        key={survey.id}
-        title={`문항 ${index + 1}`}
-        actions={
-          <Button
-            size="sm"
-            variant="danger"
-            icon={icons.delete}
-            onClick={() => deleteButtonHandler(survey.id, index)}
-          >
-            삭제
-          </Button>
-        }
-      >
-        <div className="form-stack">
-          <Field label="질문" htmlFor={`${survey.id}-subject`}>
-            <input
-              id={`${survey.id}-subject`}
-              type="text"
-              className="form-control"
-              placeholder="질문을 입력하세요."
-              defaultValue={survey.subject}
-              onChange={(e) => onInputUpdateHandler(survey.id, e)}
-            />
-          </Field>
-          <div className="field">
-            <span className="field-label">설문 종류</span>
-            <ChoiceGroup
-              variant="segmented"
-              name={`${survey.id}-type`}
-              legend={`문항 ${index + 1} 설문 종류`}
-              options={SURVEY_TYPES}
-              value={survey.type}
-              onChange={(type) => onTypeChangeHandler(survey, type)}
-            />
-          </div>
-          {survey.type !== "text" && (
-            <div className="field">
-              <span className="field-label">보기</span>
-              {survey.surveyDataList.map((data, dataIndex) => (
-                <div className="form-row" key={data.id}>
-                  <div className="field">
-                    <input
-                      type="text"
-                      className="form-control"
-                      aria-label={`문항 ${index + 1} 보기 ${dataIndex + 1}`}
-                      defaultValue={data.data}
-                      onChange={(e) =>
-                        onInputDataHandler(survey.id, data.id, e)
-                      }
-                    />
-                  </div>
-                  <Button
-                    variant="danger"
-                    icon={icons.delete}
-                    onClick={() => deleteDataButtonHandler(survey.id, data.id)}
-                  >
-                    삭제
-                  </Button>
-                </div>
-              ))}
-              <div>
-                <Button
-                  size="sm"
-                  icon={icons.add}
-                  onClick={() => {
-                    onClickAddSurveyDataHandler(survey.id);
-                  }}
-                >
-                  보기 추가
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </Panel>
-    ));
-  }
-
   return (
     <PageContainer>
-      <Tabs
-        idBase={subjectTabId}
-        ariaLabel="과목"
-        items={subjectTabs}
-        value={selectedSubject}
-        onChange={setSelectedSubject}
-      />
-      <TabPanel idBase={subjectTabId} tabId={selectedSubject}>
-        <div className="form-stack">
-          <div className="toolbar">
-            <Tabs
-              idBase={groupTabId}
-              ariaLabel="설문 종류"
-              variant="pills"
-              items={GROUP_TABS}
-              value={selectGroup}
-              onChange={setSelectGroup}
-            />
-            <Button
-              variant="primary"
-              icon={icons.add}
-              onClick={() => onClickAddSurveyHandler()}
+      <div className={style.surveyContainer}>
+        <div className={style.surveyHeader}>
+          <ul className={style.surveyCourseList}>
+            <li
+              onClick={() => {
+                setSelectedSubject("Course");
+              }}
+              className={
+                (currentCourse === "Course" && style.active) || undefined
+              }
             >
-              문항 추가
-            </Button>
-          </div>
-          <TabPanel idBase={groupTabId} tabId={selectGroup}>
-            <div className="layout-split">
-              <div className="form-stack">{questionList}</div>
-              <Panel title="미리 보기" subtitle="수강생 화면">
-                <SurveyPreview surveyList={surveyList} />
-              </Panel>
-            </div>
-          </TabPanel>
+              수강
+            </li>
+            {subjectList.map((subject) => (
+              <li
+                key={subject.id}
+                onClick={() => {
+                  setSelectedSubject(subject.id);
+                }}
+                className={
+                  (selectedSubject === subject.id && style.active) || undefined
+                }
+              >
+                {subject.name}
+              </li>
+            ))}
+          </ul>
         </div>
-      </TabPanel>
+        <div className={style.surveyBody}>
+          <div className={style.surveyList}>
+            <ul>
+              <li
+                onClick={() => {
+                  setSelectGroup("pre");
+                }}
+                className={(selectGroup === "pre" && style.active) || undefined}
+              >
+                사전 설문
+              </li>
+              <li
+                onClick={() => {
+                  setSelectGroup("post");
+                }}
+                className={
+                  (selectGroup === "post" && style.active) || undefined
+                }
+              >
+                사후 설문
+              </li>
+            </ul>
+          </div>
+          <div className={style.survey}>
+            <ul>
+              <IconButton onClick={() => onClickAddSurveyHandler()}>
+                추가
+              </IconButton>
+              {surveyList.map((survey, index) => (
+                <div className={style.surveyQuestion} key={survey.id}>
+                  <li>
+                    <div className={style.surveyForm}>
+                      <div>
+                        <input
+                          type="text"
+                          className={style.surveySubject}
+                          defaultValue={survey.subject}
+                          ref={surveyRef}
+                          onChange={(e) => onInputUpdateHandler(survey.id, e)}
+                        />
+                        <IconButton
+                          onClick={() => deleteButtonHandler(survey.id)}
+                        >
+                          삭제
+                        </IconButton>
+                      </div>
+                      <div>
+                        <label>설문 종류</label>
+                        <Select
+                          className={style.surveyType}
+                          options={options}
+                          defaultValue={options.find(
+                            (option) => option.value === survey.type,
+                          )}
+                          isSearchable
+                          onChange={(e) => onTypeChangeHandler(survey, e)}
+                        />
+                      </div>
+                      {survey.type !== "text" && (
+                        <div>
+                          {survey.surveyDataList.map((data) => (
+                            <Fragment key={data.id}>
+                              <input
+                                key={data.id}
+                                type="text"
+                                defaultValue={data.data}
+                                onChange={(e) =>
+                                  onInputDataHandler(survey.id, data.id, e)
+                                }
+                                className={style.surveyData}
+                              />
+                              <IconButton
+                                onClick={() =>
+                                  deleteDataButtonHandler(survey.id, data.id)
+                                }
+                              >
+                                삭제
+                              </IconButton>
+                            </Fragment>
+                          ))}
+                          <IconButton
+                            className={style.addData}
+                            onClick={() => {
+                              onClickAddSurveyDataHandler(survey.id);
+                            }}
+                          >
+                            {" "}
+                            추가{" "}
+                          </IconButton>
+                        </div>
+                      )}
+                    </div>
+                    <div className={style.surveyPreview}>
+                      미리보기
+                      <ul>
+                        <PollItem
+                          key={`${survey.id}-${survey.type}-${survey.surveyDataList.length}`}
+                          item={toPollItem(survey, index)}
+                        />
+                      </ul>
+                    </div>
+                  </li>
+                </div>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
     </PageContainer>
   );
 }
-
-// 수강생에게 보이는 모양 (입력은 저장되지 않음)
-const SurveyPreview = ({ surveyList }) => {
-  if (surveyList.length === 0) {
-    return (
-      <StatusBox type="empty" size="sm" title="미리 볼 문항이 없습니다." />
-    );
-  }
-  return (
-    <div className="form-stack">
-      {surveyList.map((survey, index) => (
-        <PreviewQuestion key={survey.id} survey={survey} index={index} />
-      ))}
-    </div>
-  );
-};
-
-const PreviewQuestion = ({ survey, index }) => {
-  const labelId = `preview-${survey.id}-label`;
-
-  let input;
-  if (survey.type === "text") {
-    input = <textarea className="form-control" aria-labelledby={labelId} />;
-  } else {
-    let inputType = "radio";
-    if (survey.type === "checkBox") {
-      inputType = "checkbox";
-    }
-    input = (
-      <div className="form-check-group">
-        {survey.surveyDataList.map((data) => (
-          <label key={data.id} className="form-check">
-            <input type={inputType} name={`preview-${survey.id}`} />
-            {data.data}
-          </label>
-        ))}
-      </div>
-    );
-  }
-
-  return (
-    <div className="field" role="group" aria-labelledby={labelId}>
-      <span className="field-label" id={labelId}>
-        {index + 1}. {survey.subject}
-      </span>
-      {input}
-    </div>
-  );
-};

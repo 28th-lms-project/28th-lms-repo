@@ -1,24 +1,18 @@
 import { useParams } from "react-router-dom";
+import style from "./CourseSurveyAns.module.css";
 import { useEffect, useState } from "react";
 import {
   createCourseSurveyAnswers,
   getCourseSurveyQuestions,
   getMySurveyAnswered,
 } from "../../../../api/admin/system/survey/surveyApi";
-import Button from "../../../common/ui/Button";
-import Panel from "../../../common/ui/Panel";
-import StatusBox from "../../../common/ui/StatusBox";
-import { useToast } from "../../../common/ui/feedbackContext";
+import { IconButton } from "../../../common/input/IconButton";
 
 export default function CourseSurveyAns() {
   const { courseId, courseSurveyId } = useParams();
-  const toast = useToast();
   const [surveys, setSurveys] = useState();
   const [questions, setQuestions] = useState();
   const [answers, setAnswers] = useState({});
-  const [loadError, setLoadError] = useState(null);
-  const [unansweredIds, setUnansweredIds] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let ignore = false;
@@ -27,7 +21,6 @@ export default function CourseSurveyAns() {
         const answered = await getMySurveyAnswered(courseId, courseSurveyId);
         if (answered) {
           if (!ignore) {
-            // 창을 바로 닫으므로 토스트 대신 alert (닫히기 전에 읽을 수 있게)
             alert("이미 참여한 설문입니다.");
             window.close();
           }
@@ -38,7 +31,7 @@ export default function CourseSurveyAns() {
         const result = await getCourseSurveyQuestions(courseId, courseSurveyId);
         if (!result || !result.courseSurvey) {
           if (!ignore) {
-            setLoadError({ message: "설문을 찾을 수 없습니다." });
+            alert("설문을 찾을 수 없습니다.");
           }
           return;
         }
@@ -53,7 +46,7 @@ export default function CourseSurveyAns() {
         }
       } catch (e) {
         if (!ignore) {
-          setLoadError(e);
+          alert(e.message);
         }
       }
     })();
@@ -90,30 +83,11 @@ export default function CourseSurveyAns() {
     });
   };
 
-  if (loadError) {
-    return (
-      <div className="popup-page">
-        <main className="popup-body">
-          <StatusBox type="error" detail={loadError.message} />
-        </main>
-      </div>
-    );
-  }
-
   if (!surveys) {
-    return (
-      <div className="popup-page">
-        <main className="popup-body">
-          <StatusBox type="loading" />
-        </main>
-      </div>
-    );
+    return <div>불러오는 중...</div>;
   }
 
   const onClickSaveButtonHandler = async () => {
-    if (submitting) {
-      return;
-    }
     const answerList = Object.keys(answers).map((questionId) => {
       const answer = answers[questionId];
       return {
@@ -123,107 +97,75 @@ export default function CourseSurveyAns() {
       };
     });
     if (answerList.length < questions.length) {
-      const missing = questions
-        .filter((question) => !answers[question.id])
-        .map((question) => question.id);
-      setUnansweredIds(missing);
-      toast.error("모든 문항에 답변해주세요.");
+      alert("모든 문항에 답변해주세요.");
       return;
     }
-    setUnansweredIds([]);
     console.log(answerList);
     console.log(answers);
 
-    setSubmitting(true);
     try {
       await createCourseSurveyAnswers(courseId, courseSurveyId, {
         answers: answerList,
       });
-      // 창을 바로 닫으므로 토스트 대신 alert (닫히기 전에 읽을 수 있게)
       alert("제출되었습니다.");
       window.close();
     } catch (e) {
-      toast.error(e.message);
-    } finally {
-      setSubmitting(false);
+      alert(e.message);
     }
   };
 
   // 분해
   const { title, surveySubject, surveyType } = surveys;
 
-  let saveText = "저장";
-  if (submitting) {
-    saveText = "저장 중...";
-  }
-
   return (
-    <div className="popup-page">
-      <header className="popup-header">
-        <h1 className="popup-title">{title}</h1>
-        <div className="popup-actions">
-          <Button onClick={() => window.close()}>닫기</Button>
-        </div>
-      </header>
-      <main className="popup-body">
-        <Panel
-          title={`${surveySubject} · ${surveyType}`}
-          subtitle={`${questions.length}문항`}
-          footer={
-            <Button
-              variant="primary"
-              loading={submitting}
-              onClick={onClickSaveButtonHandler}
-            >
-              {saveText}
-            </Button>
-          }
-        >
-          <div className="form-stack">
-            {questions.map((question, index) => (
-              <SurveyAnswer
-                key={question.id}
-                no={index + 1}
-                question={question}
-                unanswered={unansweredIds.includes(question.id)}
-                onChangeAnswerHandler={onChangeAnswerHandler}
-              />
-            ))}
-          </div>
-        </Panel>
-      </main>
+    <div className={style.container}>
+      <h2>{title}</h2>
+      <p>
+        {surveySubject} · {surveyType}
+      </p>
+      <ol>
+        {questions.map((question) => (
+          <li key={question.id}>
+            <div>{question.subject}</div>
+            <SurveyAnswer
+              question={question}
+              onChangeAnswerHandler={onChangeAnswerHandler}
+              onClickSaveButtonHandler={onClickSaveButtonHandler}
+            />
+          </li>
+        ))}
+      </ol>
+      <div>
+        <IconButton onClick={onClickSaveButtonHandler}>저장</IconButton>
+      </div>
     </div>
   );
 }
 
 // 문항 유형별 입력 렌더링
-const SurveyAnswer = ({ no, question, unanswered, onChangeAnswerHandler }) => {
-  const { id, type, subject, surveyDataList } = question;
-  const labelId = `question-${id}-label`;
-  const messageId = `question-${id}-msg`;
+const SurveyAnswer = ({ question, onChangeAnswerHandler }) => {
+  const { id, type, surveyDataList } = question;
 
-  let input;
   if (type === "text") {
-    input = (
+    return (
       <input
         type="text"
-        className="form-control"
         name={id}
-        aria-labelledby={labelId}
-        aria-invalid={unanswered}
-        aria-describedby={messageId}
         onChange={(e) => onChangeAnswerHandler(id, type, e.currentTarget.value)}
       />
     );
-  } else {
-    let inputType = "radio";
-    if (type === "checkBox") {
-      inputType = "checkbox";
-    }
-    input = (
-      <div className="form-check-group">
+  }
+
+  let inputType = "radio";
+  if (type === "checkBox") {
+    inputType = "checkbox";
+  }
+
+  return (
+    <>
+      <div>
         {surveyDataList.map((data) => (
-          <label key={data.id} className="form-check">
+          <label key={data.id}>
             <input
               type={inputType}
               name={id}
@@ -241,20 +183,6 @@ const SurveyAnswer = ({ no, question, unanswered, onChangeAnswerHandler }) => {
           </label>
         ))}
       </div>
-    );
-  }
-
-  return (
-    <div className="field" role="group" aria-labelledby={labelId}>
-      <span className="field-label" id={labelId}>
-        {no}. {subject}
-      </span>
-      {input}
-      {unanswered && (
-        <span className="field-error" id={messageId} role="alert">
-          답변해주세요.
-        </span>
-      )}
-    </div>
+    </>
   );
 };

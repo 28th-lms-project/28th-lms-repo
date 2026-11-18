@@ -4,19 +4,14 @@ import {
   getCourseSurveyResult,
   getCourseSurveyStudentAnswers,
 } from "../../../../api/admin/system/survey/surveyApi";
-import Button from "../../../common/ui/Button";
-import Panel from "../../../common/ui/Panel";
-import StatusBox from "../../../common/ui/StatusBox";
-import { useToast } from "../../../common/ui/feedbackContext";
+import style from "./CourseSurveyAns.module.css";
 
 /**
  * 설문 결과 팝업: 응답한 학생을 선택하면 그 학생의 답변을 보여준다 (읽기 전용)
  */
 export default function CourseSurveyResult() {
   const { courseId, courseSurveyId } = useParams();
-  const toast = useToast();
   const [result, setResult] = useState(null);
-  const [loadError, setLoadError] = useState(null);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [answers, setAnswers] = useState([]);
 
@@ -34,7 +29,7 @@ export default function CourseSurveyResult() {
         }
       } catch (e) {
         if (!ignore) {
-          setLoadError(e);
+          alert(e.message);
         }
       }
     })();
@@ -61,156 +56,95 @@ export default function CourseSurveyResult() {
         }
       } catch (e) {
         if (!ignore) {
-          toast.error(e.message);
+          alert(e.message);
         }
       }
     })();
     return () => {
       ignore = true;
     };
-  }, [courseId, courseSurveyId, selectedStudentId, toast]);
-
-  if (loadError) {
-    return (
-      <div className="popup-page">
-        <main className="popup-body">
-          <StatusBox type="error" detail={loadError.message} />
-        </main>
-      </div>
-    );
-  }
+  }, [courseId, courseSurveyId, selectedStudentId]);
 
   if (!result) {
-    return (
-      <div className="popup-page">
-        <main className="popup-body">
-          <StatusBox type="loading" />
-        </main>
-      </div>
-    );
+    return <div>불러오는 중...</div>;
   }
 
   const { title, surveySubject, surveyType } = result.courseSurvey;
 
-  let selectedName = "";
-  result.respondents.forEach((student) => {
-    if (student.courseStudentId === selectedStudentId) {
-      selectedName = student.name;
-    }
-  });
+  return (
+    <div className={style.container}>
+      <h2>{title}</h2>
+      <p>
+        {surveySubject} · {surveyType} · 응답 {result.respondents.length}명
+      </p>
 
-  let body;
-  if (result.respondents.length === 0) {
-    body = <StatusBox type="empty" title="아직 응답한 학생이 없습니다." />;
-  } else {
-    body = (
-      <div className="layout-split layout-split-start">
-        <Panel title="응답한 학생" subtitle={`${result.respondents.length}명`} flush>
-          <ul className="list-group">
+      {result.respondents.length === 0 && <p>아직 응답한 학생이 없습니다.</p>}
+
+      {result.respondents.length > 0 && (
+        <div style={{ display: "flex", gap: "24px" }}>
+          <ul>
             {result.respondents.map((student) => {
-              let current;
+              let fontWeight = "normal";
               if (student.courseStudentId === selectedStudentId) {
-                current = "true";
+                fontWeight = "bold";
               }
               return (
-                <li key={student.courseStudentId}>
-                  <button
-                    type="button"
-                    className="list-item"
-                    aria-current={current}
-                    onClick={() =>
-                      setSelectedStudentId(student.courseStudentId)
-                    }
-                  >
-                    {student.name}
-                  </button>
+                <li
+                  key={student.courseStudentId}
+                  style={{ cursor: "pointer", fontWeight }}
+                  onClick={() => setSelectedStudentId(student.courseStudentId)}
+                >
+                  {student.name}
                 </li>
               );
             })}
           </ul>
-        </Panel>
 
-        <Panel title={`${selectedName} 학생의 답변`}>
-          <div className="form-stack">
-            {result.surveyList.map((question, index) => (
-              <AnswerView
-                key={question.id}
-                no={index + 1}
-                question={question}
-                answers={answers}
-              />
+          <ol>
+            {result.surveyList.map((question) => (
+              <li key={question.id}>
+                <div>{question.subject}</div>
+                <AnswerView question={question} answers={answers} />
+              </li>
             ))}
-          </div>
-        </Panel>
-      </div>
-    );
-  }
-
-  return (
-    <div className="popup-page">
-      <header className="popup-header">
-        <h1 className="popup-title">{title}</h1>
-        <div className="popup-actions">
-          <Button onClick={() => window.close()}>닫기</Button>
+          </ol>
         </div>
-      </header>
-      <main className="popup-body">
-        <div className="form-stack">
-          <p className="card-meta">
-            {surveySubject} · {surveyType} · 응답 {result.respondents.length}명
-          </p>
-          {body}
-        </div>
-      </main>
+      )}
     </div>
   );
 }
 
 // 문항별 학생 답변 (읽기 전용)
-const AnswerView = ({ no, question, answers }) => {
+const AnswerView = ({ question, answers }) => {
   const myAnswers = answers.filter((a) => a.surveyId === question.id);
-  const labelId = `result-${question.id}-label`;
 
-  let content;
   if (question.type === "text") {
     let text = "";
     if (myAnswers.length > 0) {
       text = myAnswers[0].textAnswer;
     }
-    if (text) {
-      content = <div className="answer-box">{text}</div>;
-    } else {
-      content = <div className="answer-box answer-box-empty">답변 없음</div>;
-    }
-  } else {
-    let inputType = "radio";
-    if (question.type === "checkBox") {
-      inputType = "checkbox";
-    }
-    const selectedIds = myAnswers.map((a) => a.dataId);
-    content = (
-      <div className="form-check-group">
-        {question.surveyDataList.map((data) => (
-          <label key={data.id} className="form-check">
-            <input
-              type={inputType}
-              checked={selectedIds.includes(data.id)}
-              disabled
-              readOnly
-            />
-            {data.data}
-          </label>
-        ))}
-      </div>
-    );
+    return <input type="text" value={text} readOnly />;
   }
 
+  let inputType = "radio";
+  if (question.type === "checkBox") {
+    inputType = "checkbox";
+  }
+  const selectedIds = myAnswers.map((a) => a.dataId);
+
   return (
-    <div className="field" role="group" aria-labelledby={labelId}>
-      <span className="field-label" id={labelId}>
-        {no}. {question.subject}
-      </span>
-      {content}
+    <div>
+      {question.surveyDataList.map((data) => (
+        <label key={data.id}>
+          <input
+            type={inputType}
+            checked={selectedIds.includes(data.id)}
+            disabled
+            readOnly
+          />
+          {data.data}
+        </label>
+      ))}
     </div>
   );
 };

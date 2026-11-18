@@ -1,7 +1,0 @@
-/* 보기 한 줄: 보기 내용 | 비율 막대 | 인원 */
-.optionRow {
-  display: grid;
-  grid-template-columns: minmax(120px, 240px) minmax(0, 1fr) 64px;
-  align-items: center;
-  column-gap: 12px;
-}
