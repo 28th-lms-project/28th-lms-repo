@@ -203,12 +203,12 @@ export const routes = [
                   {
                     path: "menu",
                     element: <Menu />,
-                    handle: { crumb: "메뉴 관리", menu: true },
+                    handle: { crumb: "메뉴 관리", menu: true, darkReady: true },
                   },
                   {
                     path: "role",
                     element: <Role />,
-                    handle: { crumb: "권한 관리", menu: true },
+                    handle: { crumb: "권한 관리", menu: true, darkReady: true },
                   },
                   {
                     path: "access",
@@ -233,7 +233,7 @@ export const routes = [
           {
             path: "*",
             element: <NotFound />,
-            handle: { crumb: "페이지 없음", notFound: true },
+            handle: { crumb: "페이지 없음", notFound: true, darkReady: true },
           },
         ],
       },
