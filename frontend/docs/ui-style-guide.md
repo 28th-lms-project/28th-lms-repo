@@ -352,7 +352,7 @@
 6. 불러오는 중 · 빈 목록 · 오류 · 권한 없음 상태를 `StatusBox`로 넣습니다.
 7. 화면 CSS module에서 표준 클래스와 겹치는 규칙을 지웁니다 (8장 "공통 규칙").
 8. 사이드바 [☾]로 다크 모드를 켜고 확인한 뒤, 그 화면 라우트의 `handle`에 `darkReady: true`를 넣습니다 (`router/MainRouterProvider.jsx`). 넣기 전에는 다크 모드여도 그 화면은 밝게 보입니다 (9장).
-9. `sample/catalog/standardization.js`의 `STANDARDIZED`에 옮긴 화면 이름(파일 이름, 확장자 없이)을 넣고, `REMAINING`에 있었으면 뺍니다. 표준화 전 탭의 그 화면 예시에 [표준 적용]이 붙습니다. 예시는 지우지 않습니다.
+9. `sample/catalog/standardization.js`의 `STANDARDIZED`에 옮긴 화면 이름(파일 이름, 확장자 없이)을 넣고, `REMAINING`에 있었으면 뺍니다. 표준화 전 탭의 그 화면 예시에 [표준 적용]이 붙습니다. 예시는 지우지 않습니다. 아래 "화면별 표준 대응" 표의 그 화면 분류 뒤에도 **표준 적용 (날짜)** 를 붙입니다.
 
 ### 기존 컴포넌트 → 표준 대응
 
@@ -400,9 +400,11 @@
 | `PageContainer` (`title`) | `PageHeader` (`crumbs` · `title` · `description` · `actions`) | `crumbs`는 `useBreadcrumbs()` 결과를 넘김. `title`을 안 넘기던 화면은 브레드크럼 마지막 항목의 `title`을 넘김 |
 | `sample/Modal` (`Alert` · `Confirm`) | `Modal` · `useConfirm` | 8장 "모달" · "확인 창" |
 
-### 화면별 표준 대응 (2026-11-17)
+### 화면별 표준 대응 (2026-11-18)
 
-화면 파일(`components`의 `sample` · `common` 밖)마다 표준으로 옮길 때 무엇을 보면 되는지 분류했습니다. 새 화면을 만들거나 옮길 때 이 표에서 찾고, 표에 없는 화면이 생기면 같은 기준으로 한 줄 추가합니다. 2026-11-17에 `dev`를 합치며 과정 설문 화면을 추가했습니다.
+화면 파일(`components`의 `sample` · `common` 밖)마다 표준으로 옮길 때 무엇을 보면 되는지 분류했습니다. 새 화면을 만들거나 옮길 때 이 표에서 찾고, 표에 없는 화면이 생기면 같은 기준으로 한 줄 추가합니다. 2026-11-17에 `dev`를 합치며 과정 설문 화면을, 2026-11-18에 설문 통계 팝업을 추가했습니다.
+
+분류 뒤의 **표준 적용 (날짜)** 는 그 화면에 표준 UI를 적용한 날입니다 (git 기록 기준). 샘플 표준화 전 탭의 [표준 적용] 배지와 같은 목록(`sample/catalog/standardization.js`의 `STANDARDIZED`)이라, 화면에 표준을 적용하면 두 곳을 함께 고칩니다. 표시가 없는 화면이 남은 작업입니다.
 
 | 분류 | 뜻 | 할 일 |
 | --- | --- | --- |
@@ -416,40 +418,41 @@
 
 | 화면 | 분류 | 메모 |
 | --- | --- | --- |
-| `admin/course/add/CourseAdd` · `list/CourseItem` | 예시 | 과정 등록 · 과정 상세 |
-| `admin/course/CourseMain` | 부품 | 과정 목록: `list-group`(현재 과정 `aria-current`) + 머리 [추가] |
-| `CourseTableComponent/ExamPage` · `ExamQuestionPicker` | 예시 | 시험 문제 고르기 |
-| `ExamGradeModal` | 예시 | 채점 |
-| `ExamTakeModal` · `ExamQuestionViewModal` | 부품 + 예시 (8차) | 시험 응시 · 시험지 보기. 새 부품 `question-nav` |
-| `ExamSetTable` · `my/course/MyTest` | 부품 | `Table`. 역할마다 다른 칸은 `columns` 배열을 걸러서 (칸을 숨기는 CSS 아님), 공개 Y/N은 `Badge` + 바꿀 때 `useConfirm`. 규칙: 목록에서 바로 바꾸면 `Badge` · 버튼 + `useConfirm`, 폼 안에서 저장과 함께 바꾸면 체크박스(`form-check`, 시험 문제 고르기 예시) |
-| `CourseTableComponent/CourseSurvey` · `CourseSurveyForm` | 예시 | 목록 위 추가 폼 (+ `SelectBox`, 읽기 전용 값은 `readOnly` 입력 또는 `hint`). 목록은 `Table`, 눌러서 여는 칸(설문 명 · 결과 보기)은 링크 · 버튼처럼 보이게 (`btn-text`), 삭제는 `useConfirm` |
-| `CourseSurveyAns` (설문 응답 팝업) | 부품 | 팝업 창 틀(`popup-page`) + `QuestionBlock`(보기 radio · checkbox, 배점 없음) + 주관식 `Field` textarea + 바닥 [저장]. 결과는 토스트, 제출 뒤 창 닫기 |
-| `CourseSurveyResult` (설문 결과 팝업) | 예시 (10차) | 설문 결과 (문항별 집계 \| 학생별 응답). 지금 화면에 없는 집계(보기별 응답 수 · 비율)는 설문 담당자가 만들 예정 → 이 예시를 따름 |
-| `HomeworkItem` · `HomeworkSubmitStatus` · `HomeworkDetails` | 예시 | 과제 상세 |
-| `HomeWorkList` · `HomeworkForm` · `CourseStudentList` | 예시 (8차) | 목록 위 추가 폼 |
-| `HomeworkReply` · `ReplyForm` | 예시 (8차) | 댓글 같은 자리 수정 · 권한 · 마감 잠금. 주소 자동 링크는 로직이라 표준 밖 |
-| `StudentConnected` | 예시 (8차) | 주간 접속 기록 |
-| `ConfirmModal` | 부품 | `useConfirm` |
-| `admin/course/selector/*` | 부품 | `SelectBox` (하나 · 여러 개) |
-| `admin/survey/survey/Survey` | 예시 | 설문 편집기. 통일 전 탭은 `dev`를 합친 뒤 지금 모양으로 다시 맞춤 (문항별 인라인 입력 + `PollItem` 미리보기, 입력마다 서버 저장, 저장 표시 없음). 표준 예시는 편집 \| 미리 보기 + [저장] |
-| `admin/test/test/AddTest` · `UpdateTest` | 예시 | 문제 은행 문제 추가 · 수정 |
-| `admin/test/test/Test` | 예시 (8차) | 문제 은행 목록 (문항마다 펼치기 · 출제 통계). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
+| `admin/course/add/CourseAdd` · `list/CourseItem` | 예시 · **표준 적용 (2026-11-17, `CourseItem` 2026-11-18)** | 과정 등록 · 과정 상세 |
+| `admin/course/CourseMain` | 부품 · **표준 적용 (2026-11-17)** | 과정 목록: `list-group`(현재 과정 `aria-current`) + 머리 [추가] |
+| `CourseTableComponent/ExamPage` · `ExamQuestionPicker` | 예시 · **표준 적용 (2026-11-17)** | 시험 문제 고르기 |
+| `ExamGradeModal` | 예시 · **표준 적용 (2026-11-17)** | 채점 |
+| `ExamTakeModal` · `ExamQuestionViewModal` | 부품 + 예시 (8차) · **표준 적용 (2026-11-17)** | 시험 응시 · 시험지 보기. 새 부품 `question-nav` |
+| `ExamSetTable` · `my/course/MyTest` | 부품 · **`ExamSetTable` 표준 적용 (2026-11-17)** | `Table`. 역할마다 다른 칸은 `columns` 배열을 걸러서 (칸을 숨기는 CSS 아님), 공개 Y/N은 `Badge` + 바꿀 때 `useConfirm`. 규칙: 목록에서 바로 바꾸면 `Badge` · 버튼 + `useConfirm`, 폼 안에서 저장과 함께 바꾸면 체크박스(`form-check`, 시험 문제 고르기 예시) |
+| `CourseTableComponent/CourseSurvey` · `CourseSurveyForm` | 예시 · **표준 적용 (2026-11-17)** | 목록 위 추가 폼 (+ `SelectBox`, 읽기 전용 값은 `readOnly` 입력 또는 `hint`). 목록은 `Table`, 눌러서 여는 칸(설문 명 · 결과 보기)은 링크 · 버튼처럼 보이게 (`btn-text`), 삭제는 `useConfirm` |
+| `CourseSurveyAns` (설문 응답 팝업) | 부품 · **표준 적용 (2026-11-17)** | 팝업 창 틀(`popup-page`) + `QuestionBlock`(보기 radio · checkbox, 배점 없음) + 주관식 `Field` textarea + 바닥 [저장]. 결과는 토스트, 제출 뒤 창 닫기 |
+| `CourseSurveyResult` (설문 결과 팝업) | 예시 (10차) · **표준 적용 (2026-11-17)** | 설문 결과 (문항별 집계 \| 학생별 응답). 지금 화면에 없는 집계(보기별 응답 수 · 비율)는 설문 담당자가 만들 예정 → 이 예시를 따름 |
+| `CourseSurveyStatistics` (설문 통계 팝업) | 부품 · **표준 적용 (2026-11-17)** | `popup-page` + `Panel` + `Progress`(보기별 응답 비율) + `StatusBox`. 설문 결과 예시의 문항별 집계와 같은 모양 |
+| `HomeworkItem` · `HomeworkSubmitStatus` · `HomeworkDetails` | 예시 · **표준 적용 (2026-11-17)** | 과제 상세 |
+| `HomeWorkList` · `HomeworkForm` · `CourseStudentList` | 예시 (8차) · **표준 적용 (2026-11-17)** | 목록 위 추가 폼 |
+| `HomeworkReply` · `ReplyForm` | 예시 (8차) · **표준 적용 (2026-11-17)** | 댓글 같은 자리 수정 · 권한 · 마감 잠금. 주소 자동 링크는 로직이라 표준 밖 |
+| `StudentConnected` | 예시 (8차) · **표준 적용 (2026-11-17)** | 주간 접속 기록 |
+| `ConfirmModal` | 부품 · **삭제 (2026-11-18, `useConfirm`으로 바꿈)** | `useConfirm` |
+| `admin/course/selector/*` | 부품 · **표준 적용 (2026-11-17 ~ 18)** | `SelectBox` (하나 · 여러 개) |
+| `admin/survey/survey/Survey` | 예시 · **표준 적용 (2026-11-17)** | 설문 편집기. 표준화 전 탭은 `dev`를 합친 뒤 그때 모양으로 다시 맞춤 (문항별 인라인 입력 + `PollItem` 미리보기, 입력마다 서버 저장, 저장 표시 없음). 표준 예시는 편집 \| 미리 보기 + [저장] |
+| `admin/test/test/AddTest` · `UpdateTest` | 예시 · **표준 적용 (2026-11-17)** | 문제 은행 문제 추가 · 수정 |
+| `admin/test/test/Test` | 예시 (8차) · **표준 적용 (2026-11-17)** | 문제 은행 목록 (문항마다 펼치기 · 출제 통계). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
 | `admin/system/member/*` | 예시 | 목록 \| 상세. 등록 · 수정 · 비밀번호 초기화는 폼 모달, 역할 바꾸기는 `desc-list` 안 select + [역할 변경] + `useConfirm` |
 | `admin/system/role/Role` | 부품 · **표준 적용 (2026-11-17)** | `input-group`(접두어) + `Table` 순서 바꾸기(잠긴 행) · 칸 편집 + "순서가 변경되었습니다" `Callout` |
 | `role/RoleUserMoveModal` | 부품 · **표준 적용 (2026-11-17)** | `Modal` + `list-boxed` + `SelectBox` + `Callout`. 결과(일부만 성공 포함)는 토스트 |
-| `admin/system/access/Access` | 예시 (8차) | 접근 관리 (연쇄 선택 · 같은 폼으로 추가 · 수정) |
-| `access-role/AccessRole` | 예시 (8차) | 권한별 접근 권한 관리 (저장 전 변경 표시). 새 클래스 `layout-split-start` |
+| `admin/system/access/Access` | 예시 (8차) · **표준 적용 (2026-11-17)** | 접근 관리 (연쇄 선택 · 같은 폼으로 추가 · 수정) |
+| `access-role/AccessRole` | 예시 (8차) · **표준 적용 (2026-11-17)** | 권한별 접근 권한 관리 (저장 전 변경 표시). 새 클래스 `layout-split-start` |
 | `admin/system/code/*` | 예시 (8차) | 환경 변수 관리 (패널 하나가 보기 · 수정 · 추가). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
 | `admin/system/menu/Menu` · `MenuColumn` | 예시 (10차) · **표준 적용 (2026-11-17)** | 메뉴 관리 (3단 `Table` + 순서 바꾸기 + 순서 저장 바). 상세는 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. 지금 화면의 "놓자마자 저장" 대신 저장 바로 한 번에 (역할 관리와 같게), 키보드(↑ ↓)로도 옮길 수 있게 됨 |
 | `my/course/MyCourse` | 부품 | `Tabs` (고른 탭은 주소 `?tab=`에) |
-| `my/course/MyCourseData` | 예시 · 제외 1 | 목록 \| 상세 · 상세 화면. **제외**: 리치 텍스트 `Editor` (6장 "표준을 만들지 않기로 한 것") |
-| `my/course/MyTimetable` | 부품 + 예시 (8차) | 날짜별 시간표 (새 클래스 `tr.is-highlight`). 하루 보기는 `Table bordered`, 업로드는 `FilePicker` |
-| `my/course/MyInterview` | 예시 (8차) | 목록 위 추가 폼 (`datetime-local`) |
-| `my/course/MyCounsel` | 예시 (8차) | 상담 기록 (기본 정보 먼저 · 구역별 수정 · 수준 배지 · 고칠 수 없는 기록) |
+| `my/course/MyCourseData` | 예시 · 제외 1 · **표준 적용 (2026-11-17)** | 목록 \| 상세 · 상세 화면. **제외**: 리치 텍스트 `Editor` (6장 "표준을 만들지 않기로 한 것") |
+| `my/course/MyTimetable` | 부품 + 예시 (8차) · **표준 적용 (2026-11-17)** | 날짜별 시간표 (새 클래스 `tr.is-highlight`). 하루 보기는 `Table bordered`, 업로드는 `FilePicker` |
+| `my/course/MyInterview` | 예시 (8차) · **표준 적용 (2026-11-17)** | 목록 위 추가 폼 (`datetime-local`) |
+| `my/course/MyCounsel` | 예시 (8차) · **표준 적용 (2026-11-17)** | 상담 기록 (기본 정보 먼저 · 구역별 수정 · 수준 배지 · 고칠 수 없는 기록) |
 | `my/info/MyInfo` · `MyPassword` · `login/Login` | 부품 + 예시 (8차) | 로그인 · 비밀번호 다시 확인. 새 부품 `auth-page` · `auth-card` |
 | `my/info/MyInfoForm` · `MyPasswordForm` | 부품 | `Field` + `form-stack` + `desc-list`(읽기 전용 값). 성공은 토스트, 비밀번호 규칙(8~20자)은 처음부터 `hint`로 |
 | `main/Main` | 예시 | 대시보드 |
-| `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
+| `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 · **`SideMenu` · `UserProfile` 표준 적용 (2026-11-17)** | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
 | `menu/MenuGuard` · `login/IsLogin` | 부품 · **`MenuGuard` 표준 적용 (2026-11-17)** | 로직. 화면은 `StatusBox` (loading · error · denied) |
 | `Section.jsx` | 부품 | `Panel` |
 | `my/course/MyCourseList` · `MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가 |

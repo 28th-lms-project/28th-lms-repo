@@ -20,7 +20,8 @@ export const STANDARDIZED = new Set([
   "CourseSurvey", "CourseSurveyForm", "CourseSurveyAns", "CourseSurveyResult",
   "ExamPage", "ExamQuestionPicker", "ExamSetTable", "ExamGradeModal", "ExamTakeModal", "ExamQuestionViewModal", "ConfirmModal",
   "HomeWorkList", "HomeworkForm", "HomeworkItem", "HomeworkSubmitStatus", "HomeworkReply", "ReplyForm",
-  "CourseTutorSelect", "CourseStudentSelect",
+  "CourseTutorSelect", "CourseStudentSelect", "ExamSubjectSelect", "TestSubjectSelect",
+  "HomeworkDetails", "CourseSurveyStatistics",
   // 시험 문제 · 설문
   "Test", "AddTest", "UpdateTest", "Survey",
   // 수강 과정 탭
