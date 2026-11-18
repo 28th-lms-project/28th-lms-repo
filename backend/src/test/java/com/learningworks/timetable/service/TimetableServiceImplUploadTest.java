@@ -65,7 +65,7 @@ class TimetableServiceImplUploadTest {
     this.service.upload(COURSE_ID, excel("2026-11-02", "2026-11-10", "2026-11-20"));
 
     Mockito.verify(this.timetableDao).deleteTimetable(COURSE_ID);
-    Mockito.verify(this.timetableDao, Mockito.times(3)).insertTimetable(Mockito.anyString(),
+    Mockito.verify(this.timetableDao, Mockito.times(3)).insertTimetable(
         Mockito.eq(COURSE_ID), Mockito.any(), Mockito.anyString(), Mockito.anyString(), Mockito.eq(1));
   }
 
@@ -87,7 +87,7 @@ class TimetableServiceImplUploadTest {
         .hasMessageContaining("2026-11-01, 2026-11-23");
 
     Mockito.verify(this.timetableDao, Mockito.never()).deleteTimetable(Mockito.anyString());
-    Mockito.verify(this.timetableDao, Mockito.never()).insertTimetable(Mockito.anyString(),
+    Mockito.verify(this.timetableDao, Mockito.never()).insertTimetable(
         Mockito.anyString(), Mockito.any(), Mockito.anyString(), Mockito.anyString(), Mockito.anyInt());
   }
 

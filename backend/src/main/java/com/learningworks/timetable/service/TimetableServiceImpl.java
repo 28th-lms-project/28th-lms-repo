@@ -26,7 +26,6 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -91,8 +90,6 @@ public class TimetableServiceImpl implements TimetableService {
         for (ExcelLesson lesson : lessons) {
 
             timetableDao.insertTimetable(
-                    UUID.randomUUID().toString().replace("-", "")
-                            .substring(0, 20),
                     courseId,
                     lesson.date(),
                     lesson.agenda(),

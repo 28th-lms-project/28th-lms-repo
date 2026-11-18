@@ -21,8 +21,8 @@ public interface TimetableDao {
             @Param("courseId") String courseId
     );
 
+    /** 시간표 한 칸 저장. ID는 매퍼에서 시퀀스로 만든다 (CI-YYYYMMDD-000001) */
     int insertTimetable(
-            @Param("id") String id,
             @Param("courseId") String courseId,
             @Param("date") LocalDate date,
             @Param("agenda") String agenda,

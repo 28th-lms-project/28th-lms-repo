@@ -21,7 +21,7 @@
         WHERE COURSE_ID = #{courseId}
     </delete>
 
-    <!-- 시간표 등록 -->
+    <!-- 시간표 등록. ID는 팀 PK 규칙: 'CI-' + 날짜 + 시퀀스 6자리 -->
     <insert id="insertTimetable">
         INSERT INTO COURSE_TIME_TABLE (
 	          ID
@@ -32,7 +32,7 @@
 	        , TIME
         )
         VALUES (
-		        #{id},
+		        'CI-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_TIME_TABLE_PK.NEXTVAL, 6, '0'),
 		        #{courseId},
 		        #{date},
 		        #{agenda},
