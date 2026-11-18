@@ -8,6 +8,8 @@ import PageHeader from "./ui/PageHeader";
  * 아직 PageHeader로 옮기지 않은 화면을 위한 호환용이다 (2026-11-17부터 안쪽 머리가 표준 PageHeader).
  * 새 화면 · 옮기는 화면은 PageHeader를 직접 쓴다: <PageHeader crumbs={useBreadcrumbs()} title=... description=... actions=... />
  * (ui-style-guide.md 6장 "기존 컴포넌트 → 표준 대응" › 틀 · 표)
+ *
+ * @deprecated PageHeader(common/ui/PageHeader.jsx)를 직접 쓴다. 마지막으로 쓰는 화면에 표준을 적용할 때 components/archive/로 옮긴다 (archive/README.md).
  */
 export default function PageContainer({ title, children }) {
   const crumbs = useBreadcrumbs();

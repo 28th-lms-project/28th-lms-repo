@@ -1,0 +1,4 @@
+/* 상세 보기 desc-list의 라벨 폭 */
+.desc {
+  --desc-label-width: 64px;
+}

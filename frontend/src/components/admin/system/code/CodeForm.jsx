@@ -1,124 +1,132 @@
-// 입력칸 아래 검증 메시지 (메시지가 없으면 아무것도 표시하지 않음)
-const ErrorField = ({ messages }) => {
-  if (!messages) {
-    return null;
+import { useId } from "react";
+import Field from "../../../common/ui/Field";
+
+// 서버 검증 메시지 배열 → Field error 문구 (없으면 undefined)
+const toError = (messages) => {
+  if (!messages || messages.length === 0) {
+    return undefined;
   }
-  return messages.map((message) => (
-    <p key={message} className="fieldError">
-      {message}
-    </p>
-  ));
+  return messages.join("\n");
+};
+
+// 코드(ID) 칸 도움말: 추가할 때와 수정할 때가 다름
+const idHintOf = (idEditable) => {
+  if (idEditable) {
+    return undefined;
+  }
+  return "추가한 뒤에는 바꿀 수 없습니다.";
 };
 
 /**
+ * 수정 · 추가할 때의 입력 칸 (보기는 UpdateCode의 desc-list)
+ *
  * form          : { id, name, parentId, order, useYn }
  * onChange      : 입력 변경 핸들러
- * idEditable    : ID 입력 가능 여부 (추가할 때만 true)
- * editable      : 나머지 입력 가능 여부
- * parentOptions : P-ID 드롭다운 목록 (대분류는 넘기지 않음)
- * crtDt, mdfyDt : 생성일 · 수정일 (표시용)
+ * idEditable    : 코드(ID) 입력 가능 여부 (추가할 때만 true)
+ * disabled      : 저장 중이면 true
+ * parentOptions : 상위 코드 드롭다운 목록 (대분류는 넘기지 않음)
  * fieldErrors   : 서버 검증 메시지 { name: ["..."] }
  */
 export default function CodeForm({
   form,
   onChange,
   idEditable,
-  editable,
+  disabled = false,
   parentOptions,
-  crtDt,
-  mdfyDt,
   fieldErrors = {},
 }) {
+  // 대 · 중 · 소 분류에서 한 화면에 3번 그려지므로 id를 따로 만듦
+  const idBase = useId();
+  const inputId = (name) => `${idBase}-${name}`;
+
   return (
-    <div className="inputForm">
-      <div className="codeInput">
-        <label>
-          ID{" "}
-          <input
-            type="text"
-            name="id"
-            value={form.id}
-            disabled={!idEditable}
-            onChange={onChange}
-          />
-        </label>
-        <ErrorField messages={fieldErrors.id} />
-      </div>
+    <div className="form-stack">
+      <Field
+        label="코드"
+        htmlFor={inputId("id")}
+        required={idEditable}
+        hint={idHintOf(idEditable)}
+        error={toError(fieldErrors.id)}
+      >
+        <input
+          id={inputId("id")}
+          type="text"
+          name="id"
+          className="form-control form-control-mono"
+          value={form.id}
+          readOnly={!idEditable}
+          disabled={disabled}
+          onChange={onChange}
+        />
+      </Field>
 
       {parentOptions && (
-        <div className="codeInput">
-          <label>
-            P-ID{" "}
-            <select
-              name="parentId"
-              value={form.parentId}
-              disabled={!editable}
-              onChange={onChange}
-            >
-              {parentOptions.map((parent) => (
-                <option key={parent.id} value={parent.id}>
-                  {parent.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <ErrorField messages={fieldErrors.parentId} />
-        </div>
+        <Field
+          label="상위 코드"
+          htmlFor={inputId("parentId")}
+          error={toError(fieldErrors.parentId)}
+        >
+          <select
+            id={inputId("parentId")}
+            name="parentId"
+            className="form-control"
+            value={form.parentId}
+            disabled={disabled}
+            onChange={onChange}
+          >
+            {parentOptions.map((parent) => (
+              <option key={parent.id} value={parent.id}>
+                {parent.name}
+              </option>
+            ))}
+          </select>
+        </Field>
       )}
 
-      <div className="codeInput">
-        <label>
-          NAME{" "}
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            disabled={!editable}
-            onChange={onChange}
-          />
-        </label>
-        <ErrorField messages={fieldErrors.name} />
-      </div>
+      <Field
+        label="이름"
+        htmlFor={inputId("name")}
+        error={toError(fieldErrors.name)}
+      >
+        <input
+          id={inputId("name")}
+          type="text"
+          name="name"
+          className="form-control"
+          value={form.name}
+          disabled={disabled}
+          onChange={onChange}
+        />
+      </Field>
 
-      <div className="codeInput">
-        <label>
-          ORDER{" "}
-          <input
-            type="number"
-            name="order"
-            value={form.order}
-            disabled={!editable}
-            onChange={onChange}
-          />
-        </label>
-        <ErrorField messages={fieldErrors.order} />
-      </div>
+      <Field
+        label="순서"
+        htmlFor={inputId("order")}
+        error={toError(fieldErrors.order)}
+      >
+        <input
+          id={inputId("order")}
+          type="number"
+          name="order"
+          className="form-control"
+          value={form.order}
+          disabled={disabled}
+          onChange={onChange}
+        />
+      </Field>
 
-      <div className="codeInput">
-        <label>
-          사용여부{" "}
+      <Field group label="사용 여부" error={toError(fieldErrors.useYn)}>
+        <label className="form-check">
           <input
             type="checkbox"
             name="useYn"
             checked={form.useYn === "Y"}
-            disabled={!editable}
+            disabled={disabled}
             onChange={onChange}
-          />
+          />{" "}
+          사용
         </label>
-        <ErrorField messages={fieldErrors.useYn} />
-      </div>
-
-      <div className="codeInput">
-        <label>
-          생성일 <input type="text" value={crtDt} disabled />
-        </label>
-      </div>
-
-      <div className="codeInput">
-        <label>
-          수정일 <input type="text" value={mdfyDt} disabled />
-        </label>
-      </div>
+      </Field>
     </div>
   );
 }

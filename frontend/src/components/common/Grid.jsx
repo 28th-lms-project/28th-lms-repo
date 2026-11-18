@@ -12,6 +12,7 @@ import { IconButton } from "./input/IconButton";
 import { icons } from "./input/icons";
 import { isMobile } from "../../utils/window";
 
+/** @deprecated 표준 Table(common/ui/Table.jsx)을 쓴다. 아직 환경 변수 관리 · 회원 관리가 씀. 마지막으로 쓰는 화면에 표준을 적용할 때 components/archive/로 옮긴다 (archive/README.md). */
 export const UpdateableGrid = ({
                                    ref,
                                    checkIdName,
@@ -207,6 +208,7 @@ export const UpdateableGrid = ({
     );
 };
 
+/** @deprecated 표준 Table(common/ui/Table.jsx)을 쓴다. 아직 환경 변수 관리 · 회원 관리가 씀. 마지막으로 쓰는 화면에 표준을 적용할 때 components/archive/로 옮긴다 (archive/README.md). */
 export const Grid = ({
                          ref,
                          checkable = false,
