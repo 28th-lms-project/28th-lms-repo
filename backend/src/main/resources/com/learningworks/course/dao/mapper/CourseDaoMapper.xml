@@ -4,22 +4,29 @@
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.learningworks.course.dao.CourseDao">
 
+	<!--
+		과정 목록 (삭제되지 않은 과정, 시작일 늦은 순). 과정마다 한 줄.
+		NAME: 강사 이름 (여럿이면 ", "로 연결, 강사가 없으면 null).
+		강사를 JOIN 하지 않고 서브쿼리로 붙인다: JOIN 하면 강사가 여럿인 과정은 여러 줄이 되고,
+		강사가 없거나 강사 ID가 잘못된 과정은 목록에서 빠진다.
+	-->
 	<select 
 	id="viewCourse" 
 	resultType="com.learningworks.course.vo.response.CourseVO">
 	 SELECT C.ID 
-          , COURSE_NAME 
-          , TO_CHAR (START_DATE,'YYYY-MM-DD') AS START_DATE
-          , TO_CHAR(END_DATED, 'YYYY-MM-DD') AS END_DATED 
-          , "NO" 
-          , U.NAME
+          , C.COURSE_NAME 
+          , TO_CHAR(C.START_DATE, 'YYYY-MM-DD') AS START_DATE
+          , TO_CHAR(C.END_DATED, 'YYYY-MM-DD') AS END_DATED 
+          , C."NO" 
+          , (SELECT LISTAGG(U.NAME, ', ') WITHIN GROUP (ORDER BY U.NAME)
+               FROM COURSE_TUTOR CT
+              INNER JOIN "USER" U
+                 ON U.ID = CT.TUTOR_ID
+              WHERE CT.COURSE_ID = C.ID) AS NAME
        FROM COURSE C
-      INNER JOIN COURSE_TUTOR CT
-         ON C.ID = CT.COURSE_ID
-      INNER JOIN "USER" U
-         ON CT.TUTOR_ID = U.ID
+      WHERE C.DEL_YN = 'N'
       <if test="userId != null">
-      WHERE C.ID IN (SELECT CS.COURSE_ID
+        AND C.ID IN (SELECT CS.COURSE_ID
                        FROM COURSE_STUDENT CS
                       WHERE CS.USER_ID = #{userId}
                       UNION
@@ -27,6 +34,7 @@
                        FROM COURSE_TUTOR CT2
                       WHERE CT2.TUTOR_ID = #{userId})
       </if>
+      ORDER BY C.START_DATE DESC, C.ID DESC
 	</select>
 
 	<!-- 로그인 사용자의 현재 역할 (강의 조회 권한 판단용) -->
