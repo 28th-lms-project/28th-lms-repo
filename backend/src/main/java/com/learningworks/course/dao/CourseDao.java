@@ -14,6 +14,7 @@ import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
+import com.learningworks.course.vo.response.TodayAttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.CourseVO;
@@ -75,6 +76,12 @@ public interface CourseDao {
 	int deleteHomeworkReply(@Param("homeworkId") String homeworkId, @Param("replyId") String replyId);
 
 	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
+
+	/** 오늘이 이 과정의 수업일이면 1, 아니면 0 (과정 기간 안 시간표가 있는 날) */
+	int countTodayClassDay(@Param("courseId") String courseId);
+
+	/** 과정의 오늘 출석 기록 수 (수강생 수 · Y · L · N). classDay · notCheckedCount 는 채우지 않음 */
+	TodayAttendanceSummaryVO readTodayAttendanceCounts(@Param("courseId") String courseId);
 
 	/**
 	 * 삭제되지 않은 과정의 시간표 날짜 중 startDate ~ endDate(yyyy-MM-dd) 밖인 날짜 (yyyy-MM-dd, 오름차순, 중복 없음).

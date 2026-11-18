@@ -9,6 +9,7 @@ import com.learningworks.course.vo.request.RegistCourseVO;
 import com.learningworks.course.vo.request.RegistHomeworkReplyVO;
 import com.learningworks.course.vo.request.RegistHomeworkVO;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
+import com.learningworks.course.vo.response.TodayAttendanceSummaryVO;
 import com.learningworks.course.vo.request.SearchCourseVO;
 import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
@@ -54,6 +55,9 @@ public interface CourseService {
 
 	/** 강의 진행률 · 출석률 요약 (어제까지 기준). 수강생은 본인만 */
 	AttendanceSummaryVO readAttendanceSummary(String courseId);
+
+	/** 과정의 오늘 출석 현황 (강사 · 관리자). 이 과정의 수강생이면 COURSE_NOT_AUTHORIZED */
+	TodayAttendanceSummaryVO readTodayAttendance(String courseId);
 
 	List<CourseVO> searchCourseList(SearchCourseVO searchCourseVO);
 
