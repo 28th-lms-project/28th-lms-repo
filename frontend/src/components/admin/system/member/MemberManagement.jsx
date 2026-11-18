@@ -1,41 +1,59 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import usePermission from "../../../../hooks/usePermission.js";
-import PageContainer from "../../../common/PageContainer.jsx";
+import useBreadcrumbs from "../../../../hooks/useBreadcrumbs.js";
 import {
   getAssignableRoles,
   getMembers,
 } from "../../../../api/admin/system/member/memberApi.js";
-import styles from "./MemberManagement.module.css";
-import { Grid } from "../../../common/Grid.jsx";
-import { Paginator } from "../../../common/Paginator.jsx";
+import PageHeader from "../../../common/ui/PageHeader.jsx";
+import StatusBox from "../../../common/ui/StatusBox.jsx";
+import Field from "../../../common/ui/Field.jsx";
+import Button from "../../../common/ui/Button.jsx";
+import Badge from "../../../common/ui/Badge.jsx";
+import Table from "../../../common/ui/Table.jsx";
+import Pagination from "../../../common/ui/Pagination.jsx";
+import { useToast } from "../../../common/ui/feedbackContext.js";
+import { icons } from "../../../common/input/icons.js";
 import MemberDetail from "./MemberDetail.jsx";
 import MemberCreateModal from "./MemberCreateModal.jsx";
 
 export default function MemberManagement() {
   const { can, status } = usePermission();
+  const crumbs = useBreadcrumbs();
 
+  // idle: 비로그인 → 표시 없음
   let content = null;
   if (status === "loading") {
-    content = <p className={styles.notice}>권한 확인 중...</p>;
+    content = <StatusBox type="loading" title="권한 확인 중..." />;
   } else if (status === "failed") {
     content = (
-      <p className={styles.notice}>
-        권한 정보를 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.
-      </p>
+      <StatusBox
+        type="error"
+        title="권한 정보를 불러오지 못했습니다."
+        detail="새로고침 후 다시 시도해 주세요."
+      />
     );
   } else if (status === "loaded") {
     if (can("MEMBER_READ_LIST")) {
       content = <MemberManagementContent />;
     } else {
-      content = <p className={styles.notice}>권한이 없습니다.</p>;
+      content = <StatusBox type="denied" />;
     }
   }
 
-  return <PageContainer>{content}</PageContainer>;
+  return (
+    <>
+      <PageHeader crumbs={crumbs} title={crumbs.at(-1)?.title} />
+      {content}
+    </>
+  );
 }
 
 function MemberManagementContent() {
   const { can } = usePermission();
+  const toast = useToast();
+  const roleFilterId = useId();
+  const keywordId = useId();
   const [members, setMembers] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [roles, setRoles] = useState([]);
@@ -55,11 +73,11 @@ function MemberManagementContent() {
   const [selectedMemberId, setSelectedMemberId] = useState(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
-  const formatStatus = (member) => {
+  const renderStatus = (member) => {
     if (member.loginBlockDate) {
-      return "잠김";
+      return <Badge tone="danger">잠김</Badge>;
     }
-    return "정상";
+    return <Badge tone="success">정상</Badge>;
   };
 
   // 내가 지정할 수 있는 역할 목록 (자기보다 아래 역할만, 최고 관리자 제외)
@@ -72,11 +90,11 @@ function MemberManagementContent() {
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
-          alert(error.message);
+          toast.error(error.message);
         }
       });
     return () => controller.abort();
-  }, []);
+  }, [toast]);
 
   // 회원 목록 조회 (MEMBER_READ_LIST 권한이 확인된 후 마운트됨)
   useEffect(() => {
@@ -98,12 +116,12 @@ function MemberManagementContent() {
       })
       .catch((error) => {
         if (error.name !== "AbortError") {
-          alert(error.message);
+          toast.error(error.message);
         }
       });
 
     return () => controller.abort();
-  }, [search]);
+  }, [search, toast]);
 
   // 검색 실행
   const handleSearch = () => {
@@ -129,139 +147,121 @@ function MemberManagementContent() {
 
   const reloadList = () => setSearch((prev) => ({ ...prev }));
 
-  // 멤버 그리드 데이터 구성
-  const header = [
-    { id: "id", title: "아이디" },
-    { id: "name", title: "이름" },
-    { id: "roleName", title: "역할" },
-    { id: "createDate", title: "등록일" },
-    { id: "loginBlockDate", title: "상태" },
+  // 회원 목록 표 칸
+  const columns = [
+    { key: "id", title: "아이디", mono: true },
+    { key: "name", title: "이름" },
+    { key: "roleName", title: "역할", width: "16%" },
+    { key: "createDate", title: "등록일", width: "22%" },
+    {
+      key: "status",
+      title: "상태",
+      width: "80px",
+      align: "center",
+      render: renderStatus,
+    },
   ];
 
-  const content = members.map((member) => [
-    { id: member.id, keyName: "id", value: member.id },
-    { id: member.id, keyName: "name", value: member.name },
-    { id: member.id, keyName: "roleName", value: member.roleName },
-    { id: member.id, keyName: "createDate", value: member.createDate },
-    { id: member.id, keyName: "loginBlockDate", value: formatStatus(member) },
-  ]);
-
-  const selectedRowIndex = members.findIndex(
-    (member) => member.id === selectedMemberId,
-  );
-  let activeRows = [];
-  if (selectedRowIndex >= 0) {
-    activeRows = [selectedRowIndex];
+  // 오른쪽 상세: 권한 없음 · 고른 회원 없음(목록이 비었을 때)도 표시
+  let detail = <StatusBox type="empty" title="회원을 고르세요." />;
+  if (!can("MEMBER_READ_DETAIL")) {
+    detail = (
+      <StatusBox type="denied" title="회원 상세를 볼 권한이 없습니다." />
+    );
+  } else if (selectedMemberId) {
+    detail = (
+      <MemberDetail
+        key={selectedMemberId}
+        memberId={selectedMemberId}
+        roles={roles}
+        onChanged={reloadList}
+      />
+    );
   }
 
   return (
     <>
-      <div className={styles.container}>
-        {/* 상단 툴바 (검색 / 필터 / 등록 버튼) */}
-        <div className={styles.toolbar}>
-          <div className={styles.searchGroup}>
+      <div className="form-stack">
+        <div className="toolbar">
+          <div className="form-row">
             {roles.length > 0 && (
-              <select
-                className={styles.select}
-                value={selectedRoleFilter}
-                onChange={(event) => setSelectedRoleFilter(event.target.value)}
-              >
-                <option value="">전체 역할</option>
-                {roles.map((role) => (
-                  <option key={role.roleId} value={role.roleId}>
-                    {role.roleDisplayName}
-                  </option>
-                ))}
-              </select>
+              <Field label="역할" htmlFor={roleFilterId}>
+                <select
+                  id={roleFilterId}
+                  className="form-control"
+                  value={selectedRoleFilter}
+                  onChange={(event) =>
+                    setSelectedRoleFilter(event.target.value)
+                  }
+                >
+                  <option value="">전체 역할</option>
+                  {roles.map((role) => (
+                    <option key={role.roleId} value={role.roleId}>
+                      {role.roleDisplayName}
+                    </option>
+                  ))}
+                </select>
+              </Field>
             )}
 
-            <input
-              className={styles.searchInput}
-              type="text"
-              placeholder="아이디 또는 이름 검색"
-              value={keywordInput}
-              onChange={(event) => setKeywordInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-                  handleSearch();
-                }
-              }}
-            />
+            <Field label="검색어" htmlFor={keywordId}>
+              <input
+                id={keywordId}
+                type="search"
+                className="form-control"
+                placeholder="아이디 또는 이름"
+                value={keywordInput}
+                onChange={(event) => setKeywordInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                    handleSearch();
+                  }
+                }}
+              />
+            </Field>
 
-            <button
-              type="button"
-              className={styles.btnSearch}
-              onClick={handleSearch}
-            >
-              검색
-            </button>
-            <button
-              type="button"
-              className={styles.btnReset}
-              onClick={handleReset}
-            >
-              초기화
-            </button>
+            <div className="btn-group">
+              <Button onClick={handleSearch}>검색</Button>
+              <Button onClick={handleReset}>초기화</Button>
+            </div>
           </div>
 
           {can("MEMBER_CREATE") && roles.length > 0 && (
-            <button
-              type="button"
-              className={styles.btnCreate}
+            <Button
+              variant="primary"
+              icon={icons.add}
               onClick={() => setIsCreateOpen(true)}
             >
-              + 회원 등록
-            </button>
+              회원 등록
+            </Button>
           )}
         </div>
 
-        {/* 본문 (목록 그리드 + 상세 패널) */}
-        <div className={styles.layout}>
-          <div className={styles.listArea}>
-            {members.length === 0 && (
-              <div className={styles.emptyNotice}>조회된 회원이 없습니다.</div>
-            )}
-
-            {members.length > 0 && (
-              <Grid
-                className={styles.grid}
-                title=""
-                header={header}
-                content={content}
-                columnStyle="1.5fr 1fr 1fr 1.5fr 90px"
-                clickableColumn={{
-                  0: (value) => {
-                    setSelectedMemberId(value);
-                  },
-                }}
-                activeRows={activeRows}
-              />
-            )}
-
+        {/* 목록 표 | 회원 상세 */}
+        <div className="layout-split">
+          <div>
+            <Table
+              ariaLabel="회원 목록"
+              size="sm"
+              columns={columns}
+              rows={members}
+              selectedKey={selectedMemberId}
+              onRowClick={(row) => setSelectedMemberId(row.id)}
+              emptyText="조회된 회원이 없습니다."
+            />
             {pagination && (
-              <div className={styles.paginationWrap}>
-                <Paginator
-                  id="member"
-                  start={pagination.groupStartPageNo}
-                  countPerPageGroup={pagination.pageCountInGroup}
-                  activePage={pagination.pageNo}
-                  totalPageCount={pagination.pageCount}
-                  setActivePage={(pageNo) =>
+              <div className="table-footer">
+                <Pagination
+                  page={pagination.pageNo}
+                  totalPages={pagination.pageCount}
+                  onChange={(pageNo) =>
                     setSearch((prev) => ({ ...prev, pageNo }))
                   }
                 />
               </div>
             )}
           </div>
-
-          {selectedMemberId && can("MEMBER_READ_DETAIL") && (
-            <MemberDetail
-              key={selectedMemberId}
-              memberId={selectedMemberId}
-              roles={roles}
-              onChanged={reloadList}
-            />
-          )}
+          {detail}
         </div>
       </div>
 
