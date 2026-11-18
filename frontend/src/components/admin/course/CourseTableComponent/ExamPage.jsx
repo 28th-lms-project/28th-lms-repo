@@ -119,6 +119,16 @@ export default function ExamPage() {
     }
   };
 
+  // 시험 탭을 떠나면(폼을 [취소] 없이 떠난 경우 포함) 고른 과목 · 문제를 비운다
+  // (slice 에 남으면 다음에 폼을 열 때 이전 과목으로 문제 목록 · 등록이 이어짐)
+  useEffect(
+    () => () => {
+      dispatch(testActions.selectSubjectId(""));
+      dispatch(testActions.clearSelectedQuestions());
+    },
+    [dispatch],
+  );
+
   // 탭에 들어오면 시험 세트 목록 조회
   useEffect(() => {
     if (!id) {
