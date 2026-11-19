@@ -19,6 +19,12 @@ public class HomeworkVO {
 	 * 과제 목록(readHomeworkList)에서만 채운다. 수강생에게는 "제출함"의 뜻
 	 */
 	private String submittedYn;
+
+	/** 이 과제에 삭제되지 않은 댓글(제출)을 남긴 수강생 수 (강사 · 조교 댓글은 세지 않음). 과제 목록에서만 채운다 */
+	private Integer submittedCount;
+
+	/** 과정 수강생 수 (제출률 분모). 과제 목록에서만 채운다 */
+	private Integer studentCount;
 	
 	private List<HomeworkReplyVO> homeworkReplies ;  
 	private List<CourseMemberVO> courseMembers ; 

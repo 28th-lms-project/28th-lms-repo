@@ -14,7 +14,8 @@ const ATTENDANCE_COLUMNS = [
   { key: "name", title: "이름", width: 140 },
   {
     key: "attendanceRate",
-    title: "출석률",
+    // 서버 attendanceRate = 출석 인정일 / 과정 전체 수업일 (수료 판단용). 대시보드는 "지금까지"(진행된 수업일) 기준
+    title: "출석률 (전체 기간)",
     render: (student) => (
       <Progress
         label={`${student.name} 출석률`}

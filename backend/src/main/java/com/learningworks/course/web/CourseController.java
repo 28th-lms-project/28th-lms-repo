@@ -28,6 +28,7 @@ import com.learningworks.course.vo.response.CourseMemberVO;
 import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
 import com.learningworks.course.vo.response.HomeworkVO;
+import com.learningworks.course.vo.response.TodayAttendanceSummaryVO;
 
 import jakarta.validation.Valid;
 
@@ -257,6 +258,18 @@ public class CourseController {
 	@GetMapping("/{courseId}/attendance/summary")
 	public ApiResponse<AttendanceSummaryVO> readAttendanceSummary(@PathVariable String courseId) {
 		return ApiResponse.OK(this.courseService.readAttendanceSummary(courseId));
+	}
+
+	/**
+	 * 과정의 오늘 출석 현황 (강사 · 관리자용). 출석 요약은 어제까지 기준이라 오늘은 따로 센다.
+	 * 이 과정의 수강생은 403 COURSE_NOT_AUTHORIZED (본인 출결은 GET /attendances/{courseId}/today)
+	 * @param courseId
+	 * @return TodayAttendanceSummaryVO (classDay, studentCount, presentCount, lateCount, absentCount, notCheckedCount)
+	 */
+	@RequireAction(domain = "COURSE", action = "ATTENDANCE_READ", description = "강의 출석률 조회")
+	@GetMapping("/{courseId}/attendance/today")
+	public ApiResponse<TodayAttendanceSummaryVO> readTodayAttendance(@PathVariable String courseId) {
+		return ApiResponse.OK(this.courseService.readTodayAttendance(courseId));
 	}
 
 	/**
