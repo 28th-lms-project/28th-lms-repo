@@ -24,6 +24,7 @@
                     ON C3.ID = CT.COURSE_ID
                  INNER JOIN "USER" U
                     ON U.ID = CT.TUTOR_ID
+                    AND U.DEL_YN = 'N'
                  WHERE C3.DEL_YN = 'N'
                    AND TRUNC(SYSDATE) BETWEEN TRUNC(C3.START_DATE) AND TRUNC(C3.END_DATED)) AS ACTIVE_TUTOR_COUNT
           FROM (SELECT COUNT(CASE WHEN TRUNC(SYSDATE) BETWEEN TRUNC(C.START_DATE) AND TRUNC(C.END_DATED) THEN 1 END) AS ACTIVE_COUNT
@@ -43,6 +44,7 @@
                   FROM COURSE_TUTOR CT
                  INNER JOIN "USER" U
                     ON U.ID = CT.TUTOR_ID
+                    AND U.DEL_YN = 'N'
                  WHERE CT.COURSE_ID = C.ID) AS TUTOR_NAMES
              , (SELECT COUNT(*)
                   FROM COURSE_STUDENT CS

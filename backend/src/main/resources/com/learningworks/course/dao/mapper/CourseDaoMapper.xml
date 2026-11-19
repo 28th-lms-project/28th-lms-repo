@@ -23,6 +23,7 @@
                FROM COURSE_TUTOR CT
               INNER JOIN "USER" U
                  ON U.ID = CT.TUTOR_ID
+                 AND U.DEL_YN = 'N'
               WHERE CT.COURSE_ID = C.ID) AS NAME
           , CASE
               WHEN EXISTS (SELECT 1
@@ -67,6 +68,7 @@
                FROM COURSE_TUTOR CT
               INNER JOIN "USER" U
                  ON U.ID = CT.TUTOR_ID
+                 AND U.DEL_YN = 'N'
               WHERE CT.COURSE_ID = C.ID) AS NAME
        FROM COURSE C
       WHERE C.ID = #{_parameter}
@@ -193,6 +195,7 @@
              WHERE U.ID IN (SELECT CS.USER_ID  
                               FROM COURSE_STUDENT CS 
                              WHERE CS.COURSE_ID = #{_parameter})
+               AND U.DEL_YN = 'N'
 	</select>
 	
 	
@@ -223,9 +226,11 @@
           AND CHR2.DEL_YN = 'N'
           AND CHR2.COURSE_STUDENT_ID IN (SELECT CS.USER_ID
                                            FROM COURSE_STUDENT CS
+                                          INNER JOIN "USER" U ON U.ID = CS.USER_ID AND U.DEL_YN = 'N'
                                           WHERE CS.COURSE_ID = CH.COURSE_ID)) AS SUBMITTED_COUNT
     , (SELECT COUNT(*)
          FROM COURSE_STUDENT CS2
+        INNER JOIN "USER" U2 ON U2.ID = CS2.USER_ID AND U2.DEL_YN = 'N'
         WHERE CS2.COURSE_ID = CH.COURSE_ID) AS STUDENT_COUNT
   FROM COURSE_HOMEWORK CH
  WHERE CH.COURSE_ID IN (SELECT C.ID 
