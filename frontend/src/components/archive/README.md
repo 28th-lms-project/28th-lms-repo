@@ -28,6 +28,9 @@
 | `Section.jsx` · `Section.css` | `common/ui/Panel` |
 | `common/Breadcrumb.jsx` (+css) | `common/ui/PageHeader` + `useBreadcrumbs()` |
 | `common/error/RouteError.module.css` | 지금의 `RouteError`는 `StatusBox size="lg"` (예전 스타일만 기록) |
+| `common/Grid.jsx` (+css) | `common/ui/Table` (2026-11-19 옮김) |
+| `common/Paginator.jsx` (+css) | `common/ui/Pagination` (2026-11-19 옮김) |
+| `common/input/IconButton.jsx` (+css) | `common/ui/Button` (`icon`) (2026-11-19 옮김) |
 | `common/input/Input.jsx` (+css) | `common/ui/Field` + 입력 클래스(`form-control` 등) |
 | `sample/Grid.jsx` (+css) | `common/ui/Table` |
 | `sample/Modal.jsx` (+css) | `common/ui/Modal` · `useConfirm()` |
@@ -47,9 +50,6 @@
 
 | 부품 | 아직 쓰는 화면 |
 | --- | --- |
-| `common/Grid.jsx` | 환경 변수 관리(`Code`), 회원 관리(`MemberManagement`) |
-| `common/Paginator.jsx` | 회원 관리 |
-| `common/input/IconButton.jsx` | 환경 변수 관리(`AddCode` · `UpdateCode`) |
-| `common/PageContainer.jsx` | 여러 화면 (안쪽 머리는 이미 표준 `PageHeader`) |
+| `common/PageContainer.jsx` | 과정 관리 머리(`CourseHeader`), 설문 편집기(`Survey`), 문제 은행(`Test`), 열리지 않는 옛 화면(`MyCourse` · `MyCourseList`). 안쪽 머리는 이미 표준 `PageHeader` |
 
 옮긴 뒤에도 샘플 표준화 전 탭이 그 부품을 쓰면, 탭의 import 경로만 `archive/`로 바꿉니다.

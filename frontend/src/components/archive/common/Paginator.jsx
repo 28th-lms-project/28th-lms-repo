@@ -1,8 +1,8 @@
 /** @format */
+/* 기록용 (archive): 표준화 전 모습을 남긴 코드. 새 코드에서 import 금지(lint로 막음) · 고치지 않음. 대체: common/ui/Pagination. 안내: components/archive/README.md */
 
 import styles from "./Paginator.module.css";
 
-/** @deprecated 표준 Pagination(common/ui/Pagination.jsx)을 쓴다. 아직 회원 관리가 씀. 마지막으로 쓰는 화면에 표준을 적용할 때 components/archive/로 옮긴다 (archive/README.md). */
 export const Paginator = ({
                               id,
                               start,
