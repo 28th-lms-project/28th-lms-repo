@@ -118,7 +118,7 @@ export const summarizeAttendance = (activeCourses) => {
   const rates = [];
   let noTimetable = false;
   const flags = scan(activeCourses, "summary", (summary) => {
-    // 수업일 = 과정 기간 안에서 시간표가 있는 날. 0이면 시간표 미등록
+    // 수업일 = 과정 시작일 ~ 종료일 중 평일. 0이면 기간에 평일이 없음
     if (summary?.totalClassDays === 0) noTimetable = true;
     const me = summary?.students?.[0];
     if (me && summary.passedClassDays > 0) {

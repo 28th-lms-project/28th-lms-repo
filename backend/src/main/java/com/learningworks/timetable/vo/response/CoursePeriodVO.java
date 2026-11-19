@@ -2,6 +2,9 @@ package com.learningworks.timetable.vo.response;
 
 import java.time.LocalDate;
 
+import lombok.Data;
+
+
 /** 과정 기간 (시간표 업로드 때 날짜 검증용). 컬럼 순서대로 생성자에 매핑된다 */
 public record CoursePeriodVO(
         LocalDate startDate,

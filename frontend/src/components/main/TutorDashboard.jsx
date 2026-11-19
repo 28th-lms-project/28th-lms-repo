@@ -96,7 +96,7 @@ function TutorSummaryCards({ active, total, can }) {
   if (attendance.rate === null) {
     if (attendance.loading) rateHint = LOADING_HINT;
     else if (attendance.anyFailed) rateHint = "불러오지 못했습니다";
-    else if (attendance.noTimetable) rateHint = "시간표가 등록되지 않은 과정이 있습니다";
+    else if (attendance.noTimetable) rateHint = "과정 기간에 수업일(평일)이 없는 과정이 있습니다";
     else rateHint = "아직 수업일이 없습니다";
   }
 

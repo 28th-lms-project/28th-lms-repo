@@ -516,17 +516,22 @@
 
 
     <!--
-        수업일 기준 (한 곳에서만 정의): 과정 기간 안에서 시간표(COURSE_TIME_TABLE)가 있는 날짜.
-        공휴일 · 휴강은 시간표가 없으니 빠지고, 보강(주말 수업)은 시간표가 있으면 들어간다.
-        파라미터 #{courseId}. 출석 체크 · 오늘 내 출결(AttendanceDaoMapper)도 이 조각을 include 한다.
+        수업일 기준 (한 곳에서만 정의): 과정(COURSE) 시작일 ~ 종료일 중 평일(월 ~ 금).
+        시간표(COURSE_TIME_TABLE)는 보지 않는다. 공휴일 · 휴강도 수업일로 세고, 주말 보강은 세지 않는다.
+        파라미터 #{courseId}. 진행률 · 출석률 요약과 출석 체크 · 오늘 내 출결(AttendanceDaoMapper)이 이 조각을 include 한다.
+        CONNECT BY 는 과정 한 줄로 먼저 거른 뒤 날짜를 펼친다 (COURSE 전체에 걸면 행이 폭증함).
     -->
     <sql id="courseClassDays">
-        SELECT DISTINCT TRUNC(TT.DATETIME) AS CLASS_DAY
-          FROM COURSE_TIME_TABLE TT
-         INNER JOIN COURSE C
-            ON C.ID = TT.COURSE_ID
-         WHERE TT.COURSE_ID = #{courseId}
-           AND TRUNC(TT.DATETIME) BETWEEN TRUNC(C.START_DATE) AND TRUNC(C.END_DATED)
+        SELECT CD.CLASS_DAY
+          FROM (SELECT TRUNC(C.START_DATE) + LEVEL - 1 AS CLASS_DAY
+                     , TRUNC(C.END_DATED) AS END_DAY
+                  FROM (SELECT START_DATE
+                             , END_DATED
+                          FROM COURSE
+                         WHERE ID = #{courseId}) C
+               CONNECT BY LEVEL <![CDATA[ <= ]]> TRUNC(C.END_DATED) - TRUNC(C.START_DATE) + 1) CD
+         WHERE CD.CLASS_DAY <![CDATA[ <= ]]> CD.END_DAY
+           AND TO_CHAR(CD.CLASS_DAY, 'DY', 'NLS_DATE_LANGUAGE=ENGLISH') NOT IN ('SAT', 'SUN')
     </sql>
 
     <!-- 오늘이 이 과정의 수업일이면 1, 아니면 0 (수업일 기준은 위 courseClassDays) -->
@@ -555,7 +560,7 @@
 
     <!--
         출석률 요약: 전체 수업일 수 / 어제까지 진행된 수업일 수 (수업일 기준은 위 courseClassDays)
-        시간표가 없는 과정은 둘 다 0
+        과정 기간에 평일이 없으면 둘 다 0
     -->
     <select id="readCourseClassDays"
             resultType="com.learningworks.course.vo.response.AttendanceSummaryVO">
@@ -564,7 +569,10 @@
           FROM (<include refid="courseClassDays"/>) D
     </select>
 
-    <!-- 출석률 요약: 수강생별 Y / L / N 횟수 (어제까지). 기록이 없는 수강생도 0으로 나오도록 LEFT JOIN -->
+    <!--
+        출석률 요약: 수강생별 Y / L / N 횟수 (어제까지, 수업일에 찍힌 기록만). 기록이 없는 수강생도 0으로 나오도록 LEFT JOIN.
+        수업일이 아닌 날(예: 예전 기준으로 받은 주말 보강 출석)의 기록은 세지 않는다 (진행된 수업일과 기준을 맞춤)
+    -->
     <select id="readStudentAttendanceCounts"
             resultType="com.learningworks.course.vo.response.StudentAttendanceVO">
         SELECT CS.USER_ID
@@ -579,6 +587,8 @@
             ON A.COURSE_ID = CS.COURSE_ID
            AND A.USER_ID = CS.USER_ID
            AND A.LGN_DT <![CDATA[ < ]]> TRUNC(SYSDATE)
+           AND TRUNC(A.LGN_DT) IN (SELECT D.CLASS_DAY
+                                     FROM (<include refid="courseClassDays"/>) D)
          WHERE CS.COURSE_ID = #{courseId}
         <if test="userId != null">
            AND CS.USER_ID = #{userId}

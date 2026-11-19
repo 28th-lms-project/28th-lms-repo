@@ -16,6 +16,8 @@ export const courseSlice = createSlice({
     // { totalClassDays, passedClassDays, progressRate, averageAttendanceRate, averageWarning,
     //   students: [{ userId, name, presentCount, lateCount, absentCount, attendanceRate, warning }] }
     attendanceSummary: null,
+    // 출석률 요약 불러오기 상태: "idle" | "loading" | "success" | "error"
+    attendanceSummaryStatus: "idle",
   },
   reducers: {
     load(state, action) {
@@ -51,6 +53,10 @@ export const courseSlice = createSlice({
     // payload: 출석률 요약 객체 (지울 때는 null)
     loadAttendanceSummary(state, action) {
       state.attendanceSummary = action.payload ?? null;
+    },
+    // payload: "idle" | "loading" | "success" | "error"
+    setAttendanceSummaryStatus(state, action) {
+      state.attendanceSummaryStatus = action.payload;
     },
   },
 });
