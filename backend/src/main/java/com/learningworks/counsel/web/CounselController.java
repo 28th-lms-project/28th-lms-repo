@@ -24,11 +24,13 @@ import com.learningworks.counsel.vo.response.CounselListResponseVO;
 import com.learningworks.counsel.vo.response.ScoreResponseVO;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 상담 API
  * 프론트: frontend/src/api/my/course/counselApi.js
  */
+@Tag(name = "상담", description = "상담 신청 · 목록 · 답변")
 @RestController
 @RequestMapping("/counsel")
 public class CounselController {

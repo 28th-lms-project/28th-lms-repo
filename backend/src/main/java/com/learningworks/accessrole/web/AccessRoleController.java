@@ -15,8 +15,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 // 역할 목록은 ROLE 모듈의 GET /roles 사용
+@Tag(name = "역할별 접근 권한", description = "역할별 허용 · 미허용 권한 조회 · 저장")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/access-role")

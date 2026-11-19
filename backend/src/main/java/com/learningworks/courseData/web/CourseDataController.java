@@ -30,11 +30,13 @@ import com.learningworks.courseData.vo.response.CourseDataResponseVO;
 import com.learningworks.courseData.vo.response.LinkPreviewResponseVO;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 교육 자료 API
  * 프론트: frontend/src/api/my/course/courseDataApi.js
  */
+@Tag(name = "교육 자료", description = "교육 자료 · 첨부 파일")
 @RestController
 @RequestMapping("/course-data")
 public class CourseDataController {

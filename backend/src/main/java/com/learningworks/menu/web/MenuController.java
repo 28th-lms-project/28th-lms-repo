@@ -22,6 +22,7 @@ import com.learningworks.menu.vo.response.MenuVO;
 import com.learningworks.menu.vo.response.MyMenuListVO;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 메뉴 · 메뉴 접근 권한. 설계: backend/docs/design/menu-design.md
@@ -29,6 +30,7 @@ import lombok.AllArgsConstructor;
  * MENU_ROLE은 사이드바 표시와 URL 접근(프론트 가드)만 정한다. API 권한은 ROLE_ACTION이 정한다.
  */
 @AllArgsConstructor
+@Tag(name = "메뉴", description = "메뉴 · 메뉴별 역할 (사이드바, 화면 접근)")
 @RestController
 @RequestMapping("/menus")
 public class MenuController {

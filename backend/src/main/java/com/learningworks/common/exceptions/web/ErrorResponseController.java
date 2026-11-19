@@ -10,6 +10,7 @@ import com.learningworks.common.utils.ApiResponse;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import io.swagger.v3.oas.annotations.Hidden;
 
 /**
  * GlobalExceptionHandler가 처리하지 못한 에러의 최종 폴백.
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  *   없으면 권한 어노테이션이 없는 API로 취급되어(기본값: SUPER_ADMIN 전용) 모든 에러 응답이 401/403으로 바뀐다.
  */
 @Slf4j
+@Hidden // 스프링 오류 처리용 (/error) 이라 API 명세에서 제외
 @RestController
 public class ErrorResponseController implements ErrorController {
 
