@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import com.learningworks.common.action.AccessChecker;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.course.dao.CourseDao;
@@ -20,12 +21,13 @@ class CourseAccessCheckerTest {
   private static final String COURSE_ID = "C1";
 
   private CourseDao courseDao;
+  private final AccessChecker accessChecker = Mockito.mock(AccessChecker.class);
   private CourseAccessChecker checker;
 
   @BeforeEach
   void setUp() {
     this.courseDao = Mockito.mock(CourseDao.class);
-    this.checker = new CourseAccessChecker(this.courseDao);
+    this.checker = new CourseAccessChecker(this.courseDao, this.accessChecker);
   }
 
   @AfterEach
@@ -40,6 +42,7 @@ class CourseAccessCheckerTest {
     Mockito.when(this.courseDao.countCourseStudentOrTutor(COURSE_ID, userId))
         .thenReturn((tutor ? 1 : 0) + (student ? 1 : 0));
     Mockito.when(this.courseDao.readUserBaseRole(userId)).thenReturn(baseRole);
+    CourseAccessTestSupport.stubAllCourse(this.accessChecker, userId, baseRole);
   }
 
   private static void assertForbidden(Runnable call) {
@@ -92,4 +95,30 @@ class CourseAccessCheckerTest {
     Assertions.assertThat(this.checker.relationOf(COURSE_ID)).isEqualTo(Relation.TUTOR);
     Assertions.assertThat(this.checker.isStudent(COURSE_ID, "B1")).isTrue();
   }
+
+  @Test
+  @DisplayName("조회만 가능한 사람(COURSE_ALL_READ만): 등록되지 않은 과정도 조회는 되지만 강사 기능은 403")
+  void readAllOnly() {
+    login("R1", false, false, "ROLE_READONLY");
+
+    Assertions.assertThat(this.checker.relationOf(COURSE_ID)).isEqualTo(Relation.ADMIN);
+    assertForbidden(() -> this.checker.requireTutorOrAdmin(COURSE_ID));
+  }
+
+  @Test
+  @DisplayName("관리자(COURSE_ALL_MANAGE): 등록되지 않은 과정의 강사 기능도 된다")
+  void manageAll() {
+    login("A1", false, false, "ROLE_ADMIN");
+
+    this.checker.requireTutorOrAdmin(COURSE_ID);
+  }
+
+  @Test
+  @DisplayName("API에 붙지 않는 권한 코드 두 개를 선언한다 (권한 관리 화면에서 등록 · 부여)")
+  void declaresActionCodes() {
+    Assertions.assertThat(this.checker.declaredActionCodes())
+        .extracting(code -> code.actionCode())
+        .containsExactly("COURSE_ALL_READ", "COURSE_ALL_MANAGE");
+  }
+
 }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import com.learningworks.common.action.AccessChecker;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.course.dao.CourseDao;
@@ -21,16 +22,18 @@ class CourseServiceImplHomeworkTest {
   private static final String STUDENT_ID = "S1";
 
   private CourseDao courseDao;
+  private final AccessChecker accessChecker = Mockito.mock(AccessChecker.class);
   private CourseServiceImpl service;
 
   @BeforeEach
   void setUp() {
     this.courseDao = Mockito.mock(CourseDao.class);
-    this.service = new CourseServiceImpl(this.courseDao);
+    this.service = new CourseServiceImpl(this.courseDao, new CourseAccessChecker(this.courseDao, this.accessChecker));
 
     SecurityContextHolder.getContext().setAuthentication(
         UsernamePasswordAuthenticationToken.authenticated(STUDENT_ID, null, List.of()));
     Mockito.when(this.courseDao.readUserBaseRole(STUDENT_ID)).thenReturn("ROLE_STUDENT");
+    CourseAccessTestSupport.stubAllCourse(this.accessChecker, STUDENT_ID, "ROLE_STUDENT");
   }
 
   @AfterEach
