@@ -541,10 +541,10 @@
          WHERE D.CLASS_DAY = TRUNC(SYSDATE)
     </select>
 
-    <!-- 과정의 오늘 출석 현황 (수강생의 오늘 기록만). classDay · notCheckedCount 는 서비스에서 채운다 -->
+    <!-- 과정의 오늘 출석 현황 (수강생의 오늘 기록만, 탈퇴 회원 제외). classDay · notCheckedCount 는 서비스에서 채운다 -->
     <select id="readTodayAttendanceCounts"
             resultType="com.learningworks.course.vo.response.TodayAttendanceSummaryVO">
-        SELECT (SELECT COUNT(*) FROM COURSE_STUDENT CS WHERE CS.COURSE_ID = #{courseId}) AS STUDENT_COUNT
+        SELECT (SELECT COUNT(*) FROM COURSE_STUDENT CS INNER JOIN "USER" U ON U.ID = CS.USER_ID AND U.DEL_YN = 'N' WHERE CS.COURSE_ID = #{courseId}) AS STUDENT_COUNT
              , T.PRESENT_COUNT
              , T.LATE_COUNT
              , T.ABSENT_COUNT
@@ -555,7 +555,7 @@
                  WHERE A.COURSE_ID = #{courseId}
                    AND A.LGN_DT <![CDATA[ >= ]]> TRUNC(SYSDATE)
                    AND A.LGN_DT <![CDATA[ < ]]> TRUNC(SYSDATE) + 1
-                   AND A.USER_ID IN (SELECT CS2.USER_ID FROM COURSE_STUDENT CS2 WHERE CS2.COURSE_ID = #{courseId})) T
+                   AND A.USER_ID IN (SELECT CS2.USER_ID FROM COURSE_STUDENT CS2 INNER JOIN "USER" U2 ON U2.ID = CS2.USER_ID AND U2.DEL_YN = 'N' WHERE CS2.COURSE_ID = #{courseId})) T
     </select>
 
     <!--
@@ -572,6 +572,7 @@
     <!--
         출석률 요약: 수강생별 Y / L / N 횟수 (어제까지, 수업일에 찍힌 기록만). 기록이 없는 수강생도 0으로 나오도록 LEFT JOIN.
         수업일이 아닌 날(예: 예전 기준으로 받은 주말 보강 출석)의 기록은 세지 않는다 (진행된 수업일과 기준을 맞춤)
+        탈퇴한 회원(USER.DEL_YN = 'Y')은 수강 등록이 남아 있어도 빼서, 출석률 평균 · 출석 주의에 들어가지 않게 한다
     -->
     <select id="readStudentAttendanceCounts"
             resultType="com.learningworks.course.vo.response.StudentAttendanceVO">
@@ -590,6 +591,7 @@
            AND TRUNC(A.LGN_DT) IN (SELECT D.CLASS_DAY
                                      FROM (<include refid="courseClassDays"/>) D)
          WHERE CS.COURSE_ID = #{courseId}
+           AND U.DEL_YN = 'N'
         <if test="userId != null">
            AND CS.USER_ID = #{userId}
         </if>
