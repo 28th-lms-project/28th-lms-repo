@@ -5,8 +5,7 @@ import { useSyncExternalStore } from "react";
  * - 값은 <html data-color-scheme="dark">. 토큰 값은 index.css의 [data-color-scheme="dark"].
  * - 이 브라우저의 localStorage에 기억. 새로고침 때 밝은 색이 잠깐 보이지 않도록 index.html이 렌더링 전에 먼저 붙인다.
  * - 기본은 밝은 모드 (시스템 설정을 따르지 않음).
- * - 아직 표준으로 옮기지 않은 화면은 MainLayout이 "밝은 섬"(data-color-scheme="light")으로 감싸 밝게 둔다.
- *   화면을 옮긴 뒤 라우트 handle에 darkReady: true를 넣으면 그 화면도 다크 모드를 따른다.
+ * - 모든 화면이 따른다 (2026-11-19에 화면별 darkReady 표시와 MainLayout의 밝은 섬을 지움).
  *
  *   const [scheme, setColorScheme] = useColorScheme();   // "light" | "dark"
  */
