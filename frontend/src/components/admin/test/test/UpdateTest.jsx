@@ -18,8 +18,15 @@ import style from "./Test.module.css";
 /**
  * 문제 카드의 [수정] [삭제] 버튼 줄 + 수정 폼.
  * children: 버튼 줄 왼쪽에 놓을 것 (보기 · 정답 펼치기 버튼)
+ * canUpdate · canDelete: 문제 수정 · 삭제 권한. 없으면 해당 버튼을 숨김
  */
-export default function UpdateTest({ questionId, answerTypes, children }) {
+export default function UpdateTest({
+  questionId,
+  answerTypes,
+  canUpdate,
+  canDelete,
+  children,
+}) {
   const [modifying, setModifying] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [form, setForm] = useState(null);
@@ -156,29 +163,33 @@ export default function UpdateTest({ questionId, answerTypes, children }) {
     <>
       <div className={style.cardActions}>
         <div>{children}</div>
-        {!modifying && (
+        {!modifying && (canUpdate || canDelete) && (
           <div className="btn-group">
-            <Button
-              size="sm"
-              icon={icons.edit}
-              onClick={() => {
-                setFieldErrors({});
-                setForm(null);
-                setModifying(true);
-              }}
-            >
-              수정
-            </Button>
-            <Button
-              size="sm"
-              variant="danger"
-              icon={icons.delete}
-              onClick={() => {
-                onClickDeleteButtonHandler(questionId);
-              }}
-            >
-              삭제
-            </Button>
+            {canUpdate && (
+              <Button
+                size="sm"
+                icon={icons.edit}
+                onClick={() => {
+                  setFieldErrors({});
+                  setForm(null);
+                  setModifying(true);
+                }}
+              >
+                수정
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                size="sm"
+                variant="danger"
+                icon={icons.delete}
+                onClick={() => {
+                  onClickDeleteButtonHandler(questionId);
+                }}
+              >
+                삭제
+              </Button>
+            )}
           </div>
         )}
       </div>

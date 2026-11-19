@@ -52,12 +52,13 @@ const toTypeTone = (answerType) => {
 };
 
 export default function Test() {
-  const { isSuperAdmin, status } = usePermission();
+  const { can, status } = usePermission();
   const crumbs = useBreadcrumbs();
   // 시험 문제 관리는 들어올 때마다 비밀번호를 다시 확인 (내 정보 · 상담 기록과 같은 방식)
   const [passwordVerified, setPasswordVerified] = useState(false);
 
-  if (status === "loaded" && isSuperAdmin) {
+  // 문제 조회 권한(EXAM_QUESTION_READ)이 있으면 들어올 수 있음 (서버 ExamController 의 @RequireAction 과 같은 기준)
+  if (status === "loaded" && can("EXAM_QUESTION_READ")) {
     if (!passwordVerified) {
       return (
         <>
@@ -98,6 +99,11 @@ function TestManagement() {
   const dispatch = useDispatch();
   const toast = useToast();
   const subjectTabId = useId();
+  const { can } = usePermission();
+  // 버튼별 권한. 권한이 없으면 버튼을 숨김 (가이드 8장)
+  const canCreate = can("EXAM_QUESTION_CREATE");
+  const canUpdate = can("EXAM_QUESTION_UPDATE");
+  const canDelete = can("EXAM_QUESTION_DELETE");
 
   // 보기 · 정답을 펼친 문제 id (문제마다 따로)
   const [openIds, setOpenIds] = useState([]);
@@ -270,7 +276,12 @@ function TestManagement() {
                 </span>
                 {stats}
               </div>
-              <UpdateTest questionId={question.id} answerTypes={answerTypeList}>
+              <UpdateTest
+                questionId={question.id}
+                answerTypes={answerTypeList}
+                canUpdate={canUpdate}
+                canDelete={canDelete}
+              >
                 {toggleButton}
               </UpdateTest>
               {answerBlock && (
@@ -300,6 +311,7 @@ function TestManagement() {
               subjectId={selectedSubjectId}
               answerTypes={answerTypeList}
               questionCount={questions.length}
+              canCreate={canCreate}
             />
           )}
           {questionList}
