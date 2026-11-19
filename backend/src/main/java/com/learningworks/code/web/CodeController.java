@@ -20,7 +20,9 @@ import com.learningworks.common.utils.ApiResponse;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "환경 변수", description = "시스템 코드(환경 변수) 관리")
 @RestController
 @AllArgsConstructor
 public class CodeController {

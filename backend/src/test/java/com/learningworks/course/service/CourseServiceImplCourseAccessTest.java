@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import com.learningworks.common.action.AccessChecker;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.course.dao.CourseDao;
@@ -22,12 +23,13 @@ class CourseServiceImplCourseAccessTest {
   private static final String COURSE_ID = "C1";
 
   private CourseDao courseDao;
+  private final AccessChecker accessChecker = Mockito.mock(AccessChecker.class);
   private CourseServiceImpl service;
 
   @BeforeEach
   void setUp() {
     this.courseDao = Mockito.mock(CourseDao.class);
-    this.service = new CourseServiceImpl(this.courseDao);
+    this.service = new CourseServiceImpl(this.courseDao, new CourseAccessChecker(this.courseDao, this.accessChecker));
     Mockito.when(this.courseDao.readOneCourse(Mockito.anyString())).thenReturn(new CourseVO());
   }
 
@@ -43,6 +45,7 @@ class CourseServiceImplCourseAccessTest {
     Mockito.when(this.courseDao.countCourseStudentOrTutor(COURSE_ID, userId))
         .thenReturn((tutor ? 1 : 0) + (student ? 1 : 0));
     Mockito.when(this.courseDao.readUserBaseRole(userId)).thenReturn(baseRole);
+    CourseAccessTestSupport.stubAllCourse(this.accessChecker, userId, baseRole);
   }
 
   private static void assertError(Runnable call, ErrorCode errorCode) {

@@ -3,8 +3,8 @@ import { useState } from "react";
 import styles from "../Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "../CatalogParts.jsx";
 import Breadcrumb from "../../../archive/common/Breadcrumb.jsx";
-import { Paginator } from "../../../common/Paginator.jsx";
-import { IconButton } from "../../../common/input/IconButton.jsx";
+import { Paginator } from "../../../archive/common/Paginator.jsx";
+import { IconButton } from "../../../archive/common/input/IconButton.jsx";
 
 const TABS = ["설문 목록", "설문 등록", "결과 보기"];
 const COURSES = ["풀스택 28기", "백엔드 27기", "프론트엔드 12기"];

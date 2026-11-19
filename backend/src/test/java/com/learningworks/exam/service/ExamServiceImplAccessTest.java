@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import com.learningworks.common.action.AccessChecker;
+import com.learningworks.course.service.CourseAccessTestSupport;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.course.dao.CourseDao;
@@ -26,13 +28,14 @@ class ExamServiceImplAccessTest {
 
   private ExamDao examDao;
   private CourseDao courseDao;
+  private final AccessChecker accessChecker = Mockito.mock(AccessChecker.class);
   private ExamServiceImpl service;
 
   @BeforeEach
   void setUp() {
     this.examDao = Mockito.mock(ExamDao.class);
     this.courseDao = Mockito.mock(CourseDao.class);
-    this.service = new ExamServiceImpl(this.examDao, new CourseAccessChecker(this.courseDao));
+    this.service = new ExamServiceImpl(this.examDao, new CourseAccessChecker(this.courseDao, this.accessChecker));
 
     RegistTestSetVO set = new RegistTestSetVO();
     set.setId(SET_ID);
@@ -56,6 +59,7 @@ class ExamServiceImplAccessTest {
     Mockito.when(this.courseDao.countCourseStudentOrTutor(COURSE_ID, userId))
         .thenReturn((tutor ? 1 : 0) + (student ? 1 : 0));
     Mockito.when(this.courseDao.readUserBaseRole(userId)).thenReturn(baseRole);
+    CourseAccessTestSupport.stubAllCourse(this.accessChecker, userId, baseRole);
   }
 
   private static void assertForbidden(Runnable call) {

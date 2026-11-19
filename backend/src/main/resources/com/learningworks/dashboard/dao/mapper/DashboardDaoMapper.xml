@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.dashboard.dao.DashboardDao">
+
+    <!-- 과정 수 · 진행 중 과정의 수강생(탈퇴 회원 제외) · 강사 수 (집계와 서브쿼리를 섞지 않으려고 안쪽에서 먼저 센다: ORA-00937) -->
+    <select id="selectCourseCounts" resultType="com.learningworks.dashboard.vo.response.AdminDashboardVO">
+        SELECT T.ACTIVE_COUNT
+             , T.UPCOMING_COUNT
+             , T.ENDED_COUNT
+             , (SELECT COUNT(DISTINCT CS.USER_ID)
+                  FROM COURSE_STUDENT CS
+                 INNER JOIN COURSE C2
+                    ON C2.ID = CS.COURSE_ID
+                 INNER JOIN "USER" SU
+                    ON SU.ID = CS.USER_ID
+                   AND SU.DEL_YN = 'N'
+                 WHERE C2.DEL_YN = 'N'
+                   AND TRUNC(SYSDATE) BETWEEN TRUNC(C2.START_DATE) AND TRUNC(C2.END_DATED)) AS ACTIVE_STUDENT_COUNT
+             , (SELECT COUNT(DISTINCT CT.TUTOR_ID)
+                  FROM COURSE_TUTOR CT
+                 INNER JOIN COURSE C3
+                    ON C3.ID = CT.COURSE_ID
+                 INNER JOIN "USER" U
+                    ON U.ID = CT.TUTOR_ID
+                    AND U.DEL_YN = 'N'
+                 WHERE C3.DEL_YN = 'N'
+                   AND TRUNC(SYSDATE) BETWEEN TRUNC(C3.START_DATE) AND TRUNC(C3.END_DATED)) AS ACTIVE_TUTOR_COUNT
+          FROM (SELECT COUNT(CASE WHEN TRUNC(SYSDATE) BETWEEN TRUNC(C.START_DATE) AND TRUNC(C.END_DATED) THEN 1 END) AS ACTIVE_COUNT
+                     , COUNT(CASE WHEN TRUNC(SYSDATE) <![CDATA[ < ]]> TRUNC(C.START_DATE) THEN 1 END) AS UPCOMING_COUNT
+                     , COUNT(CASE WHEN TRUNC(SYSDATE) <![CDATA[ > ]]> TRUNC(C.END_DATED) THEN 1 END) AS ENDED_COUNT
+                  FROM COURSE C
+                 WHERE C.DEL_YN = 'N') T
+    </select>
+
+    <!-- 진행 중 과정 (끝나는 날 순). 수강생 수는 탈퇴 회원 제외 -->
+    <select id="selectActiveCourses" resultType="com.learningworks.dashboard.vo.response.AdminCourseVO">
+        SELECT C.ID
+             , C.COURSE_NAME
+             , TO_CHAR(C.START_DATE, 'YYYY-MM-DD') AS START_DATE
+             , TO_CHAR(C.END_DATED, 'YYYY-MM-DD') AS END_DATED
+             , (SELECT LISTAGG(U.NAME, ', ') WITHIN GROUP (ORDER BY U.NAME)
+                  FROM COURSE_TUTOR CT
+                 INNER JOIN "USER" U
+                    ON U.ID = CT.TUTOR_ID
+                    AND U.DEL_YN = 'N'
+                 WHERE CT.COURSE_ID = C.ID) AS TUTOR_NAMES
+             , (SELECT COUNT(*)
+                  FROM COURSE_STUDENT CS
+                 INNER JOIN "USER" SU
+                    ON SU.ID = CS.USER_ID
+                   AND SU.DEL_YN = 'N'
+                 WHERE CS.COURSE_ID = C.ID) AS STUDENT_COUNT
+             , (SELECT COUNT(*)
+                  FROM TEST_ANSWERS TA
+                 INNER JOIN TEST_SET TS
+                    ON TS.ID = TA.TEST_SET_ID
+                 WHERE TS.COURSE_ID = C.ID
+                   AND TA.IS_CORRECT = 'R') AS PENDING_ANSWERS
+          FROM COURSE C
+         WHERE C.DEL_YN = 'N'
+           AND TRUNC(SYSDATE) BETWEEN TRUNC(C.START_DATE) AND TRUNC(C.END_DATED)
+         ORDER BY C.END_DATED ASC, C.ID ASC
+    </select>
+
+    <!-- 손볼 데이터: 끝나지 않은 과정의 시간표 미등록 · 강사 없음 · 강사 ID 오류, 삭제되지 않은 과정의 기간 밖 시간표 -->
+    <select id="selectDataChecks" resultType="com.learningworks.dashboard.vo.response.DataCheckVO">
+        SELECT 'NO_TIMETABLE' AS CHECK_TYPE, C.ID AS COURSE_ID, C.COURSE_NAME, NULL AS DETAIL
+          FROM COURSE C
+         WHERE C.DEL_YN = 'N'
+           AND TRUNC(SYSDATE) <![CDATA[ <= ]]> TRUNC(C.END_DATED)
+           AND NOT EXISTS (SELECT 1
+                             FROM COURSE_TIME_TABLE TT
+                            WHERE TT.COURSE_ID = C.ID
+                              AND TRUNC(TT.DATETIME) BETWEEN TRUNC(C.START_DATE) AND TRUNC(C.END_DATED))
+        UNION ALL
+        SELECT 'NO_TUTOR', C.ID, C.COURSE_NAME, NULL
+          FROM COURSE C
+         WHERE C.DEL_YN = 'N'
+           AND TRUNC(SYSDATE) <![CDATA[ <= ]]> TRUNC(C.END_DATED)
+           AND NOT EXISTS (SELECT 1 FROM COURSE_TUTOR CT WHERE CT.COURSE_ID = C.ID)
+        UNION ALL
+        SELECT 'INVALID_TUTOR', C.ID, C.COURSE_NAME, CT.TUTOR_ID
+          FROM COURSE C
+         INNER JOIN COURSE_TUTOR CT
+            ON CT.COURSE_ID = C.ID
+         WHERE C.DEL_YN = 'N'
+           AND TRUNC(SYSDATE) <![CDATA[ <= ]]> TRUNC(C.END_DATED)
+           AND NOT EXISTS (SELECT 1 FROM "USER" U WHERE U.ID = CT.TUTOR_ID AND U.DEL_YN = 'N')
+        UNION ALL
+        SELECT 'TIMETABLE_OUT_OF_PERIOD', C.ID, C.COURSE_NAME, TO_CHAR(COUNT(DISTINCT TRUNC(TT.DATETIME)))
+          FROM COURSE C
+         INNER JOIN COURSE_TIME_TABLE TT
+            ON TT.COURSE_ID = C.ID
+         WHERE C.DEL_YN = 'N'
+           AND TRUNC(TT.DATETIME) NOT BETWEEN TRUNC(C.START_DATE) AND TRUNC(C.END_DATED)
+         GROUP BY C.ID, C.COURSE_NAME
+         ORDER BY 1, 2
+    </select>
+
+    <!-- 역할별 회원 수 (탈퇴 제외, 역할 순위 순) -->
+    <select id="selectRoleMemberCounts" resultType="com.learningworks.dashboard.vo.response.RoleMemberCountVO">
+        SELECT R.ROLE_ID
+             , R.ROLE_DISPLAY_NAME
+             , COUNT(U.ID) AS MEMBER_COUNT
+          FROM "ROLE" R
+          LEFT JOIN "USER" U
+            ON U.BASE_ROLE = R.ROLE_ID
+           AND U.DEL_YN = 'N'
+         GROUP BY R.ROLE_ID, R.ROLE_DISPLAY_NAME, R.ROLE_RANK
+         ORDER BY R.ROLE_RANK
+    </select>
+
+    <!-- 로그인이 잠긴 회원 수 -->
+    <select id="selectLockedMemberCount" resultType="int">
+        SELECT COUNT(*)
+          FROM "USER"
+         WHERE DEL_YN = 'N'
+           AND LOGIN_BLOCK_DATE <![CDATA[ > ]]> SYSDATE
+    </select>
+
+    <!-- 어떤 역할에도 허용되지 않은 권한 코드 -->
+    <select id="selectUngrantedActionCodes" resultType="string">
+        SELECT DISTINCT A.ACTION_CODE
+          FROM ACTION A
+         WHERE A.ACTION_CODE IS NOT NULL
+           AND NOT EXISTS (SELECT 1 FROM ROLE_ACTION RA WHERE RA.ACTION_ID = A.ACTION_ID)
+         ORDER BY A.ACTION_CODE
+    </select>
+</mapper>

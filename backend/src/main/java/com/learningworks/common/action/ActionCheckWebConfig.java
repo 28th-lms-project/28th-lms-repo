@@ -42,7 +42,10 @@ public class ActionCheckWebConfig implements WebMvcConfigurer {
           + "JWT 적용 후 app.access-check.enabled=true로 켜주세요.");
       return;
     }
-    registry.addInterceptor(this.actionCheckInterceptor);
+    // Swagger(springdoc) 화면 · 명세 주소는 권한 검사에서 뺀다
+    // (권한 어노테이션이 없어 default-super-admin 설정 때문에 SUPER_ADMIN 전용으로 막히기 때문)
+    registry.addInterceptor(this.actionCheckInterceptor).excludePathPatterns(
+        "/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**");
   }
 
 }

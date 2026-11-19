@@ -2,6 +2,9 @@ package com.learningworks.course.service;
 
 import java.util.List;
 import org.springframework.stereotype.Component;
+import com.learningworks.common.action.AccessChecker;
+import com.learningworks.common.action.ActionCodeDeclarer;
+import com.learningworks.common.action.DeclaredActionCode;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.AuthUtil;
@@ -18,35 +21,50 @@ import com.learningworks.course.dao.CourseDao;
  *
  * 역할이 무엇이든(예: 강사 역할인 사람이 다른 과정의 수강생) 한 과정 안에서는 그 과정의 관계대로만 행동하게 된다.
  * 실패하면 403 COURSE_NOT_AUTHORIZED.
+ *
+ * 과정에 등록되지 않은 사람(관리자 · 조회 전용 등)은 역할 ID가 아니라 아래 두 권한 코드로 판단한다 (가이드 9장).
+ * 두 코드는 API에 붙지 않으므로 ActionCodeDeclarer로 선언하고, 권한 관리 화면에서 역할에 부여한다.
+ * - COURSE_ALL_READ: 등록되지 않은 과정도 조회 (과정 목록 전체 · 과정 화면 · 출석 요약 · 성적 전체 등)
+ * - COURSE_ALL_MANAGE: 등록되지 않은 과정도 관리 (과제 · 시험 · 채점 · 학생 추가 · 상담 · 면접 등록 등)
+ * SUPER_ADMIN은 AccessChecker가 항상 통과시킨다.
  */
 @Component
-public class CourseAccessChecker {
+public class CourseAccessChecker implements ActionCodeDeclarer {
 
-	/**
-	 * 과정과 상관없이 모든 과정을 다룰 수 있는 역할.
-	 * TODO: 역할 ID 비교(가이드 9장 "하지 말 것")라 권한 코드 기반으로 바꿀 예정. 판단은 이 클래스 한 곳에만 둔다.
-	 */
-	private static final List<String> COURSE_ADMIN_ROLES = List.of("ROLE_SUPER_ADMIN", "ROLE_ADMIN");
+	/** 과정에 등록되지 않아도 모든 과정을 조회 */
+	public static final DeclaredActionCode ALL_READ =
+			new DeclaredActionCode("COURSE", "ALL_READ", "모든 과정 조회 (과정에 등록되지 않아도)");
+
+	/** 과정에 등록되지 않아도 모든 과정을 관리 */
+	public static final DeclaredActionCode ALL_MANAGE =
+			new DeclaredActionCode("COURSE", "ALL_MANAGE", "모든 과정 관리 (과정에 등록되지 않아도)");
 
 	/** 로그인 사용자와 과정의 관계 */
 	public enum Relation {
 		/** 이 과정의 강사 (강사이면서 수강생이어도 강사) */
 		TUTOR,
-		/** 과정에 등록되지 않은 관리자 */
+		/** 과정에 등록되지 않았지만 모든 과정을 조회할 수 있는 사람 (COURSE_ALL_READ) */
 		ADMIN,
 		/** 이 과정의 수강생 */
 		STUDENT
 	}
 
 	private final CourseDao courseDao;
+	private final AccessChecker accessChecker;
 
-	public CourseAccessChecker(CourseDao courseDao) {
+	public CourseAccessChecker(CourseDao courseDao, AccessChecker accessChecker) {
 		this.courseDao = courseDao;
+		this.accessChecker = accessChecker;
+	}
+
+	@Override
+	public List<DeclaredActionCode> declaredActionCodes() {
+		return List.of(ALL_READ, ALL_MANAGE);
 	}
 
 	/**
-	 * 로그인 사용자와 과정의 관계. 강사 → 관리자 → 수강생 순으로 본다
-	 * (관리자가 어떤 과정의 수강생으로도 등록돼 있으면 그 과정에서는 관리자로 본다: 조회 범위가 더 넓음).
+	 * 로그인 사용자와 과정의 관계 (조회 기준). 강사 → 모든 과정 조회 권한(COURSE_ALL_READ) → 수강생 순으로 본다
+	 * (모든 과정 조회 권한이 있는 사람이 어떤 과정의 수강생이기도 하면 그 과정에서는 ADMIN으로 본다: 조회 범위가 더 넓음).
 	 * 어느 것도 아니면 403.
 	 */
 	public Relation relationOf(String courseId) {
@@ -54,7 +72,7 @@ public class CourseAccessChecker {
 		if (this.isTutor(courseId, loginId)) {
 			return Relation.TUTOR;
 		}
-		if (this.isAdmin(loginId)) {
+		if (this.canReadAll(loginId)) {
 			return Relation.ADMIN;
 		}
 		if (this.isStudent(courseId, loginId)) {
@@ -68,11 +86,16 @@ public class CourseAccessChecker {
 		return this.relationOf(courseId);
 	}
 
-	/** 강사 기능: 이 과정의 강사 또는 관리자. 이 과정의 수강생 · 외부인은 403 */
+	/**
+	 * 강사 기능: 이 과정의 강사 또는 모든 과정 관리 권한(COURSE_ALL_MANAGE).
+	 * 이 과정의 수강생 · 외부인 · 조회만 가능한 사람(COURSE_ALL_READ만 있음)은 403
+	 */
 	public void requireTutorOrAdmin(String courseId) {
-		if (this.relationOf(courseId) == Relation.STUDENT) {
-			throw new LearningworksException(ErrorCode.COURSE_NOT_AUTHORIZED);
+		String loginId = AuthUtil.getLoginId();
+		if (this.isTutor(courseId, loginId) || this.canManageAll(loginId)) {
+			return;
 		}
+		throw new LearningworksException(ErrorCode.COURSE_NOT_AUTHORIZED);
 	}
 
 	/** 수강생 기능 (시험 응시 등): 이 과정의 수강생만. 관리자 · 강사라도 수강생으로 등록돼 있지 않으면 403 */
@@ -94,8 +117,13 @@ public class CourseAccessChecker {
 		return studentOrTutor - tutor > 0;
 	}
 
-	/** userId가 모든 과정을 다룰 수 있는 관리자인지 */
-	public boolean isAdmin(String userId) {
-		return COURSE_ADMIN_ROLES.contains(this.courseDao.readUserBaseRole(userId));
+	/** userId가 등록되지 않은 과정도 조회할 수 있는지 (COURSE_ALL_READ, SUPER_ADMIN은 항상 true) */
+	public boolean canReadAll(String userId) {
+		return this.accessChecker.hasAction(userId, ALL_READ.actionCode());
+	}
+
+	/** userId가 등록되지 않은 과정도 관리할 수 있는지 (COURSE_ALL_MANAGE, SUPER_ADMIN은 항상 true) */
+	public boolean canManageAll(String userId) {
+		return this.accessChecker.hasAction(userId, ALL_MANAGE.actionCode());
 	}
 }

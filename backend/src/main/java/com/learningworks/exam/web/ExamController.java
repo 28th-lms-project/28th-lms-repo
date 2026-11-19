@@ -30,8 +30,10 @@ import com.learningworks.exam.vo.request.RegistTestSetVO;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @AllArgsConstructor
+@Tag(name = "시험", description = "시험 문제 · 시험 세트 · 응시 · 채점")
 @RestController
 public class ExamController {
 	private ExamService examService;

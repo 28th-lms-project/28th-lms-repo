@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from "react";
-import PageContainer from "../../../common/PageContainer";
+import PageHeader from "../../../common/ui/PageHeader";
+import useBreadcrumbs from "../../../../hooks/useBreadcrumbs";
 import { searchTest } from "../../../../api/admin/system/test/testApi";
 import style from "./Test.module.css";
 
@@ -52,6 +53,7 @@ const toTypeTone = (answerType) => {
 
 export default function Test() {
   const { can, status } = usePermission();
+  const crumbs = useBreadcrumbs();
   // 시험 문제 관리는 들어올 때마다 비밀번호를 다시 확인 (내 정보 · 상담 기록과 같은 방식)
   const [passwordVerified, setPasswordVerified] = useState(false);
 
@@ -59,9 +61,10 @@ export default function Test() {
   if (status === "loaded" && can("EXAM_QUESTION_READ")) {
     if (!passwordVerified) {
       return (
-        <PageContainer>
+        <>
+          <PageHeader crumbs={crumbs} title={crumbs.at(-1)?.title} />
           <MyPassword onVerified={() => setPasswordVerified(true)} />
-        </PageContainer>
+        </>
       );
     }
     return <TestManagement />;
@@ -82,11 +85,17 @@ export default function Test() {
   } else if (status === "loaded") {
     content = <StatusBox type="denied" />;
   }
-  return <PageContainer>{content}</PageContainer>;
+  return (
+    <>
+      <PageHeader crumbs={crumbs} title={crumbs.at(-1)?.title} />
+      {content}
+    </>
+  );
 }
 
 function TestManagement() {
   const { questions } = useSelector((state) => state.test);
+  const crumbs = useBreadcrumbs();
   const dispatch = useDispatch();
   const toast = useToast();
   const subjectTabId = useId();
@@ -286,7 +295,8 @@ function TestManagement() {
   }
 
   return (
-    <PageContainer>
+    <>
+      <PageHeader crumbs={crumbs} title={crumbs.at(-1)?.title} />
       <Tabs
         idBase={subjectTabId}
         ariaLabel="과목"
@@ -307,6 +317,6 @@ function TestManagement() {
           {questionList}
         </div>
       </TabPanel>
-    </PageContainer>
+    </>
   );
 }

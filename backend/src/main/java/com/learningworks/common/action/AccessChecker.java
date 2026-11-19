@@ -63,6 +63,16 @@ public class AccessChecker {
     }
   }
 
+  /**
+   * userId가 actionCode 권한을 가졌는지 (403 대신 true/false). 서비스 안에서 판단할 때 쓴다
+   * (예: CourseAccessChecker의 COURSE_ALL_MANAGE). SUPER_ADMIN은 항상 true.
+   *
+   * @throws LearningworksException 비로그인 GLOBAL_UNAUTHORIZED(401), 회원이 없거나 탈퇴했으면 GLOBAL_FORBIDDEN(403)
+   */
+  public boolean hasAction(String userId, String actionCode) {
+    return this.can(this.findRoleId(userId), actionCode);
+  }
+
   /** roleId 역할에 actionCode 권한이 허용되어 있는지 */
   public boolean can(String roleId, String actionCode) {
     if (RoleConstants.SUPER_ADMIN_ROLE.equals(roleId)) {

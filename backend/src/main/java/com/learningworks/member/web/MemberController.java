@@ -28,7 +28,9 @@ import com.learningworks.member.vo.response.MemberVO;
 import com.learningworks.role.vo.response.RoleVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "회원", description = "회원 조회 · 등록 · 수정")
 @RestController
 @RequestMapping("/members")
 @RequiredArgsConstructor

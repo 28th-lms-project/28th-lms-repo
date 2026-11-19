@@ -27,9 +27,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Slf4j
 @AllArgsConstructor
+@Tag(name = "역할", description = "역할 조회 · 등록 · 수정 · 삭제")
 @RestController
 @RequestMapping("/roles")
 public class RoleController {

@@ -11,8 +11,10 @@ import com.learningworks.common.action.vo.response.ActionCodeListVO;
 import com.learningworks.common.action.vo.response.MyActionCodeVO;
 import com.learningworks.common.utils.ApiResponse;
 import lombok.AllArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @AllArgsConstructor
+@Tag(name = "권한 코드", description = "서버에 등록된 권한 코드 목록, 내 권한")
 @RestController
 @RequestMapping("/action-codes")
 public class ActionCodeController {

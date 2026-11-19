@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "../Catalog.module.css";
 import { Variant, Variants } from "../CatalogParts.jsx";
-import { IconButton } from "../../../common/input/IconButton.jsx";
+import { IconButton } from "../../../archive/common/input/IconButton.jsx";
 import { icons } from "../../../common/input/icons.js";
 
 /** 바깥 클릭 · Esc로 닫는 오버레이 (RoleUserMoveModal 방식) */

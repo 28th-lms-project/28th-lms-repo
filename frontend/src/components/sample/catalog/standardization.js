@@ -32,17 +32,21 @@ export const STANDARDIZED = new Set([
   "Member", "MemberManagement", "MemberDetail", "MemberCreateModal", "MemberFormModal", "MemberPasswordResetModal",
   // 로그인
   "Login",
+  // 환경 변수 관리
+  "Code", "AddCode", "UpdateCode", "CodeForm",
+  // 대시보드 · 성적
+  "Main", "TutorDashboard", "AdminDashboard", "MyScore", "CourseScore",
   // 사이드바 (토큰 · 테마로 바꿈)
   "SideMenu", "UserProfile", "LogoutButton",
-  // 화면에서 더 이상 쓰지 않는 옛 부품 (PageContainer는 머리를 표준 PageHeader로 그림)
-  "Input", "Breadcrumb", "PageContainer", "Modal",
+  // 화면에서 더 이상 쓰지 않는 옛 부품 (모두 archive/로 옮김)
+  "Input", "Breadcrumb", "PageContainer", "Modal", "Grid", "Paginator", "IconButton",
+  // 지운 화면 (열리지 않던 옛 수강 과정 화면. CourseItem이 대신함)
+  "MyCourse", "MyCourseList",
 ]);
 
 /** 아직 옮기지 않은 화면 · 아직 화면에서 쓰는 옛 부품 */
-export const REMAINING = new Set([
-  "Code", "Main", "MyCourse",
-  "IconButton", "Paginator",
-]);
+// 2026-11-19: 모든 화면 · 옛 부품을 옮겨서 비어 있음. 새로 옮길 화면이 생기면 여기에
+export const REMAINING = new Set([]);
 
 /** 화면 이름이 아닌 말 (판정에서 뺌) */
 const IGNORED = new Set(["Sample", "여러 화면", "여러 곳"]);

@@ -1,4 +1,5 @@
 /** @format */
+/* 기록용 (archive): 표준화 전 모습을 남긴 코드. 새 코드에서 import 금지(lint로 막음) · 고치지 않음. 대체: common/ui/Table. 안내: components/archive/README.md */
 
 import {
     useCallback,
@@ -9,10 +10,9 @@ import {
 } from "react";
 import styles from "./Grid.module.css";
 import { IconButton } from "./input/IconButton";
-import { icons } from "./input/icons";
-import { isMobile } from "../../utils/window";
+import { icons } from "../../common/input/icons";
+import { isMobile } from "../../../utils/window";
 
-/** @deprecated 표준 Table(common/ui/Table.jsx)을 쓴다. 아직 환경 변수 관리 · 회원 관리가 씀. 마지막으로 쓰는 화면에 표준을 적용할 때 components/archive/로 옮긴다 (archive/README.md). */
 export const UpdateableGrid = ({
                                    ref,
                                    checkIdName,
@@ -208,7 +208,6 @@ export const UpdateableGrid = ({
     );
 };
 
-/** @deprecated 표준 Table(common/ui/Table.jsx)을 쓴다. 아직 환경 변수 관리 · 회원 관리가 씀. 마지막으로 쓰는 화면에 표준을 적용할 때 components/archive/로 옮긴다 (archive/README.md). */
 export const Grid = ({
                          ref,
                          checkable = false,

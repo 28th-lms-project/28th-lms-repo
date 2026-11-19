@@ -38,19 +38,19 @@ public class CourseServiceImpl implements CourseService{
 
 	private CourseDao courseDao;
 
-	/** 과정 단위 권한 확인 (과제 관리 · 학생 추가는 이 과정의 강사 또는 관리자). 같은 CourseDao 를 쓴다 */
+	/** 과정 단위 권한 확인 (과제 관리 · 학생 추가는 이 과정의 강사 또는 COURSE_ALL_MANAGE) */
 	private final CourseAccessChecker courseAccess;
 
-	public CourseServiceImpl (CourseDao courseDao) {
+	public CourseServiceImpl (CourseDao courseDao, CourseAccessChecker courseAccess) {
 		this.courseDao = courseDao;
-		this.courseAccess = new CourseAccessChecker(courseDao);
+		this.courseAccess = courseAccess;
 	}
 
 	@Override
 	public List<CourseVO> viewCourse() {
 		// 관리자는 전체 강의, 강사 · 수강생은 자신이 속한 강의만 조회한다. (userId 가 null 이면 전체)
 		String loginId = AuthUtil.getLoginId();
-		String userId = this.isCourseAdmin(loginId) ? null : loginId;
+		String userId = this.courseAccess.canReadAll(loginId) ? null : loginId;
 		// 목록 조회는 결과가 없으면 MyBatis가 빈 리스트를 반환하므로 별도 처리하지 않는다.
 		// 과정마다 로그인 사용자와의 관계(myRelation)를 함께 준다 (관리자도 자기가 등록된 과정은 표시됨)
 		return this.courseDao.viewCourse(userId, loginId);
@@ -73,21 +73,14 @@ public class CourseServiceImpl implements CourseService{
 	}
 
 	/**
-	 * 로그인 사용자가 모든 강의를 다룰 수 있는 관리자인지. 판단은 CourseAccessChecker 한 곳에서 한다
-	 * (DB의 현재 BASE_ROLE 기준, 권한 코드 기반으로 바꿀 때 그쪽만 고친다).
-	 */
-	private boolean isCourseAdmin(String loginId) {
-		return this.courseAccess.isAdmin(loginId);
-	}
-
-	/**
 	 * 강의 조회 권한 검사.
 	 * - 관리자(ROLE_SUPER_ADMIN, ROLE_ADMIN): 모든 강의
 	 * - 그 외(강사 · 수강생): 자신이 속한 강의만. 아니면 403 COURSE_NOT_AUTHORIZED
 	 */
 	private void checkCourseAccess(String courseId) {
 		String loginId = AuthUtil.getLoginId();
-		if (this.isCourseAdmin(loginId)) {
+		// 등록되지 않은 과정도 조회할 수 있는 사람 (COURSE_ALL_READ)
+		if (this.courseAccess.canReadAll(loginId)) {
 			return;
 		}
 		this.checkCourseMember(courseId, loginId);
@@ -328,10 +321,10 @@ public class CourseServiceImpl implements CourseService{
 			throw new LearningworksException(ErrorCode.HOMEWORK_NOT_EXISTS);
 		}
 
-		// 작성자 본인, 관리자(ROLE_SUPER_ADMIN, ROLE_ADMIN), 해당 강의의 강사만 삭제할 수 있다.
+		// 작성자 본인, 모든 과정 관리 권한(COURSE_ALL_MANAGE), 해당 강의의 강사만 삭제할 수 있다.
 		String loginId = AuthUtil.getLoginId();
 		boolean isWriter = loginId.equals(reply.getCourseStudentId());
-		if (!isWriter && !this.isCourseAdmin(loginId)
+		if (!isWriter && !this.courseAccess.canManageAll(loginId)
 				&& this.courseDao.countCourseTutor(courseId, loginId) == 0) {
 			throw new LearningworksException(ErrorCode.COURSE_NOT_AUTHORIZED);
 		}
@@ -365,12 +358,6 @@ public class CourseServiceImpl implements CourseService{
 		return this.courseDao.readCourseMembers(courseId);
 	}
 
-	/** 이 비율(진행된 수업일 대비 출석 인정일 %) 미만이면 출석 경고 */
-	private static final double ATTENDANCE_WARNING_RATE = 80.0;
-
-	/** 지각 이 횟수마다 결석 1번 */
-	private static final int LATE_COUNT_PER_ABSENT = 3;
-
 	@Override
 	public AttendanceSummaryVO readAttendanceSummary(String courseId) {
 		this.findCourse(courseId);        // 없는 강의면 404
@@ -381,31 +368,8 @@ public class CourseServiceImpl implements CourseService{
 		String loginId = AuthUtil.getLoginId();
 		String userId = this.isCourseStudent(courseId, loginId) ? loginId : null;
 
-		AttendanceSummaryVO summary = this.courseDao.readCourseClassDays(courseId);
-		if (summary == null) {
-			summary = new AttendanceSummaryVO();
-		}
-		int total = summary.getTotalClassDays();
-		int passed = summary.getPassedClassDays();
-		summary.setProgressRate(this.toPercent(passed, total));
-
-		List<StudentAttendanceVO> students = this.courseDao.readStudentAttendanceCounts(courseId, userId);
-		int attendedSum = 0;
-		for (StudentAttendanceVO student : students) {
-			int attended = this.fillAbsentCounts(student, passed);
-			attendedSum += attended;
-			student.setAttendanceRate(this.toPercent(attended, total));
-			student.setWarning(this.isAttendanceWarning(attended, passed));
-		}
-		summary.setStudents(students);
-
-		if (!students.isEmpty()) {
-			double averageAttended = (double) attendedSum / students.size();
-			double averageRate = students.stream().mapToDouble(StudentAttendanceVO::getAttendanceRate).average().orElse(0);
-			summary.setAverageAttendanceRate(Math.round(averageRate * 10) / 10.0);
-			summary.setAverageWarning(this.isAttendanceWarning(averageAttended, passed));
-		}
-		return summary;
+		// 계산은 관리자 대시보드와 함께 쓰는 AttendanceSummaries 로 (권한 확인은 위에서 끝냄)
+		return AttendanceSummaries.summarize(this.courseDao, courseId, userId);
 	}
 
 	@Override
@@ -433,39 +397,6 @@ public class CourseServiceImpl implements CourseService{
 		int studentOrTutor = this.courseDao.countCourseStudentOrTutor(courseId, userId);
 		int tutor = this.courseDao.countCourseTutor(courseId, userId);
 		return studentOrTutor - tutor > 0;
-	}
-
-	/**
-	 * 결석 환산 값을 student에 채우고 출석 인정일을 돌려준다.
-	 * 기록 없는 수업일 = 진행된 수업일 - (Y + L + N)
-	 * 최종 결석 수 = N + 기록 없는 수업일 + floor(L / 3)
-	 * 출석 인정일 = 진행된 수업일 - 최종 결석 수
-	 */
-	private int fillAbsentCounts(StudentAttendanceVO student, int passedClassDays) {
-		int recorded = student.getPresentCount() + student.getLateCount() + student.getAbsentCount();
-		int noRecordDays = Math.max(0, passedClassDays - recorded);
-		int lateAbsent = student.getLateCount() / LATE_COUNT_PER_ABSENT;
-		int totalAbsent = student.getAbsentCount() + noRecordDays + lateAbsent;
-		int attended = Math.max(0, passedClassDays - totalAbsent);
-
-		student.setNoRecordCount(noRecordDays);
-		student.setLateAbsentCount(lateAbsent);
-		student.setTotalAbsentCount(totalAbsent);
-		student.setAttendedDays(attended);
-		return attended;
-	}
-
-	/** 진행된 수업일 대비 출석 인정일이 80% 미만이면 true. 진행된 수업일이 0이면 false */
-	private boolean isAttendanceWarning(double attendedDays, int passedClassDays) {
-		return passedClassDays > 0 && attendedDays * 100.0 / passedClassDays < ATTENDANCE_WARNING_RATE;
-	}
-
-	/** part / total * 100 (소수 1자리). total 이 0이면 0 */
-	private double toPercent(int part, int total) {
-		if (total <= 0) {
-			return 0;
-		}
-		return Math.round(part * 1000.0 / total) / 10.0;
 	}
 
 	@Override

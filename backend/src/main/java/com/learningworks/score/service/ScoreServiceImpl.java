@@ -4,8 +4,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.learningworks.common.exceptions.LearningworksException;
+import com.learningworks.course.service.CourseAccessChecker;
 import com.learningworks.common.exceptions.enums.ErrorCode;
-import com.learningworks.role.RoleConstants;
 import com.learningworks.score.dao.ScoreDao;
 import com.learningworks.score.vo.response.ScoreVO;
 import com.learningworks.score.vo.response.StudentScoreVO;
@@ -15,11 +15,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ScoreServiceImpl implements ScoreService {
 
-  /** 담당 과정이 아니어도 모든 과정 성적을 조회할 수 있는 역할 */
-  private static final List<String> SCORE_READ_ALL_ROLES =
-      List.of(RoleConstants.SUPER_ADMIN_ROLE, "ROLE_ADMIN", "ROLE_READONLY");
-
   private final ScoreDao scoreDao;
+
+  /** 모든 과정 성적 조회 판단 (COURSE_ALL_READ) */
+  private final CourseAccessChecker courseAccess;
 
   @Transactional(readOnly = true)
   @Override
@@ -42,12 +41,11 @@ public class ScoreServiceImpl implements ScoreService {
   }
 
   /**
-   * 과정 성적 조회 권한 검사. 관리자(SUPER_ADMIN, ADMIN, READONLY): 모든 과정 그 외: COURSE_TUTOR 에 등록된 담당 과정만 (강사 · 조교). 아니면
-   * 403
+   * 과정 성적 조회 권한 검사. 모든 과정 조회 권한(COURSE_ALL_READ, 관리자 · 조회 전용 등)이면 모든 과정,
+   * 그 외에는 COURSE_TUTOR 에 등록된 담당 과정만 (강사 · 조교). 아니면 403
    */
   private void checkCourseScoreAccess(String loginId, String courseId) {
-    String baseRole = this.scoreDao.selectUserBaseRole(loginId);
-    if (baseRole != null && SCORE_READ_ALL_ROLES.contains(baseRole)) {
+    if (this.courseAccess.canReadAll(loginId)) {
       return;
     }
     if (this.scoreDao.selectCourseTutorCount(courseId, loginId) == 0) {

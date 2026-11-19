@@ -31,8 +31,10 @@ import com.learningworks.course.vo.response.HomeworkVO;
 import com.learningworks.course.vo.response.TodayAttendanceSummaryVO;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 
+@Tag(name = "과정", description = "과정 · 수강생 · 과제 · 출석률 요약")
 @RestController
 public class CourseController {
 

@@ -27,7 +27,11 @@
 | --- | --- |
 | `Section.jsx` · `Section.css` | `common/ui/Panel` |
 | `common/Breadcrumb.jsx` (+css) | `common/ui/PageHeader` + `useBreadcrumbs()` |
+| `common/PageContainer.jsx` | `common/ui/PageHeader` + `useBreadcrumbs()` (2026-11-19 옮김) |
 | `common/error/RouteError.module.css` | 지금의 `RouteError`는 `StatusBox size="lg"` (예전 스타일만 기록) |
+| `common/Grid.jsx` (+css) | `common/ui/Table` (2026-11-19 옮김) |
+| `common/Paginator.jsx` (+css) | `common/ui/Pagination` (2026-11-19 옮김) |
+| `common/input/IconButton.jsx` (+css) | `common/ui/Button` (`icon`) (2026-11-19 옮김) |
 | `common/input/Input.jsx` (+css) | `common/ui/Field` + 입력 클래스(`form-control` 등) |
 | `sample/Grid.jsx` (+css) | `common/ui/Table` |
 | `sample/Modal.jsx` (+css) | `common/ui/Modal` · `useConfirm()` |
@@ -42,14 +46,11 @@
 
 ## 들어오는 때
 
-아직 화면이 쓰고 있는 옛 부품은 원래 자리에 두고 `@deprecated`를 붙였습니다 (VS Code에서 import에 취소선).
+아직 화면이 쓰고 있는 옛 부품은 원래 자리에 두고 `@deprecated`를 붙입니다 (VS Code에서 import에 취소선).
 **그 부품을 쓰는 마지막 화면에 표준을 적용하는 PR에서** 이 폴더로 옮깁니다. 원래 경로를 따라 넣고, 맨 위에 기록용 한 줄을 붙이고, 이 표에 한 줄 추가합니다.
 
 | 부품 | 아직 쓰는 화면 |
 | --- | --- |
-| `common/Grid.jsx` | 환경 변수 관리(`Code`), 회원 관리(`MemberManagement`) |
-| `common/Paginator.jsx` | 회원 관리 |
-| `common/input/IconButton.jsx` | 환경 변수 관리(`AddCode` · `UpdateCode`) |
-| `common/PageContainer.jsx` | 여러 화면 (안쪽 머리는 이미 표준 `PageHeader`) |
+| (없음) | 2026-11-19에 마지막 `PageContainer`까지 옮겨서 남은 옛 부품이 없습니다 |
 
 옮긴 뒤에도 샘플 표준화 전 탭이 그 부품을 쓰면, 탭의 import 경로만 `archive/`로 바꿉니다.

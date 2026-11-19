@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Navigate, Outlet, useLocation, useMatches } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import SideMenu from "../components/menu/SideMenu";
 import MenuGuard from "../components/menu/MenuGuard";
 import { selectUser, setUser } from "../store/slices/loginSliceStore";
@@ -18,8 +18,6 @@ export default function MainLayout() {
   const user = useSelector(selectUser);
   const permissionStatus = useSelector(selectPermissionStatus);
   const menuStatus = useSelector(selectMyMenuStatus);
-  // 다크 모드: 표준으로 옮긴 화면(라우트 handle.darkReady)만 따른다. 나머지는 "밝은 섬"으로 감싸 지금 모양 그대로 (가이드 9장)
-  const darkReady = useMatches().some((match) => match.handle?.darkReady);
 
   // 내 권한 조회: 로그인 직후(navigate("/"))와 새로고침 모두 여기서 처리.
   // 로그아웃하면 status가 "idle"로 초기화되어 다음 로그인 때 다시 조회된다.
@@ -66,7 +64,7 @@ export default function MainLayout() {
     <div className={styles.container}>
       {/* 로그아웃 · 다른 계정 로그인 시 사이드바를 새로 만들어, 이전 사용자가 펼치거나 접은 그룹 상태를 버린다 */}
       <SideMenu key={user?.id ?? "guest"} />
-      <main className={styles.content} data-color-scheme={darkReady ? undefined : "light"}>
+      <main className={styles.content}>
         {/* 내 메뉴에 없는 화면은 "권한이 없습니다" (사이드바는 그대로) */}
         <MenuGuard>
           <Outlet />

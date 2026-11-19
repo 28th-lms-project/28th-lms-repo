@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import com.learningworks.common.action.AccessChecker;
 import com.learningworks.course.dao.CourseDao;
 import com.learningworks.course.vo.response.AttendanceSummaryVO;
 import com.learningworks.course.vo.response.CourseVO;
@@ -21,18 +22,20 @@ class CourseServiceImplAttendanceTest {
   private static final String STUDENT_ID = "S1";
 
   private CourseDao courseDao;
+  private final AccessChecker accessChecker = Mockito.mock(AccessChecker.class);
   private CourseServiceImpl service;
 
   @BeforeEach
   void setUp() {
     this.courseDao = Mockito.mock(CourseDao.class);
-    this.service = new CourseServiceImpl(this.courseDao);
+    this.service = new CourseServiceImpl(this.courseDao, new CourseAccessChecker(this.courseDao, this.accessChecker));
 
     // 수강생 S1으로 로그인, C1의 수강생 (관리자 · 강사 아님)
     SecurityContextHolder.getContext().setAuthentication(
         UsernamePasswordAuthenticationToken.authenticated(STUDENT_ID, null, List.of()));
     Mockito.when(this.courseDao.readOneCourse(COURSE_ID)).thenReturn(new CourseVO());
     Mockito.when(this.courseDao.readUserBaseRole(STUDENT_ID)).thenReturn("ROLE_STUDENT");
+    CourseAccessTestSupport.stubAllCourse(this.accessChecker, STUDENT_ID, "ROLE_STUDENT");
     Mockito.when(this.courseDao.countCourseStudentOrTutor(COURSE_ID, STUDENT_ID)).thenReturn(1);
     Mockito.when(this.courseDao.countCourseTutor(COURSE_ID, STUDENT_ID)).thenReturn(0);
   }

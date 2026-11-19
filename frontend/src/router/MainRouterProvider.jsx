@@ -11,8 +11,6 @@ import RouteError from "../components/common/error/RouteError";
 import Login from "../components/login/Login";
 import Main from "../components/main/Main";
 import MyInfo from "../components/my/info/MyInfo";
-import MyCourseList from "../components/my/course/MyCourseList";
-import MyCourse from "../components/my/course/MyCourse";
 
 import CourseAdd from "../components/admin/course/add/CourseAdd";
 import Survey from "../components/admin/survey/survey/Survey";
@@ -74,17 +72,17 @@ export const routes = [
           {
             index: true,
             element: <Main />,
-            handle: { crumb: "Dashboard", menu: true, darkReady: true },
+            handle: { crumb: "Dashboard", menu: true },
           },
           {
             path: "login",
             element: <Login />,
-            handle: { crumb: "로그인", darkReady: true },
+            handle: { crumb: "로그인" },
           },
           {
             path: "sample",
             element: <Sample />,
-            handle: { crumb: "Sample", menu: true, darkReady: true },
+            handle: { crumb: "Sample", menu: true },
           },
           {
             path: "my",
@@ -93,11 +91,11 @@ export const routes = [
               {
                 path: "info",
                 element: <MyInfo />,
-                handle: { crumb: "내 정보 수정", menu: true, darkReady: true },
+                handle: { crumb: "내 정보 수정", menu: true },
               },
               {
                 path: "course",
-                handle: { crumb: "수강 과정", darkReady: true },
+                handle: { crumb: "수강 과정" },
                 element: (
                   <>
                     <CourseMain />
@@ -134,20 +132,8 @@ export const routes = [
                             <CourseItem />
                           </>
                         ),
-                        handle: { darkReady: true },
                       },
                     ],
-                  },
-                  {
-                    path: "list",
-                    element: <MyCourseList />,
-                    handle: { menu: true },
-                  },
-                  // ?tab=0~8 로 탭 전환 (MyCourse 의 TABS 참고)
-                  {
-                    path: "list/:courseId",
-                    element: <MyCourse />,
-                    handle: { crumb: "과정 상세" },
                   },
                 ],
               },
@@ -175,26 +161,26 @@ export const routes = [
                         <Outlet />
                       </>
                     ),
-                    handle: { crumb: "과정 목록", menu: true, darkReady: true },
+                    handle: { crumb: "과정 목록", menu: true },
                     // TODO 과정 목록 경로 설정
                   },
                   {
                     path: "add",
                     element: <CourseAdd />,
 
-                    handle: { crumb: "과정 등록", menu: true, darkReady: true },
+                    handle: { crumb: "과정 등록", menu: true },
                   },
                 ],
               },
               {
                 path: "survey",
                 element: <Survey />,
-                handle: { crumb: "설문 관리", menu: true, darkReady: true },
+                handle: { crumb: "설문 관리", menu: true },
               },
               {
                 path: "test",
                 element: <Test />,
-                handle: { crumb: "시험 문제 관리", menu: true, darkReady: true },
+                handle: { crumb: "시험 문제 관리", menu: true },
               },
               {
                 path: "system",
@@ -203,32 +189,32 @@ export const routes = [
                   {
                     path: "member",
                     element: <MemberManagement />,
-                    handle: { crumb: "회원 관리", menu: true, darkReady: true },
+                    handle: { crumb: "회원 관리", menu: true },
                   },
                   {
                     path: "menu",
                     element: <Menu />,
-                    handle: { crumb: "메뉴 관리", menu: true, darkReady: true },
+                    handle: { crumb: "메뉴 관리", menu: true },
                   },
                   {
                     path: "role",
                     element: <Role />,
-                    handle: { crumb: "권한 관리", menu: true, darkReady: true },
+                    handle: { crumb: "권한 관리", menu: true },
                   },
                   {
                     path: "access",
                     element: <Access />,
-                    handle: { crumb: "접근 관리", menu: true, darkReady: true },
+                    handle: { crumb: "접근 관리", menu: true },
                   },
                   {
                     path: "access-role",
                     element: <AccessRole />,
-                    handle: { crumb: "권한별 접근 권한 관리", menu: true, darkReady: true },
+                    handle: { crumb: "권한별 접근 권한 관리", menu: true },
                   },
                   {
                     path: "code",
                     element: <Code />,
-                    handle: { crumb: "환경 변수 관리", menu: true, darkReady: true },
+                    handle: { crumb: "환경 변수 관리", menu: true },
                   },
                 ],
               },
@@ -238,7 +224,7 @@ export const routes = [
           {
             path: "*",
             element: <NotFound />,
-            handle: { crumb: "페이지 없음", notFound: true, darkReady: true },
+            handle: { crumb: "페이지 없음", notFound: true },
           },
         ],
       },

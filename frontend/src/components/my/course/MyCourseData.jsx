@@ -194,7 +194,7 @@ export default function MyCourseData({ courseId: courseIdProp }) {
   const toast = useToast();
   const confirm = useConfirm();
 
-  // 부모(MyCourse)에서 받은 courseId 우선, 없으면 URL 파라미터(CourseItem :id) 사용
+  // courseId prop이 있으면 우선 (지금은 넘기는 화면 없음), 없으면 URL 파라미터(CourseItem :id) 사용
   const courseId = courseIdProp ?? params?.courseId ?? params?.id;
 
   // 교육 자료 권한 (CourseDataController 의 @RequireAction 과 같은 코드)

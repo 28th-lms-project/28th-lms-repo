@@ -2,8 +2,8 @@
 import { useState } from "react";
 import styles from "../Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "../CatalogParts.jsx";
-import { Grid } from "../../../common/Grid.jsx";
-import { IconButton } from "../../../common/input/IconButton.jsx";
+import { Grid } from "../../../archive/common/Grid.jsx";
+import { IconButton } from "../../../archive/common/input/IconButton.jsx";
 import { icons } from "../../../common/input/icons.js";
 
 const MEMBERS = [

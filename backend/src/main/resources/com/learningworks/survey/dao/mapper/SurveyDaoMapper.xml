@@ -150,13 +150,16 @@
 			                        AND S.USER_ID = #{userId})
 			        THEN 'Y' ELSE 'N' END AS ANSWERED_YN
 		  FROM COURSE_SURVEY CS
-		 INNER JOIN (SELECT COUNT(ID) AS STUDENT_COUNT
-		 			   FROM COURSE_STUDENT
-		 			  WHERE COURSE_ID = #{courseId}) STU
+		 INNER JOIN (SELECT COUNT(CS.ID) AS STUDENT_COUNT
+		 			   FROM COURSE_STUDENT CS
+		 			   INNER JOIN "USER" U ON U.ID = CS.USER_ID AND U.DEL_YN = 'N'
+		 			  WHERE CS.COURSE_ID = #{courseId}) STU
 		 	ON 1 = 1
 		  LEFT OUTER JOIN (SELECT COURSE_SURVEY_ID
 		  						, COUNT(DISTINCT COURSE_STUDENT_ID) AS ANSWER_COUNT
 		  					 FROM COURSE_SURVEY_ANSWER
+		  					 INNER JOIN COURSE_STUDENT AS_CS ON AS_CS.ID = COURSE_SURVEY_ANSWER.COURSE_STUDENT_ID
+		  					 INNER JOIN "USER" AS_U ON AS_U.ID = AS_CS.USER_ID AND AS_U.DEL_YN = 'N'
 		  					WHERE COURSE_SURVEY_ID IN (SELECT ID
 		  												 FROM COURSE_SURVEY
 		  												WHERE COURSE_ID = #{courseId})
@@ -339,17 +342,20 @@
 	<select id="selectCourseSurveyResponseCount" 
 			parameterType="string"
 			resultType="_int">
-			SELECT COUNT(DISTINCT COURSE_STUDENT_ID)
-			  FROM COURSE_SURVEY_ANSWER
-			 WHERE COURSE_SURVEY_ID = #{_parameter}
+			SELECT COUNT(DISTINCT A.COURSE_STUDENT_ID)
+			  FROM COURSE_SURVEY_ANSWER A
+			  INNER JOIN COURSE_STUDENT CS ON CS.ID = A.COURSE_STUDENT_ID
+			  INNER JOIN "USER" U ON U.ID = CS.USER_ID AND U.DEL_YN = 'N'
+			 WHERE A.COURSE_SURVEY_ID = #{_parameter}
 			</select>
 			
 	<select id="selectCourseStudentCount" 
 			parameterType="string"
 			resultType="_int">
-			SELECT COUNT(ID)
-			  FROM COURSE_STUDENT
-			 WHERE COURSE_ID = #{_parameter}
+			SELECT COUNT(CS.ID)
+			  FROM COURSE_STUDENT CS
+			  INNER JOIN "USER" U ON U.ID = CS.USER_ID AND U.DEL_YN = 'N'
+			 WHERE CS.COURSE_ID = #{_parameter}
 			</select>
 
 </mapper>

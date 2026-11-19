@@ -12,7 +12,9 @@ import com.learningworks.common.action.LoginRequired;
 import com.learningworks.common.utils.ApiResponse;
 import com.learningworks.common.utils.AuthUtil;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "출석", description = "오늘 출석 체크 · 오늘 내 출결")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/attendances")
