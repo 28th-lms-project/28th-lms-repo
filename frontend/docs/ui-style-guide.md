@@ -79,15 +79,15 @@
 
 표준 UI 컴포넌트(`common/ui/`)의 전체 목록은 8장 "구조" 표에 있습니다. 아래는 그 전부터 있던 컴포넌트이고, 표준으로 바꾸는 법은 6장 "기존 컴포넌트 → 표준 대응"에 있습니다.
 
-2026-11-18에 화면에서 쓰지 않는 옛 컴포넌트는 `components/archive/`(기록, import 금지)로 옮겼습니다. 아직 화면이 쓰는 것(`PageContainer` · `Grid` · `Paginator` · `IconButton`)은 원래 자리에 두고 `@deprecated`를 붙였습니다. 3 ~ 5장의 위치는 옮기기 전 경로입니다.
+2026-11-18에 화면에서 쓰지 않는 옛 컴포넌트는 `components/archive/`(기록, import 금지)로 옮겼고, `Grid` · `Paginator` · `IconButton`도 마지막 화면(환경 변수 · 회원 관리)을 옮겨서 2026-11-19에 옮겼습니다. 아직 화면이 쓰는 것은 `PageContainer` 하나이고 `@deprecated`를 붙여 두었습니다. 3 ~ 5장의 위치는 옮기기 전 경로입니다.
 
 | 컴포넌트 | 위치 | 주요 props · 메모 |
 | --- | --- | --- |
 | `PageContainer` | `common/PageContainer.jsx` | 호환용 틀. 안쪽은 표준 `PageHeader` (2026-11-17). `title`을 안 넘기면 브레드크럼 마지막 항목. 새 화면은 `PageHeader`를 직접 씀 |
 | `Section` | `archive/Section.jsx` (기록) | 흰 카드 + 1.2rem 제목. `title`, `nopadding`, `nomargin`, `direction`, `itemGap` |
-| `Grid` | `common/Grid.jsx` | CSS grid 표. `header`, `content`, `columnStyle`, `checkable`, `editable`, `clickableColumn`, `activeRows`, `footer` |
-| `Paginator` | `common/Paginator.jsx` | `start`, `countPerPageGroup`, `activePage`, `setActivePage`, `totalPageCount` |
-| `IconButton` | `common/input/IconButton.jsx` | `icon`, `iconSize`(기본 20, 화면에서는 주로 16), `backgroundColor`, `disabled`, `hoverIconRotate`, `alwaysIconRotate`, `style`. `className` · 그 밖의 props(`aria-label` 등)는 `<button>`에 전달 (2026-11-16 수정, sample 복사본도 같음). 모양은 아직 그대로 — 표준 `Button`으로 바꾸는 법은 6장 "기존 컴포넌트 → 표준 대응" |
+| `Grid` | `archive/common/Grid.jsx` (기록) | CSS grid 표. `header`, `content`, `columnStyle`, `checkable`, `editable`, `clickableColumn`, `activeRows`, `footer` |
+| `Paginator` | `archive/common/Paginator.jsx` (기록) | `start`, `countPerPageGroup`, `activePage`, `setActivePage`, `totalPageCount` |
+| `IconButton` | `archive/common/input/IconButton.jsx` (기록) | `icon`, `iconSize`(기본 20, 화면에서는 주로 16), `backgroundColor`, `disabled`, `hoverIconRotate`, `alwaysIconRotate`, `style`. `className` · 그 밖의 props(`aria-label` 등)는 `<button>`에 전달 (2026-11-16 수정, sample 복사본도 같음). 모양은 아직 그대로 — 표준 `Button`으로 바꾸는 법은 6장 "기존 컴포넌트 → 표준 대응" |
 | `icons` | `common/input/icons.js` | edit, close, add, setting, fullStar, star, login, logout, download, downloadDone, progress, delete, refresh, sort, unchecked, checked, radioUnChecked, radioChecked, home, arrowRight, error, ok, full, exitFull |
 | `Id` · `Password` · `TextField` · `NativeSelect` · `Textarea` · `Checkbox` · `Radio` · `FileField` · `Button` | `archive/common/input/Input.jsx` (기록) | `NativeSelect` · `Textarea`는 스타일 클래스가 정의되어 있지 않아 브라우저 기본 모양 |
 | `Editor` | `common/Editor.jsx` | 리치 텍스트 에디터 (MyCourseData에서 사용). 카탈로그에는 넣지 않음 |
@@ -337,14 +337,14 @@
 차수 밖의 현황:
 
 - 표준을 만들지 않기로 한 것: TextField 떠 있는 라벨(라벨은 위), 팝업 창(`window.open`, UI 아님), 기존 샘플 Chart · Poll(샘플 밖에서 안 씀. 차트를 쓰게 되면 그때 색을 토큰으로), 리치 텍스트 `Editor`(외부 에디터, 옮길 때 테두리 · 높이만 맞춤)
-- 다크 모드: 앱 전체에서 켤 수 있음 (사이드바 [☾] 버튼, 2026-11-17). 표준으로 옮긴 화면(라우트 `handle.darkReady`)만 다크를 따르고, 나머지는 밝게 유지 (9장)
+- 다크 모드: 앱 전체에서 켤 수 있음 (사이드바 [☾] 버튼, 2026-11-17). 2026-11-19 기준 `MainLayout` 안의 모든 라우트가 `darkReady`입니다 (9장 "지금 상태")
 - 강조색(primary)과 테마(brand): 강조색은 **인디고**, 테마(사이드바 색)는 **네이비**로 확정 (2026-11-17). 고르는 기능(샘플 페이지 강조색 후보 · 사이드바 테마 견본)은 지움 (7장 "강조색 (primary) 과 테마 (brand)")
 
 ### 팀이 정할 것
 
 정한 것: 강조색 인디고 · 테마(사이드바) 네이비 (7장), 다크 모드는 앱 전체 · 기본 밝은 모드 · 화면별로 옮기면 켜짐 (9장). 모두 2026-11-17.
 표준화 전 예시는 지우지 않고 기록으로 남김: 탭 이름 "표준화 전 (기록)", 표준을 적용한 화면은 [표준 적용] 표시 (2026-11-18). 2026-11-17에 지웠던 메뉴 관리 · 권한 관리 · 404 · 오류 · 화면 틀 예시도 되살림.
-옛 컴포넌트도 지우지 않음 (2026-11-18): 화면이 쓰지 않는 것은 `components/archive/`(원래 경로 그대로, README, lint로 import 금지)로, 아직 쓰는 것(`PageContainer` · `Grid` · `Paginator` · `IconButton`)은 `@deprecated`를 붙여 두고 마지막 사용 화면을 옮기는 PR에서 `archive/`로 옮김. 표준화 전 카탈로그는 `sample/catalog/archive/`.
+옛 컴포넌트도 지우지 않음 (2026-11-18): 화면이 쓰지 않는 것은 `components/archive/`(원래 경로 그대로, README, lint로 import 금지)로, 아직 쓰는 것은 `@deprecated`를 붙여 두고 마지막 사용 화면을 옮기는 PR에서 `archive/`로 옮김. `Grid` · `Paginator` · `IconButton`은 2026-11-19에 옮겼고, 남은 것은 `PageContainer` 하나. 표준화 전 카탈로그는 `sample/catalog/archive/`.
 
 1. **새 표준 부품 · 토큰 승인**: 누가 어떻게 승인할지 (예: PR 리뷰 1명 이상 + 8장 · 7장에 추가).
 2. **메뉴 아이콘**: 메뉴 데이터에 아이콘을 넣을지. 넣으면 접힌 사이드바를 "아이콘 띠 + 올리면 펼쳐지는 메뉴"로 바꿀 수 있습니다 (지금은 접힌 상태에서 메뉴를 표시하지 않음, 8장 "사이드 메뉴").
@@ -354,7 +354,7 @@
 한 화면을 표준으로 옮길 때 이 순서로 합니다.
 
 1. 아래 "화면별 표준 대응" 표에서 화면을 찾고, 분류에 맞는 예시 · 부품을 확인합니다.
-2. 옛 컴포넌트(`@deprecated` 표시: `Grid` · `Paginator` · `IconButton` · `PageContainer`) import를 표준 부품으로 바꿉니다 (아래 "기존 컴포넌트 → 표준 대응"). `components/archive/`는 import할 수 없습니다.
+2. 옛 컴포넌트(`@deprecated` 표시: 지금은 `PageContainer`만 남음) import를 표준 부품으로 바꿉니다 (아래 "기존 컴포넌트 → 표준 대응"). `components/archive/`는 import할 수 없습니다.
 3. 틀을 바꿉니다: `PageContainer` → `PageHeader`, 흰 카드 → `Panel`.
 4. 화면 CSS의 hex · px 값을 토큰으로 바꿉니다 (7장 "옮길 때 대응표").
 5. `alert()` · `confirm()`을 토스트(`useToast`) · `useConfirm`으로 바꿉니다.
@@ -410,7 +410,7 @@
 | `PageContainer` (`title`) | `PageHeader` (`crumbs` · `title` · `description` · `actions`) | `crumbs`는 `useBreadcrumbs()` 결과를 넘김. `title`을 안 넘기던 화면은 브레드크럼 마지막 항목의 `title`을 넘김 |
 | `sample/Modal` (`Alert` · `Confirm`) | `Modal` · `useConfirm` | 8장 "모달" · "확인 창" |
 
-### 화면별 표준 대응 (2026-11-18)
+### 화면별 표준 대응 (2026-11-18, 2026-11-19 갱신)
 
 화면 파일(`components`의 `sample` · `common` 밖)마다 표준으로 옮길 때 무엇을 보면 되는지 분류했습니다. 새 화면을 만들거나 옮길 때 이 표에서 찾고, 표에 없는 화면이 생기면 같은 기준으로 한 줄 추가합니다. 2026-11-17에 `dev`를 합치며 과정 설문 화면을, 2026-11-18에 설문 통계 팝업을 추가했습니다.
 
@@ -447,25 +447,26 @@
 | `admin/survey/survey/Survey` | 예시 · **표준 적용 (2026-11-17)** | 설문 편집기. 표준화 전 탭은 `dev`를 합친 뒤 그때 모양으로 다시 맞춤 (문항별 인라인 입력 + `PollItem` 미리보기, 입력마다 서버 저장, 저장 표시 없음). 표준 예시는 편집 \| 미리 보기 + [저장] |
 | `admin/test/test/AddTest` · `UpdateTest` | 예시 · **표준 적용 (2026-11-17)** | 문제 은행 문제 추가 · 수정 |
 | `admin/test/test/Test` | 예시 (8차) · **표준 적용 (2026-11-17)** | 문제 은행 목록 (문항마다 펼치기 · 출제 통계). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
-| `admin/system/member/*` | 예시 | 목록 \| 상세. 등록 · 수정 · 비밀번호 초기화는 폼 모달, 역할 바꾸기는 `desc-list` 안 select + [역할 변경] + `useConfirm` |
+| `admin/system/member/*` | 예시 · **표준 적용 (2026-11-18)** | 목록 \| 상세. 등록 · 수정 · 비밀번호 초기화는 폼 모달, 역할 바꾸기는 `desc-list` 안 select + [역할 변경] + `useConfirm` |
 | `admin/system/role/Role` | 부품 · **표준 적용 (2026-11-17)** | `input-group`(접두어) + `Table` 순서 바꾸기(잠긴 행) · 칸 편집 + "순서가 변경되었습니다" `Callout` |
 | `role/RoleUserMoveModal` | 부품 · **표준 적용 (2026-11-17)** | `Modal` + `list-boxed` + `SelectBox` + `Callout`. 결과(일부만 성공 포함)는 토스트 |
 | `admin/system/access/Access` | 예시 (8차) · **표준 적용 (2026-11-17)** | 접근 관리 (연쇄 선택 · 같은 폼으로 추가 · 수정) |
 | `access-role/AccessRole` | 예시 (8차) · **표준 적용 (2026-11-17)** | 권한별 접근 권한 관리 (저장 전 변경 표시). 새 클래스 `layout-split-start` |
-| `admin/system/code/*` | 예시 (8차) | 환경 변수 관리 (패널 하나가 보기 · 수정 · 추가). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
+| `admin/system/code/*` | 예시 (8차) · **표준 적용 (2026-11-18)** | 환경 변수 관리 (패널 하나가 보기 · 수정 · 추가). 권한 확인 중 · 오류 · 권한 없음 안내(`dev`에서 추가)는 `StatusBox` (`loading` · `error` · `type="denied"`) |
 | `admin/system/menu/Menu` · `MenuColumn` | 예시 (10차) · **표준 적용 (2026-11-17)** | 메뉴 관리 (3단 `Table` + 순서 바꾸기 + 순서 저장 바). 상세는 `desc-list` + 역할 체크박스 + 보기 ↔ 수정 규칙. 지금 화면의 "놓자마자 저장" 대신 저장 바로 한 번에 (역할 관리와 같게), 키보드(↑ ↓)로도 옮길 수 있게 됨 |
-| `my/course/MyCourse` | 부품 | `Tabs` (고른 탭은 주소 `?tab=`에) |
+| `my/course/MyCourse` | 보류 | 라우트(`/my/course/list/:courseId`)가 앞의 `list`(과정 상세 `CourseItem`)에 가려 열리지 않습니다. 같은 일은 `CourseItem`이 표준으로 함. 지울지 팀에서 정함 (아직 `PageContainer`를 씀) |
 | `my/course/MyCourseData` | 예시 · 제외 1 · **표준 적용 (2026-11-17)** | 목록 \| 상세 · 상세 화면. **제외**: 리치 텍스트 `Editor` (6장 "표준을 만들지 않기로 한 것") |
 | `my/course/MyTimetable` | 부품 + 예시 (8차) · **표준 적용 (2026-11-17)** | 날짜별 시간표 (새 클래스 `tr.is-highlight`). 하루 보기는 `Table bordered`, 업로드는 `FilePicker` |
 | `my/course/MyInterview` | 예시 (8차) · **표준 적용 (2026-11-17)** | 목록 위 추가 폼 (`datetime-local`) |
 | `my/course/MyCounsel` | 예시 (8차) · **표준 적용 (2026-11-17)** | 상담 기록 (기본 정보 먼저 · 구역별 수정 · 수준 배지 · 고칠 수 없는 기록) |
-| `my/info/MyInfo` · `MyPassword` · `login/Login` | 부품 + 예시 (8차) | 로그인 · 비밀번호 다시 확인. 새 부품 `auth-page` · `auth-card` |
-| `my/info/MyInfoForm` · `MyPasswordForm` | 부품 | `Field` + `form-stack` + `desc-list`(읽기 전용 값). 성공은 토스트, 비밀번호 규칙(8~20자)은 처음부터 `hint`로 |
-| `main/Main` | 예시 | 대시보드 |
+| `my/info/MyInfo` · `MyPassword` · `login/Login` | 부품 + 예시 (8차) · **표준 적용 (2026-11-18)** | 로그인 · 비밀번호 다시 확인. 새 부품 `auth-page` · `auth-card` |
+| `my/info/MyInfoForm` · `MyPasswordForm` | 부품 · **표준 적용 (2026-11-18)** | `Field` + `form-stack` + `desc-list`(읽기 전용 값). 성공은 토스트, 비밀번호 규칙(8~20자)은 처음부터 `hint`로 |
+| `main/Main` · `TutorDashboard` · `AdminDashboard` | 예시 · **표준 적용 (2026-11-18 ~ 19)** | 대시보드. `StatCard` · `Panel` · `Table` · `Progress` · `Badge` · `StatusBox`. 무엇을 보여 주는지는 `frontend/docs/design/dashboard-design.md` |
+| `my/course/MyScore` · `CourseTableComponent/CourseScore` | 부품 · **표준 적용 (2026-11-18)** | 성적 (`Panel` · `Badge` · `StatusBox` + 차트). 강사가 성적 탭을 열면 `CourseScore`, 수강생은 `MyScore` |
 | `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 · **표준 적용 (2026-11-17, `LogoutButton` 2026-11-18)** | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료, 2026-11-18에 글자 크기 · 굵기 · 모서리 토큰 · 포커스 · 로그아웃 `sidebar-btn`). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
 | `menu/MenuGuard` · `login/IsLogin` | 부품 · **`MenuGuard` 표준 적용 (2026-11-17)** | 로직. 화면은 `StatusBox` (loading · error · denied) |
 | `Section.jsx` | 부품 | `Panel`. 쓰는 화면이 없어 `archive/Section.jsx`(기록)로 옮김 (2026-11-18) |
-| `my/course/MyCourseList` · `MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가 |
+| `my/course/MyCourseList` · `MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가. `MyCourseList`는 `MyCourse`처럼 라우트가 가려져 열리지 않음 |
 
 ### PR에서 바뀌는 앱 전체 영향
 
@@ -1430,7 +1431,9 @@ import Comment from "../common/ui/Comment";
 
 - 토큰 · 표준 UI(8장)는 다크 모드를 지원합니다.
 - **앱 전체에서 켭니다**: 사이드바 머리의 [☾] 버튼 (샘플 페이지 목차의 버튼도 같은 값). 이 브라우저에 기억하고(`localStorage`의 `lms-color-scheme`), 기본은 밝은 모드입니다. 시스템 설정은 따르지 않습니다.
-- **화면별로 켜짐**: 표준으로 옮긴 화면만 다크를 따릅니다. `MainLayout`이 본문(`<main>`)을 밝은 섬으로 감싸고, 지금 라우트의 `handle`에 `darkReady: true`가 있으면 섬을 풉니다. 지금 `darkReady`인 화면: 샘플 페이지, 메뉴 관리, 권한 관리, 404 (2026-11-17). 라우트 오류 화면(`errorElement`)은 라우트가 아니라서 오류가 난 화면의 설정을 따릅니다.
+- **화면별로 켜짐**: 표준으로 옮긴 화면만 다크를 따릅니다. `MainLayout`이 본문(`<main>`)을 밝은 섬으로 감싸고, 지금 라우트의 `handle`에 `darkReady: true`가 있으면 섬을 풉니다. 라우트 오류 화면(`errorElement`)은 라우트가 아니라서 오류가 난 화면의 설정을 따릅니다.
+- **2026-11-19 기준 `MainLayout` 안의 모든 라우트가 `darkReady`** 입니다 (대시보드 · 로그인 · 샘플 · 내 정보 · 수강 과정 · 과정 관리 · 설문 · 시험 문제 · 시스템 관리 전부, 404). `MainLayout` 밖의 팝업(`/popup/homework`, 설문 결과 · 통계)은 `popup-page`라 토큰을 따릅니다.
+- 아직 색을 직접 적은 곳: 리치 텍스트 `Editor`(`common/Editor.module.css` · `editor/editorContent.css`, 표준 밖이라 다크에서도 밝은 상자), 밝은 섬의 글자색(`layout/MainLayout.module.css`, 섬과 함께 지울 것).
 - 사이드바는 원래 어두운 색이라 모드와 상관없이 같습니다.
 - 샘플의 "표준화 전" · "기존 샘플" 영역과 그 모달은 색을 직접 적어서 다크 모드에서도 **밝게 고정**됩니다 (아래 "밝은 섬").
 
@@ -1485,7 +1488,7 @@ const [scheme, setColorScheme] = useColorScheme(); // "light" | "dark"
 1. 화면을 표준으로 옮깁니다 (6장 "화면 옮기는 순서"). 색을 hex로 직접 적은 곳이 남아 있으면 다크에서 깨집니다 (흰 상자 위 밝은 글자 등).
 2. 사이드바 [☾]로 켜고 화면 · 모달 · 빈 목록 · 오류 상태를 한 번씩 봅니다.
 3. 라우트 `handle`에 `darkReady: true`를 넣습니다. 하위 라우트도 같은 화면이면 부모 하나에만 넣어도 됩니다 (지금 라우트 중 하나라도 `darkReady`면 켜짐).
-4. 모든 화면이 `darkReady`가 되면 `MainLayout`의 밝은 섬과 `darkReady` 표시를 지웁니다.
+4. 모든 화면이 `darkReady`가 되면 `MainLayout`의 밝은 섬과 `darkReady` 표시를 지웁니다. 2026-11-19에 모든 라우트가 `darkReady`가 되어 이제 지울 수 있습니다 (다음 단계: 섬 · `darkReady` 표시 · 섬 글자색을 지우고, 새 화면은 처음부터 토큰으로).
 
 - 흰 카드를 hex로 적은 화면은 `Panel`로 바꾼 뒤 `darkReady`를 넣습니다 (`Section`은 쓰는 화면이 없어 기록 폴더로 옮김). `PageContainer`는 2026-11-17부터 안쪽이 표준 `PageHeader`라 다크 모드를 따릅니다 (화면의 나머지 부분만 확인하면 됨).
 - 표준 `Modal` · 토스트는 `<body>`에 그려져서, 다크 모드에서 밝은 섬 안(아직 안 옮긴 화면)에서 열어도 어둡게 보입니다. 옮기기 전 화면에서 밝게 보여야 하면 모달 최상위에 `data-color-scheme="light"`를 붙입니다.

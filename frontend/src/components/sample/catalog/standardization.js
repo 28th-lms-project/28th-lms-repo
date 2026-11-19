@@ -32,16 +32,20 @@ export const STANDARDIZED = new Set([
   "Member", "MemberManagement", "MemberDetail", "MemberCreateModal", "MemberFormModal", "MemberPasswordResetModal",
   // 로그인
   "Login",
+  // 환경 변수 관리
+  "Code", "AddCode", "UpdateCode", "CodeForm",
+  // 대시보드 · 성적
+  "Main", "TutorDashboard", "AdminDashboard", "MyScore", "CourseScore",
   // 사이드바 (토큰 · 테마로 바꿈)
   "SideMenu", "UserProfile", "LogoutButton",
-  // 화면에서 더 이상 쓰지 않는 옛 부품 (PageContainer는 머리를 표준 PageHeader로 그림)
-  "Input", "Breadcrumb", "PageContainer", "Modal",
+  // 화면에서 더 이상 쓰지 않는 옛 부품 (archive/로 옮김. PageContainer는 아직 쓰지만 머리를 표준 PageHeader로 그림)
+  "Input", "Breadcrumb", "PageContainer", "Modal", "Grid", "Paginator", "IconButton",
 ]);
 
 /** 아직 옮기지 않은 화면 · 아직 화면에서 쓰는 옛 부품 */
+// MyCourse · MyCourseList: 라우트가 앞의 "list"(CourseItem)에 가려 열리지 않는 옛 화면 (정리 대상)
 export const REMAINING = new Set([
-  "Code", "Main", "MyCourse",
-  "IconButton", "Paginator",
+  "MyCourse", "MyCourseList",
 ]);
 
 /** 화면 이름이 아닌 말 (판정에서 뺌) */
