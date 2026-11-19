@@ -33,16 +33,17 @@ import com.learningworks.course.vo.response.TodayAttendanceSummaryVO;
 @Service
 public class CourseServiceImpl implements CourseService{
 
-	/** 모든 강의를 조회할 수 있는 역할. 그 외 역할은 자신이 속한(수강생 · 강사) 강의만 조회할 수 있다. */
-	private static final List<String> COURSE_ADMIN_ROLES = List.of("ROLE_SUPER_ADMIN", "ROLE_ADMIN");
-
 	/** 수강생 · 강사가 아니어도 모든 강의에 댓글을 작성할 수 있는 역할 */
 	private static final String SUPER_ADMIN_ROLE = "ROLE_SUPER_ADMIN";
 
 	private CourseDao courseDao;
 
+	/** 과정 단위 권한 확인 (과제 관리 · 학생 추가는 이 과정의 강사 또는 관리자). 같은 CourseDao 를 쓴다 */
+	private final CourseAccessChecker courseAccess;
+
 	public CourseServiceImpl (CourseDao courseDao) {
 		this.courseDao = courseDao;
+		this.courseAccess = new CourseAccessChecker(courseDao);
 	}
 
 	@Override
@@ -72,12 +73,11 @@ public class CourseServiceImpl implements CourseService{
 	}
 
 	/**
-	 * 로그인 사용자가 관리자(ROLE_SUPER_ADMIN, ROLE_ADMIN)인지 확인한다.
-	 * 역할은 토큰이 아니라 DB의 현재 BASE_ROLE 기준으로 판단한다.
+	 * 로그인 사용자가 모든 강의를 다룰 수 있는 관리자인지. 판단은 CourseAccessChecker 한 곳에서 한다
+	 * (DB의 현재 BASE_ROLE 기준, 권한 코드 기반으로 바꿀 때 그쪽만 고친다).
 	 */
 	private boolean isCourseAdmin(String loginId) {
-		String baseRole = this.courseDao.readUserBaseRole(loginId);
-		return COURSE_ADMIN_ROLES.contains(baseRole);
+		return this.courseAccess.isAdmin(loginId);
 	}
 
 	/**
@@ -134,6 +134,10 @@ public class CourseServiceImpl implements CourseService{
 		// 수강생을 선택하지 않으면 studentId 가 null 로 들어온다.
 		List<String> studentIds = registCourseVO.getStudentId();
 		if (studentIds != null) {
+			// 같은 과정에 강사와 수강생으로 함께 등록하지 않는다 (역할이 아니라 과정 관계로 판단)
+			if (studentIds.contains(registCourseVO.getTutorId())) {
+				throw new LearningworksException(ErrorCode.COURSE_TUTOR_STUDENT_CONFLICT);
+			}
 			for (String studentId : studentIds) {
 				RegistCourseStudentVO registCourseStudentVO = new RegistCourseStudentVO();
 				registCourseStudentVO.setCourseId(registCourseVO.getId());
@@ -220,9 +224,9 @@ public class CourseServiceImpl implements CourseService{
 	@Transactional
 	@Override
 	public HomeworkVO addHomework(String courseId, RegistHomeworkVO registHomeworkVO) {
-		// 관리자(ROLE_SUPER_ADMIN, ROLE_ADMIN)는 모든 강의, 강사는 자기 강의에만 등록할 수 있다.
-		// 학생은 COURSE_HOMEWORK_CREATE 권한을 부여하지 않고 프론트에서 버튼을 숨겨서 막는다.
-		this.checkCourseAccess(courseId);
+		// 관리자는 모든 강의, 강사는 자기 강의에만 등록할 수 있다.
+		// 이 과정의 수강생은 권한 코드가 있어도(예: 강사 역할인 사람이 다른 과정을 수강) 막는다.
+		this.courseAccess.requireTutorOrAdmin(courseId);
 
 		registHomeworkVO.setCourseId(courseId);
 		int insertedRow = this.courseDao.addHomework(registHomeworkVO);
@@ -241,9 +245,8 @@ public class CourseServiceImpl implements CourseService{
 	@Transactional
 	@Override
 	public HomeworkVO updateHomework(String courseId, String homeworkId, ModifyHomeworkVO modifyHomeworkVO) {
-		// 등록과 같은 권한: 관리자는 모든 강의, 강사는 자기 강의만.
-		// 학생은 COURSE_HOMEWORK_UPDATE 권한을 부여하지 않아서 막는다.
-		this.checkCourseAccess(courseId);
+		// 등록과 같은 권한: 관리자는 모든 강의, 강사는 자기 강의만 (이 과정의 수강생은 403)
+		this.courseAccess.requireTutorOrAdmin(courseId);
 
 		// 강의에 속하고 삭제되지 않은 과제가 없으면 0 행이 수정된다.
 		int updatedRow = this.courseDao.updateHomework(courseId, homeworkId, modifyHomeworkVO);
@@ -300,9 +303,8 @@ public class CourseServiceImpl implements CourseService{
 	@Transactional
 	@Override
 	public String deleteHomework(String courseId, String homeworkId) {
-		// 수정과 같은 권한: 관리자는 모든 강의, 강사는 자기 강의만.
-		// 학생은 COURSE_HOMEWORK_DELETE 권한을 부여하지 않아서 막는다.
-		this.checkCourseAccess(courseId);
+		// 수정과 같은 권한: 관리자는 모든 강의, 강사는 자기 강의만 (이 과정의 수강생은 403)
+		this.courseAccess.requireTutorOrAdmin(courseId);
 
 		// 실제로 지우지 않고 DEL_YN = 'Y' 로 표시한다. 강의에 속한 삭제되지 않은 과제가 없으면 0 행.
 		int deletedRow = this.courseDao.deleteHomework(courseId, homeworkId);
@@ -345,9 +347,15 @@ public class CourseServiceImpl implements CourseService{
 	@Transactional
 	@Override
 	public List<CourseMemberVO> addCourseMember(String courseId, List<String> studentId) {
+		this.findCourse(courseId);                       // 없는 강의면 404
+		this.courseAccess.requireTutorOrAdmin(courseId); // 이 과정의 강사 또는 관리자만 학생을 추가
 		RegistCourseStudentVO registCourseStudentVO = new RegistCourseStudentVO();
 		registCourseStudentVO.setCourseId(courseId);
 		for (String userId : studentId) {
+			// 같은 과정에 강사와 수강생으로 함께 등록하지 않는다 (역할이 아니라 과정 관계로 판단)
+			if (this.courseAccess.isTutor(courseId, userId)) {
+				throw new LearningworksException(ErrorCode.COURSE_TUTOR_STUDENT_CONFLICT);
+			}
 			 registCourseStudentVO.setStudentId(userId);
 			 int result = this.courseDao.addStudent(registCourseStudentVO);
 			 if (result == 0) {
