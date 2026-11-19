@@ -144,6 +144,34 @@ public class AssignmentController {
 - 같은 권한 코드인데 `description`이 다르면 서버가 시작되지 않습니다 (5장).
 - 반복이 불편하면 자기 모듈 안에 상수 클래스를 만들어도 됩니다 (선택). 공용 상수 파일은 만들지 마세요.
 
+### API에 붙지 않는 권한 코드 (서비스 안에서 판단할 때)
+
+어떤 API를 쓸 수 있는지가 아니라 **서비스 안에서 사람에 따라 동작이 달라질 때**(예: 과정에 등록되지 않아도 모든 과정을 관리할 수 있는지) 역할 ID를 비교하지 말고 권한 코드로 판단합니다 (9장).
+
+- 권한 코드 등록부는 `@RequireAction`만 모으므로, 이런 코드는 **`ActionCodeDeclarer`**를 구현한 빈에서 선언합니다. 등록부가 함께 등록해서 접근 관리 화면 드롭다운에 다른 코드처럼 나옵니다.
+- 이름 규칙 · 길이 · `description` 규칙은 `@RequireAction`과 같습니다. 같은 코드가 `@RequireAction`에도 있으면 `description`이 같아야 합니다.
+- 판단은 `AccessChecker.hasAction(userId, actionCode)`로 합니다 (`SUPER_ADMIN`은 항상 true, 역할 권한 캐시를 그대로 씀).
+- 등록 · 부여는 6장과 같습니다. 단, 새 코드가 들어간 서버가 **배포되기 전에는 화면에서 등록할 수 없으므로**, 배포와 동시에 필요한 권한이면 SQL로 미리 넣습니다.
+
+```java
+@Component
+public class CourseAccessChecker implements ActionCodeDeclarer {
+  public static final DeclaredActionCode ALL_MANAGE =
+      new DeclaredActionCode("COURSE", "ALL_MANAGE", "모든 과정 관리 (과정에 등록되지 않아도)");
+
+  @Override
+  public List<DeclaredActionCode> declaredActionCodes() {
+    return List.of(ALL_MANAGE);
+  }
+
+  public boolean canManageAll(String userId) {
+    return this.accessChecker.hasAction(userId, ALL_MANAGE.actionCode());
+  }
+}
+```
+
+현재 선언된 코드: `COURSE_ALL_READ`(등록되지 않은 과정도 조회) · `COURSE_ALL_MANAGE`(등록되지 않은 과정도 관리). 과정 · 시험 · 면접 · 상담 · 성적의 과정 단위 권한 확인(`CourseAccessChecker`)이 씁니다 (2026-11-19).
+
 ---
 
 ## 4. 어떤 API에 무엇을 붙일까
@@ -328,6 +356,7 @@ WARN  c.l.common.action.UnusedActionCodeReporter -- 코드에서 쓰이지 않�
   - 관리자가 화면에서 권한을 바꿔도 반영되지 않고, 새로 만든 역할은 아무 기능도 쓸 수 없게 됩니다.
 - 서비스에서 역할 ID를 직접 비교하기
   - 예: `if ("ROLE_TUTOR".equals(roleId))`, `AuthUtil.isGranted("ROLE_TUTOR")`. 위와 같은 이유입니다. `isGranted`는 토큰의 역할(로그인 시점 값)을 보므로 바뀐 역할도 반영되지 않습니다.
+  - 사람에 따라 서비스 동작이 달라져야 하면 권한 코드를 선언하고 `AccessChecker.hasAction`으로 판단하세요 (3장 "API에 붙지 않는 권한 코드").
 - **등록한 뒤에 `domain` · `action` 바꾸기**
   - 권한 코드가 바뀌면 기존 등록 · 부여와 연결이 끊겨, 부여받았던 역할이 그 API를 쓸 수 없게 됩니다. 기존 코드는 접근 관리 화면에 "(미사용)"으로 표시됩니다.
   - 꼭 바꿔야 하면 6장 "권한 코드를 바꾸거나 없앨 때"를 따라 주세요.
