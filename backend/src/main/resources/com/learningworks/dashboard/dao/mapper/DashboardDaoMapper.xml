@@ -4,7 +4,7 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.learningworks.dashboard.dao.DashboardDao">
 
-    <!-- 과정 수 · 진행 중 과정의 수강생 · 강사 수 (집계와 서브쿼리를 섞지 않으려고 안쪽에서 먼저 센다: ORA-00937) -->
+    <!-- 과정 수 · 진행 중 과정의 수강생(탈퇴 회원 제외) · 강사 수 (집계와 서브쿼리를 섞지 않으려고 안쪽에서 먼저 센다: ORA-00937) -->
     <select id="selectCourseCounts" resultType="com.learningworks.dashboard.vo.response.AdminDashboardVO">
         SELECT T.ACTIVE_COUNT
              , T.UPCOMING_COUNT
@@ -13,6 +13,9 @@
                   FROM COURSE_STUDENT CS
                  INNER JOIN COURSE C2
                     ON C2.ID = CS.COURSE_ID
+                 INNER JOIN "USER" SU
+                    ON SU.ID = CS.USER_ID
+                   AND SU.DEL_YN = 'N'
                  WHERE C2.DEL_YN = 'N'
                    AND TRUNC(SYSDATE) BETWEEN TRUNC(C2.START_DATE) AND TRUNC(C2.END_DATED)) AS ACTIVE_STUDENT_COUNT
              , (SELECT COUNT(DISTINCT CT.TUTOR_ID)
@@ -21,6 +24,7 @@
                     ON C3.ID = CT.COURSE_ID
                  INNER JOIN "USER" U
                     ON U.ID = CT.TUTOR_ID
+                    AND U.DEL_YN = 'N'
                  WHERE C3.DEL_YN = 'N'
                    AND TRUNC(SYSDATE) BETWEEN TRUNC(C3.START_DATE) AND TRUNC(C3.END_DATED)) AS ACTIVE_TUTOR_COUNT
           FROM (SELECT COUNT(CASE WHEN TRUNC(SYSDATE) BETWEEN TRUNC(C.START_DATE) AND TRUNC(C.END_DATED) THEN 1 END) AS ACTIVE_COUNT
@@ -30,7 +34,7 @@
                  WHERE C.DEL_YN = 'N') T
     </select>
 
-    <!-- 진행 중 과정 (끝나는 날 순) -->
+    <!-- 진행 중 과정 (끝나는 날 순). 수강생 수는 탈퇴 회원 제외 -->
     <select id="selectActiveCourses" resultType="com.learningworks.dashboard.vo.response.AdminCourseVO">
         SELECT C.ID
              , C.COURSE_NAME
@@ -40,9 +44,13 @@
                   FROM COURSE_TUTOR CT
                  INNER JOIN "USER" U
                     ON U.ID = CT.TUTOR_ID
+                    AND U.DEL_YN = 'N'
                  WHERE CT.COURSE_ID = C.ID) AS TUTOR_NAMES
              , (SELECT COUNT(*)
                   FROM COURSE_STUDENT CS
+                 INNER JOIN "USER" SU
+                    ON SU.ID = CS.USER_ID
+                   AND SU.DEL_YN = 'N'
                  WHERE CS.COURSE_ID = C.ID) AS STUDENT_COUNT
              , (SELECT COUNT(*)
                   FROM TEST_ANSWERS TA
