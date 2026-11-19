@@ -59,10 +59,7 @@ export default function Test() {
     if (!passwordVerified) {
       return (
         <PageContainer>
-          {/* MyPassword는 아직 표준 전(hex 색)이라 다크 모드에서 밝은 섬으로 고정 (가이드 9장) */}
-          <div data-color-scheme="light">
-            <MyPassword onVerified={() => setPasswordVerified(true)} />
-          </div>
+          <MyPassword onVerified={() => setPasswordVerified(true)} />
         </PageContainer>
       );
     }
