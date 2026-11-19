@@ -103,42 +103,47 @@ function AccessManagement() {
             return next;
         });
 
-    // 메뉴 전체 조회 (메뉴 모듈의 GET /menus. 단계 → 상위 메뉴 → 메뉴 순서로 정렬되어 옴)
-    const getMenuList = useCallback(async () => {
-        try {
-            const body = await getMenus();
+    // 아래 조회 함수들은 응답이 온 뒤에 상태를 바꾼다 (effect에서 불러도 렌더가 연달아 일어나지 않음).
+    // 오류는 안에서 처리하므로 await해도 예외가 나지 않는다.
 
-            setMenuList(body?.menus ?? []);
-        } catch (error) {
-            console.error("메뉴 조회 실패:", error);
-            toast.error(getErrorMessage(error));
-        }
-    }, [toast]);
+    // 메뉴 전체 조회 (메뉴 모듈의 GET /menus. 단계 → 상위 메뉴 → 메뉴 순서로 정렬되어 옴)
+    const getMenuList = useCallback(
+        () =>
+            getMenus()
+                .then((body) => setMenuList(body?.menus ?? []))
+                .catch((error) => {
+                    console.error("메뉴 조회 실패:", error);
+                    toast.error(getErrorMessage(error));
+                }),
+        [toast]
+    );
 
     // 접근 권한 목록 조회
-    const getAccessList = useCallback(async (params = {}) => {
-        try {
-            const body = await fetchAccessApi(params);
-
-            setAccessList(body ?? []);
-            setListError("");
-        } catch (error) {
-            console.error("접근 권한 조회 실패:", error);
-            setListError(getErrorMessage(error));
-        }
-    }, []);
+    const getAccessList = useCallback(
+        (params = {}) =>
+            fetchAccessApi(params)
+                .then((body) => {
+                    setAccessList(body ?? []);
+                    setListError("");
+                })
+                .catch((error) => {
+                    console.error("접근 권한 조회 실패:", error);
+                    setListError(getErrorMessage(error));
+                }),
+        []
+    );
 
     // 권한 코드 목록 조회 (등록 여부 registered 포함)
-    const getActionCodeList = useCallback(async () => {
-        try {
-            const body = await getActionCodes();
-
-            setActionDomainList(body?.domainList ?? []);
-        } catch (error) {
-            console.error("권한 코드 조회 실패:", error);
-            toast.error(getErrorMessage(error));
-        }
-    }, [toast]);
+    const getActionCodeList = useCallback(
+        () =>
+            getActionCodes()
+                .then((body) => setActionDomainList(body?.domainList ?? []))
+                .catch((error) => {
+                    console.error("권한 코드 조회 실패:", error);
+                    toast.error(getErrorMessage(error));
+                }),
+        [toast]
+    );
 
     useEffect(() => {
         getMenuList();

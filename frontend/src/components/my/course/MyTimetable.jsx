@@ -75,7 +75,7 @@ export default function MyTimetable({ courseId: courseIdProp }) {
 
   const [isUploading, setIsUploading] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(Boolean(courseId));
 
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -92,59 +92,70 @@ export default function MyTimetable({ courseId: courseIdProp }) {
   // 오늘 날짜 (전체 시간표에서 오늘 라인 강조용)
   const todayDate = getLocalDate();
 
-  // 시간표 조회
-  const loadTimetable = useCallback(
-    async (date = null) => {
-      if (!courseId) {
-        setErrorMessage("과정 ID(courseId)를 확인할 수 없습니다.");
-        return;
-      }
+  // 과정이 바뀌면 다시 "불러오는 중"으로. effect 안에서 바로 상태를 바꾸지 않도록 렌더 중에 맞춘다
+  // (React 문서 "props가 바뀔 때 state 조정하기")
+  const [loadingCourseId, setLoadingCourseId] = useState(courseId);
+  if (loadingCourseId !== courseId) {
+    setLoadingCourseId(courseId);
+    setIsLoading(Boolean(courseId));
+    setErrorMessage("");
+  }
 
-      setIsLoading(true);
-      setErrorMessage("");
+  // 과정 ID가 없으면 조회하지 않고 이 문구만 보여 준다
+  const shownError = courseId
+    ? errorMessage
+    : "과정 ID(courseId)를 확인할 수 없습니다.";
 
-      try {
-        const response = await getTimetable(courseId);
+  // 시간표 조회: 응답이 온 뒤에만 상태를 바꾼다 (불러오는 중 표시는 부르는 쪽에서)
+  const fetchTimetable = useCallback(
+    (date = null) =>
+      getTimetable(courseId)
+        .then((response) => {
+          const data = getResponseData(response);
 
-        const data = getResponseData(response);
+          const schedules = data.schedules ?? [];
 
-        const schedules = data.schedules ?? [];
+          setTimetable({
+            ...data,
+            timeSlots: data.timeSlots ?? [],
+            schedules,
+          });
 
-        setTimetable({
-          ...data,
-          timeSlots: data.timeSlots ?? [],
-          schedules,
-        });
+          const today = getLocalDate();
 
-        const today = getLocalDate();
+          const targetDate =
+            date && schedules.some((schedule) => schedule.date === date)
+              ? date
+              : schedules.some((schedule) => schedule.date === today)
+                ? today
+                : (schedules[0]?.date ?? today);
 
-        const targetDate =
-          date && schedules.some((schedule) => schedule.date === date)
-            ? date
-            : schedules.some((schedule) => schedule.date === today)
-              ? today
-              : (schedules[0]?.date ?? today);
+          setSelectedDate(targetDate);
+        })
+        .catch((error) => {
+          setTimetable(null);
 
-        setSelectedDate(targetDate);
-      } catch (error) {
-        setTimetable(null);
-
-        setErrorMessage(
-          error instanceof Error
-            ? error.message
-            : "시간표 조회 중 오류가 발생했습니다.",
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    },
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "시간표 조회 중 오류가 발생했습니다.",
+          );
+        })
+        .finally(() => setIsLoading(false)),
     [courseId],
   );
 
+  // 다시 불러오기 (오류 화면의 [다시 시도])
+  const loadTimetable = (date = null) => {
+    setIsLoading(true);
+    setErrorMessage("");
+    fetchTimetable(date);
+  };
+
   // 과정 진입 시 시간표 조회
   useEffect(() => {
-    loadTimetable();
-  }, [loadTimetable]);
+    if (courseId) fetchTimetable();
+  }, [courseId, fetchTimetable]);
 
   // 엑셀 업로드 (FilePicker 가 같은 파일을 다시 고를 수 있도록 input 을 비워 줌)
   const handleFileSelect = async (files) => {
@@ -245,10 +256,10 @@ export default function MyTimetable({ courseId: courseIdProp }) {
       )}
 
       {/* 조회 오류 · 조회 중 */}
-      {errorMessage ? (
+      {shownError ? (
         <StatusBox
           type="error"
-          detail={errorMessage}
+          detail={shownError}
           onRetry={courseId ? () => loadTimetable(selectedDate) : undefined}
         />
       ) : isLoading ? (
