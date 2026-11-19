@@ -8,8 +8,7 @@
  * - 회색 · 상태색(info 포함)은 어느 쪽과도 상관없이 고정.
  * - 다크 모드: 색 토큰만 [data-color-scheme="dark"]에서 바뀐다 (파일 끝).
  *   <html>에 붙이면 전체, 요소에 붙이면 그 안만. [data-color-scheme="light"]는 다크 안의 "밝은 섬".
- *   앱 전체: 사이드바의 다크 모드 버튼 (theme/colorScheme.js). 아직 표준으로 옮기지 않은 화면은
- *   MainLayout이 밝은 섬으로 감싸고, 라우트 handle.darkReady인 화면만 다크를 따른다 (가이드 9장).
+ *   앱 전체: 사이드바의 다크 모드 버튼 (theme/colorScheme.js). 모든 화면이 따른다 (가이드 9장).
  */
 
 /* 공통 UI 클래스 (가이드 8장). @import는 파일 맨 앞에 있어야 함 */

@@ -5,11 +5,13 @@ import { getCourses } from "../../../api/admin/course/courseApi";
 
 import { useLocation } from "react-router-dom";
 
-import PageContainer from "../../common/PageContainer";
+import PageHeader from "../../common/ui/PageHeader";
+import useBreadcrumbs from "../../../hooks/useBreadcrumbs";
 
 export default function CourseMain() {
     const dispatch = useDispatch();
     const { pathname } = useLocation();
+    const crumbs = useBreadcrumbs();
 
     useEffect(() => {
         const controller = new AbortController();
@@ -30,9 +32,5 @@ export default function CourseMain() {
         };
     }, [dispatch, pathname]);
 
-    return (
-        <>
-            <PageContainer />
-        </>
-    );
+    return <PageHeader crumbs={crumbs} title={crumbs.at(-1)?.title} />;
 }

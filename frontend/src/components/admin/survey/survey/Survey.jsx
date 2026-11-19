@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
-import PageContainer from "../../../common/PageContainer";
+import PageHeader from "../../../common/ui/PageHeader";
+import useBreadcrumbs from "../../../../hooks/useBreadcrumbs";
 import { useEffect, useId, useState } from "react";
 import { getCourses } from "../../../../api/admin/course/courseApi";
 import { courseActions } from "../../../../store/slices/courseSliceStore";
@@ -38,6 +39,7 @@ const GROUP_TABS = [
 
 export default function Survey() {
   const { isSuperAdmin, status } = usePermission();
+  const crumbs = useBreadcrumbs();
 
   if (status === "loaded" && isSuperAdmin) return <SurveyManagement />;
 
@@ -56,11 +58,17 @@ export default function Survey() {
   } else if (status === "loaded") {
     content = <StatusBox type="denied" />;
   }
-  return <PageContainer>{content}</PageContainer>;
+  return (
+    <>
+      <PageHeader crumbs={crumbs} title={crumbs.at(-1)?.title} />
+      {content}
+    </>
+  );
 }
 
 function SurveyManagement() {
   const { courseList } = useSelector((state) => state.courses);
+  const crumbs = useBreadcrumbs();
   const { surveyList } = useSelector((state) => state.survey);
   const dispatch = useDispatch();
   const toast = useToast();
@@ -337,7 +345,8 @@ function SurveyManagement() {
   }
 
   return (
-    <PageContainer>
+    <>
+      <PageHeader crumbs={crumbs} title={crumbs.at(-1)?.title} />
       <Tabs
         idBase={subjectTabId}
         ariaLabel="과목"
@@ -374,7 +383,7 @@ function SurveyManagement() {
           </TabPanel>
         </div>
       </TabPanel>
-    </PageContainer>
+    </>
   );
 }
 
