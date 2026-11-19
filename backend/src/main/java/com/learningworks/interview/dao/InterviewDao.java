@@ -16,14 +16,6 @@ public interface InterviewDao {
 	List<InterviewResponseVO> selectInterviewList(@Param("courseId") String courseId,
 	                                              @Param("userId") String userId);
 
-	/** 사용자의 현재 역할 (USER.BASE_ROLE) */
-	String selectUserBaseRole(String userId);
-
-	/** userId(USER.ID)가 이 과정의 강사면 1 이상 */
-	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
-
-	/** userId(USER.ID)가 이 과정의 수강생이면 1 이상 */
-	int countCourseStudentByUser(@Param("courseId") String courseId, @Param("userId") String userId);
 
 	List<InterviewStudentResponseVO> selectCourseStudentList(String courseId);
 

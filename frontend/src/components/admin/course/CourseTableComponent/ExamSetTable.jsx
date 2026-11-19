@@ -11,6 +11,7 @@ import ExamQuestionViewModal from "./ExamQuestionViewModal";
 import ExamTakeModal from "./ExamTakeModal";
 import ExamGradeModal from "./ExamGradeModal";
 import usePermission from "../../../../hooks/usePermission";
+import useCourseRelation from "../../../../hooks/useCourseRelation";
 
 import Badge from "../../../common/ui/Badge";
 import Button from "../../../common/ui/Button";
@@ -57,7 +58,9 @@ export default function ExamSetTable({
   const { can } = usePermission();
   const toast = useToast();
   const confirm = useConfirm();
-  const canTakeTest = can(PERMISSION.TAKE_TEST);
+  // 응시: 권한 코드 + 이 과정의 수강생 (강사 역할에도 응시 권한이 있을 수 있어서, 가르치는 과정에서는 숨김)
+  const relation = useCourseRelation();
+  const canTakeTest = can(PERMISSION.TAKE_TEST) && relation === "STUDENT";
   const canViewQuestions = can(PERMISSION.VIEW_QUESTIONS);
   // 공개 여부 · 채점 · 삭제는 수강생 화면(studentView)에서는 권한이 있어도 숨긴다
   const canUpdateShowYn = !studentView && can(PERMISSION.UPDATE_SHOW_YN);

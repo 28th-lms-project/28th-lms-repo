@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.AuthUtil;
+import com.learningworks.course.service.CourseAccessChecker;
 import com.learningworks.counsel.dao.CounselDao;
 import com.learningworks.counsel.vo.request.CapabilityRequestVO;
 import com.learningworks.counsel.vo.request.ConsultDataRequestVO;
@@ -22,16 +23,14 @@ import com.learningworks.counsel.vo.response.ScoreResponseVO;
 @Service
 public class CounselServiceImpl implements CounselService {
 
-	/**
-	 * 과정과 상관없이 모든 과정의 상담을 다룰 수 있는 역할.
-	 * CourseServiceImpl.COURSE_ADMIN_ROLES 와 같은 기준 (역할 ID 비교는 과정 쪽과 함께 권한 코드로 바꿀 예정)
-	 */
-	private static final List<String> COURSE_ADMIN_ROLES = List.of("ROLE_SUPER_ADMIN", "ROLE_ADMIN");
-
 	private final CounselDao counselDao;
 
-	public CounselServiceImpl(CounselDao counselDao) {
+	/** 과정 단위 권한 확인: 상담은 관리자 또는 이 과정의 강사만 */
+	private final CourseAccessChecker courseAccess;
+
+	public CounselServiceImpl(CounselDao counselDao, CourseAccessChecker courseAccess) {
 		this.counselDao = counselDao;
+		this.courseAccess = courseAccess;
 	}
 
 	@Override
@@ -172,14 +171,7 @@ public class CounselServiceImpl implements CounselService {
 	 * 상담 권한(@RequireAction)이 있어도 다른 과정이거나 이 과정의 수강생이면 403 COURSE_NOT_AUTHORIZED.
 	 */
 	private void checkTutorOrAdmin(String courseId) {
-		String loginId = AuthUtil.getLoginId();
-		if (this.counselDao.countCourseTutor(courseId, loginId) > 0) {
-			return;
-		}
-		if (COURSE_ADMIN_ROLES.contains(this.counselDao.selectUserBaseRole(loginId))) {
-			return;
-		}
-		throw new LearningworksException(ErrorCode.COURSE_NOT_AUTHORIZED);
+		this.courseAccess.requireTutorOrAdmin(courseId);
 	}
 
 	private void validateRequired(String value) {

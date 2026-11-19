@@ -11,6 +11,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
+import com.learningworks.course.dao.CourseDao;
+import com.learningworks.course.service.CourseAccessChecker;
 import com.learningworks.interview.dao.InterviewDao;
 import com.learningworks.interview.vo.request.InterviewRequestVO;
 
@@ -20,12 +22,14 @@ class InterviewServiceImplAccessTest {
   private static final String COURSE_ID = "C1";
 
   private InterviewDao interviewDao;
+  private CourseDao courseDao;
   private InterviewServiceImpl service;
 
   @BeforeEach
   void setUp() {
     this.interviewDao = Mockito.mock(InterviewDao.class);
-    this.service = new InterviewServiceImpl(this.interviewDao);
+    this.courseDao = Mockito.mock(CourseDao.class);
+    this.service = new InterviewServiceImpl(this.interviewDao, new CourseAccessChecker(this.courseDao));
     Mockito.when(this.interviewDao.selectInterviewList(Mockito.anyString(), Mockito.any()))
         .thenReturn(List.of());
   }
@@ -39,9 +43,11 @@ class InterviewServiceImplAccessTest {
   private void login(String userId, boolean tutor, boolean student, String baseRole) {
     SecurityContextHolder.getContext().setAuthentication(
         UsernamePasswordAuthenticationToken.authenticated(userId, null, List.of()));
-    Mockito.when(this.interviewDao.countCourseTutor(COURSE_ID, userId)).thenReturn(tutor ? 1 : 0);
-    Mockito.when(this.interviewDao.countCourseStudentByUser(COURSE_ID, userId)).thenReturn(student ? 1 : 0);
-    Mockito.when(this.interviewDao.selectUserBaseRole(userId)).thenReturn(baseRole);
+    // 과정 관계는 공용 CourseAccessChecker 가 CourseDao 로 판단한다
+    Mockito.when(this.courseDao.countCourseTutor(COURSE_ID, userId)).thenReturn(tutor ? 1 : 0);
+    Mockito.when(this.courseDao.countCourseStudentOrTutor(COURSE_ID, userId))
+        .thenReturn((tutor ? 1 : 0) + (student ? 1 : 0));
+    Mockito.when(this.courseDao.readUserBaseRole(userId)).thenReturn(baseRole);
   }
 
   private static void assertForbidden(Runnable call) {

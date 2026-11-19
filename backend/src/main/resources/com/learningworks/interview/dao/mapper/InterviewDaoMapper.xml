@@ -41,29 +41,6 @@
 		        , CS.ID ASC
 	</select>
 
-	<!-- 로그인 사용자의 현재 역할 (관리자 판단용) -->
-	<select id="selectUserBaseRole" parameterType="string" resultType="string">
-		SELECT BASE_ROLE
-		  FROM "USER"
-		 WHERE ID = #{_parameter}
-	</select>
-
-	<!-- 로그인 사용자(USER.ID)가 이 과정의 강사인지 -->
-	<select id="countCourseTutor" resultType="_int">
-		SELECT COUNT(1)
-		  FROM COURSE_TUTOR CT
-		 WHERE CT.COURSE_ID = #{courseId}
-		   AND CT.TUTOR_ID = #{userId}
-	</select>
-
-	<!-- 로그인 사용자(USER.ID)가 이 과정의 수강생인지 -->
-	<select id="countCourseStudentByUser" resultType="_int">
-		SELECT COUNT(1)
-		  FROM COURSE_STUDENT CS
-		 WHERE CS.COURSE_ID = #{courseId}
-		   AND CS.USER_ID = #{userId}
-	</select>
-
 	<!-- 수강생의 과정 참여 여부 -->
 	<select id="countCourseStudent" resultType="_int">
 		SELECT COUNT(1)
