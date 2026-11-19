@@ -162,7 +162,7 @@ function SummaryCards({ active, total, today }) {
   if (attendance.rate === null) {
     if (attendance.loading) attendanceHint = LOADING_HINT;
     else if (attendance.anyFailed) attendanceHint = "불러오지 못했습니다";
-    else if (attendance.noTimetable) attendanceHint = "시간표가 등록되지 않았습니다";
+    else if (attendance.noTimetable) attendanceHint = "과정 기간에 수업일(평일)이 없습니다";
     else attendanceHint = "아직 수업일이 없습니다";
   } else if (attendance.warning) {
     attendanceHint += " · 출석률 주의";
@@ -231,14 +231,14 @@ function CourseCard({ course, today }) {
   const badge = courseBadge(course, today);
   const isActive = course.phase === "active";
   const loaded = course.summary?.ok ? course.summary.value : null;
-  // 시간표가 없으면(수업일 0) 수업일 기준 진행률을 낼 수 없어 날짜 기준으로 보여 준다
+  // 수업일(과정 기간의 평일)이 0이면 수업일 기준 진행률을 낼 수 없어 날짜 기준으로 보여 준다
   const summary = loaded?.totalClassDays > 0 ? loaded : null;
   const summaryLoading = course.summary === undefined;
 
   let progressNote = "날짜 기준 진행률";
-  if (summary) progressNote = `${summary.passedClassDays} / ${summary.totalClassDays} 수업일 (어제 기준)`;
+  if (summary) progressNote = `${summary.passedClassDays} / ${summary.totalClassDays} 수업일 (평일 기준, 어제까지)`;
   else if (summaryLoading) progressNote = LOADING_HINT;
-  else if (loaded) progressNote = "시간표 미등록 · 날짜 기준 진행률";
+  else if (loaded) progressNote = "기간에 평일이 없음 · 날짜 기준 진행률";
 
   return (
     <button

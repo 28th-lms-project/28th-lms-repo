@@ -83,7 +83,7 @@ public interface CourseDao {
 	List<String> selectTimetableDatesOutside(@Param("courseId") String courseId,
 			@Param("startDate") String startDate, @Param("endDate") String endDate);
 
-	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐). 수업일 = 과정 기간 안 시간표가 있는 날 */
+	/** 전체 수업일 수 · 어제까지 진행된 수업일 수 (totalClassDays, passedClassDays 만 채워짐). 수업일 = 과정 시작일 ~ 종료일 중 평일 */
 	AttendanceSummaryVO readCourseClassDays(@Param("courseId") String courseId);
 
 	/** 수강생별 Y / L / N 횟수 (어제까지). userId 가 null 이면 강의 전체 수강생 */

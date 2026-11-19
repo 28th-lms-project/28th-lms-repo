@@ -34,7 +34,7 @@ export const getCourseStudents = (courseId, options) =>
  * 백엔드: CourseController#readAttendanceSummary → GET /{courseId}/attendance/summary
  * 관리자 · 강사는 과정 전체 수강생, 수강생은 본인만 내려온다.
  * @param {string} courseId
- * @returns {Promise<{ totalClassDays: number, passedClassDays: number, progressRate: number, averageAttendanceRate: number, averageWarning: boolean, students: { userId: string, name: string, presentCount: number, lateCount: number, absentCount: number, attendanceRate: number, warning: boolean }[] }>}
+ * @returns {Promise<{ totalClassDays: number, passedClassDays: number, progressRate: number, averageAttendanceRate: number, averageWarning: boolean, students: { userId: string, name: string, presentCount: number, lateCount: number, absentCount: number, noRecordCount: number, lateAbsentCount: number, totalAbsentCount: number, attendedDays: number, attendanceRate: number, warning: boolean }[] }>}
  * errorCode: COURSE_NOT_EXISTS, COURSE_NOT_AUTHORIZED
  */
 export const getAttendanceSummary = (courseId, options) =>

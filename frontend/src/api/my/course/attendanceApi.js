@@ -9,7 +9,7 @@ const encode = (value) => encodeURIComponent(value);
 /**
  * 오늘 내 출결
  * 반환: { attendDate, classDay, attendStatus, lgnDt, lateTime, absentTime }
- *       classDay: 오늘 출석할 수 있는 수업일인지 (시간표가 있고 과정 기간 안). false면 출석 버튼을 숨김
+ *       classDay: 오늘 출석할 수 있는 수업일인지 (과정 기간 안의 평일). false면 출석 버튼을 숨김
  *       attendStatus: Y 출석 · L 지각 · N 결석, 아직 안 눌렀으면 null
  *       lateTime · absentTime: 이 시각(HH:mm)까지 누르면 출석 · 지각
  * errorCode: COURSE_NOT_AUTHORIZED (이 과정 수강생이 아님)

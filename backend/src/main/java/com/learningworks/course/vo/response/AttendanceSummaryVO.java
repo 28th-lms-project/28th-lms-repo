@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 public class AttendanceSummaryVO {
 
-	/** 전체 수업일 수 (과정 기간 안에서 시간표가 있는 날 수). 0이면 시간표 미등록 */
+	/** 전체 수업일 수 (과정 시작일 ~ 종료일 중 평일 수). 0이면 기간에 평일이 없음 */
 	private int totalClassDays;
 
 	/** 어제까지 진행된 수업일 수 */

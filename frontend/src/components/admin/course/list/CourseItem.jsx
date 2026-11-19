@@ -161,13 +161,23 @@ export default function CourseItem() {
     // 다른 과정으로 이동했을 때 이전 과정의 출석률이 보이지 않도록 비운다
     dispatch(courseActions.loadAttendanceSummary(null));
     if (!canReadAttendance) {
+      dispatch(courseActions.setAttendanceSummaryStatus("idle"));
       return;
     }
+    dispatch(courseActions.setAttendanceSummaryStatus("loading"));
     const controller = new AbortController();
     getAttendanceSummary(id, { signal: controller.signal })
-      .then((summary) => dispatch(courseActions.loadAttendanceSummary(summary)))
-      // 실패하면 요약 없이 둔다 (과정 진행률은 날짜 기준으로 표시됨)
-      .catch(() => {});
+      .then((summary) => {
+        dispatch(courseActions.loadAttendanceSummary(summary));
+        dispatch(courseActions.setAttendanceSummaryStatus("success"));
+      })
+      // 실패하면 요약 없이 둔다 (과정 진행률은 날짜 기준으로 표시되고, 출석률 탭은 오류를 보여 줌)
+      // 다른 과정으로 이동해서 취소된 요청은 무시 (새 요청이 "loading"으로 덮어씀)
+      .catch((error) => {
+        if (error.name !== "AbortError") {
+          dispatch(courseActions.setAttendanceSummaryStatus("error"));
+        }
+      });
     return () => controller.abort();
   }, [id, dispatch, canReadAttendance]);
 
@@ -225,7 +235,7 @@ export default function CourseItem() {
               </dd>
             </div>
           </dl>
-          {/* 출석률 요약이 있고 시간표가 있으면 수업일 기준 진행률, 아니면 날짜 기준 진행률 */}
+          {/* 출석률 요약이 있으면 수업일(과정 기간의 평일) 기준 진행률, 아니면 날짜 기준 진행률 */}
           {attendanceSummary?.totalClassDays > 0 ? (
             <div>
               <Progress
@@ -235,7 +245,7 @@ export default function CourseItem() {
               />
               <p className="field-hint">
                 {attendanceSummary.passedClassDays} /{" "}
-                {attendanceSummary.totalClassDays} 수업일 (어제 기준)
+                {attendanceSummary.totalClassDays} 수업일 (평일 기준, 어제까지)
               </p>
             </div>
           ) : (
@@ -243,7 +253,7 @@ export default function CourseItem() {
               <Progress label="과정 진행률" value={dateProgress} showValue />
               {attendanceSummary && (
                 <p className="field-hint">
-                  시간표 미등록 · 날짜 기준 진행률
+                  기간에 평일이 없음 · 날짜 기준 진행률
                 </p>
               )}
             </div>

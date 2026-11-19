@@ -12,7 +12,7 @@ public class TodayAttendanceVO {
 
   /**
    * 오늘이 출석할 수 있는 수업일인지. 출석 체크(POST)와 같은 기준:
-   * 오늘 시간표(COURSE_TIME_TABLE)가 있고 과정 기간 안이면 true. false면 출석 버튼을 숨긴다
+   * 오늘이 과정 기간 안의 평일(월 ~ 금)이면 true. false면 출석 버튼을 숨긴다
    */
   private boolean classDay;
 

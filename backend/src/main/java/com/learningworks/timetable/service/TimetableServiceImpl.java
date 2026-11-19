@@ -79,8 +79,8 @@ public class TimetableServiceImpl implements TimetableService {
             );
         }
 
-        // 2. 과정 기간 밖 날짜가 있으면 저장하지 않음 (수업일 = 과정 기간 안 시간표가 있는 날이라,
-        //    기간 밖 시간표는 출석 · 진행률에 쓰이지 않고 화면만 헷갈리게 한다). 기존 시간표는 그대로 둔다
+        // 2. 과정 기간 밖 날짜가 있으면 저장하지 않음 (기간 밖 시간표는 화면만 헷갈리게 한다.
+        //    수업일 · 출석 · 진행률은 과정 기간의 평일로 계산하며 시간표는 쓰지 않음). 기존 시간표는 그대로 둔다
         validateLessonDates(courseId, lessons);
 
         // 3. 기존 과정 시간표 삭제

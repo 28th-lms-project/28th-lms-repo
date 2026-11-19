@@ -461,7 +461,8 @@ public class CourseServiceImpl implements CourseService{
 
 	/**
 	 * 새 과정 기간 밖에 시간표가 있으면 수정하지 않는다 (시작일 · 종료일 칸에 날짜를 적어 알림).
-	 * 수업일 = 과정 기간 안에서 시간표가 있는 날이라, 기간을 줄이면 밀려난 날의 출석 · 진행률이 조용히 바뀌기 때문.
+	 * 기간 밖 시간표는 화면에서 헷갈리기만 하고, 기간을 줄이면 밀려난 날의 수업 정보가 조용히 사라지기 때문.
+	 * (수업일 · 진행률 · 출석률은 과정 시작일 ~ 종료일의 평일로 계산하며 시간표는 보지 않는다)
 	 * 기간을 늘리는 것은 영향이 없어 그대로 허용된다.
 	 */
 	private void checkTimetableInPeriod(String courseId, String startDate, String endDate) {
