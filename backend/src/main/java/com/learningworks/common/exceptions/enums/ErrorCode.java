@@ -73,6 +73,7 @@ public enum ErrorCode {
 
   // 409 CONFLICT
   GLOBAL_DUPLICATED(HttpStatus.CONFLICT, "이미 존재하는 데이터입니다."), //
+  COURSE_TUTOR_STUDENT_CONFLICT(HttpStatus.CONFLICT, "같은 과정에 강사와 수강생으로 함께 등록할 수 없습니다."), //
   USER_USED(HttpStatus.CONFLICT, "이미 사용 중인 정보입니다."), //
   ROLE_ID_USED(HttpStatus.CONFLICT, "이미 사용 중인 역할 ID입니다."), //
   ROLE_IN_USE(HttpStatus.CONFLICT, "해당 역할을 사용 중인 회원이 있어 삭제할 수 없습니다. 회원의 역할을 먼저 변경해주세요."), //

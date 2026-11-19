@@ -405,6 +405,15 @@
     </select>
 
     <!-- 강사 수동 채점: 답안 1건의 채점 결과 수정 -->
+    <!-- 답안이 속한 시험 세트의 과정 ID (채점 권한 확인용) -->
+    <select id="selectCourseIdByAnswerId" parameterType="string" resultType="string">
+        SELECT TS.COURSE_ID
+          FROM TEST_ANSWERS TA
+         INNER JOIN TEST_SET TS
+            ON TS.ID = TA.TEST_SET_ID
+         WHERE TA.ID = #{_parameter}
+    </select>
+
     <update id="updateAnswerGrade">
         UPDATE TEST_ANSWERS
            SET IS_CORRECT = #{isCorrect}

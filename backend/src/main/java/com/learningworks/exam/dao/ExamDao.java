@@ -70,6 +70,9 @@ public interface ExamDao {
 	/** 답안 1건의 채점 결과(IS_CORRECT) 수정 */
 	int updateAnswerGrade(@Param("answerId") String answerId, @Param("isCorrect") String isCorrect);
 
+	/** 답안이 속한 시험 세트의 과정 ID (채점 권한 확인용). 답안이 없으면 null */
+	String selectCourseIdByAnswerId(String answerId);
+
 	
 //	String getTestSetIdByCourseName(String courseName);
 

@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.ValidationFailedException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
+import com.learningworks.course.service.CourseAccessChecker;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,18 @@ import lombok.AllArgsConstructor;
 public class ExamServiceImpl implements ExamService {
 
 	private ExamDao examDao;
+
+	/** 과정 단위 권한 확인: 시험 세트 · 채점은 이 과정의 강사 또는 관리자, 응시는 이 과정의 수강생 */
+	private CourseAccessChecker courseAccess;
+
+	/** 시험 세트의 과정 ID. 없는 세트면 EXAM_NOT_EXISTS */
+	private String courseIdOfTestSet(String testSetId) {
+		RegistTestSetVO testSet = this.examDao.selectExamsetById(testSetId);
+		if (testSet == null) {
+			throw new LearningworksException(ErrorCode.EXAM_NOT_EXISTS);
+		}
+		return testSet.getCourseId();
+	}
 
 	/** TESTS.ANSWER_TYPE 에 넣을 수 있는 값 (공통 코드 TEST_ANSWER_TYPE 의 ID) */
 	private static final Set<String> QUESTION_ANSWER_TYPES = Set.of(
@@ -163,6 +176,8 @@ public class ExamServiceImpl implements ExamService {
 
 	@Override
 	public List<ExamSetVO> readAllExamInExamSet(String courseId, String userId) {
+		// 과정 화면의 시험 탭: 이 과정의 강사 · 수강생 또는 관리자
+		this.courseAccess.requireMember(courseId);
 		List<ExamSetVO> examSet = this.examDao.selectAllExamInExamSet(courseId, userId);
 		System.out.println("시험 세트 수" + examSet.size());
 
@@ -257,6 +272,7 @@ public class ExamServiceImpl implements ExamService {
 	@Override
 	@Transactional 
 	public RegistTestSetVO makeNewTestSet(String courseId, RegistTestSetVO registTestSetVO) {
+		this.courseAccess.requireTutorOrAdmin(courseId);
 		int TestSetResult = this.examDao.makeNewTestSet(courseId,registTestSetVO);
 		if (TestSetResult == 0 ) {
 			throw new LearningworksException(ErrorCode.GLOBAL_BAD_REQUEST);
@@ -279,6 +295,7 @@ public class ExamServiceImpl implements ExamService {
 		if (testSetId == null || testSetId.isBlank()) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
+		this.courseAccess.requireTutorOrAdmin(this.courseIdOfTestSet(testSetId));
 		int updatedRows = this.examDao.updateTestSetShowYn(testSetId, showYn);
 		if (updatedRows != 1) {
 			// 해당 ID의 시험 세트가 없음
@@ -290,6 +307,7 @@ public class ExamServiceImpl implements ExamService {
 	@Override
 	@Transactional 
 	public String deleteTestSet(String testSetId) {
+		this.courseAccess.requireTutorOrAdmin(this.courseIdOfTestSet(testSetId));
 		int result = this.examDao.deleteTestSet(testSetId);
 		if(result == 0) {
 			throw new LearningworksException(ErrorCode.EXAM_NOT_EXISTS);
@@ -299,6 +317,8 @@ public class ExamServiceImpl implements ExamService {
 
 	@Override
 	public ExamQuestionListVO viewTestSetQuestions(String testSetId) {
+		// 정답이 포함된 문제 목록이라 이 과정의 강사 또는 관리자만 (수강생은 viewTestSetQuestionsForTake)
+		this.courseAccess.requireTutorOrAdmin(this.courseIdOfTestSet(testSetId));
 		List<ExamQuestionVO> result = this.examDao.viewTestSetQuestions(testSetId);
 		if(result == null) {
 			throw new LearningworksException(ErrorCode.EXAM_NOT_EXISTS);
@@ -315,6 +335,8 @@ public class ExamServiceImpl implements ExamService {
 		if (testSet == null) {
 			throw new LearningworksException(ErrorCode.EXAM_NOT_EXISTS);
 		}
+		// 이 과정의 수강생만 응시 (공개된 시험이라도 다른 과정 사람은 볼 수 없음)
+		this.courseAccess.requireStudent(testSet.getCourseId());
 		if (!"Y".equals(testSet.getShowYn())) {
 			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
 		}
@@ -356,6 +378,8 @@ public class ExamServiceImpl implements ExamService {
 		if (testSet == null) {
 			throw new LearningworksException(ErrorCode.EXAM_NOT_EXISTS);
 		}
+		// 이 과정의 수강생만 답안을 낼 수 있다 (이전에는 공개 여부만 봐서 아무 과정의 시험에 제출 가능했음)
+		this.courseAccess.requireStudent(testSet.getCourseId());
 		if (!"Y".equals(testSet.getShowYn())) {
 			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
 		}
@@ -409,6 +433,8 @@ public class ExamServiceImpl implements ExamService {
 
 	@Override
 	public List<ExamQuestionAnswerVO> isCorrectSetByUserId(String testSetId, String userId) {
+		// 학생 답안 조회(채점 화면): 이 과정의 강사 또는 관리자
+		this.courseAccess.requireTutorOrAdmin(this.courseIdOfTestSet(testSetId));
 		List<ExamQuestionAnswerVO> answerLsit = this.examDao.correctStudentAnswer(testSetId, userId);
 		System.out.println(answerLsit);
 		return answerLsit;
@@ -420,6 +446,12 @@ public class ExamServiceImpl implements ExamService {
 		if (answerId == null || answerId.isBlank()) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
+		String courseId = this.examDao.selectCourseIdByAnswerId(answerId);
+		if (courseId == null) {
+			// 해당 ID의 답안이 없음
+			throw new LearningworksException(ErrorCode.GLOBAL_BAD_REQUEST);
+		}
+		this.courseAccess.requireTutorOrAdmin(courseId);
 		int updatedRows = this.examDao.updateAnswerGrade(answerId, isCorrect);
 		if (updatedRows != 1) {
 			// 해당 ID의 답안이 없음
