@@ -85,16 +85,20 @@ export default function StudentConnected() {
     );
   }
 
-  const { progressRate, passedClassDays = 0, students = [] } = attendanceSummary;
+  const {
+    progressRate,
+    passedClassDays = 0,
+    students = [],
+  } = attendanceSummary;
 
   return (
     <div className="form-stack">
       <div className="toolbar">
         <span className="field-hint">
           수강생 {students.length}명 · 과정 진행률{" "}
-          {clampRate(progressRate).toFixed(1)}% · 수업일은 과정 기간의
-          평일(월 ~ 금) · 출석률은 전체 수업일 기준, 출석 일수는 진행된 수업일
-          기준 (어제까지, 오늘 출석은 내일 반영)
+          {clampRate(progressRate).toFixed(1)}% · 수업일은 과정 기간의 평일(월 ~
+          금) · 출석률은 전체 수업일 기준, 출석 일수는 진행된 수업일 기준
+          (어제까지, 오늘 출석은 내일 반영)
         </span>
       </div>
       <Table

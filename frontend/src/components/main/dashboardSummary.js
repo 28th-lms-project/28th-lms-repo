@@ -109,25 +109,34 @@ const scan = (courses, key, visit) => {
 };
 
 /**
- * 출석률: 진행 중 과정에서 본인 줄(수강생은 본인만 내려옴)을 모아 평균.
+ * 출석률: 진행 중 과정에서 본인 줄(수강생은 본인만 내려옴)의 "지금까지 출석률"(rateSoFar)을 평균.
+ * 서버 attendanceRate(과정 전체 수업일 기준)는 과정 중간에 낮게 나와 주의 표시와 어긋나므로 쓰지 않는다.
  * 수업일이 아직 지나지 않은 과정(passedClassDays 0)은 뺀다.
  */
 export const summarizeAttendance = (activeCourses) => {
   const rows = [];
+  const rates = [];
   let noTimetable = false;
   const flags = scan(activeCourses, "summary", (summary) => {
     // 수업일 = 과정 시작일 ~ 종료일 중 평일. 0이면 기간에 평일이 없음
     if (summary?.totalClassDays === 0) noTimetable = true;
     const me = summary?.students?.[0];
-    if (me && summary.passedClassDays > 0) rows.push(me);
+    if (me && summary.passedClassDays > 0) {
+      rows.push(me);
+      // 지금까지 출석률 (진행된 수업일 기준): 주의 표시 기준과 같고, 강사 대시보드와 같은 숫자
+      const rate = rateSoFar(me, summary.passedClassDays);
+      if (rate !== null) rates.push(rate);
+    }
   });
   const sum = (key) => rows.reduce((total, row) => total + (row[key] ?? 0), 0);
   if (rows.length === 0) {
     return { rate: null, late: 0, lateAbsent: 0, absent: 0, warning: false, noTimetable, ...flags };
   }
-  const rate = rows.reduce((total, row) => total + row.attendanceRate, 0) / rows.length;
+  const rate = rates.length > 0
+    ? Math.round((rates.reduce((total, value) => total + value, 0) / rates.length) * 10) / 10
+    : null;
   return {
-    rate: Math.round(rate * 10) / 10,
+    rate,
     late: sum("lateCount"),
     // 지각 3번 = 결석 1번으로 바꾼 수 (서버 계산)
     lateAbsent: sum("lateAbsentCount"),
@@ -263,4 +272,173 @@ export const homeworkDue = (today, endDate) => {
     label: days === 0 ? "오늘 마감" : `D-${days}`,
     tone: days <= HOMEWORK_WARNING_DAYS ? "warning" : "neutral",
   };
+};
+
+/* ───── 강사 대시보드 ───── */
+
+/**
+ * 지금까지 출석률 % = 출석 인정일(attendedDays) / 진행된 수업일 (소수 1자리). 진행된 수업일이 0이면 null.
+ * 서버의 attendanceRate는 "과정 전체 수업일" 기준이라 과정 중간에는 빠진 날이 없어도 낮게 나온다.
+ * 주의 표시(warning)는 진행된 수업일 기준(80%)이라, 강사 화면은 이 값과 기준을 맞춰 보여 준다.
+ */
+export const rateSoFar = (student, passedClassDays) =>
+  passedClassDays > 0 && typeof student?.attendedDays === "number"
+    ? Math.round((student.attendedDays / passedClassDays) * 1000) / 10
+    : null;
+
+/**
+ * 강사: 담당 과정의 출석 요약.
+ * rate: 담당 과정 수강생 전원의 "지금까지 출석률" 평균 (수업일이 지난 과정만), warningCount: 출석 주의 학생 수 합계
+ */
+export const summarizeTutorAttendance = (activeCourses) => {
+  const rates = [];
+  let warningCount = 0;
+  let studentCount = 0;
+  let noTimetable = false;
+  const flags = scan(activeCourses, "summary", (summary) => {
+    if (summary?.totalClassDays === 0) noTimetable = true;
+    const students = summary?.students ?? [];
+    studentCount += students.length;
+    warningCount += students.filter((student) => student.warning).length;
+    for (const student of students) {
+      const rate = rateSoFar(student, summary.passedClassDays);
+      if (rate !== null) rates.push(rate);
+    }
+  });
+  const rate = rates.length > 0
+    ? Math.round((rates.reduce((sum, value) => sum + value, 0) / rates.length) * 10) / 10
+    : null;
+  return { rate, warningCount, studentCount, noTimetable, ...flags };
+};
+
+/** 강사: 출석 주의 학생 (서버의 warning), 지금까지 출석률 낮은 순. 항목에 rate(지금까지 출석률) 포함 */
+export const collectAttendanceWarnings = (activeCourses) => {
+  const items = [];
+  const flags = scan(activeCourses, "summary", (summary, course) => {
+    for (const student of summary?.students ?? []) {
+      if (student.warning) {
+        const rate = rateSoFar(student, summary.passedClassDays);
+        items.push({ key: `${course.id}-${student.userId}`, course, student, rate });
+      }
+    }
+  });
+  items.sort((a, b) => (a.rate ?? 0) - (b.rate ?? 0));
+  return { items, ...flags };
+};
+
+/**
+ * 강사: 오늘 출석 현황 (오늘 수업이 있는 과정만 합산).
+ * checked: 출석 · 지각 · 결석 기록 수, present · late · notChecked, classCourses: 오늘 수업 있는 과정 수
+ */
+export const summarizeTodayAttendance = (activeCourses) => {
+  const total = { studentCount: 0, present: 0, late: 0, absent: 0, notChecked: 0, classCourses: 0 };
+  const flags = scan(activeCourses, "todayAttendance", (today) => {
+    if (!today?.classDay) return;
+    total.classCourses += 1;
+    total.studentCount += today.studentCount ?? 0;
+    total.present += today.presentCount ?? 0;
+    total.late += today.lateCount ?? 0;
+    total.absent += today.absentCount ?? 0;
+    total.notChecked += today.notCheckedCount ?? 0;
+  });
+  return { ...total, ...flags };
+};
+
+/**
+ * 강사: 마감 전 과제와 제출 현황 (마감 순). 항목에 submittedCount · studentCount (서버 집계, 수강생 제출만)
+ */
+export const collectTutorHomeworks = (activeCourses, today) => {
+  const items = [];
+  const flags = scan(activeCourses, "homeworks", (homeworks, course) => {
+    for (const homework of homeworks ?? []) {
+      if (homework.endDate && homework.endDate >= today) {
+        items.push({ key: `${course.id}-${homework.id}`, course, homework });
+      }
+    }
+  });
+  items.sort((a, b) => a.homework.endDate.localeCompare(b.homework.endDate));
+  return { items, ...flags };
+};
+
+/**
+ * 강사: 설문 응답 현황. 수강생이 있고 아직 모두 응답하지 않은 설문만, 응답률 낮은 순.
+ * 항목: { key, course, survey, rate(%) }
+ */
+export const collectSurveyResponses = (activeCourses) => {
+  const items = [];
+  const flags = scan(activeCourses, "surveys", (surveys, course) => {
+    for (const survey of surveys ?? []) {
+      if (!(survey.studentCount > 0) || survey.answerCount >= survey.studentCount) continue;
+      const rate = Math.round((survey.answerCount / survey.studentCount) * 100);
+      items.push({ key: `${course.id}-${survey.id}`, course, survey, rate });
+    }
+  });
+  items.sort((a, b) => a.rate - b.rate);
+  return { items, ...flags };
+};
+
+/**
+ * 강사: 다가오는 면접 일정 (지금 이후, 가까운 순). interviewDateTime은 "YYYY-MM-DD HH:MM"이라 문자열 비교가 시간 비교와 같다.
+ * 항목: { key, course, interview, date, time }
+ * @param {string} now  "YYYY-MM-DD HH:MM"
+ */
+export const collectUpcomingInterviews = (activeCourses, now) => {
+  const items = [];
+  const flags = scan(activeCourses, "interviews", (interviews, course) => {
+    for (const interview of interviews ?? []) {
+      const at = interview.interviewDateTime ?? "";
+      if (at < now) continue;
+      items.push({
+        key: `${course.id}-${interview.id}`,
+        course,
+        interview,
+        date: at.slice(0, 10),
+        time: at.slice(11, 16),
+      });
+    }
+  });
+  items.sort((a, b) => a.interview.interviewDateTime.localeCompare(b.interview.interviewDateTime));
+  return { items, ...flags };
+};
+
+/**
+ * 강사: 채점 대기. 과정 전체 성적(학생별 scoreList)을 시험별로 묶는다.
+ * 항목: { key, course, testSetId, setName, pendingAnswers(채점 안 된 답안 수), pendingStudents, submitted(응시 학생), studentCount }
+ * pendingAnswers가 있는 시험만, 많은 순. total: 전체 채점 대기 답안 수
+ */
+export const collectGradingQueue = (activeCourses) => {
+  const items = [];
+  let total = 0;
+  const flags = scan(activeCourses, "courseScores", (students, course) => {
+    const bySet = new Map();
+    for (const student of students ?? []) {
+      for (const row of student.scoreList ?? []) {
+        const entry = bySet.get(row.testSetId) ?? {
+          key: `${course.id}-${row.testSetId}`,
+          course,
+          testSetId: row.testSetId,
+          setName: row.setName,
+          pendingAnswers: 0,
+          pendingStudents: 0,
+          submitted: 0,
+          studentCount: 0,
+        };
+        entry.studentCount += 1;
+        if (row.score !== null && row.score !== undefined) entry.submitted += 1;
+        if (row.pendingCount > 0) {
+          entry.pendingAnswers += row.pendingCount;
+          entry.pendingStudents += 1;
+        }
+        bySet.set(row.testSetId, entry);
+      }
+    }
+    for (const entry of bySet.values()) {
+      if (entry.pendingAnswers > 0) {
+        items.push(entry);
+        total += entry.pendingAnswers;
+      }
+    }
+  });
+  items.sort((a, b) => b.pendingAnswers - a.pendingAnswers);
+  return { items, total, ...flags };
 };

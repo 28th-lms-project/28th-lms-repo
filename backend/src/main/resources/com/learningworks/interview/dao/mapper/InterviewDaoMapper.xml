@@ -5,8 +5,8 @@
 <mapper namespace="com.learningworks.interview.dao.InterviewDao">
 
 	<!-- 과정의 면접 일정 목록 (면접일시 오름차순) -->
+	<!-- 과정의 면접 일정. userId가 있으면 그 수강생 본인 것만 (수강생이 볼 때) -->
 	<select id="selectInterviewList"
-	        parameterType="string"
 	        resultType="com.learningworks.interview.vo.response.InterviewResponseVO">
 		SELECT CSI.ID
 		     , CSI.COURSE_STUDENT_ID
@@ -18,7 +18,10 @@
 		    ON CSI.COURSE_STUDENT_ID = CS.ID
 		 INNER JOIN "USER" U
 		    ON CS.USER_ID = U.ID
-		 WHERE CS.COURSE_ID = #{_parameter}
+		 WHERE CS.COURSE_ID = #{courseId}
+		<if test="userId != null">
+		   AND CS.USER_ID = #{userId}
+		</if>
 		 ORDER BY CSI.INTERVIEW_DATE_TIME ASC
 		        , CSI.ID ASC
 	</select>
@@ -36,6 +39,29 @@
 		   AND U.DEL_YN = 'N'
 		 ORDER BY U.NAME ASC
 		        , CS.ID ASC
+	</select>
+
+	<!-- 로그인 사용자의 현재 역할 (관리자 판단용) -->
+	<select id="selectUserBaseRole" parameterType="string" resultType="string">
+		SELECT BASE_ROLE
+		  FROM "USER"
+		 WHERE ID = #{_parameter}
+	</select>
+
+	<!-- 로그인 사용자(USER.ID)가 이 과정의 강사인지 -->
+	<select id="countCourseTutor" resultType="_int">
+		SELECT COUNT(1)
+		  FROM COURSE_TUTOR CT
+		 WHERE CT.COURSE_ID = #{courseId}
+		   AND CT.TUTOR_ID = #{userId}
+	</select>
+
+	<!-- 로그인 사용자(USER.ID)가 이 과정의 수강생인지 -->
+	<select id="countCourseStudentByUser" resultType="_int">
+		SELECT COUNT(1)
+		  FROM COURSE_STUDENT CS
+		 WHERE CS.COURSE_ID = #{courseId}
+		   AND CS.USER_ID = #{userId}
 	</select>
 
 	<!-- 수강생의 과정 참여 여부 -->

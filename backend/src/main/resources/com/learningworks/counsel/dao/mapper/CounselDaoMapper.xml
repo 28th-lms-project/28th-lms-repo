@@ -4,6 +4,21 @@
   "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.learningworks.counsel.dao.CounselDao">
 
+	<!-- 로그인 사용자의 현재 역할 (관리자 판단용) -->
+	<select id="selectUserBaseRole" parameterType="string" resultType="string">
+		SELECT BASE_ROLE
+		  FROM "USER"
+		 WHERE ID = #{_parameter}
+	</select>
+
+	<!-- 로그인 사용자(USER.ID)가 이 과정의 강사인지 -->
+	<select id="countCourseTutor" resultType="_int">
+		SELECT COUNT(1)
+		  FROM COURSE_TUTOR CT
+		 WHERE CT.COURSE_ID = #{courseId}
+		   AND CT.TUTOR_ID = #{userId}
+	</select>
+
 	<!-- 과정의 수강생-종합의견 목록 (상담 정보가 없는 수강생도 포함) -->
 	<select id="selectCounselList"
 	        parameterType="string"

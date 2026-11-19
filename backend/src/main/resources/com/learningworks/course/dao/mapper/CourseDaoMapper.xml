@@ -196,7 +196,10 @@
 	</select>
 	
 	
-	<!-- 과제 목록. SUBMITTED_YN: 로그인 사용자(userId)가 삭제되지 않은 댓글(제출)을 남겼으면 Y -->
+	<!--
+		과제 목록. SUBMITTED_YN: 로그인 사용자(userId)가 삭제되지 않은 댓글(제출)을 남겼으면 Y
+		SUBMITTED_COUNT: 제출한 수강생 수 (과정 수강생의 댓글만, 강사 댓글 제외) · STUDENT_COUNT: 과정 수강생 수
+	-->
 	<select id="readHomeworkList"
 	       resultType="com.learningworks.course.vo.response.HomeworkVO">
 	SELECT CH.CONTENT 
@@ -214,6 +217,16 @@
            THEN 'Y'
            ELSE 'N'
       END AS SUBMITTED_YN
+    , (SELECT COUNT(DISTINCT CHR2.COURSE_STUDENT_ID)
+         FROM COURSE_HOMEWORK_REPLY CHR2
+        WHERE CHR2.HOMEWORK_ID = CH.ID
+          AND CHR2.DEL_YN = 'N'
+          AND CHR2.COURSE_STUDENT_ID IN (SELECT CS.USER_ID
+                                           FROM COURSE_STUDENT CS
+                                          WHERE CS.COURSE_ID = CH.COURSE_ID)) AS SUBMITTED_COUNT
+    , (SELECT COUNT(*)
+         FROM COURSE_STUDENT CS2
+        WHERE CS2.COURSE_ID = CH.COURSE_ID) AS STUDENT_COUNT
   FROM COURSE_HOMEWORK CH
  WHERE CH.COURSE_ID IN (SELECT C.ID 
                       FROM COURSE C 
@@ -520,6 +533,30 @@
          WHERE CD.CLASS_DAY <![CDATA[ <= ]]> CD.END_DAY
            AND TO_CHAR(CD.CLASS_DAY, 'DY', 'NLS_DATE_LANGUAGE=ENGLISH') NOT IN ('SAT', 'SUN')
     </sql>
+
+    <!-- 오늘이 이 과정의 수업일이면 1, 아니면 0 (수업일 기준은 위 courseClassDays) -->
+    <select id="countTodayClassDay" resultType="int">
+        SELECT COUNT(*)
+          FROM (<include refid="courseClassDays"/>) D
+         WHERE D.CLASS_DAY = TRUNC(SYSDATE)
+    </select>
+
+    <!-- 과정의 오늘 출석 현황 (수강생의 오늘 기록만). classDay · notCheckedCount 는 서비스에서 채운다 -->
+    <select id="readTodayAttendanceCounts"
+            resultType="com.learningworks.course.vo.response.TodayAttendanceSummaryVO">
+        SELECT (SELECT COUNT(*) FROM COURSE_STUDENT CS WHERE CS.COURSE_ID = #{courseId}) AS STUDENT_COUNT
+             , T.PRESENT_COUNT
+             , T.LATE_COUNT
+             , T.ABSENT_COUNT
+          FROM (SELECT COUNT(CASE WHEN A.ATTEND_STATUS = 'Y' THEN 1 END) AS PRESENT_COUNT
+                     , COUNT(CASE WHEN A.ATTEND_STATUS = 'L' THEN 1 END) AS LATE_COUNT
+                     , COUNT(CASE WHEN A.ATTEND_STATUS = 'N' THEN 1 END) AS ABSENT_COUNT
+                  FROM ATTENDANCE A
+                 WHERE A.COURSE_ID = #{courseId}
+                   AND A.LGN_DT <![CDATA[ >= ]]> TRUNC(SYSDATE)
+                   AND A.LGN_DT <![CDATA[ < ]]> TRUNC(SYSDATE) + 1
+                   AND A.USER_ID IN (SELECT CS2.USER_ID FROM COURSE_STUDENT CS2 WHERE CS2.COURSE_ID = #{courseId})) T
+    </select>
 
     <!--
         출석률 요약: 전체 수업일 수 / 어제까지 진행된 수업일 수 (수업일 기준은 위 courseClassDays)

@@ -28,6 +28,7 @@ import com.learningworks.course.vo.response.CourseVO;
 import com.learningworks.course.vo.response.HomeworkReplyVO;
 import com.learningworks.course.vo.response.HomeworkVO;
 import com.learningworks.course.vo.response.StudentAttendanceVO;
+import com.learningworks.course.vo.response.TodayAttendanceSummaryVO;
 
 @Service
 public class CourseServiceImpl implements CourseService{
@@ -396,6 +397,26 @@ public class CourseServiceImpl implements CourseService{
 			summary.setAverageAttendanceRate(Math.round(averageRate * 10) / 10.0);
 			summary.setAverageWarning(this.isAttendanceWarning(averageAttended, passed));
 		}
+		return summary;
+	}
+
+	@Override
+	public TodayAttendanceSummaryVO readTodayAttendance(String courseId) {
+		this.findCourse(courseId);        // 없는 강의면 404
+		this.checkCourseAccess(courseId); // 관리자 또는 이 강의의 수강생 · 강사만
+
+		// 다른 수강생의 출석 현황이라 수강생에게는 주지 않는다 (본인 출결은 GET /attendances/{courseId}/today)
+		if (this.isCourseStudent(courseId, AuthUtil.getLoginId())) {
+			throw new LearningworksException(ErrorCode.COURSE_NOT_AUTHORIZED);
+		}
+
+		TodayAttendanceSummaryVO summary = this.courseDao.readTodayAttendanceCounts(courseId);
+		if (summary == null) {
+			summary = new TodayAttendanceSummaryVO();
+		}
+		summary.setClassDay(this.courseDao.countTodayClassDay(courseId) > 0);
+		int checked = summary.getPresentCount() + summary.getLateCount() + summary.getAbsentCount();
+		summary.setNotCheckedCount(Math.max(0, summary.getStudentCount() - checked));
 		return summary;
 	}
 

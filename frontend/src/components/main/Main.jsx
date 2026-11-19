@@ -1,9 +1,8 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "../common/ui/PageHeader";
 import Panel from "../common/ui/Panel";
 import StatCard from "../common/ui/StatCard";
-import Progress from "../common/ui/Progress";
 import Badge from "../common/ui/Badge";
 import Button from "../common/ui/Button";
 import StatusBox from "../common/ui/StatusBox";
@@ -16,34 +15,33 @@ import useBreadcrumbs from "../../hooks/useBreadcrumbs";
 import usePermission from "../../hooks/usePermission";
 import useMyCourses from "./useMyCourses";
 import useStudentDashboard from "./useStudentDashboard";
+import TutorDashboard from "./TutorDashboard";
+import {
+  CourseCard,
+  EndedCourses,
+  ListPanel,
+  LOADING_HINT,
+  TodayLessons,
+} from "./dashboardParts";
+import { COURSE_TAB, courseUrl, useNowTime } from "./dashboardShared";
+import styles from "./Main.module.css";
 import {
   ATTEND_STATUS,
   attendNowRule,
   collectOpenHomeworks,
   collectTodayAttendance,
   collectPendingTests,
-  collectTodayLessons,
-  courseBadge,
-  dateProgress,
   homeworkDue,
-  isNowInSlot,
   summarizeAttendance,
   summarizeScores,
-  toTimeKey,
 } from "./dashboardSummary";
-
-const LOADING_HINT = "불러오는 중...";
-
-/** 수강 과정 화면(MyCourse)의 탭 번호 */
-const COURSE_TAB = { attendance: 1, timetable: 2, homework: 3, test: 4 };
-const courseUrl = (courseId, tab = 0) =>
-  `/my/course/list/${encodeURIComponent(courseId)}?tab=${tab}`;
 
 /**
  * 대시보드. 역할 ID가 아니라 "이 사람이 과정에서 무엇인지 + 권한"으로 영역을 고른다
  * (역할 ID를 비교하면 관리자가 화면에서 권한을 바꾸거나 새 역할을 만들어도 반영되지 않음. access-control-guide 9장).
  * - 수강생 영역: 수강생으로 등록된 과정(myRelation === "STUDENT")이 있을 때
- * - 강사 영역: 강사로 등록된 과정(myRelation === "TUTOR")이 있을 때 (내용은 강사 대시보드에서 채움)
+ * - 강사 영역: 강사로 등록된 과정(myRelation === "TUTOR")이 있을 때 (TutorDashboard)
+ * - 둘 다면 두 영역을 위아래로, 영역 제목을 붙여 구분
  * - 과정 조회 권한(COURSE_READ)이 없거나 어느 쪽도 아니면 안내만
  */
 export default function Main() {
@@ -82,10 +80,21 @@ export default function Main() {
       />
     );
   } else {
+    const both = studentCourses.length > 0 && tutorCourses.length > 0;
     body = (
-      <div className="form-stack">
-        {studentCourses.length > 0 && <StudentDashboard courses={studentCourses} />}
-        {tutorCourses.length > 0 && <TutorSection courses={tutorCourses} />}
+      <div className={styles.sections}>
+        {tutorCourses.length > 0 && (
+          <section aria-label="강사 대시보드">
+            {both && <h2 className={styles.sectionTitle}>담당 과정 (강사)</h2>}
+            <TutorDashboard courses={tutorCourses} />
+          </section>
+        )}
+        {studentCourses.length > 0 && (
+          <section aria-label="수강생 대시보드">
+            {both && <h2 className={styles.sectionTitle}>수강 중인 과정</h2>}
+            <StudentDashboard courses={studentCourses} />
+          </section>
+        )}
       </div>
     );
   }
@@ -95,22 +104,6 @@ export default function Main() {
       <PageHeader crumbs={crumbs} title="대시보드" />
       {body}
     </>
-  );
-}
-
-/**
- * 강사 영역 (자리만). 강사 대시보드(출석 주의 학생 · 채점 대기 등)는 feature/dashboard-tutor에서 채운다.
- */
-function TutorSection({ courses }) {
-  return (
-    <Panel title="담당 과정" subtitle={`${courses.length}개`}>
-      <StatusBox
-        type="empty"
-        size="sm"
-        title="강사 대시보드는 준비 중입니다."
-        detail="담당 과정의 출석 · 채점 현황은 왼쪽 메뉴의 과정 화면에서 확인해 주세요."
-      />
-    </Panel>
   );
 }
 
@@ -197,7 +190,7 @@ function SummaryCards({ active, total, today }) {
         hint={`전체 ${total}개`}
       />
       <StatCard
-        label="출석률"
+        label="출석률 (지금까지)"
         value={attendance.rate ?? "-"}
         unit={attendance.rate === null ? undefined : "%"}
         hint={attendanceHint}
@@ -225,6 +218,7 @@ function SummaryCards({ active, total, today }) {
   );
 }
 
+<<<<<<< HEAD
 /** 과정 카드. 진행 중이면 진행률(출석 요약, 못 불러오면 날짜 기준), 시작 전 · 종료는 기간 · 배지만 */
 function CourseCard({ course, today }) {
   const navigate = useNavigate();
@@ -333,6 +327,8 @@ function ListPanel({ title, subtitle, result, emptyTitle, renderItem }) {
   );
 }
 
+=======
+>>>>>>> dev
 /**
  * 오늘 출결: 오늘 수업이 있는 과정마다 상태 배지, 아직 안 눌렀으면 [출석] 버튼.
  * 지각 · 결석으로 기록될 시각이면 누르기 전에 한 번 확인한다.
@@ -411,53 +407,6 @@ function TodayAttendance({ active, patchResult }) {
                 )}
               </span>
             </div>
-          </li>
-        );
-      }}
-    />
-  );
-}
-
-/** 지금 시각 "HH:MM" (1분마다 갱신, 지금 수업 · 출석 기준 표시용) */
-function useNowTime() {
-  const [now, setNow] = useState(() => toTimeKey(new Date()));
-  useEffect(() => {
-    const timer = setInterval(() => setNow(toTimeKey(new Date())), 60_000);
-    return () => clearInterval(timer);
-  }, []);
-  return now;
-}
-
-function TodayLessons({ active, today }) {
-  const navigate = useNavigate();
-  const nowTime = useNowTime();
-  const showCourse = active.length > 1;
-
-  return (
-    <ListPanel
-      title="오늘 시간표"
-      subtitle={today}
-      result={collectTodayLessons(active)}
-      emptyTitle="오늘은 수업이 없습니다."
-      renderItem={({ key, course, lesson, slot }) => {
-        const isNow = isNowInSlot(slot, nowTime);
-        return (
-          <li key={key}>
-            <button
-              type="button"
-              className={`list-item ${isNow ? "is-selected" : ""}`.trim()}
-              aria-current={isNow ? "true" : undefined}
-              onClick={() => navigate(courseUrl(course.id, COURSE_TAB.timetable))}
-            >
-              <span>
-                {lesson.subject || lesson.content || "수업"}
-                {showCourse && <span className="card-meta"> · {course.courseName}</span>}
-              </span>
-              <span className="list-item-end">
-                {isNow && <Badge tone="info">진행 중</Badge>}
-                {slot ? `${slot.label} ${slot.start}` : `${lesson.slotIndex}교시`}
-              </span>
-            </button>
           </li>
         );
       }}

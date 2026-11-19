@@ -22,6 +22,12 @@ import com.learningworks.counsel.vo.response.ScoreResponseVO;
 @Service
 public class CounselServiceImpl implements CounselService {
 
+	/**
+	 * 과정과 상관없이 모든 과정의 상담을 다룰 수 있는 역할.
+	 * CourseServiceImpl.COURSE_ADMIN_ROLES 와 같은 기준 (역할 ID 비교는 과정 쪽과 함께 권한 코드로 바꿀 예정)
+	 */
+	private static final List<String> COURSE_ADMIN_ROLES = List.of("ROLE_SUPER_ADMIN", "ROLE_ADMIN");
+
 	private final CounselDao counselDao;
 
 	public CounselServiceImpl(CounselDao counselDao) {
@@ -32,6 +38,7 @@ public class CounselServiceImpl implements CounselService {
 	@Transactional(readOnly = true)
 	public List<CounselListResponseVO> getCounselList(String courseId) {
 		validateRequired(courseId);
+		checkTutorOrAdmin(courseId);
 		return this.counselDao.selectCounselList(courseId);
 	}
 
@@ -153,10 +160,26 @@ public class CounselServiceImpl implements CounselService {
 	private void validateCourseStudent(String courseId, String courseStudentId) {
 		validateRequired(courseId);
 		validateRequired(courseStudentId);
+		checkTutorOrAdmin(courseId);
 
 		if (this.counselDao.countCourseStudent(courseId, courseStudentId) == 0) {
 			throw new LearningworksException(ErrorCode.COUNSEL_STUDENT_NOT_IN_COURSE);
 		}
+	}
+
+	/**
+	 * 상담(연락처 · 역량 진단 · 성적 · 상담 기록 · 의견)은 수강생 개인 정보라 관리자 또는 이 과정의 강사만 다룬다.
+	 * 상담 권한(@RequireAction)이 있어도 다른 과정이거나 이 과정의 수강생이면 403 COURSE_NOT_AUTHORIZED.
+	 */
+	private void checkTutorOrAdmin(String courseId) {
+		String loginId = AuthUtil.getLoginId();
+		if (this.counselDao.countCourseTutor(courseId, loginId) > 0) {
+			return;
+		}
+		if (COURSE_ADMIN_ROLES.contains(this.counselDao.selectUserBaseRole(loginId))) {
+			return;
+		}
+		throw new LearningworksException(ErrorCode.COURSE_NOT_AUTHORIZED);
 	}
 
 	private void validateRequired(String value) {
