@@ -16,6 +16,7 @@ import usePermission from "../../hooks/usePermission";
 import useMyCourses from "./useMyCourses";
 import useStudentDashboard from "./useStudentDashboard";
 import TutorDashboard from "./TutorDashboard";
+import AdminDashboard from "./AdminDashboard";
 import {
   CourseCard,
   EndedCourses,
@@ -41,13 +42,15 @@ import {
  * (역할 ID를 비교하면 관리자가 화면에서 권한을 바꾸거나 새 역할을 만들어도 반영되지 않음. access-control-guide 9장).
  * - 수강생 영역: 수강생으로 등록된 과정(myRelation === "STUDENT")이 있을 때
  * - 강사 영역: 강사로 등록된 과정(myRelation === "TUTOR")이 있을 때 (TutorDashboard)
- * - 둘 다면 두 영역을 위아래로, 영역 제목을 붙여 구분
- * - 과정 조회 권한(COURSE_READ)이 없거나 어느 쪽도 아니면 안내만
+ * - 관리 영역: 관리자 대시보드 권한(DASHBOARD_ADMIN_READ)이 있을 때. 과정 등록 여부와 상관없이 맨 위 (AdminDashboard)
+ * - 영역이 둘 이상이면 위아래로, 영역 제목을 붙여 구분 (관리 → 강사 → 수강생)
+ * - 어느 영역도 없으면 안내만
  */
 export default function Main() {
   const crumbs = useBreadcrumbs();
   const { can, status: permissionStatus } = usePermission();
   const canReadCourses = can("COURSE_READ");
+  const canAdmin = can("DASHBOARD_ADMIN_READ");
   const myCourses = useMyCourses(
     permissionStatus === "loaded" && canReadCourses,
   );
@@ -77,7 +80,7 @@ export default function Main() {
         onRetry={myCourses.reload}
       />
     );
-  } else if (studentCourses.length === 0 && tutorCourses.length === 0) {
+  } else if (!canAdmin && studentCourses.length === 0 && tutorCourses.length === 0) {
     body = (
       <StatusBox
         type="empty"
@@ -86,21 +89,31 @@ export default function Main() {
       />
     );
   } else {
-    const both = studentCourses.length > 0 && tutorCourses.length > 0;
+    // 보여 줄 영역 (관리 → 강사 → 수강생). 둘 이상이면 영역 제목을 붙인다
+    const sections = [
+      canAdmin && { key: "admin", label: "관리자 대시보드", title: "전체 현황 (관리)", content: <AdminDashboard /> },
+      tutorCourses.length > 0 && {
+        key: "tutor",
+        label: "강사 대시보드",
+        title: "담당 과정 (강사)",
+        content: <TutorDashboard courses={tutorCourses} />,
+      },
+      studentCourses.length > 0 && {
+        key: "student",
+        label: "수강생 대시보드",
+        title: "수강 중인 과정",
+        content: <StudentDashboard courses={studentCourses} />,
+      },
+    ].filter(Boolean);
+    const showTitles = sections.length > 1;
     body = (
       <div className={styles.sections}>
-        {tutorCourses.length > 0 && (
-          <section aria-label="강사 대시보드">
-            {both && <h2 className={styles.sectionTitle}>담당 과정 (강사)</h2>}
-            <TutorDashboard courses={tutorCourses} />
+        {sections.map((section) => (
+          <section key={section.key} aria-label={section.label}>
+            {showTitles && <h2 className={styles.sectionTitle}>{section.title}</h2>}
+            {section.content}
           </section>
-        )}
-        {studentCourses.length > 0 && (
-          <section aria-label="수강생 대시보드">
-            {both && <h2 className={styles.sectionTitle}>수강 중인 과정</h2>}
-            <StudentDashboard courses={studentCourses} />
-          </section>
-        )}
+        ))}
       </div>
     );
   }
