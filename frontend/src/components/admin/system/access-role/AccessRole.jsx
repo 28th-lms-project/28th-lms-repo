@@ -1,6 +1,6 @@
 /** @format */
 
-import {useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 import useBreadcrumbs from "../../../../hooks/useBreadcrumbs";
 import usePermission from "../../../../hooks/usePermission";
 import Button from "../../../common/ui/Button.jsx";
@@ -83,22 +83,24 @@ function AccessRoleManagement() {
     const [selectedLvl2, setSelectedLvl2] = useState("");
     const [selectedLvl3, setSelectedLvl3] = useState("");
 
-    // 역할 목록 조회
-    const fetchRoleList = async () => {
-        try {
-            const body = await getRoles();
-
-            // ROLE_SUPER_ADMIN은 항상 모든 권한을 가지므로 권한 설정 대상에서 제외 (D-03)
-            setRoleList(
-                (body?.roleList ?? []).filter(
-                    (role) => role.roleId !== SUPER_ADMIN_ROLE_ID
-                )
-            );
-        } catch (error) {
-            console.error("역할 목록 조회 실패", error);
-            toast.error(getErrorMessage(error));
-        }
-    };
+    // 역할 목록 조회 (응답이 온 뒤에 상태를 바꾼다: effect에서 불러도 렌더가 연달아 일어나지 않음)
+    const fetchRoleList = useCallback(
+        () =>
+            getRoles()
+                .then((body) => {
+                    // ROLE_SUPER_ADMIN은 항상 모든 권한을 가지므로 권한 설정 대상에서 제외 (D-03)
+                    setRoleList(
+                        (body?.roleList ?? []).filter(
+                            (role) => role.roleId !== SUPER_ADMIN_ROLE_ID
+                        )
+                    );
+                })
+                .catch((error) => {
+                    console.error("역할 목록 조회 실패", error);
+                    toast.error(getErrorMessage(error));
+                }),
+        [toast]
+    );
 
     // 역할 선택 시 권한 조회
     const fetchPermissionList = async (roleId) => {
@@ -137,7 +139,7 @@ function AccessRoleManagement() {
 
     useEffect(() => {
         fetchRoleList();
-    }, []);
+    }, [fetchRoleList]);
 
     const lvl1Options = useMemo(
         () => [...new Set(permissionList.map((item) => item.lvl1))],
