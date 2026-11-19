@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import com.learningworks.common.action.AccessChecker;
 import com.learningworks.common.exceptions.ValidationFailedException;
 import com.learningworks.course.dao.CourseDao;
 import com.learningworks.course.vo.request.ModifyCourseVO;
@@ -17,12 +18,13 @@ class CourseServiceImplUpdateTest {
   private static final String COURSE_ID = "C1";
 
   private CourseDao courseDao;
+  private final AccessChecker accessChecker = Mockito.mock(AccessChecker.class);
   private CourseServiceImpl service;
 
   @BeforeEach
   void setUp() {
     this.courseDao = Mockito.mock(CourseDao.class);
-    this.service = new CourseServiceImpl(this.courseDao);
+    this.service = new CourseServiceImpl(this.courseDao, new CourseAccessChecker(this.courseDao, this.accessChecker));
     Mockito.when(this.courseDao.updateCourse(Mockito.any())).thenReturn(1);
   }
 

@@ -204,4 +204,56 @@ class ActionCodeRegistryTest {
     Assertions.assertThat(unannotated.get(0)).contains("noAnnotation");
   }
 
+
+  /** API에 붙지 않는 권한 코드를 선언하는 빈 (테스트용) */
+  private static ActionCodeDeclarer declarer(DeclaredActionCode... codes) {
+    return () -> java.util.List.of(codes);
+  }
+
+  @Test
+  @DisplayName("선언한 권한 코드도 @RequireAction 코드와 함께 등록되고 이름순으로 정렬된다")
+  void registersDeclaredActionCodes() {
+    ActionCodeRegistry registry = new ActionCodeRegistry(null);
+    registry.register(ActionCodeRegistryTest.handlerMethods(new ValidController()),
+        java.util.List.of(declarer(new DeclaredActionCode("COURSE", "ALL_MANAGE", "모든 과정 관리"))));
+
+    Assertions.assertThat(registry.getDefinitions())
+        .extracting(ActionDefinition::actionCode)
+        .containsExactly("ASSIGNMENT_READ", "COURSE_ALL_MANAGE", "COURSE_NOTICE_CREATE", "ROLE_DELETE");
+    ActionDefinition declared = registry.getDefinitions().stream()
+        .filter(definition -> definition.actionCode().equals("COURSE_ALL_MANAGE"))
+        .findFirst()
+        .orElseThrow();
+    Assertions.assertThat(declared.domain()).isEqualTo("COURSE");
+    Assertions.assertThat(declared.action()).isEqualTo("ALL_MANAGE");
+    Assertions.assertThat(declared.source()).contains("(선언)");
+  }
+
+  @Test
+  @DisplayName("선언한 권한 코드도 이름 형식 · description 규칙을 지켜야 한다")
+  void validatesDeclaredActionCodes() {
+    ActionCodeRegistry registry = new ActionCodeRegistry(null);
+
+    Assertions.assertThatThrownBy(() -> registry.register(java.util.List.of(),
+            java.util.List.of(declarer(new DeclaredActionCode("course", "ALL_READ", "전체 과정 조회")))))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("형식 오류");
+    Assertions.assertThatThrownBy(() -> registry.register(java.util.List.of(),
+            java.util.List.of(declarer(new DeclaredActionCode("COURSE", "ALL_READ", " ")))))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("description이 비어 있습니다");
+  }
+
+  @Test
+  @DisplayName("선언한 코드가 @RequireAction 코드와 같으면 description이 같아야 한다")
+  void declaredCodeMustMatchAnnotation() {
+    ActionCodeRegistry registry = new ActionCodeRegistry(null);
+
+    Assertions.assertThatThrownBy(() -> registry.register(
+            ActionCodeRegistryTest.handlerMethods(new ValidController()),
+            java.util.List.of(declarer(new DeclaredActionCode("ROLE", "DELETE", "다른 설명")))))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("description이 서로 다릅니다");
+  }
+
 }

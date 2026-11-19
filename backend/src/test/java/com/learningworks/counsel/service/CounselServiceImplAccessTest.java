@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import com.learningworks.common.action.AccessChecker;
+import com.learningworks.course.service.CourseAccessTestSupport;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.counsel.dao.CounselDao;
@@ -24,13 +26,14 @@ class CounselServiceImplAccessTest {
 
   private CounselDao counselDao;
   private CourseDao courseDao;
+  private final AccessChecker accessChecker = Mockito.mock(AccessChecker.class);
   private CounselServiceImpl service;
 
   @BeforeEach
   void setUp() {
     this.counselDao = Mockito.mock(CounselDao.class);
     this.courseDao = Mockito.mock(CourseDao.class);
-    this.service = new CounselServiceImpl(this.counselDao, new CourseAccessChecker(this.courseDao));
+    this.service = new CounselServiceImpl(this.counselDao, new CourseAccessChecker(this.courseDao, this.accessChecker));
     Mockito.when(this.counselDao.selectCounselList(COURSE_ID)).thenReturn(List.of());
     Mockito.when(this.counselDao.countCourseStudent(COURSE_ID, COURSE_STUDENT_ID)).thenReturn(1);
     Mockito.when(this.counselDao.countCounsel(COURSE_STUDENT_ID)).thenReturn(1);
@@ -49,6 +52,7 @@ class CounselServiceImplAccessTest {
     Mockito.when(this.courseDao.countCourseTutor(COURSE_ID, userId)).thenReturn(tutorOfCourse ? 1 : 0);
     Mockito.when(this.courseDao.countCourseStudentOrTutor(COURSE_ID, userId)).thenReturn(tutorOfCourse ? 1 : 0);
     Mockito.when(this.courseDao.readUserBaseRole(userId)).thenReturn(baseRole);
+    CourseAccessTestSupport.stubAllCourse(this.accessChecker, userId, baseRole);
   }
 
   private static void assertForbidden(Runnable call) {

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import com.learningworks.common.action.AccessChecker;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.course.dao.CourseDao;
@@ -21,12 +22,13 @@ class CourseServiceImplTodayAttendanceTest {
   private static final String COURSE_ID = "C1";
 
   private CourseDao courseDao;
+  private final AccessChecker accessChecker = Mockito.mock(AccessChecker.class);
   private CourseServiceImpl service;
 
   @BeforeEach
   void setUp() {
     this.courseDao = Mockito.mock(CourseDao.class);
-    this.service = new CourseServiceImpl(this.courseDao);
+    this.service = new CourseServiceImpl(this.courseDao, new CourseAccessChecker(this.courseDao, this.accessChecker));
     Mockito.when(this.courseDao.readOneCourse(COURSE_ID)).thenReturn(new CourseVO());
   }
 
@@ -39,6 +41,7 @@ class CourseServiceImplTodayAttendanceTest {
     SecurityContextHolder.getContext().setAuthentication(
         UsernamePasswordAuthenticationToken.authenticated("T1", null, List.of()));
     Mockito.when(this.courseDao.readUserBaseRole("T1")).thenReturn("ROLE_TUTOR");
+    CourseAccessTestSupport.stubAllCourse(this.accessChecker, "T1", "ROLE_TUTOR");
     Mockito.when(this.courseDao.countCourseStudentOrTutor(COURSE_ID, "T1")).thenReturn(1);
     Mockito.when(this.courseDao.countCourseTutor(COURSE_ID, "T1")).thenReturn(1);
   }
@@ -84,6 +87,7 @@ class CourseServiceImplTodayAttendanceTest {
     SecurityContextHolder.getContext().setAuthentication(
         UsernamePasswordAuthenticationToken.authenticated("S1", null, List.of()));
     Mockito.when(this.courseDao.readUserBaseRole("S1")).thenReturn("ROLE_STUDENT");
+    CourseAccessTestSupport.stubAllCourse(this.accessChecker, "S1", "ROLE_STUDENT");
     Mockito.when(this.courseDao.countCourseStudentOrTutor(COURSE_ID, "S1")).thenReturn(1);
     Mockito.when(this.courseDao.countCourseTutor(COURSE_ID, "S1")).thenReturn(0);
 
