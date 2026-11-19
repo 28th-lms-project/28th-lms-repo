@@ -357,7 +357,6 @@
            <!-- 지운 문제도 채점해야 제출이 막히지 않는다 (DEL_YN 조건 없음) -->
     </select>
 
-    <!-- TODO: 답안 테이블 이름(TEST_ANSWERS)이 실제와 다르면 아래 두 쿼리 수정 -->
     <select id="countSubmittedAnswers" resultType="int">
         SELECT COUNT(*)
           FROM TEST_ANSWERS

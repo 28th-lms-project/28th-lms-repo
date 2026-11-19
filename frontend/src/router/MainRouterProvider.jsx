@@ -162,7 +162,6 @@ export const routes = [
                       </>
                     ),
                     handle: { crumb: "과정 목록", menu: true },
-                    // TODO 과정 목록 경로 설정
                   },
                   {
                     path: "add",
