@@ -18,12 +18,6 @@ import com.learningworks.counsel.vo.response.ScoreResponseVO;
 @Mapper
 public interface CounselDao {
 
-	/** 사용자의 현재 역할 (USER.BASE_ROLE) */
-	String selectUserBaseRole(String userId);
-
-	/** userId(USER.ID)가 이 과정의 강사면 1 이상 */
-	int countCourseTutor(@Param("courseId") String courseId, @Param("userId") String userId);
-
 	List<CounselListResponseVO> selectCounselList(String courseId);
 
 	int countCourseStudent(@Param("courseId") String courseId,

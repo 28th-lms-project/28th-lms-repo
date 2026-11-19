@@ -13,6 +13,8 @@ import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.counsel.dao.CounselDao;
 import com.learningworks.counsel.vo.request.OpinionRequestVO;
+import com.learningworks.course.dao.CourseDao;
+import com.learningworks.course.service.CourseAccessChecker;
 
 /** 상담 (CounselServiceImpl): 관리자 또는 이 과정의 강사만 */
 class CounselServiceImplAccessTest {
@@ -21,12 +23,14 @@ class CounselServiceImplAccessTest {
   private static final String COURSE_STUDENT_ID = "CS1";
 
   private CounselDao counselDao;
+  private CourseDao courseDao;
   private CounselServiceImpl service;
 
   @BeforeEach
   void setUp() {
     this.counselDao = Mockito.mock(CounselDao.class);
-    this.service = new CounselServiceImpl(this.counselDao);
+    this.courseDao = Mockito.mock(CourseDao.class);
+    this.service = new CounselServiceImpl(this.counselDao, new CourseAccessChecker(this.courseDao));
     Mockito.when(this.counselDao.selectCounselList(COURSE_ID)).thenReturn(List.of());
     Mockito.when(this.counselDao.countCourseStudent(COURSE_ID, COURSE_STUDENT_ID)).thenReturn(1);
     Mockito.when(this.counselDao.countCounsel(COURSE_STUDENT_ID)).thenReturn(1);
@@ -41,8 +45,10 @@ class CounselServiceImplAccessTest {
   private void login(String userId, boolean tutorOfCourse, String baseRole) {
     SecurityContextHolder.getContext().setAuthentication(
         UsernamePasswordAuthenticationToken.authenticated(userId, null, List.of()));
-    Mockito.when(this.counselDao.countCourseTutor(COURSE_ID, userId)).thenReturn(tutorOfCourse ? 1 : 0);
-    Mockito.when(this.counselDao.selectUserBaseRole(userId)).thenReturn(baseRole);
+    // 과정 관계는 공용 CourseAccessChecker 가 CourseDao 로 판단한다
+    Mockito.when(this.courseDao.countCourseTutor(COURSE_ID, userId)).thenReturn(tutorOfCourse ? 1 : 0);
+    Mockito.when(this.courseDao.countCourseStudentOrTutor(COURSE_ID, userId)).thenReturn(tutorOfCourse ? 1 : 0);
+    Mockito.when(this.courseDao.readUserBaseRole(userId)).thenReturn(baseRole);
   }
 
   private static void assertForbidden(Runnable call) {
