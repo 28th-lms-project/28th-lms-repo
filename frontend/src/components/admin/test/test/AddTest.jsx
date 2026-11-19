@@ -8,7 +8,16 @@ import { icons } from "../../../common/input/icons";
 import QuestionForm from "./QuestionForm";
 import { emptyQuestionForm, toQuestionPayload } from "./questionFormValues";
 
-export default function AddTest({ subjectId, answerTypes, questionCount }) {
+/**
+ * 문제 수 + [문제 추가] 버튼 · 등록 폼.
+ * canCreate: 문제 등록 권한(EXAM_QUESTION_CREATE). 없으면 버튼과 폼을 숨김
+ */
+export default function AddTest({
+  subjectId,
+  answerTypes,
+  questionCount,
+  canCreate,
+}) {
   const [addState, setAddState] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [form, setForm] = useState(emptyQuestionForm);
@@ -47,7 +56,7 @@ export default function AddTest({ subjectId, answerTypes, questionCount }) {
     <>
       <div className="toolbar">
         <span className="field-hint">{questionCount}문제</span>
-        {!addState && (
+        {canCreate && !addState && (
           <Button
             variant="primary"
             icon={icons.add}
@@ -61,7 +70,7 @@ export default function AddTest({ subjectId, answerTypes, questionCount }) {
           </Button>
         )}
       </div>
-      {addState && (
+      {canCreate && addState && (
         <QuestionForm
           title="문제 추가"
           answerTypes={answerTypes}
