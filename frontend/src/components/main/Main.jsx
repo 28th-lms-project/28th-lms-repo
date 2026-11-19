@@ -71,7 +71,11 @@ export default function Main() {
     body = <StatusBox type="loading" />;
   } else if (canReadCourses && myCourses.status === "failed") {
     body = (
-      <StatusBox type="error" title="내 과정을 불러오지 못했습니다." onRetry={myCourses.reload} />
+      <StatusBox
+        type="error"
+        title="내 과정을 불러오지 못했습니다."
+        onRetry={myCourses.reload}
+      />
     );
   } else if (studentCourses.length === 0 && tutorCourses.length === 0) {
     body = (
@@ -133,7 +137,9 @@ function StudentDashboard({ courses: baseCourses }) {
           </div>
         </Panel>
       )}
-      {active.length > 0 && <TodayAttendance active={active} patchResult={patchResult} />}
+      {active.length > 0 && (
+        <TodayAttendance active={active} patchResult={patchResult} />
+      )}
       {active.length > 0 && (
         <div className="layout-3col">
           <TodayLessons active={active} today={today} />
@@ -152,12 +158,16 @@ function SummaryCards({ active, total, today }) {
   const tests = collectPendingTests(active);
   const homeworks = collectOpenHomeworks(active, today);
 
-  const lateNote = attendance.lateAbsent > 0 ? ` (결석 ${attendance.lateAbsent}회로 환산)` : "";
+  const lateNote =
+    attendance.lateAbsent > 0
+      ? ` (결석 ${attendance.lateAbsent}회로 환산)`
+      : "";
   let attendanceHint = `지각 ${attendance.late}회${lateNote} · 결석 ${attendance.absent}회`;
   if (attendance.rate === null) {
     if (attendance.loading) attendanceHint = LOADING_HINT;
     else if (attendance.anyFailed) attendanceHint = "불러오지 못했습니다";
-    else if (attendance.noTimetable) attendanceHint = "과정 기간에 수업일(평일)이 없습니다";
+    else if (attendance.noTimetable)
+      attendanceHint = "과정 기간에 수업일(평일)이 없습니다";
     else attendanceHint = "아직 수업일이 없습니다";
   } else if (attendance.warning) {
     attendanceHint += " · 출석률 주의";
@@ -180,8 +190,10 @@ function SummaryCards({ active, total, today }) {
   const nearest = homeworks.items[0];
   let homeworkHint = "마감 전 과제를 모두 냈습니다";
   if (homeworks.loading) homeworkHint = LOADING_HINT;
-  else if (homeworks.anyFailed) homeworkHint = "일부 과정을 불러오지 못했습니다";
-  else if (nearest) homeworkHint = `가장 빠른 마감: ${homeworkDue(today, nearest.homework.endDate).label}`;
+  else if (homeworks.anyFailed)
+    homeworkHint = "일부 과정을 불러오지 못했습니다";
+  else if (nearest)
+    homeworkHint = `가장 빠른 마감: ${homeworkDue(today, nearest.homework.endDate).label}`;
 
   return (
     <div className="card-grid">
@@ -206,13 +218,19 @@ function SummaryCards({ active, total, today }) {
       />
       <StatCard
         label="응시할 시험"
-        value={tests.loading && tests.items.length === 0 ? "-" : tests.items.length}
+        value={
+          tests.loading && tests.items.length === 0 ? "-" : tests.items.length
+        }
         unit="개"
         hint={testHint}
       />
       <StatCard
         label="남은 과제"
-        value={homeworks.loading && homeworks.items.length === 0 ? "-" : homeworks.items.length}
+        value={
+          homeworks.loading && homeworks.items.length === 0
+            ? "-"
+            : homeworks.items.length
+        }
         unit="건"
         hint={homeworkHint}
       />
@@ -220,7 +238,6 @@ function SummaryCards({ active, total, today }) {
   );
 }
 
-<<<<<<< HEAD
 /** 과정 카드. 진행 중이면 진행률(출석 요약, 못 불러오면 날짜 기준), 시작 전 · 종료는 기간 · 배지만 */
 function CourseCard({ course, today }) {
   const navigate = useNavigate();
@@ -232,7 +249,8 @@ function CourseCard({ course, today }) {
   const summaryLoading = course.summary === undefined;
 
   let progressNote = "날짜 기준 진행률";
-  if (summary) progressNote = `${summary.passedClassDays} / ${summary.totalClassDays} 수업일 (평일 기준, 어제까지)`;
+  if (summary)
+    progressNote = `${summary.passedClassDays} / ${summary.totalClassDays} 수업일 (평일 기준, 어제까지)`;
   else if (summaryLoading) progressNote = LOADING_HINT;
   else if (loaded) progressNote = "기간에 평일이 없음 · 날짜 기준 진행률";
 
@@ -329,8 +347,6 @@ function ListPanel({ title, subtitle, result, emptyTitle, renderItem }) {
   );
 }
 
-=======
->>>>>>> dev
 /**
  * 오늘 출결: 오늘 수업이 있는 과정마다 상태 배지, 아직 안 눌렀으면 [출석] 버튼.
  * 지각 · 결석으로 기록될 시각이면 누르기 전에 한 번 확인한다.
@@ -361,8 +377,13 @@ function TodayAttendance({ active, patchResult }) {
     setPendingId(course.id);
     try {
       const record = await checkTodayAttendance(course.id);
-      patchResult(course.id, "attendance", { ok: true, value: { ...attendance, ...record } });
-      toast.success(`${ATTEND_STATUS[record?.attendStatus]?.label ?? "출석"}으로 기록했습니다.`);
+      patchResult(course.id, "attendance", {
+        ok: true,
+        value: { ...attendance, ...record },
+      });
+      toast.success(
+        `${ATTEND_STATUS[record?.attendStatus]?.label ?? "출석"}으로 기록했습니다.`,
+      );
     } catch (error) {
       toast.error(error.message || "출석하지 못했습니다.");
       // 이미 출석함 등 서버 상태가 화면과 다를 수 있으니 다시 읽는다
@@ -390,7 +411,9 @@ function TodayAttendance({ active, patchResult }) {
               <span className="list-item-end">
                 {badge ? (
                   <>
-                    <span className="card-meta">{attendance.lgnDt?.slice(11)}</span>
+                    <span className="card-meta">
+                      {attendance.lgnDt?.slice(11)}
+                    </span>
                     <Badge tone={badge.tone}>{badge.label}</Badge>
                   </>
                 ) : (
@@ -423,7 +446,9 @@ function PendingTests({ active }) {
   return (
     <ListPanel
       title="응시할 시험"
-      subtitle={result.items.length > 0 ? `${result.items.length}개` : undefined}
+      subtitle={
+        result.items.length > 0 ? `${result.items.length}개` : undefined
+      }
       result={result}
       emptyTitle="응시할 시험이 없습니다."
       renderItem={({ key, course, set }) => (
@@ -456,14 +481,20 @@ function OpenHomeworks({ active, today }) {
   return (
     <ListPanel
       title="남은 과제"
-      subtitle={[
-        result.items.length > 0 ? `${result.items.length}건` : null,
-        result.submitted > 0 ? `제출 ${result.submitted}건` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ") || undefined}
+      subtitle={
+        [
+          result.items.length > 0 ? `${result.items.length}건` : null,
+          result.submitted > 0 ? `제출 ${result.submitted}건` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ") || undefined
+      }
       result={result}
-      emptyTitle={result.submitted > 0 ? "마감 전 과제를 모두 냈습니다." : "마감 전 과제가 없습니다."}
+      emptyTitle={
+        result.submitted > 0
+          ? "마감 전 과제를 모두 냈습니다."
+          : "마감 전 과제가 없습니다."
+      }
       renderItem={({ key, course, homework }) => {
         const due = homeworkDue(today, homework.endDate);
         return (
@@ -471,7 +502,9 @@ function OpenHomeworks({ active, today }) {
             <button
               type="button"
               className="list-item"
-              onClick={() => navigate(courseUrl(course.id, COURSE_TAB.homework))}
+              onClick={() =>
+                navigate(courseUrl(course.id, COURSE_TAB.homework))
+              }
             >
               <span>
                 {homework.subject}
