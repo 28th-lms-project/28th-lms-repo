@@ -149,12 +149,6 @@ public class GlobalExceptionHandler {
 
     log.warn("접근 거부: {} {}", methodName, url);
 
-    // TODO User Logout 요청 URL 수정
-    // GET /user/logout 에서 발생한 AuthorizationDeniedException 이라면 "이미 로그아웃 되었습니다." 를 전송한다.
-    if (methodName.equalsIgnoreCase("get") && url.equalsIgnoreCase("/user/logout")) {
-      return ApiResponse.OK("이미 로그아웃 되었습니다.");
-    }
-
     return ApiResponse.ERROR(ErrorCode.GLOBAL_FORBIDDEN);
   }
 

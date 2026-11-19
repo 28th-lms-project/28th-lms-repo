@@ -20,7 +20,7 @@
 백엔드 API는 모두 **공통 API 호출 함수(`api`)** 를 통해 호출합니다. 화면을 개발할 때는 **모듈 API 파일**에 URL만 적고, **컴포넌트**에서는 성공 데이터 사용과 에러 대응만 작성하면 됩니다.
 
 - 성공하면 응답의 `body`가 그대로 반환됩니다. `responseCode`, `.data`, `.body`를 확인할 필요가 없습니다.
-- 실패하면 `ApiError`가 throw 됩니다. `try-catch`로 받아서 `errorCode`, `message`, `validations`를 사용합니다.
+- 실패하면 `ApiError`가 throw 됩니다. `try-catch`(또는 `.then().catch()`)로 받아서 `errorCode`, `message`, `validations`를 사용합니다.
 - 백엔드 주소, 헤더, 응답 해석, 로그인 토큰(`Authorization` 헤더)은 공통 함수가 처리합니다. **컴포넌트나 모듈 API 파일에서 `fetch`를 직접 사용하지 마세요.**
 
 백엔드 응답 형식은 `backend/docs/api-response-guide.md`를 참고하세요.
@@ -180,7 +180,8 @@ const handleDelete = async (roleId) => {
 
 ### 규칙
 
-1. API 호출은 항상 `try-catch`로 감쌉니다. 실패 시 반드시 throw 됩니다.
+1. API 호출의 실패는 항상 처리합니다: `try-catch`로 감싸거나 `.then().catch()`로 받습니다 (5장 "요청 취소" 예시). 실패 시 반드시 throw 됩니다.
+   - `useEffect`에서 처음 불러올 때는 `.then()` 안에서 state를 바꾸는 쪽을 씁니다. effect에서 `async` 함수를 바로 부르면 lint(`react-hooks/set-state-in-effect`)가 막습니다.
 2. 에러 종류는 **`errorCode`로 구분**합니다. `message` 문구는 바뀔 수 있으므로 문자열 비교에 사용하지 마세요.
 3. 별도로 대응할 필요가 없는 에러는 `error.message`를 그대로 보여주면 됩니다. 사용자용 한글 메시지가 담겨 있습니다.
 4. 성공 메시지("저장되었습니다." 등)는 백엔드가 보내지 않습니다. 필요하면 프론트에서 작성합니다.
@@ -247,7 +248,7 @@ useEffect(() => {
 - [ ] `fetch`, `handleResponse`, `Content-Type` 헤더를 직접 작성하지 않았는가?
 - [ ] 요청 데이터의 필드명이 백엔드 요청 VO와 같은가?
 - [ ] 컴포넌트에서 `responseCode === "SUCCESS"`, `response.data` 같은 확인 없이 반환값을 바로 사용하는가?
-- [ ] API 호출을 `try-catch`로 감쌌는가?
+- [ ] API 호출의 실패를 `try-catch` 또는 `.catch()`로 처리했는가?
 - [ ] 에러 종류를 `message`가 아니라 `errorCode`로 구분하는가?
 - [ ] 입력 화면에서 `validations` 메시지를 표시하는가?
 

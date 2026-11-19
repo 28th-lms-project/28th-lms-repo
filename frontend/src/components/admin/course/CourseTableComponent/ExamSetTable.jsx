@@ -162,8 +162,7 @@ export default function ExamSetTable({
     }
   };
 
-  // 문제 목록을 불러와 채점 모달을 연다 (수강생 탭 + 문제 · 정답)
-  // TODO: 수강생 답안 조회 API가 완성되면 ExamGradeModal 의 studentAnswers 로 연결
+  // 문제 목록을 불러와 채점 모달을 연다 (수강생 탭 + 문제 · 정답. 수강생 답안은 모달이 수강생을 고를 때 불러옴)
   const onClickGrade = async (testSet) => {
     if (!canGrade) {
       toast.error("권한이 없습니다.");
