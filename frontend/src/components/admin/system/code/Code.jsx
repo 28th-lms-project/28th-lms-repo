@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import PageHeader from "../../../common/ui/PageHeader";
 import Panel from "../../../common/ui/Panel";
 import Table from "../../../common/ui/Table";
@@ -71,6 +71,42 @@ export default function Code() {
   );
 }
 
+/** 목록에서 고를 위치: selectId가 있으면 그 코드, 없으면 첫 번째 (목록이 비면 undefined) */
+const findSelectIndex = (codes, selectId) => {
+  if (codes.length === 0) {
+    return undefined;
+  }
+  if (selectId) {
+    const index = codes.findIndex((code) => code.id === selectId);
+    if (index >= 0) {
+      return index;
+    }
+  }
+  return 0;
+};
+
+/** 대 · 중 · 소 목록을 차례로 불러온다 (상태를 바꾸지 않음. 결과는 applyCodes로 반영) */
+const fetchCodes = async (topId, midId, lowId) => {
+  const top = await getCodeList();
+  const topIndex = findSelectIndex(top, topId);
+
+  let mid = [];
+  let midIndex;
+  if (topIndex !== undefined) {
+    mid = await getCodeList(top[topIndex].id);
+    midIndex = findSelectIndex(mid, midId);
+  }
+
+  let low = [];
+  let lowIndex;
+  if (midIndex !== undefined) {
+    low = await getCodeList(mid[midIndex].id);
+    lowIndex = findSelectIndex(low, lowId);
+  }
+
+  return { top, topIndex, mid, midIndex, low, lowIndex };
+};
+
 function CodeManagement() {
   const toast = useToast();
 
@@ -102,49 +138,15 @@ function CodeManagement() {
     return code.id;
   };
 
-  const findSelectIndex = (codes, selectId) => {
-    if (codes.length === 0) {
-      return undefined;
-    }
-    if (selectId) {
-      const index = codes.findIndex((code) => code.id === selectId);
-      if (index >= 0) {
-        return index;
-      }
-    }
-    return 0;
-  };
-
-  const fetchCodes = async (topId, midId, lowId) => {
-    const top = await getCodeList();
-    const topIndex = findSelectIndex(top, topId);
-
-    let mid = [];
-    let midIndex;
-    if (topIndex !== undefined) {
-      mid = await getCodeList(top[topIndex].id);
-      midIndex = findSelectIndex(mid, midId);
-    }
-
-    let low = [];
-    let lowIndex;
-    if (midIndex !== undefined) {
-      low = await getCodeList(mid[midIndex].id);
-      lowIndex = findSelectIndex(low, lowId);
-    }
-
-    return { top, topIndex, mid, midIndex, low, lowIndex };
-  };
-
-  // 받은 결과를 state에 반영
-  const applyCodes = (result) => {
+  // 받은 결과를 state에 반영 (setter만 써서 한 번 만든 함수를 계속 씀)
+  const applyCodes = useCallback((result) => {
     setTopCodes(result.top);
     setSelectedTop(result.topIndex);
     setMidCodes(result.mid);
     setSelectedMid(result.midIndex);
     setLowCodes(result.low);
     setSelectedLow(result.lowIndex);
-  };
+  }, []);
 
   const failCodes = (e) => {
     toast.error(e.message);
@@ -156,7 +158,7 @@ function CodeManagement() {
   };
 
   // 처음 불러오기 (실패하면 화면에 오류 + 다시 시도)
-  const requestFirst = () => {
+  const requestFirst = useCallback(() => {
     fetchCodes()
       .then((result) => {
         applyCodes(result);
@@ -166,7 +168,7 @@ function CodeManagement() {
         setListError(e.message);
         setListStatus("failed");
       });
-  };
+  }, [applyCodes]);
 
   // [다시 시도]
   const retryFirst = () => {
@@ -176,7 +178,7 @@ function CodeManagement() {
 
   useEffect(() => {
     requestFirst();
-  }, []);
+  }, [requestFirst]);
 
   const onSelectTop = (row) => {
     setAddingTop(false);
