@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
+import com.learningworks.course.service.CourseAccessChecker;
+import com.learningworks.course.service.CourseAccessChecker.Relation;
 import com.learningworks.survey.dao.SurveyDao;
 import com.learningworks.survey.vo.request.ModifySurveyDataVO;
 import com.learningworks.survey.vo.request.ModifySurveyVO;
@@ -36,6 +38,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class SurveyServiceImpl implements SurveyService {
 	private SurveyDao surveyDao;
+	// 과정 설문은 이 과정의 강사 · 수강생 · 관리자만 (관계없는 사람은 403 COURSE_NOT_AUTHORIZED)
+	private CourseAccessChecker courseAccessChecker;
 
 	@Override
 	@Transactional
@@ -172,6 +176,7 @@ public class SurveyServiceImpl implements SurveyService {
 
 	@Override
 	public List<CourseSurveyVO> readAllCourseSurvey(String courseId, String userId) {
+		this.courseAccessChecker.requireMember(courseId);
 		return this.surveyDao.selectAllCourseSurvey(courseId, userId);
 	}
 
@@ -181,6 +186,7 @@ public class SurveyServiceImpl implements SurveyService {
 		if (registCourseSurvey == null || courseId == null || courseId.isBlank()) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
+		this.courseAccessChecker.requireTutorOrAdmin(courseId);
 		registCourseSurvey.setCourseId(courseId);
 
 		int insertCount = this.surveyDao.insertNewCourseSurvey(registCourseSurvey);
@@ -198,6 +204,7 @@ public class SurveyServiceImpl implements SurveyService {
 	@Override
 	@Transactional
 	public String deleteCourseSurvey(String courseId, String courseSurveyId) {
+		this.courseAccessChecker.requireTutorOrAdmin(courseId);
 		// 답변 상세 → 답변 → 설문 순서로 삭제
 		this.surveyDao.deleteCourseSurveyAnswerDatas(courseSurveyId);
 		this.surveyDao.deleteCourseSurveyAnswers(courseSurveyId);
@@ -330,14 +337,16 @@ public class SurveyServiceImpl implements SurveyService {
 	@Override
 	public CourseSurveyResultVO readCourseSurveyResult(String courseId, String courseSurveyId, String userId) {
 		CourseSurveyVO courseSurvey = this.findCourseSurvey(courseId, courseSurveyId);
+		// 이 과정과 관계없는 사람은 여기서 403
+		Relation relation = this.courseAccessChecker.requireMember(courseId);
 		List<SurveyRespondentVO> respondents = this.surveyDao.selectCourseSurveyRespondents(courseSurveyId);
 
 		// 이 과정의 수강생이면 다른 학생의 응답은 보이지 않게 본인만 남김 (강사 · 관리자는 전체)
-		String myCourseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
-		if (myCourseStudentId != null) {
+		if (relation == Relation.STUDENT) {
+			String myCourseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
 			List<SurveyRespondentVO> mine = new ArrayList<>();
 			for (SurveyRespondentVO respondent : respondents) {
-				if (myCourseStudentId.equals(respondent.getCourseStudentId())) {
+				if (respondent.getCourseStudentId().equals(myCourseStudentId)) {
 					mine.add(respondent);
 				}
 			}
@@ -358,11 +367,15 @@ public class SurveyServiceImpl implements SurveyService {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 		this.findCourseSurvey(courseId, courseSurveyId);
+		// 이 과정과 관계없는 사람은 여기서 403
+		Relation relation = this.courseAccessChecker.requireMember(courseId);
 
 		// 수강생은 본인 답변만 볼 수 있음 (강사 · 관리자는 누구든)
-		String myCourseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
-		if (myCourseStudentId != null && !myCourseStudentId.equals(courseStudentId)) {
-			throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+		if (relation == Relation.STUDENT) {
+			String myCourseStudentId = this.surveyDao.selectCourseStudentId(courseId, userId);
+			if (!courseStudentId.equals(myCourseStudentId)) {
+				throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+			}
 		}
 		return this.surveyDao.selectCourseSurveyStudentAnswers(courseSurveyId, courseStudentId);
 	}
@@ -384,6 +397,7 @@ public class SurveyServiceImpl implements SurveyService {
 	@Override
 	public CourseSurveyStatisticsVO readCourseSurveyStatistics(String courseId, String courseSurveyId) {
 		CourseSurveyVO courseSurvey = this.findCourseSurvey(courseId, courseSurveyId);
+		this.courseAccessChecker.requireMember(courseId);
 		List<SurveyVO> questions = this.surveyDao.selectAllSurveyByGroup(courseSurvey.getSurveyGroup());
 		List<SurveyCountVO> optionCounts = this.surveyDao.selectCourseSurveyOptionsCounts(courseSurveyId);
 		List<SurveyCountVO> questionCounts = this.surveyDao.selectCourseSurveyQuestionCount(courseSurveyId);
