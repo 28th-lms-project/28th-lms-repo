@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import styles from "../Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "../CatalogParts.jsx";
-import { IconButton } from "../../../common/input/IconButton.jsx";
+import { IconButton } from "../../../archive/common/input/IconButton.jsx";
 import { icons } from "../../../common/input/icons.js";
 import errorStyles from "../../../archive/common/error/RouteError.module.css";
 

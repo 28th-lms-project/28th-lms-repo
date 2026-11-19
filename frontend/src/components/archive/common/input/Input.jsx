@@ -3,8 +3,8 @@
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import styles from "./Input.module.css";
-import { Grid } from "../../../common/Grid";
-import { Icon, IconButton } from "../../../common/input/IconButton";
+import { Grid } from "../Grid";
+import { Icon, IconButton } from "./IconButton";
 import { icons } from "../../../common/input/icons";
 
 const inputStyle = {

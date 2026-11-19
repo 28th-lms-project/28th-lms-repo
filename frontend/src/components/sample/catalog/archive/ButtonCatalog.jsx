@@ -3,7 +3,7 @@ import { useState } from "react";
 import styles from "../Catalog.module.css";
 import { GroupTitle, Variant, Variants } from "../CatalogParts.jsx";
 import { Button } from "../../../archive/common/input/Input.jsx";
-import { IconButton } from "../../../common/input/IconButton.jsx";
+import { IconButton } from "../../../archive/common/input/IconButton.jsx";
 import { icons } from "../../../common/input/icons.js";
 
 const GRADES = [

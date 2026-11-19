@@ -13,7 +13,7 @@ import {
     Textarea,
     TextField,
 } from "../../../archive/common/input/Input.jsx";
-import { IconButton } from "../../../common/input/IconButton.jsx";
+import { IconButton } from "../../../archive/common/input/IconButton.jsx";
 import { icons } from "../../../common/input/icons.js";
 
 const COUNSEL_TYPES = ["학습", "진로", "생활", "기타"];
