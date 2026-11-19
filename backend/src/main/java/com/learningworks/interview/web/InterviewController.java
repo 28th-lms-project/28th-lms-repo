@@ -17,11 +17,13 @@ import com.learningworks.interview.vo.response.InterviewResponseVO;
 import com.learningworks.interview.vo.response.InterviewStudentResponseVO;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 면접 일정 API
  * 프론트: frontend/src/api/admin/course/interviewApi.js
  */
+@Tag(name = "면접 일정", description = "면접 일정 조회 · 등록")
 @RestController
 @RequestMapping("/interview")
 public class InterviewController {

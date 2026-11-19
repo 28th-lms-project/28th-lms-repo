@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 시간표 API
@@ -21,6 +22,7 @@ import java.time.LocalDate;
  * 다른 컨트롤러와 동일하게 공통 응답(ApiResponse)을 사용한다.
  * 프론트 apiClient는 응답의 body만 꺼내서 반환한다.
  */
+@Tag(name = "시간표", description = "시간표 업로드 · 조회")
 @RestController
 @RequestMapping("/timetable")
 public class TimetableController {

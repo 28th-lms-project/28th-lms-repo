@@ -13,7 +13,9 @@ import com.learningworks.score.service.ScoreService;
 import com.learningworks.score.vo.response.ScoreVO;
 import com.learningworks.score.vo.response.StudentScoreVO;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
+@Tag(name = "성적", description = "과정 성적 · 내 성적")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/scores")

@@ -19,9 +19,11 @@ import com.learningworks.common.utils.ApiResponse;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 // 접근 권한(ACTION) 관리 화면 전용. 저장은 ROLE_SUPER_ADMIN 전용 (D-03)
 // 메뉴 목록은 메뉴 모듈의 GET /menus를 사용한다 (예전 GET /access/menus는 삭제)
+@Tag(name = "접근 권한", description = "접근 권한(권한 코드) 목록 · 저장")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/access")

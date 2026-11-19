@@ -32,8 +32,10 @@ import com.learningworks.survey.vo.response.SurveyVO;
 
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @AllArgsConstructor
+@Tag(name = "설문", description = "설문 등록 · 응답 · 결과")
 @RestController
 public class SurveyController {
 	private SurveyService surveyService;
