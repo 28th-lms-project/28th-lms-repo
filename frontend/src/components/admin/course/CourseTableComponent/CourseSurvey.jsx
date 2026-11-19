@@ -9,6 +9,7 @@ import {
 import CourseSurveyForm from "./CourseSurveyForm";
 import CourseSurveyAnsModal from "./CourseSurveyAnsModal";
 import usePermission from "../../../../hooks/usePermission";
+import useCourseRelation from "../../../../hooks/useCourseRelation";
 import Badge from "../../../common/ui/Badge";
 import Button from "../../../common/ui/Button";
 import StatusBox from "../../../common/ui/StatusBox";
@@ -28,6 +29,10 @@ export default function StudentSurvey() {
   // 버튼별 권한 (백엔드 SurveyController 의 @RequireAction). 권한이 없으면 버튼을 숨김 (가이드 8장)
   const canCreate = can("COURSE_SURVEY_CREATE");
   const canDelete = can("COURSE_SURVEY_DELETE");
+  // 응답: 권한 코드 + 이 과정의 수강생. 아니면 설문 이름을 누를 수 없게 글자로만 보여 준다
+  // (강사 역할에도 응답 권한이 있을 수 있어서, 가르치는 과정에서는 응답 창을 열지 않음)
+  const relation = useCourseRelation(courseId);
+  const canAnswer = can("COURSE_SURVEY_ANSWER") && relation === "STUDENT";
   const toast = useToast();
   const confirm = useConfirm();
 
@@ -138,6 +143,10 @@ export default function StudentSurvey() {
       key: "title",
       title: "설문 명",
       render: (survey) => {
+        // 응답할 수 없는 사람(강사 · 관리자 등)에게는 이름만 보여 준다
+        if (!canAnswer) {
+          return survey.title;
+        }
         // 이미 참여한 설문은 다시 열 수 없음 (서버도 제출 때 중복을 막음)
         const answered = survey.answeredYn === "Y";
         let blockedReason;
