@@ -1,4 +1,5 @@
-import PageContainer from '../common/PageContainer';
+import PageHeader from "../common/ui/PageHeader.jsx";
+import useBreadcrumbs from "../../hooks/useBreadcrumbs.js";
 import { Chart } from "../archive/sample/Chart.jsx";
 import { PollList } from "../archive/sample/Poll.jsx";
 import { chartData } from "../../assets/mocks/chart.json.js";
@@ -109,6 +110,7 @@ const scrollToSection = (id, tocEl) => {
 
 
 const SampleDashboard = () => {
+    const crumbs = useBreadcrumbs();
     title("DashBoard!");
 
     // 다크 모드는 앱 전체 (사이드바 버튼과 같은 값). 여기 버튼은 샘플을 보며 바로 바꾸기용
@@ -148,7 +150,8 @@ const SampleDashboard = () => {
         });
     };
     return (
-        <PageContainer>
+        <>
+            <PageHeader crumbs={crumbs} title={crumbs.at(-1)?.title} />
             <div ref={tocRef} className={catalogStyles.toc}>
                 <div className={catalogStyles.tocRow}>
                     <Tabs idBase={tabsId} items={PART_TABS} value={part} onChange={changePart} ariaLabel="샘플 구역" className={catalogStyles.partTabs} />
@@ -480,7 +483,7 @@ const SampleDashboard = () => {
             </div>
             )}
             </TabPanel>
-        </PageContainer>
+        </>
     );
 };
 export default SampleDashboard;
