@@ -57,7 +57,7 @@ export default function MyTimetable({ courseId: courseIdProp }) {
   const params = useParams();
   const toast = useToast();
 
-  // 부모(MyCourse / CourseItem)에서 받은 courseId 우선, 없으면 URL 파라미터 사용
+  // courseId prop이 있으면 우선 (지금은 넘기는 화면 없음), 없으면 URL 파라미터(CourseItem :id) 사용
   const courseId = courseIdProp ?? params?.courseId ?? params?.id;
 
   // 시간표 등록 권한 (TimetableController#upload 의 @RequireAction 과 같은 코드)
