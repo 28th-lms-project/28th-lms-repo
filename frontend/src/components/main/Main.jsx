@@ -48,7 +48,9 @@ export default function Main() {
   const crumbs = useBreadcrumbs();
   const { can, status: permissionStatus } = usePermission();
   const canReadCourses = can("COURSE_READ");
-  const myCourses = useMyCourses(permissionStatus === "loaded" && canReadCourses);
+  const myCourses = useMyCourses(
+    permissionStatus === "loaded" && canReadCourses,
+  );
 
   // 영역별 과정 (배열을 고정해 둬야 아래 대시보드가 렌더마다 다시 요청하지 않음)
   const studentCourses = useMemo(
