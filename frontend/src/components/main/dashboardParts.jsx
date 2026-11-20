@@ -2,7 +2,7 @@
  * 대시보드 공용 부품 (수강생 · 강사 대시보드가 함께 씀).
  * 과정 카드 · 종료된 과정(접힘) · 목록 패널 · 오늘 시간표. 상수 · 주소 · 훅은 dashboardShared.js
  */
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Panel from "../common/ui/Panel";
 import Progress from "../common/ui/Progress";
@@ -13,7 +13,10 @@ import {
   collectTodayLessons,
   courseBadge,
   dateProgress,
-  isNowInSlot,
+  isNowInBlock,
+  isPastBlock,
+  lessonBlockLabel,
+  lessonBlockTime,
 } from "./dashboardSummary";
 import { COURSE_TAB, courseUrl, useNowTime } from "./dashboardShared";
 
@@ -101,11 +104,18 @@ export function EndedCourses({ courses, today, showTutor = true }) {
   );
 }
 
-/** 목록 패널 공통: 불러오는 중 · 실패 · 빈 목록 · 항목 */
-export function ListPanel({ title, subtitle, result, emptyTitle, renderItem }) {
+/**
+ * 목록 패널 공통: 불러오는 중 · 실패 · 빈 목록 · 항목
+ * listClassName · listRef: 목록(ul)에 붙일 클래스 · ref (오늘 시간표의 내부 스크롤용)
+ */
+export function ListPanel({ title, subtitle, result, emptyTitle, renderItem, listClassName, listRef }) {
   let content;
   if (result.items.length > 0) {
-    content = <ul className="list-group">{result.items.map(renderItem)}</ul>;
+    content = (
+      <ul ref={listRef} className={`list-group ${listClassName ?? ""}`.trim()}>
+        {result.items.map(renderItem)}
+      </ul>
+    );
   } else if (result.loading) {
     content = <StatusBox type="loading" size="sm" />;
   } else if (result.anyFailed) {
@@ -130,34 +140,88 @@ export function ListPanel({ title, subtitle, result, emptyTitle, renderItem }) {
   );
 }
 
+/**
+ * 오늘 시간표. 이어지는 같은 수업은 한 줄로 묶고(collectTodayLessons), 목록이 길면 패널 안에서만 스크롤한다.
+ * 끝난 수업은 남은 수업이 있는 동안 "지난 수업 N개" 한 줄로 접어 두고, 모두 끝나면 흐리게 전부 보여 준다.
+ * 지금 수업(없으면 다음 수업)이 보이도록 목록 안에서 스크롤을 맞춘다.
+ */
 export function TodayLessons({ active, today }) {
   const navigate = useNavigate();
   const nowTime = useNowTime();
+  const [showPast, setShowPast] = useState(false);
+  const listRef = useRef(null);
   const showCourse = active.length > 1;
+
+  const result = collectTodayLessons(active);
+  const past = result.items.filter((block) => isPastBlock(block, nowTime));
+  const rest = result.items.filter((block) => !isPastBlock(block, nowTime));
+  const foldPast = past.length > 0 && rest.length > 0;
+
+  let items = result.items;
+  if (foldPast) {
+    items = [{ key: "past-toggle", toggle: true }, ...(showPast ? past : []), ...rest];
+  }
+  // 스크롤 기준: 지금 수업, 없으면 다음 수업
+  const anchorKey = (rest.find((block) => isNowInBlock(block, nowTime)) ?? rest[0])?.key;
+
+  useEffect(() => {
+    const list = listRef.current;
+    const anchor = list?.querySelector("[data-scroll-anchor]");
+    if (!list || !anchor) return;
+    // 페이지는 그대로 두고 목록 안에서만 맞춘다 (scrollIntoView는 페이지까지 움직임)
+    const top = anchor.offsetTop;
+    const bottom = top + anchor.offsetHeight;
+    if (top < list.scrollTop || bottom > list.scrollTop + list.clientHeight) {
+      list.scrollTop = top;
+    }
+  }, [anchorKey, showPast, items.length]);
 
   return (
     <ListPanel
       title="오늘 시간표"
       subtitle={today}
-      result={collectTodayLessons(active)}
+      result={{ ...result, items }}
       emptyTitle="오늘은 수업이 없습니다."
-      renderItem={({ key, course, lesson, slot }) => {
-        const isNow = isNowInSlot(slot, nowTime);
+      listClassName="list-group-scroll"
+      listRef={listRef}
+      renderItem={(block) => {
+        if (block.toggle) {
+          return (
+            <li key={block.key}>
+              <button
+                type="button"
+                className="list-item is-muted"
+                aria-expanded={showPast}
+                onClick={() => setShowPast((value) => !value)}
+              >
+                <span>{showPast ? "지난 수업 접기" : `지난 수업 ${past.length}개`}</span>
+                <span className="list-item-end">{showPast ? "접기" : "보기"}</span>
+              </button>
+            </li>
+          );
+        }
+        const isNow = isNowInBlock(block, nowTime);
+        const isPast = isPastBlock(block, nowTime);
+        const label = lessonBlockLabel(block);
+        let stateClass = "";
+        if (isNow) stateClass = "is-selected";
+        else if (isPast) stateClass = "is-muted";
         return (
-          <li key={key}>
+          <li key={block.key}>
             <button
               type="button"
-              className={`list-item ${isNow ? "is-selected" : ""}`.trim()}
+              className={`list-item ${stateClass}`.trim()}
               aria-current={isNow ? "true" : undefined}
-              onClick={() => navigate(courseUrl(course.id, COURSE_TAB.timetable))}
+              data-scroll-anchor={block.key === anchorKey ? "" : undefined}
+              onClick={() => navigate(courseUrl(block.course.id, COURSE_TAB.timetable))}
             >
               <span>
-                {lesson.subject || lesson.content || "수업"}
-                {showCourse && <span className="card-meta"> · {course.courseName}</span>}
+                {block.title}
+                {showCourse && <span className="card-meta"> · {block.course.courseName}</span>}
               </span>
               <span className="list-item-end">
                 {isNow && <Badge tone="info">진행 중</Badge>}
-                {slot ? `${slot.label} ${slot.start}` : `${lesson.slotIndex}교시`}
+                {label ? `${label} ${lessonBlockTime(block)}` : `${block.firstIndex}교시`}
               </span>
             </button>
           </li>
