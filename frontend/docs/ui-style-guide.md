@@ -282,7 +282,7 @@
 
 ### 정리 대상
 
-- `App.jsx` · `App.css`: Vite 템플릿 잔재입니다. `App.css`는 `App.jsx`만 import하고, `App.jsx`는 아무 데서도 쓰지 않습니다.
+- `App.jsx` · `App.css`: Vite 템플릿 잔재였습니다. `App.css`는 `App.jsx`만 import하고, `App.jsx`는 아무 데서도 쓰지 않아 2026-11-20에 지웠습니다 (템플릿 이미지 · `public/icons.svg`도 함께).
 - `index.css`의 `.main_container` · `.sidebar_container` · `.main_content`: 쓰는 곳이 없습니다 (`MainLayout.module.css`가 대신함).
 - 같은 CSS 복사본: `.notice`(2곳: `Access` · `AccessRole`), 모달 인라인 스타일 객체(`overlayStyle` · `boxStyle` · `headerStyle` … 4개 모달)
 - `@fullcalendar/*` 패키지: 설치만 되어 있고 쓰는 곳이 없습니다.
@@ -433,7 +433,7 @@
 | `CourseTableComponent/ExamPage` · `ExamQuestionPicker` | 예시 · **표준 적용 (2026-11-17)** | 시험 문제 고르기 |
 | `ExamGradeModal` | 예시 · **표준 적용 (2026-11-17)** | 채점 |
 | `ExamTakeModal` · `ExamQuestionViewModal` | 부품 + 예시 (8차) · **표준 적용 (2026-11-17)** | 시험 응시 · 시험지 보기. 새 부품 `question-nav` |
-| `ExamSetTable` · `my/course/MyTest` | 부품 · **`ExamSetTable` 표준 적용 (2026-11-17)** | `Table`. 역할마다 다른 칸은 `columns` 배열을 걸러서 (칸을 숨기는 CSS 아님), 공개 Y/N은 `Badge` + 바꿀 때 `useConfirm`. 규칙: 목록에서 바로 바꾸면 `Badge` · 버튼 + `useConfirm`, 폼 안에서 저장과 함께 바꾸면 체크박스(`form-check`, 시험 문제 고르기 예시) |
+| `ExamSetTable` | 부품 · **`ExamSetTable` 표준 적용 (2026-11-17)** | `Table`. 역할마다 다른 칸은 `columns` 배열을 걸러서 (칸을 숨기는 CSS 아님), 공개 Y/N은 `Badge` + 바꿀 때 `useConfirm`. 규칙: 목록에서 바로 바꾸면 `Badge` · 버튼 + `useConfirm`, 폼 안에서 저장과 함께 바꾸면 체크박스(`form-check`, 시험 문제 고르기 예시) |
 | `CourseTableComponent/CourseSurvey` · `CourseSurveyForm` | 예시 · **표준 적용 (2026-11-17)** | 목록 위 추가 폼 (+ `SelectBox`, 읽기 전용 값은 `readOnly` 입력 또는 `hint`). 목록은 `Table`, 눌러서 여는 칸(설문 명 · 결과 보기)은 링크 · 버튼처럼 보이게 (`btn-text`), 삭제는 `useConfirm` |
 | `CourseSurveyAnsModal` (설문 응답) | 부품 · **표준 적용 (2026-11-18)** | `Modal lg` + `question-nav` + `Progress` + `QuestionBlock`(보기 radio · checkbox, 배점 없음, 주관식은 textarea). 시험 응시(`ExamTakeModal`)와 같은 모양. 답이 있으면 닫을 때 `useConfirm`, [제출]도 `useConfirm`, 결과는 토스트. 목록(`CourseSurvey`)의 설문 명 옆에 "참여 완료" `Badge`. 예전 팝업 `CourseSurveyAns`(`popup-page`)는 2026-11-18에 이 모달로 바뀜 (팝업 파일 · `/survey/answer` 라우트 삭제) |
 | `CourseSurveyResult` (설문 결과 팝업) | 예시 (10차) · **표준 적용 (2026-11-17)** | 설문 결과 (문항별 집계 \| 학생별 응답). 지금 화면에 없는 집계(보기별 응답 수 · 비율)는 설문 담당자가 만들 예정 → 이 예시를 따름 |
@@ -465,7 +465,7 @@
 | `menu/SideMenu` · `UserProfile` · `LogoutButton` | 부품 · **표준 적용 (2026-11-17, `LogoutButton` 2026-11-18)** | 사이드바 자체가 기준 (토큰 · 테마 · 작은 화면 서랍 완료, 2026-11-18에 글자 크기 · 굵기 · 모서리 토큰 · 포커스 · 로그아웃 `sidebar-btn`). 접힌 상태에서는 메뉴를 표시하지 않음 (8장 "사이드 메뉴") |
 | `menu/MenuGuard` · `login/IsLogin` | 부품 · **`MenuGuard` 표준 적용 (2026-11-17)** | 로직. 화면은 `StatusBox` (loading · error · denied) |
 | `Section.jsx` | 부품 | `Panel`. 쓰는 화면이 없어 `archive/Section.jsx`(기록)로 옮김 (2026-11-18) |
-| `my/course/MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` | 제외 | 아직 화면이 없음 (빈 파일 · 준비 중). 만들 때 이 표에 추가. 열리지 않던 옛 화면 `MyCourse` · `MyCourseList`는 `CourseItem`이 대신해서 2026-11-19에 지움 |
+| `my/course/MyAttendence` · `MyStudent` · `MySurvey` · `MyWorks` · `MyTest` | 삭제 (2026-11-20) | 빈 자리 표시 파일 · 옛 화면용 시험 목록이라 지움. 같은 기능은 과정 상세(`CourseItem`) 탭이 함. 열리지 않던 옛 화면 `MyCourse` · `MyCourseList`도 2026-11-19에 지움 |
 
 ### PR에서 바뀌는 앱 전체 영향
 
