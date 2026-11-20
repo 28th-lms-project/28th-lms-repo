@@ -24,7 +24,7 @@ mybatis:
 app:
   # JWT 설정
   jwt:
-    access-token-validity-seconds: 604800
+    access-token-validity-seconds: 34200
   # API 권한 검사 (@RequireAction, @RequireSuperAdmin, @LoginRequired, @PublicApi). 사용법: backend/docs/access-control-guide.md
   access-check:
     enabled: true
