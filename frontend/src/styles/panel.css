@@ -338,6 +338,14 @@ button.list-item:focus-visible {
   color: var(--color-text-disabled);
 }
 
+/* 길어질 수 있는 목록: 약 6줄(줄 40px + 구분선 1px)을 넘으면 목록 안에서만 스크롤 (대시보드 오늘 시간표) */
+.list-group-scroll {
+  position: relative; /* 항목 offsetTop의 기준 (목록 안 스크롤 위치 계산) */
+  max-height: 246px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .list-item-end {
   margin-left: auto;
   display: inline-flex;

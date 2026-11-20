@@ -241,29 +241,77 @@ export const attendNowRule = (attendance, nowTime) => {
   return { status: "N", hint: "지금 누르면 결석으로 기록됩니다" };
 };
 
+/** 수업 항목의 제목 (과목 → 내용 → "수업") */
+const lessonTitle = (lesson) => lesson.subject || lesson.content || "수업";
+
 /**
  * 오늘 시간표: 진행 중 과정의 오늘 수업을 교시 순으로 (교시 → 시각은 응답의 timeSlots).
  * 수업 항목은 백엔드 LessonResponseVO { slotIndex, subject, content }.
+ *
+ * 같은 과정 · 같은 제목의 수업이 바로 다음 교시(slotIndex + 1)로 이어지면 한 묶음으로 합친다.
+ * 점심시간도 한 칸(slotIndex)을 차지하므로 오전 · 오후 수업은 따로 묶인다.
+ * 교시 시각을 모르는 수업(slot 없음)은 합치지 않는다.
+ *
+ * 묶음: { key, course, title, slots: [{ slotIndex, label, start, end } | undefined], firstIndex }
  */
 export const collectTodayLessons = (activeCourses) => {
   const items = [];
   const flags = scan(activeCourses, "lessons", (daily, course) => {
-    for (const lesson of daily?.lessons ?? []) {
-      items.push({
-        key: `${course.id}-${lesson.slotIndex}`,
-        course,
-        lesson,
-        slot: slotOf(daily, lesson.slotIndex),
-      });
+    const lessons = [...(daily?.lessons ?? [])].sort(
+      (a, b) => Number(a.slotIndex) - Number(b.slotIndex),
+    );
+    let block = null;
+    let lastIndex = null;
+    for (const lesson of lessons) {
+      const index = Number(lesson.slotIndex);
+      const slot = slotOf(daily, lesson.slotIndex);
+      const title = lessonTitle(lesson);
+      const joins =
+        block !== null && slot && block.slots.at(-1) && block.title === title && index === lastIndex + 1;
+      if (joins) {
+        block.slots.push(slot);
+      } else {
+        block = { key: `${course.id}-${index}`, course, title, slots: [slot], firstIndex: index };
+        items.push(block);
+      }
+      lastIndex = index;
     }
   });
-  items.sort((a, b) => Number(a.lesson.slotIndex) - Number(b.lesson.slotIndex));
+  items.sort((a, b) => a.firstIndex - b.firstIndex);
   return { items, ...flags };
+};
+
+/** 묶음의 교시 이름: "2교시" · "1~3교시" (이름이 "N교시" 꼴이 아니면 "A ~ B") */
+export const lessonBlockLabel = (block) => {
+  const first = block.slots[0];
+  const last = block.slots.at(-1);
+  if (!first) return "";
+  if (block.slots.length === 1) return first.label;
+  const a = /^(\d+)교시$/.exec(first.label);
+  const b = /^(\d+)교시$/.exec(last.label);
+  return a && b ? `${a[1]}~${b[1]}교시` : `${first.label} ~ ${last.label}`;
+};
+
+/** 묶음의 시각: 한 교시면 시작 시각, 여러 교시면 "09:00–12:00" */
+export const lessonBlockTime = (block) => {
+  const first = block.slots[0];
+  if (!first) return "";
+  return block.slots.length === 1 ? first.start : `${first.start}–${block.slots.at(-1).end}`;
 };
 
 /** 지금 시각(HH:MM)이 그 교시 안인지 */
 export const isNowInSlot = (slot, nowTime) =>
   Boolean(slot) && slot.start <= nowTime && nowTime < slot.end;
+
+/** 지금 시각이 묶음의 어느 교시 안인지 */
+export const isNowInBlock = (block, nowTime) =>
+  block.slots.some((slot) => isNowInSlot(slot, nowTime));
+
+/** 묶음의 마지막 교시가 끝났는지 (시각을 모르면 끝나지 않은 것으로 본다) */
+export const isPastBlock = (block, nowTime) => {
+  const last = block.slots.at(-1);
+  return Boolean(last?.end) && last.end <= nowTime;
+};
 
 /** 과제 마감 배지: "오늘 마감" · "D-3", D-2까지 주의 색 */
 export const homeworkDue = (today, endDate) => {
