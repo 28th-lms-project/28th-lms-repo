@@ -2,8 +2,6 @@
 
 > 교육 과정 운영에 필요한 수강생 관리, 출결, 과제, 시험, 설문, 상담을 한곳에서 처리하는 학습 관리 시스템(LMS)
 
-<br>
-
 ## 프로젝트 개요
 
 교육 기관에서 과정 하나를 운영하려면 수강생 명단, 출결, 과제, 시험, 설문, 상담 기록을 각각 따로 관리해야 합니다.
@@ -14,51 +12,46 @@ LearningWorks는 이 업무를 **과정 단위로 묶어** 한 화면에서 처�
 - 메뉴와 버튼마다 **권한 코드**를 두고, 역할(관리자 · 강사 · 수강생 등)별로 접근할 수 있는 기능을 관리 화면에서 바로 바꿀 수 있습니다.
 - 시험 과목, 문제 유형 같은 선택 항목은 **환경 변수(공통 코드)** 로 관리해서 코드 수정 없이 늘리거나 줄일 수 있습니다.
 
-<br>
-
 ## 팀원
 
-| 이름   | GitHub                                  | 주요 작업                                          |
-| ------ | --------------------------------------- | -------------------------------------------------- |
-| 유동혁 |   https://github.com/eastdh     | 역할 · 메뉴 관리, 표준 UI 부품 · 스타일 가이드, 백엔드 공통 응답 객체 / 프론트엔드 API 호출 클라이언트 가이드, 대시보드   |
-| 이동욱 |   https://github.com/fustarc    | 회원 관리, 로그인 · 보안, 성적표               |
-| 이태훈 |   https://github.com/dlxogns03  | 과정 관리, 과제 관리, 시험 출제 · 응시 · 채점, 출결              |
-| 장규나 |   https://github.com/Jang-s-git | 접근 권한 관리, 시간표, 면접 일정, 교육 자료, 상담 |
-| 임창진 |   https://github.com/Heboen     | 설문, 시험 문제 관리, 환경 변수 관리               |
-
-<br>
+| 이름   | GitHub                        | 주요 작업                                                                                                               |
+| ------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 유동혁 | https://github.com/eastdh     | 역할 · 메뉴 관리, 표준 UI 부품 · 스타일 가이드, 백엔드 공통 응답 객체 / 프론트엔드 API 호출 클라이언트 가이드, 대시보드 |
+| 이동욱 | https://github.com/fustarc    | 회원 관리, 로그인 · 보안, 성적표                                                                                        |
+| 이태훈 | https://github.com/dlxogns03  | 과정 관리, 과제 관리, 시험 출제 · 응시 · 채점, 출결                                                                     |
+| 장규나 | https://github.com/Jang-s-git | 접근 권한 관리, 시간표, 면접 일정, 교육 자료, 상담                                                                      |
+| 임창진 | https://github.com/Heboen     | 설문, 시험 문제 관리, 환경 변수 관리                                                                                    |
 
 ## 사용 기술
 
 ### Backend
 
-| 구분         | 기술                                                   |
-| ------------ | ------------------------------------------------------ |
-| 언어         | Java 21                                                |
-| 프레임워크   | Spring Boot 4.0, Spring Security, Spring Validation    |
-| 데이터 접근  | MyBatis 4.0                                            |
-| 데이터베이스 | Oracle (ojdbc17)                                       |
-| 인증         | JWT (jjwt 0.13)                                        |
-| 기타         | Lombok, Apache POI (엑셀), jsoup (링크 미리보기), Gson |
-| 빌드         | Maven                                                  |
+| 구분         | 기술                                                                                 |
+| ------------ | ------------------------------------------------------------------------------------ |
+| 언어         | Java 21                                                                              |
+| 프레임워크   | Spring Boot 4.0.0 (Spring Framework 7.0.1), Spring Security 7.0.0, Spring Validation |
+| 데이터 접근  | MyBatis 3.5.19 (mybatis-spring-boot-starter 4.0.1)                                   |
+| 데이터베이스 | Oracle Database 21c XE (21.3.0.0.0), JDBC 드라이버 ojdbc17 23.9                      |
+| 인증         | JWT (jjwt 0.13.0)                                                                    |
+| API 문서     | springdoc-openapi 3.0.3 (Swagger UI)                                                 |
+| 기타         | Lombok 1.18.42, Apache POI 5.5.1 (엑셀), jsoup 1.21.1 (링크 미리보기), Gson 2.13.2   |
+| 빌드         | Maven 3.10.0 (Maven Wrapper)                                                         |
 
 ### Frontend
 
-| 구분               | 기술                                                              |
-| ------------------ | ----------------------------------------------------------------- |
-| 라이브러리         | React 19                                                          |
-| 라우팅             | React Router 7                                                    |
-| 상태 관리          | Redux Toolkit, React Redux                                        |
-| 빌드 · 개발 서버   | Vite 8                                                            |
-| Style              | CSS (전역 스타일 + CSS Modules), CSS 변수 디자인 토큰 (다크 모드 지원), Pretendard 글꼴 |
-| 그 밖의 라이브러리 | FullCalendar (시간표), ApexCharts (차트), react-select            |
-| 코드 검사          | ESLint                                                            |
+| 구분               | 기술                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| 라이브러리         | React 19.3.1                                                                                  |
+| 라우팅             | React Router 7.18.5                                                                           |
+| 상태 관리          | Redux Toolkit 2.14.0, React Redux 9.3.1                                                       |
+| 빌드 · 개발 서버   | Vite 8.3.5                                                                                    |
+| Style              | CSS (전역 스타일 + CSS Modules), CSS 변수 디자인 토큰 (다크 모드 지원), Pretendard 1.3.9 글꼴 |
+| 그 밖의 라이브러리 | FullCalendar 7.1.3 (시간표), ApexCharts 8.7.0 (차트), react-select 5.10.2                     |
+| 코드 검사          | ESLint 10.14.0                                                                                |
 
 ### 협업
 
 Git · GitHub (Pull Request 기반)
-
-<br>
 
 ## 주요 기능
 
@@ -104,11 +97,9 @@ Git · GitHub (Pull Request 기반)
 - **접근 관리 · 권한별 접근 권한 관리**: 기능별 권한 코드를 역할에 부여 (화면 버튼과 서버 API가 같은 권한 코드로 동작)
 - **환경 변수 관리**: 시험 과목 · 문제 유형 · 시험 종류 등 공통 코드 관리 (사용 중인 코드는 끌 수 없음)
 
-<br>
-
 ## 폴더 구조
 
-```
+```txt
 lms
 ├── backend    # Spring Boot API 서버 (com.learningworks.*: 도메인별 web · service · dao · vo)
 └── frontend   # React 화면 (src/components, src/api, src/store, src/router)
