@@ -38,10 +38,10 @@ const GROUP_TABS = [
 ];
 
 export default function Survey() {
-  const { isSuperAdmin, status } = usePermission();
+  const { can, status } = usePermission();
   const crumbs = useBreadcrumbs();
 
-  if (status === "loaded" && isSuperAdmin) return <SurveyManagement />;
+  if (status === "loaded" && can("SURVEY_READ")) return <SurveyManagement />;
 
   // idle: 비로그인(조회하지 않음) → 표시 없음
   let content = null;
