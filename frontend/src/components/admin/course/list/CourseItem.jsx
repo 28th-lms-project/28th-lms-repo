@@ -15,7 +15,6 @@ import {
 import HomeWorkList from "../CourseTableComponent/HomeWorkList";
 import MyTimetable from "../../../my/course/MyTimetable";
 import MyInterview from "../../../my/course/MyInterview.jsx";
-// import MyStudyFiles from "../../../my/course/MyStudyFiles.jsx";
 import ExamPage from "../CourseTableComponent/ExamPage.jsx";
 import MyCourseData from "../../../my/course/MyCourseData.jsx";
 import MyCounsel from "../../../my/course/MyCounsel.jsx";
