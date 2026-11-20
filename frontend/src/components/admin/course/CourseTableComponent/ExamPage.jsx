@@ -60,9 +60,9 @@ export default function ExamPage() {
   const onDeleteTestSet = (testSetId) => {
     setTestSets((prev) => prev.filter((testSet) => testSet.id !== testSetId));
   };
-  // 시험 제목 input (RegistExamSetVO.setName)
+  // 시험 제목 input (RegistTestSetVO.setName)
   const examTitleRef = useRef();
-  // 시험 공개 여부 checkbox (RegistExamSetVO.showYn: 체크 시 "Y")
+  // 시험 공개 여부 checkbox (RegistTestSetVO.showYn: 체크 시 "Y")
   const isPublicRef = useRef();
 
   // 폼을 닫을 때 선택한 과목도 비운다 (다시 열었을 때 Select와 표가 어긋나지 않도록)
