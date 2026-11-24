@@ -7,11 +7,17 @@
   <img alt="강사 대시보드" src="docs/images/dashboard-main.png">
 </picture>
 
-| 항목      | 내용                                      |
-| --------- | ----------------------------------------- |
-| 개발 기간 | 2026.11.03 ~ 2026.11.20                   |
-| 인원      | 5명 (기능 모듈별 풀스택 분담)             |
-| 구성      | React SPA + Spring Boot REST API + Oracle |
+| 항목        | 내용                                                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 개발 기간   | 2026.11.03 ~ 2026.11.20                                                                                                  |
+| 인원        | 5명 (기능 모듈별 풀스택 분담)                                                                                            |
+| 구성        | React SPA + Spring Boot REST API + Oracle                                                                                |
+| 시연 영상   | 준비 중                                                                                                                  |
+| 발표 자료   | [LearningWorks 발표 자료 (PDF)](docs/presentation.pdf)                                                                   |
+| 기획 · 회의 | [노션](https://app.notion.com/p/KTDS_28-_B-_-4080dac9e05080419184cd837ec1d1cc)                                           |
+| 일정 (WBS)  | [WBS 스프레드시트](https://docs.google.com/spreadsheets/d/14JrGELtn-kDYYioyLYBzSErJmUoTyyayNTT2if1yey0/edit?usp=sharing) |
+
+<!-- 시연 영상이 올라가면 위 표의 "준비 중"을 [시연 영상](주소)로 바꾼다 -->
 
 ## 목차
 
@@ -309,6 +315,7 @@ npm run build
 | ---------- | ---------------------------------------------------------------------- | ------------------------------------------ |
 | 프로젝트   | [요구사항 명세서](docs/requirements-spec.md)                           | 기능별 요구사항과 구현 상태                |
 |            | [개발 명세서](docs/development-spec.md)                                | 아키텍처 · 전체 API · DB · 화면 명세       |
+|            | [발표 자료 (PDF)](docs/presentation.pdf)                               | 프로젝트 발표 슬라이드                     |
 | 백엔드     | [API 공통 응답 · 예외 처리 가이드](backend/docs/api-response-guide.md) | `ApiResponse` · `ErrorCode` 사용법         |
 |            | [API 권한 설정 가이드](backend/docs/access-control-guide.md)           | `@RequireAction` 등 권한 어노테이션 사용법 |
 |            | [권한 체계 결정 기록](backend/docs/design/access-design.md)            | 권한 체계를 이렇게 정한 이유               |
