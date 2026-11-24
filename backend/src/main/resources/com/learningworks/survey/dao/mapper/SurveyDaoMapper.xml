@@ -274,19 +274,33 @@
 			 , #{textAnswer, jdbcType=VARCHAR})
 	</insert>
 
-	<!-- 과정 설문에 응답한 학생 목록 (USER는 이름만 조회) -->
+	<!--
+		과정 설문에 응답한 학생 목록 (USER는 이름만 조회)
+		RESPONDENT_ID: 학생별 첫 응답 행 ID(CA-). 강사에게는 학생 ID 대신 이 값만 내려 익명으로 답변을 조회한다
+	-->
 	<select id="selectCourseSurveyRespondents"
 		resultType="com.learningworks.survey.vo.response.SurveyRespondentVO"
 		parameterType="string">
-		SELECT DISTINCT CS.ID AS COURSE_STUDENT_ID
+		SELECT CS.ID AS COURSE_STUDENT_ID
 			 , U.NAME
+			 , MIN(CA.ID) AS RESPONDENT_ID
 		  FROM COURSE_SURVEY_ANSWER CA
 		 INNER JOIN COURSE_STUDENT CS
 			ON CS.ID = CA.COURSE_STUDENT_ID
 		 INNER JOIN "USER" U
 			ON U.ID = CS.USER_ID
 		 WHERE CA.COURSE_SURVEY_ID = #{_parameter}
+		 GROUP BY CS.ID
+			 , U.NAME
 		 ORDER BY U.NAME
+	</select>
+
+	<!-- 응답자 ID(CA-) → 과정 수강생 ID (이 설문의 응답 행이 아니면 null) -->
+	<select id="selectRespondentCourseStudentId" resultType="string">
+		SELECT COURSE_STUDENT_ID
+		  FROM COURSE_SURVEY_ANSWER
+		 WHERE ID = #{respondentId}
+		   AND COURSE_SURVEY_ID = #{courseSurveyId}
 	</select>
 
 	<!-- 한 학생의 과정 설문 답변 -->

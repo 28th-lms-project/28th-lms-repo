@@ -17,6 +17,7 @@ import { icons } from "../../../common/input/icons.js";
 import MemberDetail from "./MemberDetail.jsx";
 import MemberCreateModal from "./MemberCreateModal.jsx";
 import styles from "./MemberManagement.module.css";
+import { displayName } from "../../../../utils/displayName.js";
 
 export default function MemberManagement() {
   const { can, status } = usePermission();
@@ -151,7 +152,11 @@ function MemberManagementContent() {
   // 회원 목록 표 칸
   const columns = [
     { key: "id", title: "아이디", mono: true },
-    { key: "name", title: "이름" },
+    {
+      key: "name",
+      title: "이름",
+      render: (member) => displayName(member.name, member.nameSuffix),
+    },
     { key: "roleName", title: "역할", width: "16%" },
     { key: "createDate", title: "등록일", width: "22%" },
     {

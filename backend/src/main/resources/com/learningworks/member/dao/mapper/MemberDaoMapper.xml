@@ -40,6 +40,7 @@
 		<include refid="Commons.paginate_header" />
 		SELECT U.ID
              , U.NAME
+             , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
              , U.BASE_ROLE
              , R.ROLE_DISPLAY_NAME AS ROLE_NAME
              , TO_CHAR(U.CRT_DT, 'YYYY-MM-DD HH24:MI:SS') AS CREATE_DATE

@@ -353,22 +353,54 @@ public class SurveyServiceImpl implements SurveyService {
 			respondents = mine;
 		}
 
+		// 강사 · 관리자는 익명: 이름 · 수강생 ID 를 응답에서 빼고 "응답자 N" + 응답자 ID 만 내려준다
+		// (이름순이 드러나지 않게 응답자 ID 해시 순서로 번호를 매김). 수강생은 본인 응답만 보므로 그대로
+		boolean anonymous = relation != Relation.STUDENT;
+		if (anonymous) {
+			respondents = this.anonymize(respondents);
+		}
+
 		CourseSurveyResultVO result = new CourseSurveyResultVO();
 		result.setCourseSurvey(courseSurvey);
 		result.setSurveyList(this.surveyDao.selectAllSurveyByGroup(courseSurvey.getSurveyGroup()));
 		result.setRespondents(respondents);
+		result.setAnonymous(anonymous);
 		return result;
+	}
+
+	/** 강사용 익명 응답자 목록: 수강생 ID · 이름 제거, "응답자 N" */
+	private List<SurveyRespondentVO> anonymize(List<SurveyRespondentVO> respondents) {
+		List<SurveyRespondentVO> sorted = new ArrayList<>(respondents);
+		sorted.sort((a, b) -> Integer.compare(a.getRespondentId().hashCode(), b.getRespondentId().hashCode()));
+		List<SurveyRespondentVO> anonymous = new ArrayList<>();
+		for (int i = 0; i < sorted.size(); i++) {
+			SurveyRespondentVO respondent = new SurveyRespondentVO();
+			respondent.setRespondentId(sorted.get(i).getRespondentId());
+			respondent.setName("응답자 " + (i + 1));
+			anonymous.add(respondent);
+		}
+		return anonymous;
 	}
 
 	@Override
 	public List<SurveyStudentAnswerVO> readCourseSurveyStudentAnswers(String courseId, String courseSurveyId,
-			String courseStudentId, String userId) {
-		if (courseStudentId == null || courseStudentId.isBlank()) {
+			String respondentOrCourseStudentId, String userId) {
+		if (respondentOrCourseStudentId == null || respondentOrCourseStudentId.isBlank()) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
 		this.findCourseSurvey(courseId, courseSurveyId);
 		// 이 과정과 관계없는 사람은 여기서 403
 		Relation relation = this.courseAccessChecker.requireMember(courseId);
+
+		// 응답자 ID(CA-)면 수강생 ID 로 바꿈. 강사 · 관리자(익명 조회)는 응답자 ID 로만 조회할 수 있다 (수강생 ID 로 특정 학생 조회 차단)
+		String courseStudentId = this.surveyDao.selectRespondentCourseStudentId(courseSurveyId,
+				respondentOrCourseStudentId);
+		if (courseStudentId == null) {
+			if (relation != Relation.STUDENT) {
+				throw new LearningworksException(ErrorCode.GLOBAL_FORBIDDEN);
+			}
+			courseStudentId = respondentOrCourseStudentId;
+		}
 
 		// 수강생은 본인 답변만 볼 수 있음 (강사 · 관리자는 누구든)
 		if (relation == Relation.STUDENT) {

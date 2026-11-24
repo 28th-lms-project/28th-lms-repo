@@ -167,7 +167,7 @@ class ExamServiceImplTest {
             ModifyExamQuestionVO request = this.validRequest();
             request.setQuestion(" ");
             request.setAnswerCount(null);
-            request.setPointAlloc(5);
+            request.setPointAlloc(6); // 배점은 1~5점 (배점 = 난이도)
             request.setCorrectAnswer( "");
             Set<String> fields = factory.getValidator().validate(request).stream()
                     .map(violation -> violation.getPropertyPath().toString())

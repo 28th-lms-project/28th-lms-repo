@@ -5,6 +5,7 @@ import Badge from "../../../common/ui/Badge";
 import Progress from "../../../common/ui/Progress";
 import StatusBox from "../../../common/ui/StatusBox";
 import Table from "../../../common/ui/Table";
+import { displayName } from "../../../../utils/displayName.js";
 
 /** 0 ~ 100 으로 자르고, 숫자가 아니면 0 */
 const clampRate = (rate) => Math.min(100, Math.max(0, Number(rate) || 0));
@@ -12,14 +13,19 @@ const clampRate = (rate) => Math.min(100, Math.max(0, Number(rate) || 0));
 /** 컬럼은 진행된 수업일(passedClassDays)이 필요해서 함수로 만든다 */
 const getAttendanceColumns = (passedClassDays) => [
   { key: "userId", title: "아이디", width: 140, mono: true },
-  { key: "name", title: "이름", width: 140 },
+  {
+    key: "name",
+    title: "이름",
+    width: 140,
+    render: (student) => displayName(student.name, student.nameSuffix),
+  },
   {
     key: "attendanceRate",
     title: "출석률 (전체 기간 기준)",
     // 막대: 전체 수업일 기준 (출석 인정일 / 전체 수업일, 서버 계산)
     render: (student) => (
       <Progress
-        label={`${student.name} 출석률`}
+        label={`${displayName(student.name, student.nameSuffix)} 출석률`}
         value={clampRate(student.attendanceRate)}
         tone={student.warning ? "danger" : "success"}
         showValue

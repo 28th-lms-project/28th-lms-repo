@@ -240,14 +240,14 @@ export default function QuestionForm({
               label="배점"
               htmlFor={`${formId}-point`}
               required
-              hint="1~4점"
+              hint="1~5점 (배점이 곧 난이도입니다)"
               error={joinMessages(fieldErrors.pointAlloc)}
             >
               <input
                 id={`${formId}-point`}
                 type="number"
                 min={1}
-                max={4}
+                max={5}
                 className={`form-control ${style.pointInput}`}
                 value={form.point}
                 onChange={(e) => update({ point: e.target.value })}

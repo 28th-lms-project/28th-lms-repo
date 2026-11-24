@@ -15,6 +15,11 @@ import StatusBox from "../../common/ui/StatusBox.jsx";
 import Table from "../../common/ui/Table.jsx";
 import { useConfirm, useToast } from "../../common/ui/feedbackContext.js";
 import { icons } from "../../common/input/icons";
+import {
+  formatPoint,
+  formatTestType,
+  getScoreStatus,
+} from "../../../utils/scoreFormat.js";
 
 import {
   getAverageScore,
@@ -29,12 +34,17 @@ import {
   updateCapability,
   updateOpinion,
 } from "../../../api/my/course/counselApi.js";
+import { displayName } from "../../../utils/displayName.js";
+import {
+  formatPhoneNumber,
+  isValidPhoneNumber,
+} from "../../../utils/phoneFormat.js";
 
 // 모든 과정의 교육시간은 동일하므로 DB 조회 없이 고정 표시
 const EDUCATION_TIME = "09:00 ~ 18:00 (100일 800H)";
 
 const DESC_MAX_LENGTH = 4000;
-const CONTACT_MAX_LENGTH = 100;
+const CONTACT_MAX_LENGTH = 13; // 하이픈 포함 010-1234-5678 (서버 검증과 같음)
 
 // DB 값 1: 남자, 2: 여자
 const GENDER_OPTIONS = [
@@ -71,7 +81,12 @@ const CONSULT_TYPE_OPTIONS = CONSULT_TYPES.map((type) => ({
 }));
 
 const LIST_COLUMNS = [
-  { key: "studentName", title: "수강생", width: "160px" },
+  {
+    key: "studentName",
+    title: "수강생",
+    width: "160px",
+    render: (row) => displayName(row.studentName, row.nameSuffix),
+  },
   {
     key: "opinion",
     title: "종합의견",
@@ -83,14 +98,35 @@ const LIST_COLUMNS = [
   },
 ];
 
+const SCORE_STATUS_TONE = {
+  unsubmitted: "neutral",
+  pending: "warning",
+  done: "success",
+};
+
 const SCORE_COLUMNS = [
-  { key: "setName", title: "과목" },
+  { key: "setName", title: "시험명" },
+  {
+    key: "testType",
+    title: "유형",
+    width: "100px",
+    render: (row) => formatTestType(row.testType),
+  },
   {
     key: "score",
     title: "점수",
-    width: "100px",
+    width: "110px",
     align: "num",
-    render: (row) => row.score ?? "-",
+    render: (row) => formatPoint(row.score, row.totalPoint),
+  },
+  {
+    key: "status",
+    title: "상태",
+    width: "130px",
+    render: (row) => {
+      const status = getScoreStatus(row);
+      return <Badge tone={SCORE_STATUS_TONE[status.key]}>{status.label}</Badge>;
+    },
   },
 ];
 
@@ -366,6 +402,13 @@ function StudentInfoSection({ courseId, courseStudentId, detail, canCreate }) {
       setFormErrors({ contact: "연락처를 입력하세요." });
       return;
     }
+    // 서버 검증과 같음 (02-123-4567 · 010-1234-5678 · 1588-1234 형식)
+    if (!isValidPhoneNumber(contact)) {
+      setFormErrors({
+        contact: "연락처 형식이 올바르지 않습니다. (예: 010-1234-5678)",
+      });
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -442,7 +485,7 @@ function StudentInfoSection({ courseId, courseStudentId, detail, canCreate }) {
           <div>
             <dt>교육생</dt>
             <dd>
-              <strong>{info.studentName}</strong>
+              <strong>{displayName(info.studentName, info.nameSuffix)}</strong>
             </dd>
           </div>
           <div>
@@ -497,7 +540,11 @@ function StudentInfoSection({ courseId, courseStudentId, detail, canCreate }) {
                 maxLength={CONTACT_MAX_LENGTH}
                 value={form.contact}
                 disabled={isSaving}
-                onChange={(event) => setField("contact", event.target.value)}
+                inputMode="tel"
+                onChange={(event) =>
+                  // 입력하는 동안 하이픈 자동 추가 (숫자만 남기고 형식 맞춤)
+                  setField("contact", formatPhoneNumber(event.target.value))
+                }
               />
             </Field>
             <div>
@@ -725,8 +772,8 @@ function ScoreSection({ courseId, courseStudentId }) {
           unit={hasAverage ? "점" : undefined}
           hint={
             !average.isLoading && average.data == null
-              ? "성적 데이터 없음"
-              : undefined
+              ? "채점 완료된 성적 없음"
+              : "100점 환산 · 채점 완료 시험 기준"
           }
         />
 

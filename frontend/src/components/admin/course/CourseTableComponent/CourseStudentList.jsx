@@ -16,11 +16,16 @@ import StatusBox from "../../../common/ui/StatusBox";
 import Table from "../../../common/ui/Table";
 import { useToast } from "../../../common/ui/feedbackContext";
 import { icons } from "../../../common/input/icons";
+import { displayName } from "../../../../utils/displayName.js";
 
 const STUDENT_COLUMNS = [
   { key: "rowNum", title: "번호", width: 80, align: "num" },
   { key: "id", title: "아이디", mono: true },
-  { key: "name", title: "이름" },
+  {
+    key: "name",
+    title: "이름",
+    render: (student) => displayName(student.name, student.nameSuffix),
+  },
   {
     key: "pc id",
     title: "PC IP",

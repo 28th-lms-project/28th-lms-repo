@@ -15,6 +15,7 @@ public enum ErrorCode {
   // 400 BAD REQUEST
   GLOBAL_BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."), //
   GLOBAL_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "입력값을 확인해주세요."), //
+  COUNSEL_CONTACT_INVALID(HttpStatus.BAD_REQUEST, "연락처 형식이 올바르지 않습니다. (예: 010-1234-5678)"), //
   GLOBAL_INVALID_JSON(HttpStatus.BAD_REQUEST, "요청 본문(JSON)의 형식이 잘못되었거나 파싱할 수 없습니다."), //
   GLOBAL_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "요청 파라미터의 타입이 올바르지 않습니다."), //
   GLOBAL_MISSING_PARAMETER(HttpStatus.BAD_REQUEST, "필수 요청 파라미터가 누락되었습니다."), //
@@ -47,6 +48,7 @@ public enum ErrorCode {
   GLOBAL_FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."), //
   USER_BLOCKED_LOGIN(HttpStatus.FORBIDDEN, "로그인 실패 횟수가 누적되어 계정이 차단되었습니다."), //
   COURSE_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "해당 강의에 대한 권한이 없습니다."), //
+  SCORE_RESULT_NOT_OPEN(HttpStatus.FORBIDDEN, "채점이 끝나고 시험이 마감(비공개)된 뒤에 결과를 볼 수 있습니다."), //
   ROLE_SELF_CHANGE(HttpStatus.FORBIDDEN, "자신의 역할은 변경할 수 없습니다."), //
   ROLE_ASSIGN_FORBIDDEN(HttpStatus.FORBIDDEN, "자신보다 낮은 역할만 지정할 수 있습니다."), //
   ROLE_TARGET_FORBIDDEN(HttpStatus.FORBIDDEN, "자신보다 높거나 같은 역할의 회원은 변경할 수 없습니다."), //
@@ -63,6 +65,7 @@ public enum ErrorCode {
   EXAM_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."), //
   ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
   COURSE_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 교육 자료입니다."), //
+  TEST_SET_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 시험입니다."), //
   CODE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 환경 변수입니다."), //
   COUNSEL_NOT_EXISTS(HttpStatus.NOT_FOUND, "상담 기본 정보가 없습니다. 성별과 연락처를 먼저 등록해주세요."), //
   COUNSEL_STUDENT_NOT_IN_COURSE(HttpStatus.NOT_FOUND, "과정에 등록된 학생이 아닙니다."), //

@@ -18,6 +18,7 @@ import {
   toAnswerTypeCode,
   useAnswerTypeName,
 } from "../../../../utils/examAnswerType";
+import { displayName } from "../../../../utils/displayName.js";
 
 /** 채점 결과 코드 → 화면 표시 (배지 tone 은 가이드 배지 규칙) */
 const GRADE_LABELS = {
@@ -161,7 +162,9 @@ export default function ExamGradeModal({
       return;
     }
     const questionNo = questions.indexOf(question) + 1;
-    const studentName = selectedStudent?.name ?? "수강생";
+    const studentName = selectedStudent?.name
+      ? displayName(selectedStudent.name, selectedStudent.nameSuffix)
+      : "수강생";
     const ok = await confirm({
       title: "채점",
       message: `${studentName} 학생의 ${questionNo}번 문제를 '${GRADE_LABELS[grade].text}'(으)로 채점할까요?`,
@@ -207,7 +210,9 @@ export default function ExamGradeModal({
     const studentAnswer = answersOfStudent[question.id];
     const answered = Boolean(studentAnswer?.answer);
     const grade = GRADE_LABELS[studentAnswer?.isCorrect];
-    const studentName = selectedStudent?.name ?? "수강생";
+    const studentName = selectedStudent?.name
+      ? displayName(selectedStudent.name, selectedStudent.nameSuffix)
+      : "수강생";
     // 저장 값이 코드 · 옛 한글 이름 어느 쪽이어도 코드로 바꿔서 비교
     const answerType = toAnswerTypeCode(question.answerType);
     const isChoice = [ANSWER_TYPE.SELECT, ANSWER_TYPE.MULTIPLE].includes(
@@ -349,7 +354,9 @@ export default function ExamGradeModal({
             idBase={tabsId}
             items={students.map((student) => ({
               id: String(student.id),
-              label: student.name ?? student.id,
+              label: student.name
+                ? displayName(student.name, student.nameSuffix)
+                : student.id,
               count: gradedCountOf(student.id),
             }))}
             value={String(selectedStudentId)}

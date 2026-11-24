@@ -191,6 +191,7 @@
 	        SELECT ROWNUM
                  , U.NAME
                  , U.ID
+                 , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
               FROM "USER" u
              WHERE U.ID IN (SELECT CS.USER_ID  
                               FROM COURSE_STUDENT CS 
@@ -583,6 +584,7 @@
             resultType="com.learningworks.course.vo.response.StudentAttendanceVO">
         SELECT CS.USER_ID
              , U.NAME
+             , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
              , COUNT(CASE WHEN A.ATTEND_STATUS = 'Y' THEN 1 END) AS PRESENT_COUNT
              , COUNT(CASE WHEN A.ATTEND_STATUS = 'L' THEN 1 END) AS LATE_COUNT
              , COUNT(CASE WHEN A.ATTEND_STATUS = 'N' THEN 1 END) AS ABSENT_COUNT
@@ -600,7 +602,7 @@
         <if test="userId != null">
            AND CS.USER_ID = #{userId}
         </if>
-         GROUP BY CS.USER_ID, U.NAME
+         GROUP BY CS.USER_ID, U.NAME, U.ID, U.CRT_DT
          ORDER BY U.NAME
     </select>
 </mapper>

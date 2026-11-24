@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.learningworks.common.exceptions.LearningworksException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.common.utils.AuthUtil;
+import com.learningworks.common.utils.PhoneNumberFormat;
 import com.learningworks.course.service.CourseAccessChecker;
 import com.learningworks.counsel.dao.CounselDao;
 import com.learningworks.counsel.vo.request.CapabilityRequestVO;
@@ -45,7 +46,14 @@ public class CounselServiceImpl implements CounselService {
 	@Transactional(readOnly = true)
 	public CounselDetailResponseVO getCounselDetail(String courseId, String courseStudentId) {
 		validateCourseStudent(courseId, courseStudentId);
-		return this.counselDao.selectCounselDetail(courseStudentId);
+		CounselDetailResponseVO detail = this.counselDao.selectCounselDetail(courseStudentId);
+		// 암호문이면 복호화, 암호화 전에 저장된 평문이면 그대로
+		if (detail != null) {
+			// 복호화는 SQL(AES_DECRYPTION)에서. 하이픈 없이 저장된 예전 값도 화면에는 010-1234-5678 형식으로 (저장 값은 바꾸지 않음)
+			String contact = detail.getContact();
+			detail.setContact(PhoneNumberFormat.isValid(contact) ? PhoneNumberFormat.format(contact) : contact);
+		}
+		return detail;
 	}
 
 	@Override
@@ -59,7 +67,12 @@ public class CounselServiceImpl implements CounselService {
 		}
 
 		counselRequestVO.setCourseStudentId(courseStudentId);
-		counselRequestVO.setContact(counselRequestVO.getContact().trim());
+		// 전화번호 형식 확인 → 하이픈 형식(010-1234-5678)으로 맞춤. 암호화는 SQL(AES_ENCRYPTION)에서
+		String contact = counselRequestVO.getContact().trim();
+		if (!PhoneNumberFormat.isValid(contact)) {
+			throw new LearningworksException(ErrorCode.COUNSEL_CONTACT_INVALID);
+		}
+		counselRequestVO.setContact(PhoneNumberFormat.format(contact));
 
 		if (this.counselDao.insertCounsel(counselRequestVO) != 1) {
 			throw new LearningworksException(ErrorCode.COUNSEL_FAILURE_CREATE);

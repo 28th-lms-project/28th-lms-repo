@@ -29,6 +29,22 @@ export function formatAveragePoint(averageScore, totalPoint) {
   return formatPoint(averageScore, totalPoint);
 }
 
+/**
+ * 학생이 시험 상세 결과를 볼 수 있는지 (서버 ScoreServiceImpl.readMyScoreDetail 과 같은 기준)
+ * 응시했고, 본인 채점이 모두 끝났고, 시험이 마감(SHOW_YN = N)된 경우
+ */
+export function canOpenResult(row) {
+  return hasScoreValue(row.score) && row.pendingCount === 0 && row.showYn === "N";
+}
+
+/** 석차 "3등 / 20명" (채점 중 · 미응시면 "-") */
+export function formatRank(rankNo, rankTotal) {
+  if (rankNo === null || rankNo === undefined || !(rankTotal > 0)) {
+    return "-";
+  }
+  return `${rankNo}등 / ${rankTotal}명`;
+}
+
 export function toPercent(value, totalPoint) {
   if (value === null || value === undefined || !(totalPoint > 0)) {
     return null;

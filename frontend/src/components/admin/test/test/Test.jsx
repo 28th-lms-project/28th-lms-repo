@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import PageHeader from "../../../common/ui/PageHeader";
 import useBreadcrumbs from "../../../../hooks/useBreadcrumbs";
 import { searchTest } from "../../../../api/admin/system/test/testApi";
@@ -17,9 +17,12 @@ import StatusBox from "../../../common/ui/StatusBox";
 import { Tabs, TabPanel } from "../../../common/ui/Tabs";
 import { useToast } from "../../../common/ui/feedbackContext";
 import MyPassword from "../../../my/info/MyPassword";
+import Field from "../../../common/ui/Field";
+import SelectBox from "../../../common/ui/SelectBox";
 import { toAnswerTypeCode } from "../../../../utils/examAnswerType";
 
-const NO_DETAIL_TYPES = ["ANSWER_CHECK", "ANSWER_WRITE", "ANSWER_CODE"];
+/* 보기가 있는 유형 (보기는 항상 표시, 정답은 [정답 확인]을 눌러야 표시) */
+const CHOICE_TYPES = ["ANSWER_SELECT", "ANSWER_MULTIPLE"];
 
 /* 유형별 배지 색 (샘플 문제 은행 · 시험지와 같게) */
 const TYPE_TONE = {
@@ -105,8 +108,12 @@ function TestManagement() {
   const canUpdate = can("EXAM_QUESTION_UPDATE");
   const canDelete = can("EXAM_QUESTION_DELETE");
 
-  // 보기 · 정답을 펼친 문제 id (문제마다 따로)
+  // 정답을 펼친 문제 id (문제마다 따로, 기본은 숨김)
   const [openIds, setOpenIds] = useState([]);
+  // 목록 필터: 문제 유형 ("" 전체) · 난이도 ("" 전체, 배점 1~5점 = 난이도 1~5) · 검색어 (문제 제목 · 내용)
+  const [typeFilter, setTypeFilter] = useState("");
+  const [difficultyFilter, setDifficultyFilter] = useState("");
+  const [keyword, setKeyword] = useState("");
   const [subjectList, setSubjectList] = useState([]);
 
   const [selectedSubjectId, setSelectedSubjectId] = useState("");
@@ -177,6 +184,47 @@ function TestManagement() {
     label: subject.name,
   }));
 
+  const filteredQuestions = useMemo(() => {
+    const word = keyword.trim().toLowerCase();
+    return questions.filter((question) => {
+      if (typeFilter && toAnswerTypeCode(question.answerType) !== typeFilter) {
+        return false;
+      }
+      if (
+        difficultyFilter &&
+        String(question.pointAlloc) !== difficultyFilter
+      ) {
+        return false;
+      }
+      if (!word) {
+        return true;
+      }
+      return [question.question, question.subQuestion]
+        .filter(Boolean)
+        .some((text) => text.toLowerCase().includes(word));
+    });
+  }, [questions, typeFilter, difficultyFilter, keyword]);
+
+  const isFiltered =
+    typeFilter !== "" || difficultyFilter !== "" || keyword.trim() !== "";
+
+  const typeOptions = [
+    { value: "", label: "전체 유형" },
+    ...answerTypeList.map((type) => ({ value: type.id, label: type.name })),
+  ];
+
+  // 난이도 = 배점 (1~5점). 이 과목에서 난이도별 문제 수를 함께 표시
+  const difficultyOptions = [
+    { value: "", label: "전체 난이도" },
+    ...[1, 2, 3, 4, 5].map((level) => ({
+      value: String(level),
+      label: `난이도 ${level} (${
+        questions.filter((question) => Number(question.pointAlloc) === level)
+          .length
+      }문제)`,
+    })),
+  ];
+
   let questionList;
   if (loadError) {
     questionList = (
@@ -190,34 +238,32 @@ function TestManagement() {
     questionList = (
       <StatusBox type="empty" title="이 과목에 등록된 문제가 없습니다." />
     );
+  } else if (filteredQuestions.length === 0) {
+    questionList = (
+      <StatusBox type="empty" title="조건에 맞는 문제가 없습니다." />
+    );
   } else {
     questionList = (
       <div className="form-stack">
-        {questions.map((question) => {
+        {filteredQuestions.map((question, index) => {
           // 옛 데이터(한글 이름 등)도 코드로 바꿔서 비교
           const answerType = toAnswerTypeCode(question.answerType);
           const isOx = answerType === "ANSWER_CHECK";
-          // 보기가 있는 유형만 [보기 · 정답 펼치기] (O/X는 정답을 항상 보여줌)
-          const hasDetail = !NO_DETAIL_TYPES.includes(answerType);
+          const isChoice = CHOICE_TYPES.includes(answerType);
+          const isCode = answerType === "ANSWER_CODE";
+          // 정답은 기본 숨김. [정답 확인]을 누르면 펼치고 다시 누르면 접음 (모든 유형)
           const expanded = openIds.includes(question.id);
 
-          let toggleButton = null;
-          if (hasDetail) {
-            let toggleText = "보기 · 정답 펼치기";
-            if (expanded) {
-              toggleText = "보기 · 정답 접기";
-            }
-            toggleButton = (
-              <Button
-                size="sm"
-                variant="text"
-                aria-expanded={expanded}
-                onClick={() => toggleOpen(question.id)}
-              >
-                {toggleText}
-              </Button>
-            );
-          }
+          const toggleButton = (
+            <Button
+              size="sm"
+              variant="text"
+              aria-expanded={expanded}
+              onClick={() => toggleOpen(question.id)}
+            >
+              {expanded ? "정답 숨기기" : "정답 확인"}
+            </Button>
+          );
 
           let stats = null;
           if (
@@ -232,30 +278,48 @@ function TestManagement() {
             );
           }
 
-          let answerBlock = null;
-          if (isOx) {
-            answerBlock = (
+          // 문제 내용 (항상 표시): 본문 · 코드 + 보기 (정답은 펼쳤을 때만 초록 표시)
+          const choiceOptions = question.answers.map((answer) => ({
+            value: String(answer.no),
+            label: answer.text,
+          }));
+          let contentBlock = null;
+          if (isChoice || isOx) {
+            contentBlock = (
               <QuestionBlock
-                no="정답"
-                title="O/X 정답"
-                options={OX_OPTIONS}
-                answer={question.correctAnswer}
-                showResult
+                no={isOx ? "O/X" : "보기"}
+                title={isOx ? "O/X 문제" : "보기"}
+                body={question.subQuestion || undefined}
+                options={isOx ? OX_OPTIONS : choiceOptions}
+                multiple={answerType === "ANSWER_MULTIPLE"}
+                answer={
+                  isOx
+                    ? question.correctAnswer
+                    : getCorrectNumbers(question.correctAnswer)
+                }
+                showResult={expanded}
               />
             );
-          } else if (hasDetail && expanded) {
-            answerBlock = (
+          } else if (question.subQuestion) {
+            contentBlock = (
               <QuestionBlock
-                no="보기"
-                title="보기 · 정답"
-                options={question.answers.map((answer) => ({
-                  value: String(answer.no),
-                  label: answer.text,
-                }))}
-                multiple={answerType === "ANSWER_MULTIPLE"}
-                answer={getCorrectNumbers(question.correctAnswer)}
-                showResult
+                no="내용"
+                title="문제 내용"
+                body={!isCode ? question.subQuestion : undefined}
+                code={isCode ? question.subQuestion : undefined}
               />
+            );
+          }
+
+          // 주관식 · 코드: 펼치면 모범 답안 (없으면 강사 채점 안내)
+          let answerBlock = null;
+          if (expanded && !isChoice && !isOx) {
+            answerBlock = (
+              <div className="answer-box answer-box-model">
+                <span className="answer-box-label">모범 답안</span>
+                {question.correctAnswer ||
+                  "등록된 모범 답안이 없습니다. (강사 채점)"}
+              </div>
             );
           }
 
@@ -263,12 +327,15 @@ function TestManagement() {
             <article key={question.id} className="card">
               <div className="card-header">
                 <h3 className="card-title">
+                  <span className="field-hint">{index + 1}.</span>{" "}
                   <Badge tone={toTypeTone(answerType)}>
                     {toAnswerTypeName(answerType)}
                   </Badge>{" "}
                   {question.question}
                 </h3>
-                <span className="field-hint">{question.pointAlloc}점</span>
+                <span className="field-hint">
+                  난이도 {question.pointAlloc} · {question.pointAlloc}점
+                </span>
               </div>
               <div className="card-meta">
                 <span>
@@ -284,6 +351,9 @@ function TestManagement() {
               >
                 {toggleButton}
               </UpdateTest>
+              {contentBlock && (
+                <div className={style.answerArea}>{contentBlock}</div>
+              )}
               {answerBlock && (
                 <div className={style.answerArea}>{answerBlock}</div>
               )}
@@ -313,6 +383,51 @@ function TestManagement() {
               questionCount={questions.length}
               canCreate={canCreate}
             />
+          )}
+          {!loadError && questions.length > 0 && (
+            <div className="toolbar">
+              <div className="form-row">
+                <Field label="문제 유형" htmlFor="testTypeFilter">
+                  <SelectBox
+                    inputId="testTypeFilter"
+                    size="sm"
+                    options={typeOptions}
+                    value={typeOptions.find(
+                      (option) => option.value === typeFilter,
+                    )}
+                    onChange={(option) => setTypeFilter(option?.value ?? "")}
+                  />
+                </Field>
+                <Field label="난이도 (배점)" htmlFor="testDifficultyFilter">
+                  <SelectBox
+                    inputId="testDifficultyFilter"
+                    size="sm"
+                    options={difficultyOptions}
+                    value={difficultyOptions.find(
+                      (option) => option.value === difficultyFilter,
+                    )}
+                    onChange={(option) =>
+                      setDifficultyFilter(option?.value ?? "")
+                    }
+                  />
+                </Field>
+                <Field label="검색" htmlFor="testKeyword">
+                  <input
+                    id="testKeyword"
+                    type="search"
+                    className="form-control"
+                    placeholder="문제 제목 · 내용"
+                    value={keyword}
+                    onChange={(event) => setKeyword(event.target.value)}
+                  />
+                </Field>
+              </div>
+              <span className="field-hint" role="status">
+                {isFiltered
+                  ? `${filteredQuestions.length} / ${questions.length}문제`
+                  : `${questions.length}문제`}
+              </span>
+            </div>
           )}
           {questionList}
         </div>
