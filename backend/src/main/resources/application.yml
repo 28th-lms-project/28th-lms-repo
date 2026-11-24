@@ -10,7 +10,6 @@ spring:
     driver-class-name: oracle.jdbc.OracleDriver
     url: jdbc:oracle:thin:@192.168.211.20:1521:XE
     username: LEARNING_WORKS
-    password: LEARNING_WORKS_1234
   # 파일 업로드 크기 제한 (교육 자료 파일 10MB)
   servlet:
     multipart:
@@ -25,8 +24,7 @@ mybatis:
 app:
   # JWT 설정
   jwt:
-    secret-key: gwcR4tHA5Pvn3iApesLgqq0tcY1nLzuyrRRt7/q6lc0=
-    access-token-validity-seconds: 604800
+    access-token-validity-seconds: 34200
   # API 권한 검사 (@RequireAction, @RequireSuperAdmin, @LoginRequired, @PublicApi). 사용법: backend/docs/access-control-guide.md
   access-check:
     enabled: true
