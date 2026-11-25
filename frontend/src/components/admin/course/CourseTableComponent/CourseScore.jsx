@@ -1,8 +1,11 @@
 import { useParams } from "react-router-dom";
 import usePermission from "../../../../hooks/usePermission.js";
 import styles from "./CourseScore.module.css";
-import { useEffect, useState } from "react";
-import { getCourseScoreList } from "../../../../api/my/course/scoreApi.js";
+import { useCallback, useEffect, useState } from "react";
+import {
+  getCourseScoreList,
+  getStudentScoreDetail,
+} from "../../../../api/my/course/scoreApi.js";
 import {
   getScoreStatus,
   formatTestType,
@@ -12,6 +15,10 @@ import StatusBox from "../../../common/ui/StatusBox.jsx";
 import Panel from "../../../common/ui/Panel.jsx";
 import Badge from "../../../common/ui/Badge.jsx";
 import MyScore from "../../../my/course/MyScore.jsx";
+import Button from "../../../common/ui/Button.jsx";
+import Modal from "../../../common/ui/Modal.jsx";
+import ScoreDetailModal from "./ScoreDetailModal.jsx";
+import { displayName } from "../../../../utils/displayName.js";
 
 export default function CourseScore() {
   const { id } = useParams();
@@ -40,7 +47,8 @@ export default function CourseScore() {
   return <CourseScoreContent courseId={id} />;
 }
 
-function ScoreCell({ row }) {
+/** 응시한 시험 점수는 버튼: 누르면 상세 성적 (문항별 결과) */
+function ScoreCell({ row, onOpen, ariaLabel }) {
   if (!row) {
     return <span className={styles.muted}>-</span>;
   }
@@ -48,17 +56,22 @@ function ScoreCell({ row }) {
   if (scoreStatus.key === "unsubmitted") {
     return <span className={styles.muted}>-</span>;
   }
-  if (scoreStatus.key === "pending") {
-    return (
-      <>
-        {row.score}
+  return (
+    <Button
+      variant="text"
+      size="sm"
+      onClick={onOpen}
+      aria-label={ariaLabel}
+      title="상세 성적 보기"
+    >
+      {row.score}
+      {scoreStatus.key === "pending" && (
         <Badge tone="warning" className={styles.badgeGap}>
           {scoreStatus.label}
         </Badge>
-      </>
-    );
-  }
-  return <>{row.score}</>;
+      )}
+    </Button>
+  );
 }
 
 function AverageCell({ value }) {
@@ -71,6 +84,21 @@ function AverageCell({ value }) {
 function CourseScoreContent({ courseId }) {
   const [students, setStudents] = useState([]);
   const [status, setStatus] = useState("loading");
+  // 상세 성적 대상 { courseStudentId, userName, testSetId }
+  const [detailTarget, setDetailTarget] = useState(null);
+  // 학생 성적 화면(학생이 보는 내 성적)을 연 학생 { courseStudentId, name }
+  const [pageStudent, setPageStudent] = useState(null);
+
+  const loadDetail = useCallback(
+    (options) =>
+      getStudentScoreDetail(
+        courseId,
+        detailTarget.courseStudentId,
+        detailTarget.testSetId,
+        options,
+      ),
+    [courseId, detailTarget],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -139,22 +167,66 @@ function CourseScoreContent({ courseId }) {
                   </div>
                 </th>
               ))}
+              <th>
+                <div>과정 석차</div>
+                <div className={styles.subHeader}>100점 환산 평균</div>
+              </th>
             </tr>
           </thead>
           <tbody>
             {students.map((student) => (
               <tr key={student.courseStudentId}>
-                <td className={styles.studentCol}>{student.userName}</td>
+                <td className={styles.studentCol}>
+                  {/* 이름을 누르면 그 학생이 보는 내 성적 화면 */}
+                  <Button
+                    variant="text"
+                    size="sm"
+                    title="학생 성적 화면 보기"
+                    onClick={() =>
+                      setPageStudent({
+                        courseStudentId: student.courseStudentId,
+                        name: displayName(student.userName, student.nameSuffix),
+                      })
+                    }
+                  >
+                    {displayName(student.userName, student.nameSuffix)}
+                  </Button>
+                </td>
                 {testSets.map((test) => {
                   const row = student.scoreList.find(
                     (score) => score.testSetId === test.testSetId,
                   );
                   return (
                     <td key={test.testSetId} className="col-num">
-                      <ScoreCell row={row} />
+                      <ScoreCell
+                        row={row}
+                        ariaLabel={`${displayName(student.userName, student.nameSuffix)} ${test.setName} 상세 성적`}
+                        onOpen={() =>
+                          setDetailTarget({
+                            courseStudentId: student.courseStudentId,
+                            userName: displayName(
+                              student.userName,
+                              student.nameSuffix,
+                            ),
+                            testSetId: test.testSetId,
+                          })
+                        }
+                      />
                     </td>
                   );
                 })}
+                <td className="col-num">
+                  {student.courseRank ? (
+                    <>
+                      {student.courseRank.rankNo}등 / {student.courseRank.rankTotal}명
+                      <div className={styles.subHeader}>
+                        {student.courseRank.averagePercent}점
+                      </div>
+                    </>
+                  ) : (
+                    <span className={styles.muted}>-</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -166,10 +238,32 @@ function CourseScoreContent({ courseId }) {
                   <AverageCell value={test.averageScore} />
                 </td>
               ))}
+              <td />
             </tr>
           </tfoot>
         </table>
       </div>
+      {pageStudent && (
+        <Modal
+          open
+          size="lg"
+          className="modal-wide"
+          closeOnBackdrop
+          onClose={() => setPageStudent(null)}
+          title={`${pageStudent.name} 학생의 성적`}
+          summary="학생이 보는 내 성적 화면"
+          footer={<Button onClick={() => setPageStudent(null)}>닫기</Button>}
+        >
+          <MyScore courseId={courseId} student={pageStudent} />
+        </Modal>
+      )}
+      {detailTarget && (
+        <ScoreDetailModal
+          load={loadDetail}
+          answerLabel={`${detailTarget.userName} 답안`}
+          onClose={() => setDetailTarget(null)}
+        />
+      )}
     </Panel>
   );
 }

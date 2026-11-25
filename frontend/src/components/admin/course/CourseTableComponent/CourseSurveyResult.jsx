@@ -29,7 +29,7 @@ export default function CourseSurveyResult() {
         if (!ignore) {
           setResult(data);
           if (data.respondents.length > 0) {
-            setSelectedStudentId(data.respondents[0].courseStudentId);
+            setSelectedStudentId(data.respondents[0].respondentId);
           }
         }
       } catch (e) {
@@ -92,12 +92,17 @@ export default function CourseSurveyResult() {
 
   const { title, surveySubject, surveyType } = result.courseSurvey;
 
+  // 강사는 익명 조회 (서버가 이름 · 수강생 ID 없이 "응답자 N"만 내려줌)
+  const anonymous = Boolean(result.anonymous);
   let selectedName = "";
   result.respondents.forEach((student) => {
-    if (student.courseStudentId === selectedStudentId) {
+    if (student.respondentId === selectedStudentId) {
       selectedName = student.name;
     }
   });
+  const answerTitle = anonymous
+    ? `${selectedName}의 답변`
+    : `${selectedName} 학생의 답변`;
 
   let body;
   if (result.respondents.length === 0) {
@@ -105,22 +110,24 @@ export default function CourseSurveyResult() {
   } else {
     body = (
       <div className="layout-split layout-split-start">
-        <Panel title="응답한 학생" subtitle={`${result.respondents.length}명`} flush>
+        <Panel
+          title={anonymous ? "응답자 (익명)" : "응답한 학생"}
+          subtitle={`${result.respondents.length}명`}
+          flush
+        >
           <ul className="list-group">
             {result.respondents.map((student) => {
               let current;
-              if (student.courseStudentId === selectedStudentId) {
+              if (student.respondentId === selectedStudentId) {
                 current = "true";
               }
               return (
-                <li key={student.courseStudentId}>
+                <li key={student.respondentId}>
                   <button
                     type="button"
                     className="list-item"
                     aria-current={current}
-                    onClick={() =>
-                      setSelectedStudentId(student.courseStudentId)
-                    }
+                    onClick={() => setSelectedStudentId(student.respondentId)}
                   >
                     {student.name}
                   </button>
@@ -130,7 +137,7 @@ export default function CourseSurveyResult() {
           </ul>
         </Panel>
 
-        <Panel title={`${selectedName} 학생의 답변`}>
+        <Panel title={answerTitle}>
           <div className="form-stack">
             {result.surveyList.map((question, index) => (
               <AnswerView
@@ -159,6 +166,11 @@ export default function CourseSurveyResult() {
           <p className="card-meta">
             {surveySubject} · {surveyType} · 응답 {result.respondents.length}명
           </p>
+          {anonymous && (
+            <p className="field-hint">
+              익명 설문 결과입니다. 응답자의 이름 등 신원 정보는 표시되지 않습니다.
+            </p>
+          )}
           {body}
         </div>
       </main>

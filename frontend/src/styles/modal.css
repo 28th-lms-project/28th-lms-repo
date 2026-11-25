@@ -43,6 +43,12 @@
   max-width: var(--modal-width-lg);
 }
 
+/* 넓은 팝업: 화면 가로의 80% (성적 화면 · 상세 성적처럼 표 · 차트가 많은 내용). <Modal size="lg" className="modal-wide"> */
+.modal.modal-wide {
+  width: 80vw;
+  max-width: 80vw;
+}
+
 .modal-header {
   display: flex;
   align-items: center;

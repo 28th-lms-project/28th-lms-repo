@@ -7,6 +7,7 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import com.learningworks.common.exceptions.LearningworksException;
+import com.learningworks.common.utils.AuthUtil;
 import com.learningworks.common.exceptions.ValidationFailedException;
 import com.learningworks.common.exceptions.enums.ErrorCode;
 import com.learningworks.course.service.CourseAccessChecker;
@@ -35,6 +36,54 @@ public class ExamServiceImpl implements ExamService {
 
 	/** 과정 단위 권한 확인: 시험 세트 · 채점은 이 과정의 강사 또는 관리자, 응시는 이 과정의 수강생 */
 	private CourseAccessChecker courseAccess;
+
+	/** 시험 상태 SHOW_YN 값: 공개(응시 가능) Y · 마감 N · 채점 완료 C(강사 확정, 학생에게 결과 공개, 채점 잠금) */
+	static final String SHOW_CLOSED = "N";
+	static final String SHOW_GRADE_DONE = "C";
+
+	/** 시험 세트. 없는 세트면 EXAM_NOT_EXISTS */
+	private RegistTestSetVO findTestSet(String testSetId) {
+		if (testSetId == null || testSetId.isBlank()) {
+			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
+		}
+		RegistTestSetVO testSet = this.examDao.selectExamsetById(testSetId);
+		if (testSet == null) {
+			throw new LearningworksException(ErrorCode.EXAM_NOT_EXISTS);
+		}
+		return testSet;
+	}
+
+	@Transactional
+	@Override
+	public RegistTestSetVO completeGrading(String testSetId) {
+		RegistTestSetVO testSet = this.findTestSet(testSetId);
+		this.courseAccess.requireTutorOrAdmin(testSet.getCourseId());
+		if (SHOW_GRADE_DONE.equals(testSet.getShowYn())) {
+			throw new LearningworksException(ErrorCode.EXAM_GRADE_DONE);
+		}
+		if (this.examDao.countPendingAnswers(testSetId) > 0) {
+			throw new LearningworksException(ErrorCode.EXAM_GRADE_PENDING);
+		}
+		// 채점 완료 = 마감 + 확정: 더 이상 응시할 수 없고(Y 아님), 학생에게 결과가 공개된다
+		this.examDao.updateTestSetShowYn(testSetId, SHOW_GRADE_DONE);
+		return this.examDao.selectExamsetById(testSetId);
+	}
+
+	@Transactional
+	@Override
+	public RegistTestSetVO cancelGradeDone(String testSetId) {
+		RegistTestSetVO testSet = this.findTestSet(testSetId);
+		// 강사는 취소할 수 없음: 모든 과정 관리 권한(COURSE_ALL_MANAGE)이 있는 관리자만
+		if (!this.courseAccess.canManageAll(AuthUtil.getLoginId())) {
+			throw new LearningworksException(ErrorCode.COURSE_NOT_AUTHORIZED);
+		}
+		if (!SHOW_GRADE_DONE.equals(testSet.getShowYn())) {
+			throw new LearningworksException(ErrorCode.EXAM_GRADE_NOT_DONE);
+		}
+		// 마감 상태로 되돌림 (다시 채점 · 공개 여부 변경 가능, 학생 결과 화면은 닫힘)
+		this.examDao.updateTestSetShowYn(testSetId, SHOW_CLOSED);
+		return this.examDao.selectExamsetById(testSetId);
+	}
 
 	/** 시험 세트의 과정 ID. 없는 세트면 EXAM_NOT_EXISTS */
 	private String courseIdOfTestSet(String testSetId) {
@@ -295,7 +344,12 @@ public class ExamServiceImpl implements ExamService {
 		if (testSetId == null || testSetId.isBlank()) {
 			throw new LearningworksException(ErrorCode.GLOBAL_INVALID_PARAMETER);
 		}
-		this.courseAccess.requireTutorOrAdmin(this.courseIdOfTestSet(testSetId));
+		RegistTestSetVO testSet = this.findTestSet(testSetId);
+		this.courseAccess.requireTutorOrAdmin(testSet.getCourseId());
+		// 채점 완료된 시험은 다시 공개 · 마감으로 바꿀 수 없음 (취소는 관리자 cancelGradeDone)
+		if (SHOW_GRADE_DONE.equals(testSet.getShowYn())) {
+			throw new LearningworksException(ErrorCode.EXAM_GRADE_DONE);
+		}
 		int updatedRows = this.examDao.updateTestSetShowYn(testSetId, showYn);
 		if (updatedRows != 1) {
 			// 해당 ID의 시험 세트가 없음
@@ -452,6 +506,10 @@ public class ExamServiceImpl implements ExamService {
 			throw new LearningworksException(ErrorCode.GLOBAL_BAD_REQUEST);
 		}
 		this.courseAccess.requireTutorOrAdmin(courseId);
+		// 채점 완료된 시험의 답안은 채점 결과를 바꿀 수 없음
+		if (SHOW_GRADE_DONE.equals(this.examDao.selectShowYnByAnswerId(answerId))) {
+			throw new LearningworksException(ErrorCode.EXAM_GRADE_DONE);
+		}
 		int updatedRows = this.examDao.updateAnswerGrade(answerId, isCorrect);
 		if (updatedRows != 1) {
 			// 해당 ID의 답안이 없음

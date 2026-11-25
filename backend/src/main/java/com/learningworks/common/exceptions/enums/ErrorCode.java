@@ -15,6 +15,7 @@ public enum ErrorCode {
   // 400 BAD REQUEST
   GLOBAL_BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다."), //
   GLOBAL_INVALID_PARAMETER(HttpStatus.BAD_REQUEST, "입력값을 확인해주세요."), //
+  COUNSEL_CONTACT_INVALID(HttpStatus.BAD_REQUEST, "연락처 형식이 올바르지 않습니다. (예: 010-1234-5678)"), //
   GLOBAL_INVALID_JSON(HttpStatus.BAD_REQUEST, "요청 본문(JSON)의 형식이 잘못되었거나 파싱할 수 없습니다."), //
   GLOBAL_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "요청 파라미터의 타입이 올바르지 않습니다."), //
   GLOBAL_MISSING_PARAMETER(HttpStatus.BAD_REQUEST, "필수 요청 파라미터가 누락되었습니다."), //
@@ -47,6 +48,7 @@ public enum ErrorCode {
   GLOBAL_FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."), //
   USER_BLOCKED_LOGIN(HttpStatus.FORBIDDEN, "로그인 실패 횟수가 누적되어 계정이 차단되었습니다."), //
   COURSE_NOT_AUTHORIZED(HttpStatus.FORBIDDEN, "해당 강의에 대한 권한이 없습니다."), //
+  SCORE_RESULT_NOT_OPEN(HttpStatus.FORBIDDEN, "강사가 채점을 완료한 시험만 결과를 볼 수 있습니다."), //
   ROLE_SELF_CHANGE(HttpStatus.FORBIDDEN, "자신의 역할은 변경할 수 없습니다."), //
   ROLE_ASSIGN_FORBIDDEN(HttpStatus.FORBIDDEN, "자신보다 낮은 역할만 지정할 수 있습니다."), //
   ROLE_TARGET_FORBIDDEN(HttpStatus.FORBIDDEN, "자신보다 높거나 같은 역할의 회원은 변경할 수 없습니다."), //
@@ -63,6 +65,7 @@ public enum ErrorCode {
   EXAM_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 문제입니다."), //
   ACTION_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 접근 권한입니다."), //
   COURSE_DATA_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 교육 자료입니다."), //
+  TEST_SET_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 시험입니다."), //
   CODE_NOT_EXISTS(HttpStatus.NOT_FOUND, "존재하지 않는 환경 변수입니다."), //
   COUNSEL_NOT_EXISTS(HttpStatus.NOT_FOUND, "상담 기본 정보가 없습니다. 성별과 연락처를 먼저 등록해주세요."), //
   COUNSEL_STUDENT_NOT_IN_COURSE(HttpStatus.NOT_FOUND, "과정에 등록된 학생이 아닙니다."), //
@@ -94,6 +97,9 @@ public enum ErrorCode {
       "저장하면 본인이 메뉴 관리 화면에 들어올 수 없게 됩니다. 본인 역할 해제 · 미사용 · URL 변경 · 삭제는 다른 관리자나 최고 관리자에게 요청해주세요."), //
   ATTENDANCE_ALREADY_CHECKED(HttpStatus.CONFLICT, "오늘은 이미 출석했습니다."), //
   SURVEY_DUPLICATED(HttpStatus.CONFLICT, "이미 참여한 설문입니다."), //
+  EXAM_GRADE_DONE(HttpStatus.CONFLICT, "채점이 완료된 시험은 채점 결과와 공개 여부를 바꿀 수 없습니다."), //
+  EXAM_GRADE_PENDING(HttpStatus.CONFLICT, "채점 중인 답안이 남아 있어 채점을 완료할 수 없습니다. 모든 답안을 먼저 채점해주세요."), //
+  EXAM_GRADE_NOT_DONE(HttpStatus.CONFLICT, "채점이 완료된 시험이 아닙니다."), //
 
   // 413 CONTENT TOO LARGE
   FILES_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "업로드 가능한 파일 크기를 초과했습니다."), //

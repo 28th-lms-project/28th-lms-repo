@@ -56,15 +56,49 @@
         HAVING SUM(SS.PENDING_COUNT) = 0
     </sql>
 
+    <!--
+        과정 시험별 석차 (응시한 수강생 기준, 동점자는 같은 석차: RANK 1, 2, 2, 4).
+        채점 중(R) 답안이 남은 시험은 석차가 바뀔 수 있어 TOTAL_PENDING 으로 걸러낸다 (반 평균과 같은 기준)
+    -->
+    <sql id="courseRankScore">
+        SELECT SS.TEST_SET_ID
+             , SS.COURSE_STUDENT_ID
+             , SS.STUDENT_SCORE
+             , RANK() OVER (PARTITION BY SS.TEST_SET_ID
+                                ORDER BY SS.STUDENT_SCORE DESC) AS RANK_NO
+             , COUNT(*) OVER (PARTITION BY SS.TEST_SET_ID) AS RANK_TOTAL
+             , SUM(SS.PENDING_COUNT) OVER (PARTITION BY SS.TEST_SET_ID) AS TOTAL_PENDING
+          FROM (SELECT TA.TEST_SET_ID
+                     , TA.COURSE_STUDENT_ID
+                     , <include refid="gradedScoreSum" /> AS STUDENT_SCORE
+                     , <include refid="pendingCountSum" /> AS PENDING_COUNT
+                  FROM TEST_ANSWERS TA
+                 INNER JOIN TESTS T
+                    ON TA.TEST_ID = T.ID
+                 WHERE T.DEL_YN = 'N'
+                   AND EXISTS (SELECT 1
+                                 FROM COURSE_STUDENT CS
+                                INNER JOIN "USER" U
+                                   ON U.ID = CS.USER_ID
+                                WHERE CS.COURSE_ID = #{courseId}
+                                  AND CS.USER_ID = TA.COURSE_STUDENT_ID
+                                  AND U.DEL_YN = 'N')
+                 GROUP BY TA.TEST_SET_ID
+                     , TA.COURSE_STUDENT_ID) SS
+    </sql>
+
     <select id="selectMyScoreList"
             resultType="com.learningworks.score.vo.response.ScoreVO">
         SELECT TS.ID AS TEST_SET_ID
              , TS.SET_NAME
              , TS.TEST_TYPE
+             , TS.SHOW_YN
              , TP.TOTAL_POINT
              , MA.SCORE
              , MA.PENDING_COUNT
              , CA.AVERAGE_SCORE
+             , RK.RANK_NO
+             , RK.RANK_TOTAL
           FROM TEST_SET TS
          INNER JOIN (SELECT TST.TEST_SET_ID
                           , SUM(NVL(T.POINT_ALLOC, 0)) AS TOTAL_POINT
@@ -86,6 +120,11 @@
             ON MA.TEST_SET_ID = TS.ID
           LEFT OUTER JOIN (<include refid="courseAverageScore" />) CA
             ON CA.TEST_SET_ID = TS.ID
+          <!-- 내 석차만 (다른 학생의 이름 · 점수는 내려주지 않음) -->
+          LEFT OUTER JOIN (<include refid="courseRankScore" />) RK
+            ON RK.TEST_SET_ID = TS.ID
+           AND RK.COURSE_STUDENT_ID = #{userId}
+           AND RK.TOTAL_PENDING = 0
          WHERE TS.COURSE_ID = #{courseId}
            AND (TS.SHOW_YN = 'Y'
                 OR MA.TEST_SET_ID IS NOT NULL)
@@ -96,6 +135,7 @@
 	    <id property="courseStudentId" column="COURSE_STUDENT_ID" />
 	    <result property="userId" column="USER_ID" />
 	    <result property="userName" column="USER_NAME" />
+	    <result property="nameSuffix" column="NAME_SUFFIX" />
 	    <collection property="scoreList" ofType="com.learningworks.score.vo.response.ScoreVO">
             <id property="testSetId" column="TEST_SET_ID" />
             <result property="setName" column="SET_NAME" />
@@ -112,6 +152,7 @@
         SELECT CS.ID AS COURSE_STUDENT_ID
              , CS.USER_ID
              , U.NAME AS USER_NAME
+             , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
              , TS.ID AS TEST_SET_ID
              , TS.SET_NAME
              , TS.TEST_TYPE
@@ -150,6 +191,116 @@
            AND U.DEL_YN = 'N'
          ORDER BY U.NAME ASC
              , TS.ID ASC
+    </select>
+
+    <!-- 과정 수강생 ID(CT-) → 로그인 ID (이 과정 수강생이 아니면 null) -->
+    <select id="selectCourseStudentUserId" resultType="string">
+        SELECT USER_ID
+          FROM COURSE_STUDENT
+         WHERE ID = #{courseStudentId}
+           AND COURSE_ID = #{courseId}
+    </select>
+
+    <!-- 상세 성적 머리글: 시험 정보 + 총점 + 수강생 점수 (시험이 이 과정 것이 아니면 행 없음) -->
+    <select id="selectScoreDetail"
+            resultType="com.learningworks.score.vo.response.ScoreDetailVO">
+        SELECT TS.ID AS TEST_SET_ID
+             , TS.SET_NAME
+             , TS.TEST_TYPE
+             , TS.SHOW_YN
+             , (SELECT NAME FROM "USER" WHERE ID = #{userId}) AS USER_NAME
+             , (SELECT TO_CHAR(MIN(TA.CRT_DT), 'YYYY-MM-DD HH24:MI')
+                  FROM TEST_ANSWERS TA
+                 WHERE TA.TEST_SET_ID = TS.ID
+                   AND TA.COURSE_STUDENT_ID = #{userId}) AS SUBMITTED_AT
+             , (SELECT SUM(NVL(T.POINT_ALLOC, 0))
+                  FROM TEST_SET_TESTS TST
+                 INNER JOIN TESTS T
+                    ON TST.TEST_ID = T.ID
+                 WHERE TST.TEST_SET_ID = TS.ID
+                   AND T.DEL_YN = 'N') AS TOTAL_POINT
+             , MA.SCORE
+             , MA.PENDING_COUNT
+          FROM TEST_SET TS
+          LEFT OUTER JOIN (SELECT TA.TEST_SET_ID
+                                , <include refid="gradedScoreSum" /> AS SCORE
+                                , <include refid="pendingCountSum" /> AS PENDING_COUNT
+                             FROM TEST_ANSWERS TA
+                            INNER JOIN TESTS T
+                               ON TA.TEST_ID = T.ID
+                            WHERE TA.COURSE_STUDENT_ID = #{userId}
+                              AND TA.TEST_SET_ID = #{testSetId}
+                              AND T.DEL_YN = 'N'
+                            GROUP BY TA.TEST_SET_ID) MA
+            ON MA.TEST_SET_ID = TS.ID
+         WHERE TS.ID = #{testSetId}
+           AND TS.COURSE_ID = #{courseId}
+    </select>
+
+    <!-- 상세 성적 문항: 시험 문항(삭제 문항 제외, 성적 계산과 같은 기준) + 수강생 답안 -->
+    <select id="selectScoreDetailItems"
+            resultType="com.learningworks.score.vo.response.ScoreDetailItemVO">
+        SELECT T.ID AS TEST_ID
+             , T.QUESTION
+             , T.SUB_QUESTION
+             , T.ANSWER_TYPE
+             , T.ANSWER_SHEET_1 AS ANSWER_SHEET1
+             , T.ANSWER_SHEET_2 AS ANSWER_SHEET2
+             , T.ANSWER_SHEET_3 AS ANSWER_SHEET3
+             , T.ANSWER_SHEET_4 AS ANSWER_SHEET4
+             , T.ANSWER_SHEET_5 AS ANSWER_SHEET5
+             , NVL(T.POINT_ALLOC, 0) AS POINT_ALLOC
+             , T.CORRECT_ANSWER
+             , TA.ANSWER
+             , TA.IS_CORRECT
+             , CASE
+                 WHEN TA.IS_CORRECT = 'Y' THEN NVL(T.POINT_ALLOC, 0)
+                 WHEN TA.IS_CORRECT = 'H' THEN LEAST(2, NVL(T.POINT_ALLOC, 0))
+                 WHEN TA.IS_CORRECT IS NULL THEN NULL
+                 ELSE 0
+               END AS EARNED_POINT
+          FROM TEST_SET_TESTS TST
+         INNER JOIN TESTS T
+            ON TST.TEST_ID = T.ID
+          LEFT OUTER JOIN TEST_ANSWERS TA
+            ON TA.TEST_SET_ID = TST.TEST_SET_ID
+           AND TA.TEST_ID = T.ID
+           AND TA.COURSE_STUDENT_ID = #{userId}
+         WHERE TST.TEST_SET_ID = #{testSetId}
+           AND T.DEL_YN = 'N'
+         ORDER BY T.ID ASC
+    </select>
+
+    <!--
+        과정 전체 석차: 수강생별로 채점이 끝난(과정 전체에 채점 중 답안 없는) 응시 시험의 100점 환산 점수 평균을 내고,
+        평균이 높은 순으로 RANK (동점자 같은 석차). 응시한 시험이 없는 수강생은 석차에서 빠진다.
+        USER_ID 는 로그인 ID (TEST_ANSWERS.COURSE_STUDENT_ID 에 로그인 ID 가 저장됨)
+    -->
+    <select id="selectCourseRankList"
+            resultType="com.learningworks.score.vo.response.CourseRankVO">
+        SELECT AV.USER_ID
+             , ROUND(AV.AVERAGE_PERCENT, 1) AS AVERAGE_PERCENT
+             , AV.TEST_COUNT
+             , RANK() OVER (ORDER BY AV.AVERAGE_PERCENT DESC) AS RANK_NO
+             , COUNT(*) OVER () AS RANK_TOTAL
+          FROM (SELECT RK.COURSE_STUDENT_ID AS USER_ID
+                     , AVG(RK.STUDENT_SCORE * 100 / TP.TOTAL_POINT) AS AVERAGE_PERCENT
+                     , COUNT(*) AS TEST_COUNT
+                  FROM (<include refid="courseRankScore" />) RK
+                 INNER JOIN TEST_SET TS
+                    ON TS.ID = RK.TEST_SET_ID
+                 INNER JOIN (SELECT TST.TEST_SET_ID
+                                  , SUM(NVL(T.POINT_ALLOC, 0)) AS TOTAL_POINT
+                               FROM TEST_SET_TESTS TST
+                              INNER JOIN TESTS T
+                                 ON TST.TEST_ID = T.ID
+                              WHERE T.DEL_YN = 'N'
+                              GROUP BY TST.TEST_SET_ID) TP
+                    ON TP.TEST_SET_ID = TS.ID
+                 WHERE TS.COURSE_ID = #{courseId}
+                   AND RK.TOTAL_PENDING = 0
+                   AND TP.TOTAL_POINT > 0
+                 GROUP BY RK.COURSE_STUDENT_ID) AV
     </select>
 
     <select id="selectUserBaseRole" parameterType="string" resultType="string">

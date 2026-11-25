@@ -60,3 +60,6 @@ dist-ssr
 
 /.metadata/
 .metadata
+
+# 로컬 비밀 설정 (DB 비밀번호 · JWT 키)
+backend/src/main/resources/application-secret.yml

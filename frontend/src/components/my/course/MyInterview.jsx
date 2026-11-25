@@ -17,6 +17,7 @@ import {
   getInterviewList,
   insertInterview,
 } from "../../../api/my/course/interviewApi.js";
+import { displayName } from "../../../utils/displayName.js";
 
 const COMPANY_MAX_LENGTH = 200;
 
@@ -64,7 +65,12 @@ function validate(form) {
 }
 
 const COLUMNS = [
-  { key: "studentName", title: "수강생", width: "20%" },
+  {
+    key: "studentName",
+    title: "수강생",
+    width: "20%",
+    render: (row) => displayName(row.studentName, row.nameSuffix),
+  },
   { key: "interviewCompany", title: "회사명", ellipsis: true },
   {
     key: "interviewDateTime",
@@ -257,7 +263,7 @@ export default function MyInterview({ courseId: courseIdProp }) {
 
   const studentOptions = studentList.map((student) => ({
     value: String(student.courseStudentId),
-    label: student.studentName,
+    label: displayName(student.studentName, student.nameSuffix),
   }));
   const selectedStudent =
     studentOptions.find(

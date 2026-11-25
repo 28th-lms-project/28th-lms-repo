@@ -34,6 +34,17 @@ export const updateTestSetShowYn = (testSetId, showYn) =>
     showYn,
   });
 
+/**
+ * 채점 완료 확정 (시험 상태 showYn → "C"). 채점 중 답안이 남아 있으면 errorCode EXAM_GRADE_PENDING.
+ * 완료 후에는 채점 수정 · 공개 여부 변경이 막히고(EXAM_GRADE_DONE), 학생에게 결과가 공개된다
+ */
+export const completeGrading = (testSetId) =>
+  api.put(`/admin/system/testSet/${encodeURIComponent(testSetId)}/gradeDone`);
+
+/** 채점 완료 취소 (관리자만, showYn "C" → "N" 마감) */
+export const cancelGradeDone = (testSetId) =>
+  api.delete(`/admin/system/testSet/${encodeURIComponent(testSetId)}/gradeDone`);
+
 /** 시험 삭제 API */
 export const deleteTestSet = (testSetId) =>
   api.delete(`admin/system/testSet/${testSetId}`);

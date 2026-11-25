@@ -11,6 +11,7 @@
 		SELECT CSI.ID
 		     , CSI.COURSE_STUDENT_ID
 		     , U.NAME AS STUDENT_NAME
+		     , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
 		     , CSI.INTERVIEW_COMPANY
 		     , TO_CHAR(CSI.INTERVIEW_DATE_TIME, 'YYYY-MM-DD HH24:MI') AS INTERVIEW_DATE_TIME
 		  FROM COURSE_STUDENT_INTERVIEWS CSI
@@ -32,6 +33,7 @@
 	        resultType="com.learningworks.interview.vo.response.InterviewStudentResponseVO">
 		SELECT CS.ID AS COURSE_STUDENT_ID
 		     , U.NAME AS STUDENT_NAME
+		     , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
 		  FROM COURSE_STUDENT CS
 		 INNER JOIN "USER" U
 		    ON CS.USER_ID = U.ID

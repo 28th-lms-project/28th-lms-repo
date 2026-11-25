@@ -48,6 +48,12 @@ public interface ExamDao {
 
 	int updateTestSetShowYn(@Param("testSetId") String testSetId, @Param("showYn") String showYn);
 
+	/** 시험의 채점 중(R) 답안 수 */
+	int countPendingAnswers(String testSetId);
+
+	/** 답안이 속한 시험의 SHOW_YN (Y 공개 · N 마감 · C 채점 완료) */
+	String selectShowYnByAnswerId(String answerId);
+
 	int deleteTestSet(String testSetId);
 
 	List<ExamQuestionVO> viewTestSetQuestions(String testSetId);

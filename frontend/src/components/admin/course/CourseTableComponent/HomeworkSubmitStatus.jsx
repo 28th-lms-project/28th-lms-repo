@@ -7,6 +7,7 @@ import usePermission from "../../../../hooks/usePermission";
 import Button from "../../../common/ui/Button";
 import { useToast } from "../../../common/ui/feedbackContext";
 import styles from "./HomeworkSubmitStatus.module.css";
+import { displayName } from "../../../../utils/displayName.js";
 
 /** 배열을 섞은 새 배열 (Fisher-Yates) */
 const shuffle = (list) => {
@@ -99,7 +100,7 @@ export default function HomeworkSubmitStatus() {
     setPickedNames(
       shuffle(submittedStudents)
         .slice(0, count)
-        .map((student) => student.name),
+        .map((student) => displayName(student.name, student.nameSuffix)),
     );
   };
 
@@ -114,7 +115,10 @@ export default function HomeworkSubmitStatus() {
         {notSubmittedStudents.length > 0 && (
           <span className="field-hint">
             {" "}
-            · {notSubmittedStudents.map((student) => student.name).join(", ")}
+            ·{" "}
+            {notSubmittedStudents
+              .map((student) => displayName(student.name, student.nameSuffix))
+              .join(", ")}
           </span>
         )}
       </span>

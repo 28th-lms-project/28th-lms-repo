@@ -24,6 +24,9 @@
    -->
    <logger name="com.zaxxer.hikari" level="error" />
 
+  <!-- 상담 기본 정보 등록 SQL 의 파라미터 로그(DEBUG)에 평문 연락처가 남지 않도록 이 문장만 INFO -->
+   <logger name="com.learningworks.counsel.dao.CounselDao.insertCounsel" level="info" />
+
   <root level="debug">
     <appender-ref ref="STDOUT" />
 <!--     <appender-ref ref="FILE" /> -->

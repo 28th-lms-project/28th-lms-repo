@@ -16,4 +16,7 @@ public class CourseSurveyResultVO {
 
 	private List<SurveyRespondentVO> respondents;
 
+	/** 익명 조회 여부 (강사 · 관리자: 학생 이름 · ID 없이 "응답자 N"으로만 표시) */
+	private boolean anonymous;
+
 }

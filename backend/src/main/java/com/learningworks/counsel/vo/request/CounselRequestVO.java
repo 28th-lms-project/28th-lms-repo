@@ -4,8 +4,10 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.ToString;
 
 /**
  * 상담 기본 정보(성별 · 연락처) 등록 요청
@@ -22,7 +24,13 @@ public class CounselRequestVO {
 	@Max(value = 2, message = "성별을 올바르게 선택해주세요.")
 	private Integer gender;
 
+	/**
+	 * 전화번호 (숫자 · 하이픈). 서비스에서 010-1234-5678 형식으로 맞춘 뒤 DB 함수 AES_ENCRYPTION 으로 암호화해서 저장.
+	 * 로그(toString)에 남기지 않음
+	 */
 	@NotBlank(message = "연락처를 입력해주세요.")
-	@Size(max = 100, message = "연락처는 100자 이내로 입력해주세요.")
+	@Size(max = 13, message = "연락처는 13자 이내로 입력해주세요.")
+	@Pattern(regexp = "^[0-9\\-]*$", message = "연락처는 숫자와 - 만 입력할 수 있습니다.")
+	@ToString.Exclude
 	private String contact;
 }

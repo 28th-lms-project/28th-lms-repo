@@ -277,6 +277,26 @@
         WHERE ID = #{parameter}
       </select>
 
+    <!-- 채점 중(R) 답안 수 (성적 계산과 같이 삭제된 문제 답안은 제외) -->
+    <select id="countPendingAnswers" parameterType="string" resultType="_int">
+        SELECT COUNT(*)
+          FROM TEST_ANSWERS TA
+         INNER JOIN TESTS T
+            ON TA.TEST_ID = T.ID
+         WHERE TA.TEST_SET_ID = #{_parameter}
+           AND TA.IS_CORRECT = 'R'
+           AND T.DEL_YN = 'N'
+    </select>
+
+    <!-- 답안이 속한 시험의 상태 (SHOW_YN: Y 공개 · N 마감 · C 채점 완료) -->
+    <select id="selectShowYnByAnswerId" parameterType="string" resultType="string">
+        SELECT TS.SHOW_YN
+          FROM TEST_ANSWERS TA
+         INNER JOIN TEST_SET TS
+            ON TS.ID = TA.TEST_SET_ID
+         WHERE TA.ID = #{_parameter}
+    </select>
+
     <update id="updateTestSetShowYn">
         UPDATE TEST_SET
            SET SHOW_YN = #{showYn}

@@ -69,6 +69,10 @@ public interface SurveyDao {
 
 	List<SurveyRespondentVO> selectCourseSurveyRespondents(String courseSurveyId);
 
+	/** 응답자 ID(COURSE_SURVEY_ANSWER.ID) → 과정 수강생 ID. 이 설문의 응답이 아니면 null */
+	String selectRespondentCourseStudentId(@Param("courseSurveyId") String courseSurveyId,
+			@Param("respondentId") String respondentId);
+
 	List<SurveyStudentAnswerVO> selectCourseSurveyStudentAnswers(@Param("courseSurveyId") String courseSurveyId,
 			@Param("courseStudentId") String courseStudentId);
 

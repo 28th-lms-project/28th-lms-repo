@@ -18,6 +18,7 @@ import MyInterview from "../../../my/course/MyInterview.jsx";
 import ExamPage from "../CourseTableComponent/ExamPage.jsx";
 import MyCourseData from "../../../my/course/MyCourseData.jsx";
 import MyCounsel from "../../../my/course/MyCounsel.jsx";
+import CourseCurriculum from "../../../my/course/CourseCurriculum.jsx";
 
 import usePermission from "../../../../hooks/usePermission";
 
@@ -30,6 +31,8 @@ import { Tabs, TabPanel } from "../../../common/ui/Tabs";
 import styles from "./CourseItem.module.css";
 
 const TABS = [
+  // 커리큘럼: 등록된 시간표를 주차별로 묶어 표시. 기존 ?tab=N 링크(dashboardShared COURSE_TAB)가 바뀌지 않도록 맨 뒤에 추가
+  { label: "커리큘럼", Component: <CourseCurriculum /> },
   { label: "수강생", Component: <CourseStudentList /> }, // <CourseStudentList/>
   { label: "출석률", Component: <StudentConnected /> }, // <StudentConnected/>
   { label: "시간표", Component: <MyTimetable /> }, // courseId 는 URL(:id)에서 읽음

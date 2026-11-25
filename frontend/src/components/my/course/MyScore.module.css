@@ -1,3 +1,16 @@
 .layout {
   --layout-aside-width: 420px;
 }
+
+/* 과정 전체 석차 · 환산 평균 */
+.rankRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .rankRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
