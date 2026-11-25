@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { testActions } from "../../../../store/slices/testSliceStore";
 import {
+  cancelGradeDone,
+  completeGrading,
   deleteTestSet,
   updateTestSetShowYn,
   viewTestSetQuestions,
@@ -31,8 +33,14 @@ const PERMISSION = {
   VIEW_QUESTIONS: "EXAM_COURSE_EXAM_ANSWER_READ",
   UPDATE_SHOW_YN: "EXAM_COURSE_SET_UPDATE",
   GRADE: "EXAM_COURSE_EXAM_ANSWER_READ",
+  // 채점 완료 확정 · 취소 (취소는 서버가 모든 과정 관리 권한 COURSE_ALL_MANAGE 까지 확인)
+  GRADE_DONE: "EXAM_COURSE_EXAM_GRADE",
+  CANCEL_GRADE_DONE: "COURSE_ALL_MANAGE",
   DELETE: "EXAM_COURSE_SET_DELETE",
 };
+
+/** 시험 상태 (TEST_SET.SHOW_YN): Y 공개(응시 가능) · N 마감 · C 채점 완료(학생에게 결과 공개, 채점 잠금) */
+const GRADE_DONE = "C";
 
 /** 오류 토스트 문구: "~하지 못했습니다. 이유" */
 const failText = (prefix, error) =>
@@ -55,7 +63,7 @@ export default function ExamSetTable({
   onDelete = () => {},
   studentView = false,
 }) {
-  const { can } = usePermission();
+  const { can, isSuperAdmin } = usePermission();
   const toast = useToast();
   const confirm = useConfirm();
   // 응시: 권한 코드 + 이 과정의 수강생 (강사 역할에도 응시 권한이 있을 수 있어서, 가르치는 과정에서는 숨김)
@@ -66,6 +74,9 @@ export default function ExamSetTable({
   const canUpdateShowYn = !studentView && can(PERMISSION.UPDATE_SHOW_YN);
   const canGrade = !studentView && can(PERMISSION.GRADE);
   const canDelete = !studentView && can(PERMISSION.DELETE);
+  const canCompleteGrade = !studentView && can(PERMISSION.GRADE_DONE);
+  const canCancelGradeDone =
+    canCompleteGrade && (isSuperAdmin || can(PERMISSION.CANCEL_GRADE_DONE));
 
   // 문제 보기 모달에 띄울 내용 { title, questions } (null이면 닫힘)
   const [questionView, setQuestionView] = useState(null);
@@ -112,6 +123,45 @@ export default function ExamSetTable({
       toast.success(`시험을 ${actionText}했습니다.`);
     } catch (e) {
       toast.error(failText(`시험을 ${actionText}하지 못했습니다.`, e));
+    }
+  };
+
+  // [채점 완료] → 확인 → 확정 (채점 중 답안이 남아 있으면 서버가 거부하고 이유를 알려줌)
+  const onClickCompleteGrading = async (testSet) => {
+    const ok = await confirm({
+      title: "채점 완료",
+      message: `${testSet.setName} 시험의 채점을 완료할까요? 완료하면 시험이 마감되고 학생이 본인 답과 정답을 볼 수 있으며, 채점 결과는 더 이상 수정할 수 없습니다.`,
+      confirmText: "채점 완료",
+    });
+    if (!ok) {
+      return;
+    }
+    try {
+      await completeGrading(testSet.id);
+      onChangeShowYn(testSet.id, GRADE_DONE);
+      toast.success("채점을 완료했습니다. 학생이 결과를 확인할 수 있습니다.");
+    } catch (e) {
+      toast.error(failText("채점을 완료하지 못했습니다.", e));
+    }
+  };
+
+  // [완료 취소] (관리자) → 확인 → 마감 상태로 되돌림
+  const onClickCancelGradeDone = async (testSet) => {
+    const ok = await confirm({
+      title: "채점 완료 취소",
+      message: `${testSet.setName} 시험의 채점 완료를 취소할까요? 마감 상태로 돌아가 다시 채점할 수 있고, 학생 결과 화면은 닫힙니다.`,
+      confirmText: "완료 취소",
+      danger: true,
+    });
+    if (!ok) {
+      return;
+    }
+    try {
+      await cancelGradeDone(testSet.id);
+      onChangeShowYn(testSet.id, "N");
+      toast.success("채점 완료를 취소했습니다.");
+    } catch (e) {
+      toast.error(failText("채점 완료를 취소하지 못했습니다.", e));
     }
   };
 
@@ -175,6 +225,8 @@ export default function ExamSetTable({
       setGradeView({
         title: testSet.setName,
         questions: result?.examList ?? [],
+        // 채점 완료된 시험은 채점 모달을 읽기 전용으로
+        gradeDone: testSet.showYn === GRADE_DONE,
       });
     } catch (e) {
       toast.error(failText("문제를 불러오지 못했습니다.", e));
@@ -240,26 +292,57 @@ export default function ExamSetTable({
               </Button>
             </span>
             {submitted && <Badge tone="success">응시 완료</Badge>}
+            {testSet.showYn === GRADE_DONE && (
+              <span className="field-hint">
+                채점 완료 · 성적 탭에서 결과 확인
+              </span>
+            )}
           </div>
         );
       },
     },
-    canUpdateShowYn && {
+    (canUpdateShowYn || canCompleteGrade) && {
       key: "showYn",
-      title: "공개 여부",
-      width: 170,
-      render: (testSet) => (
-        <div className="btn-group">
-          {testSet.showYn === "Y" ? (
-            <Badge tone="info">공개</Badge>
-          ) : (
-            <Badge>비공개</Badge>
-          )}
-          <Button size="sm" onClick={() => onClickShowYn(testSet)}>
-            {nextShowYn(testSet) === "Y" ? "공개" : "비공개"}
-          </Button>
-        </div>
-      ),
+      title: "상태",
+      width: 300,
+      render: (testSet) => {
+        const gradeDone = testSet.showYn === GRADE_DONE;
+        let badge = <Badge>비공개</Badge>;
+        if (gradeDone) {
+          badge = <Badge tone="success">채점 완료</Badge>;
+        } else if (testSet.showYn === "Y") {
+          badge = <Badge tone="info">공개</Badge>;
+        }
+        return (
+          <div className="btn-group">
+            {badge}
+            {/* 채점 완료된 시험은 공개 · 비공개를 바꿀 수 없음 */}
+            {canUpdateShowYn && !gradeDone && (
+              <Button size="sm" onClick={() => onClickShowYn(testSet)}>
+                {nextShowYn(testSet) === "Y" ? "공개" : "비공개"}
+              </Button>
+            )}
+            {canCompleteGrade && !gradeDone && (
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => onClickCompleteGrading(testSet)}
+              >
+                채점 완료
+              </Button>
+            )}
+            {canCancelGradeDone && gradeDone && (
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => onClickCancelGradeDone(testSet)}
+              >
+                완료 취소
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
     hasActions && {
       key: "actions",
@@ -307,6 +390,7 @@ export default function ExamSetTable({
           title={gradeView.title}
           questions={gradeView.questions}
           students={showStudents ?? []}
+          gradeDone={gradeView.gradeDone}
           onClose={() => {
             dispatch(testActions.clearGradeTestSetId());
             setGradeView(null);

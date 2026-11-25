@@ -11,7 +11,6 @@ import UpdateTest from "./UpdateTest";
 import { getCodeOptionList } from "../../../../api/admin/system/code/codeApi";
 import usePermission from "../../../../hooks/usePermission";
 import Badge from "../../../common/ui/Badge";
-import Button from "../../../common/ui/Button";
 import QuestionBlock from "../../../common/ui/QuestionBlock";
 import StatusBox from "../../../common/ui/StatusBox";
 import { Tabs, TabPanel } from "../../../common/ui/Tabs";
@@ -244,26 +243,16 @@ function TestManagement() {
     );
   } else {
     questionList = (
-      <div className="form-stack">
+      <ul className={`list-group ${style.questionList}`} aria-label="문제 목록">
         {filteredQuestions.map((question, index) => {
           // 옛 데이터(한글 이름 등)도 코드로 바꿔서 비교
           const answerType = toAnswerTypeCode(question.answerType);
           const isOx = answerType === "ANSWER_CHECK";
           const isChoice = CHOICE_TYPES.includes(answerType);
           const isCode = answerType === "ANSWER_CODE";
-          // 정답은 기본 숨김. [정답 확인]을 누르면 펼치고 다시 누르면 접음 (모든 유형)
+          // 목록에는 문제 제목만. 줄을 누르면 내용 · 보기 · 정답 · 수정/삭제가 펼쳐지고 다시 누르면 접힘
           const expanded = openIds.includes(question.id);
-
-          const toggleButton = (
-            <Button
-              size="sm"
-              variant="text"
-              aria-expanded={expanded}
-              onClick={() => toggleOpen(question.id)}
-            >
-              {expanded ? "정답 숨기기" : "정답 확인"}
-            </Button>
-          );
+          const detailId = `question-detail-${question.id}`;
 
           let stats = null;
           if (
@@ -278,7 +267,7 @@ function TestManagement() {
             );
           }
 
-          // 문제 내용 (항상 표시): 본문 · 코드 + 보기 (정답은 펼쳤을 때만 초록 표시)
+          // 펼쳤을 때: 문제 내용(본문 · 코드) + 보기와 정답(초록), 주관식 · 코드는 모범 답안
           const choiceOptions = question.answers.map((answer) => ({
             value: String(answer.no),
             label: answer.text,
@@ -288,7 +277,7 @@ function TestManagement() {
             contentBlock = (
               <QuestionBlock
                 no={isOx ? "O/X" : "보기"}
-                title={isOx ? "O/X 문제" : "보기"}
+                title={isOx ? "O/X 문제" : "보기 · 정답"}
                 body={question.subQuestion || undefined}
                 options={isOx ? OX_OPTIONS : choiceOptions}
                 multiple={answerType === "ANSWER_MULTIPLE"}
@@ -297,7 +286,7 @@ function TestManagement() {
                     ? question.correctAnswer
                     : getCorrectNumbers(question.correctAnswer)
                 }
-                showResult={expanded}
+                showResult
               />
             );
           } else if (question.subQuestion) {
@@ -311,9 +300,8 @@ function TestManagement() {
             );
           }
 
-          // 주관식 · 코드: 펼치면 모범 답안 (없으면 강사 채점 안내)
           let answerBlock = null;
-          if (expanded && !isChoice && !isOx) {
+          if (!isChoice && !isOx) {
             answerBlock = (
               <div className="answer-box answer-box-model">
                 <span className="answer-box-label">모범 답안</span>
@@ -324,43 +312,50 @@ function TestManagement() {
           }
 
           return (
-            <article key={question.id} className="card">
-              <div className="card-header">
-                <h3 className="card-title">
-                  <span className="field-hint">{index + 1}.</span>{" "}
-                  <Badge tone={toTypeTone(answerType)}>
-                    {toAnswerTypeName(answerType)}
-                  </Badge>{" "}
-                  {question.question}
-                </h3>
+            <li key={question.id}>
+              <button
+                type="button"
+                className={`list-item ${style.questionRow}`}
+                aria-expanded={expanded}
+                aria-controls={detailId}
+                onClick={() => toggleOpen(question.id)}
+              >
+                <span className="field-hint">{index + 1}.</span>
+                <Badge tone={toTypeTone(answerType)}>
+                  {toAnswerTypeName(answerType)}
+                </Badge>
+                <span className={style.questionTitle}>{question.question}</span>
                 <span className="field-hint">
                   난이도 {question.pointAlloc} · {question.pointAlloc}점
                 </span>
-              </div>
-              <div className="card-meta">
-                <span>
-                  {question.crtDt} · {question.crtrId}
+                <span className={style.chevron} aria-hidden="true">
+                  {expanded ? "▲" : "▼"}
                 </span>
-                {stats}
-              </div>
-              <UpdateTest
-                questionId={question.id}
-                answerTypes={answerTypeList}
-                canUpdate={canUpdate}
-                canDelete={canDelete}
-              >
-                {toggleButton}
-              </UpdateTest>
-              {contentBlock && (
-                <div className={style.answerArea}>{contentBlock}</div>
+              </button>
+              {expanded && (
+                <div id={detailId} className={style.questionDetail}>
+                  {contentBlock}
+                  {answerBlock && (
+                    <div className={style.answerArea}>{answerBlock}</div>
+                  )}
+                  <div className="card-meta">
+                    <span>
+                      {question.crtDt} · {question.crtrId}
+                    </span>
+                    {stats}
+                  </div>
+                  <UpdateTest
+                    questionId={question.id}
+                    answerTypes={answerTypeList}
+                    canUpdate={canUpdate}
+                    canDelete={canDelete}
+                  />
+                </div>
               )}
-              {answerBlock && (
-                <div className={style.answerArea}>{answerBlock}</div>
-              )}
-            </article>
+            </li>
           );
         })}
-      </div>
+      </ul>
     );
   }
 

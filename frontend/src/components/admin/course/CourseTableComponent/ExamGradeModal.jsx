@@ -8,6 +8,7 @@ import usePermission from "../../../../hooks/usePermission";
 
 import Badge from "../../../common/ui/Badge";
 import Button from "../../../common/ui/Button";
+import Callout from "../../../common/ui/Callout";
 import Modal from "../../../common/ui/Modal";
 import QuestionBlock from "../../../common/ui/QuestionBlock";
 import StatusBox from "../../../common/ui/StatusBox";
@@ -71,12 +72,14 @@ export default function ExamGradeModal({
   title,
   questions = [],
   students = [],
+  gradeDone = false,
   onClose,
 }) {
   // 채점 중인 시험 세트 ID (ExamSetTable 에서 [채점] 클릭 시 slice 에 저장)
   const testSetId = useSelector((store) => store.test.gradeTestSetId);
   const { can } = usePermission();
-  const canGrade = can("EXAM_COURSE_EXAM_GRADE");
+  // 채점 완료(확정)된 시험은 결과 보기만 (서버도 수정을 막음)
+  const canGrade = can("EXAM_COURSE_EXAM_GRADE") && !gradeDone;
   const toast = useToast();
   const confirm = useConfirm();
   const tabsId = useId();
@@ -338,10 +341,15 @@ export default function ExamGradeModal({
       open
       onClose={onClose}
       size="lg"
-      title={`${title} · 채점`}
+      title={`${title} · ${gradeDone ? "채점 결과" : "채점"}`}
       summary={`수강생 ${students.length}명 · 문제 ${questions.length}개 · 총 ${totalPoint}점`}
       footer={<Button onClick={onClose}>닫기</Button>}
     >
+      {gradeDone && (
+        <Callout tone="info" title="채점이 완료된 시험입니다">
+          채점 결과를 볼 수만 있고 수정할 수 없습니다. 수정이 필요하면 관리자에게 채점 완료 취소를 요청하세요.
+        </Callout>
+      )}
       {students.length === 0 ? (
         <StatusBox
           type="empty"

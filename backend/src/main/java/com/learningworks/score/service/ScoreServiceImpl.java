@@ -95,12 +95,12 @@ public class ScoreServiceImpl implements ScoreService {
       throw new LearningworksException(ErrorCode.TEST_SET_NOT_EXISTS);
     }
 
-    // 결과 공개 정책: 응시했고, 본인 답안의 채점이 모두 끝났고(채점 중 R 없음), 시험이 마감(SHOW_YN=N)된 뒤에만.
-    // 응시 중인 시험의 정답이 아직 안 본 학생에게 퍼지지 않도록 마감 전에는 막는다
+    // 결과 공개 정책: 응시했고, 강사가 채점 완료를 확정한 시험(SHOW_YN = 'C')만.
+    // 채점 완료 확정은 채점 중 답안이 없을 때만 되고, 확정되면 응시도 막히므로 정답이 응시 전 학생에게 퍼지지 않는다
     boolean submitted = detail.getSubmittedAt() != null;
     boolean graded = detail.getPendingCount() != null && detail.getPendingCount() == 0;
-    boolean closed = "N".equals(detail.getShowYn());
-    if (!submitted || !graded || !closed) {
+    boolean gradeDone = "C".equals(detail.getShowYn());
+    if (!submitted || !graded || !gradeDone) {
       throw new LearningworksException(ErrorCode.SCORE_RESULT_NOT_OPEN);
     }
     // 공개 조건을 통과한 뒤에만 문항(정답 포함)을 조회

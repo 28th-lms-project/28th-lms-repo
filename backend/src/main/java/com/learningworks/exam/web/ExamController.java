@@ -119,6 +119,20 @@ public class ExamController {
 				this.examService.updateTestSetShowYn(testSetId, modifyTestSetShowYnVO.getShowYn()));
 	}
 	
+	/** 채점 완료 확정: 채점 중 답안이 없을 때만. 이후 채점 수정 · 공개 여부 변경 불가, 학생에게 결과 공개 */
+	@RequireAction(domain = "EXAM", action = "COURSE_EXAM_GRADE", description = "시험 답안 채점")
+	@PutMapping("admin/system/testSet/{testSetId}/gradeDone")
+	public ApiResponse<RegistTestSetVO> completeGrading(@PathVariable String testSetId) {
+		return ApiResponse.OK(this.examService.completeGrading(testSetId));
+	}
+
+	/** 채점 완료 취소: 모든 과정 관리 권한(COURSE_ALL_MANAGE)이 있는 관리자만 (강사 불가) */
+	@RequireAction(domain = "EXAM", action = "COURSE_EXAM_GRADE", description = "시험 답안 채점")
+	@DeleteMapping("admin/system/testSet/{testSetId}/gradeDone")
+	public ApiResponse<RegistTestSetVO> cancelGradeDone(@PathVariable String testSetId) {
+		return ApiResponse.OK(this.examService.cancelGradeDone(testSetId));
+	}
+
 	@RequireAction(domain = "EXAM", action = "COURSE_SET_DELETE", description = "시험 세트 삭제")
 	@DeleteMapping("admin/system/testSet/{testSetId}")
 	public ApiResponse<String> deleteTestSet(@PathVariable String testSetId){

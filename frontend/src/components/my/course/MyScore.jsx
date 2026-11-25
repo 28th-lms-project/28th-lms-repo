@@ -224,14 +224,12 @@ export default function MyScore({ courseId, student }) {
                           <span
                             className="field-hint"
                             title={
-                              hasScoreValue(row.score) && row.pendingCount === 0
-                                ? "시험이 마감되면 결과를 볼 수 있습니다."
+                              hasScoreValue(row.score)
+                                ? "강사가 채점을 완료하면 본인 답과 정답을 볼 수 있습니다."
                                 : undefined
                             }
                           >
-                            {hasScoreValue(row.score) && row.pendingCount === 0
-                              ? "마감 후 공개"
-                              : "-"}
+                            {hasScoreValue(row.score) ? "채점 완료 후 공개" : "-"}
                           </span>
                         )}
                       </td>

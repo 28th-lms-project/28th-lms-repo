@@ -69,6 +69,61 @@ class ExamServiceImplAccessTest {
         .isEqualTo(ErrorCode.COURSE_NOT_AUTHORIZED);
   }
 
+  private RegistTestSetVO gradeDoneSet() {
+    RegistTestSetVO done = new RegistTestSetVO();
+    done.setId("TS-DONE");
+    done.setCourseId(COURSE_ID);
+    done.setShowYn("C");
+    Mockito.when(this.examDao.selectExamsetById("TS-DONE")).thenReturn(done);
+    return done;
+  }
+
+  private static void assertError(Runnable call, ErrorCode code) {
+    Assertions.assertThatThrownBy(call::run)
+        .isInstanceOf(LearningworksException.class)
+        .extracting("errorCode")
+        .isEqualTo(code);
+  }
+
+  @Test
+  @DisplayName("채점 완료: 채점 중 답안이 없으면 확정(C), 남아 있으면 거부")
+  void completeGrading() {
+    login("T1", true, false, "ROLE_TUTOR");
+
+    Mockito.when(this.examDao.countPendingAnswers(SET_ID)).thenReturn(2);
+    assertError(() -> this.service.completeGrading(SET_ID), ErrorCode.EXAM_GRADE_PENDING);
+    Mockito.verify(this.examDao, Mockito.never()).updateTestSetShowYn(SET_ID, "C");
+
+    Mockito.when(this.examDao.countPendingAnswers(SET_ID)).thenReturn(0);
+    this.service.completeGrading(SET_ID);
+    Mockito.verify(this.examDao).updateTestSetShowYn(SET_ID, "C");
+  }
+
+  @Test
+  @DisplayName("채점 완료된 시험: 강사는 채점 수정 · 공개 여부 변경 · 완료 취소를 할 수 없다")
+  void gradeDoneLocksTutor() {
+    login("T1", true, false, "ROLE_TUTOR");
+    gradeDoneSet();
+    Mockito.when(this.examDao.selectShowYnByAnswerId("A1")).thenReturn("C");
+
+    assertError(() -> this.service.updateAnswerGrade("A1", "Y"), ErrorCode.EXAM_GRADE_DONE);
+    assertError(() -> this.service.updateTestSetShowYn("TS-DONE", "Y"), ErrorCode.EXAM_GRADE_DONE);
+    assertError(() -> this.service.cancelGradeDone("TS-DONE"), ErrorCode.COURSE_NOT_AUTHORIZED);
+    Mockito.verify(this.examDao, Mockito.never()).updateAnswerGrade(Mockito.any(), Mockito.any());
+  }
+
+  @Test
+  @DisplayName("채점 완료 취소: 관리자만, 마감(N)으로 되돌린다")
+  void adminCancelsGradeDone() {
+    login("A1", false, false, "ROLE_ADMIN");
+    gradeDoneSet();
+
+    this.service.cancelGradeDone("TS-DONE");
+
+    Mockito.verify(this.examDao).updateTestSetShowYn("TS-DONE", "N");
+    assertError(() -> this.service.cancelGradeDone(SET_ID), ErrorCode.EXAM_GRADE_NOT_DONE);
+  }
+
   @Test
   @DisplayName("이 과정의 강사는 시험 공개 전환을 할 수 있다")
   void tutorOfCourse() {

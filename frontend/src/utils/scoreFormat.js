@@ -30,11 +30,11 @@ export function formatAveragePoint(averageScore, totalPoint) {
 }
 
 /**
- * 학생이 시험 상세 결과를 볼 수 있는지 (서버 ScoreServiceImpl.readMyScoreDetail 과 같은 기준)
- * 응시했고, 본인 채점이 모두 끝났고, 시험이 마감(SHOW_YN = N)된 경우
+ * 학생이 시험 상세 결과(본인 답 · 정답)를 볼 수 있는지 (서버 ScoreServiceImpl.readMyScoreDetail 과 같은 기준)
+ * 응시했고, 강사가 채점 완료를 확정한 시험 (SHOW_YN = "C")
  */
 export function canOpenResult(row) {
-  return hasScoreValue(row.score) && row.pendingCount === 0 && row.showYn === "N";
+  return hasScoreValue(row.score) && row.pendingCount === 0 && row.showYn === "C";
 }
 
 /** 석차 "3등 / 20명" (채점 중 · 미응시면 "-") */

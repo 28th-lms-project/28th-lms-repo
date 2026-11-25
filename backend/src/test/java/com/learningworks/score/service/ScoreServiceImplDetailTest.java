@@ -84,10 +84,10 @@ class ScoreServiceImplDetailTest {
   }
 
   @Test
-  @DisplayName("학생 결과: 응시 + 채점 완료 + 시험 마감(N)이면 본인 결과를 본다")
+  @DisplayName("학생 결과: 응시했고 강사가 채점 완료(C)를 확정했으면 본인 결과를 본다")
   void studentResultOpen() {
     Mockito.when(this.scoreDao.selectCourseStudentId(COURSE_ID, "stu1")).thenReturn("CT-1");
-    Mockito.when(this.scoreDao.selectScoreDetail(COURSE_ID, "TS-2", "stu1")).thenReturn(myDetail("2026-11-20 10:00", 0, "N"));
+    Mockito.when(this.scoreDao.selectScoreDetail(COURSE_ID, "TS-2", "stu1")).thenReturn(myDetail("2026-11-20 10:00", 0, "C"));
 
     this.service.readMyScoreDetail("stu1", COURSE_ID, "TS-2");
 
@@ -95,12 +95,12 @@ class ScoreServiceImplDetailTest {
   }
 
   @Test
-  @DisplayName("학생 결과: 응시 중(공개 Y) · 채점 중 · 미응시 · 수강생 아님이면 막는다")
+  @DisplayName("학생 결과: 응시 중(Y) · 마감만 됨(N, 채점 완료 전) · 미응시 · 수강생 아님이면 막는다")
   void studentResultClosed() {
     Mockito.when(this.scoreDao.selectCourseStudentId(COURSE_ID, "stu1")).thenReturn("CT-1");
     Mockito.when(this.scoreDao.selectScoreDetail(COURSE_ID, "OPEN", "stu1")).thenReturn(myDetail("2026-11-20 10:00", 0, "Y"));
     Mockito.when(this.scoreDao.selectScoreDetail(COURSE_ID, "PENDING", "stu1")).thenReturn(myDetail("2026-11-20 10:00", 1, "N"));
-    Mockito.when(this.scoreDao.selectScoreDetail(COURSE_ID, "NOT_TAKEN", "stu1")).thenReturn(myDetail(null, null, "N"));
+    Mockito.when(this.scoreDao.selectScoreDetail(COURSE_ID, "NOT_TAKEN", "stu1")).thenReturn(myDetail(null, null, "C"));
 
     assertError(() -> this.service.readMyScoreDetail("stu1", COURSE_ID, "OPEN"), ErrorCode.SCORE_RESULT_NOT_OPEN);
     assertError(() -> this.service.readMyScoreDetail("stu1", COURSE_ID, "PENDING"), ErrorCode.SCORE_RESULT_NOT_OPEN);

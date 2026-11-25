@@ -31,6 +31,12 @@ public interface ExamService {
 
 	RegistTestSetVO updateTestSetShowYn(String testSetId, String showYn);
 
+	/** 채점 완료 확정 (SHOW_YN = 'C'). 채점 중 답안이 남아 있으면 거부. 이후 채점 수정 · 공개 여부 변경 불가 */
+	RegistTestSetVO completeGrading(String testSetId);
+
+	/** 채점 완료 취소 (관리자만, SHOW_YN 'C' → 'N' 마감) */
+	RegistTestSetVO cancelGradeDone(String testSetId);
+
 	String deleteTestSet(String testSetId);
 
 	ExamQuestionListVO viewTestSetQuestions(String testSetId);
