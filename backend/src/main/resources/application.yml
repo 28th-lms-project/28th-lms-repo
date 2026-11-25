@@ -5,6 +5,9 @@ logging:
 spring:
   application:
     name: learningworks
+  # DB 비밀번호 · JWT 키는 git에 올리지 않는 application-secret.yml에 둡니다 (README '실행 방법' 참고)
+  config:
+    import: optional:classpath:application-secret.yml
   # DB 설정
   datasource:
     driver-class-name: oracle.jdbc.OracleDriver

@@ -252,7 +252,12 @@ Git · GitHub (Pull Request 기반)
 
 ### 백엔드 (포트 8080)
 
-DB 접속 정보와 JWT 키는 `backend/src/main/resources/application.yml`에서 읽습니다. 자기 환경에 맞게 바꾸거나 환경 변수로 넣습니다.
+DB 주소 · 계정 같은 공통 설정은 `backend/src/main/resources/application.yml`에 있습니다. DB 비밀번호와 JWT 키는 공개 저장소에 올리지 않으려고 같은 폴더의 `application-secret.yml`에 따로 둡니다. 이 파일은 git에 올라가지 않으므로 처음 한 번 직접 만들어야 합니다.
+
+1. `application-secret.yml.example`을 복사해서 `application-secret.yml`로 저장합니다.
+2. DB 비밀번호(팀원에게 받음)와 JWT 키를 채웁니다. JWT 키는 디코딩했을 때 32바이트 이상인 Base64 문자열이어야 합니다.
+
+이 파일이 없으면 `Could not resolve placeholder 'app.jwt.secret-key'` 오류가 나면서 백엔드가 실행되지 않습니다. 환경 변수로 넣어도 되며, 환경 변수가 yml보다 우선합니다.
 
 | 설정                      | 환경 변수                                                                               |
 | ------------------------- | --------------------------------------------------------------------------------------- |
