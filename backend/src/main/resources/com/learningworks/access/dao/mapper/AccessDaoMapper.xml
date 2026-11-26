@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.learningworks.access.dao.AccessDao">
+
+    <!-- 접근 권한 목록 조회 -->
+    <select id="selectAccessList"
+            parameterType="com.learningworks.access.vo.request.AccessSearchRequestVO"
+            resultType="com.learningworks.access.vo.response.AccessListVO">
+
+        SELECT A.ACTION_ID AS actionId
+             , A.ACTION_CODE AS actionCode
+             , A.ACTION_NAME AS actionName
+             , A.TOP_MENU_ID AS topMenuId
+             , TOP_MENU.TITLE AS topMenuName
+             , A.MID_MENU_ID AS midMenuId
+             , MID_MENU.TITLE AS midMenuName
+             , A.BTM_MENU_ID AS btmMenuId
+             , BTM_MENU.TITLE AS btmMenuName
+          FROM ACTION A
+          LEFT JOIN MENU TOP_MENU
+            ON A.TOP_MENU_ID = TOP_MENU.ID
+          LEFT JOIN MENU MID_MENU
+            ON A.MID_MENU_ID = MID_MENU.ID
+          LEFT JOIN MENU BTM_MENU
+            ON A.BTM_MENU_ID = BTM_MENU.ID
+         WHERE 1 = 1
+        <if test="topMenuId != null and topMenuId != ''">
+            AND A.TOP_MENU_ID = #{topMenuId}
+        </if>
+        <if test="midMenuId != null and midMenuId != ''">
+            AND A.MID_MENU_ID = #{midMenuId}
+        </if>
+        <if test="btmMenuId != null and btmMenuId != ''">
+            AND A.BTM_MENU_ID = #{btmMenuId}
+        </if>
+        <if test="actionName != null and actionName != ''">
+            AND A.ACTION_NAME LIKE '%' || #{actionName} || '%'
+        </if>
+         <!-- 메뉴 관리 화면 · 사이드바와 같은 순서 (대 → 중 → 소 메뉴 순서), 같은 메뉴 안에서는 권한명 순 -->
+         <!-- 순서가 같거나 비어 있는 메뉴(예전 개발용 데이터)도 같은 메뉴끼리 모이도록 각 단계에 메뉴 ID를 붙인다 -->
+         ORDER BY TOP_MENU.MENU_ORDER NULLS LAST
+                , A.TOP_MENU_ID
+                , MID_MENU.MENU_ORDER NULLS LAST
+                , A.MID_MENU_ID
+                , BTM_MENU.MENU_ORDER NULLS LAST
+                , A.BTM_MENU_ID
+                , A.ACTION_NAME
+                , A.ACTION_ID
+
+    </select>
+
+
+    <!-- 접근 권한 등록 -->
+    <insert id="insertAccess"
+            parameterType="com.learningworks.access.vo.response.AccessVO">
+
+        <selectKey keyProperty="actionId"
+                   resultType="string"
+                   order="BEFORE">
+
+            SELECT 'AC-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_ACTION_PK.NEXTVAL, 6, '0')
+              FROM DUAL
+
+        </selectKey>
+
+        INSERT INTO ACTION (
+            ACTION_ID,
+            ACTION_CODE,
+            ACTION_NAME,
+            TOP_MENU_ID,
+            MID_MENU_ID,
+            BTM_MENU_ID
+        )
+        VALUES (
+            #{actionId},
+            #{actionCode},
+            #{actionName},
+            #{topMenuId},
+            #{midMenuId},
+            #{btmMenuId}
+        )
+
+    </insert>
+
+
+    <!-- 접근 권한 수정 -->
+    <update id="updateAccess"
+            parameterType="com.learningworks.access.vo.response.AccessVO">
+
+        UPDATE ACTION
+           SET
+                ACTION_NAME = #{actionName}
+              , TOP_MENU_ID = #{topMenuId}
+              , MID_MENU_ID = #{midMenuId}
+              , BTM_MENU_ID = #{btmMenuId}
+          WHERE ACTION_ID = #{actionId}
+
+    </update>
+
+    <!-- 메뉴 이동: 소메뉴를 다른 중메뉴로 옮겼을 때 (MenuServiceImpl.moveMenu, D-10) -->
+    <update id="updateActionMenusByBtmMenuId">
+
+        UPDATE ACTION
+           SET
+                TOP_MENU_ID = #{topMenuId}
+              , MID_MENU_ID = #{midMenuId}
+          WHERE BTM_MENU_ID = #{btmMenuId}
+
+    </update>
+
+    <!-- 메뉴 이동: 중메뉴를 다른 대메뉴로 옮겼을 때 (MenuServiceImpl.moveMenu, D-10) -->
+    <update id="updateActionTopMenuByMidMenuId">
+
+        UPDATE ACTION
+           SET TOP_MENU_ID = #{topMenuId}
+          WHERE MID_MENU_ID = #{midMenuId}
+
+    </update>
+
+</mapper>

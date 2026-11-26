@@ -1,0 +1,711 @@
+/*
+ * 내용 블록: 시험 문제 · 보기 목록 · 댓글 · 인용 · 세로 키-값 · 상자 목록 (frontend/docs/ui-style-guide.md 8장)
+ *
+ *   <article class="question">
+ *     <header class="question-head"><span class="question-no">1</span><h4 class="question-title">..</h4><span class="question-score">5점</span></header>
+ *     <div class="question-body">문제 내용</div>                 (코드는 <pre class="question-code">)
+ *     <ol class="option-list">
+ *       <li><label class="option"><input type="radio" name="q1" /><span>보기</span></label></li>
+ *     </ol>
+ *   </article>
+ *   option 결과: is-answer(정답 표시) · is-wrong(고른 오답). 고른 보기는 input:checked로 자동 강조
+ *
+ *   comment-list > li.comment (comment-head · comment-author · comment-time · comment-body · comment-actions)
+ *     답글은 comment 안의 comment-list.comment-replies
+ *   comment-form: 댓글 입력 (textarea + <div class="btn-group btn-group-end">버튼</div>)
+ *   quote: 의견 · 인용 (<blockquote class="quote"><p>..</p><footer>이름</footer></blockquote>)
+ *   desc-list-stacked: 라벨 위 · 값 아래, 여러 열 (dl)
+ *   list-boxed: 회색 상자 안 글머리 목록 (ul)
+ *
+ *   question-nav: 시험 응시 문항 번호 이동. <button class="question-nav-item" aria-current="step">, 답한 문항은 .is-done
+ *
+ * React: common/ui/QuestionBlock.jsx · common/ui/Comment.jsx
+ */
+
+/* ───── 시험 문제 ───── */
+.question {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+}
+
+.question + .question {
+  margin-top: 12px;
+}
+
+.question-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.question-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-on-primary);
+  background-color: var(--color-primary);
+  border-radius: var(--radius-pill);
+}
+
+.question-title {
+  flex: 1;
+  margin: 2px 0 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+}
+
+.question-score {
+  flex-shrink: 0;
+  margin-top: 3px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.question-body {
+  padding: 12px 14px;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  background-color: var(--color-bg-subtle);
+  border-radius: var(--radius);
+}
+
+.question-code {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+}
+
+/* ───── 보기 목록 ───── */
+.option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: option;
+}
+
+.option-list > li {
+  counter-increment: option;
+}
+
+.option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+}
+
+/* 보기 번호 ① ② … 대신 1 2 (글꼴에 따라 원문자 크기가 들쭉날쭉) */
+.option::before {
+  content: counter(option);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+}
+
+.option > input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.option > span {
+  flex: 1;
+  min-width: 0;
+}
+
+.option:hover {
+  border-color: var(--color-border-strong);
+}
+
+.option:has(> input:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.option:has(> input:checked) {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+}
+
+.option:has(> input:checked)::before {
+  color: var(--color-on-primary);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* 채점 뒤 · 정답 보기: 고칠 수 없음 */
+.option:has(> input:disabled) {
+  cursor: default;
+}
+
+.option:has(> input:disabled):hover {
+  border-color: var(--color-border);
+}
+
+.option.is-answer {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success-border);
+}
+
+.option.is-answer::before {
+  color: var(--color-bg-surface); /* 밝은 모드 흰색, 다크는 진한 글자 (다크의 green-4 위 흰 글자는 1.75:1) */
+  background-color: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.option.is-wrong {
+  background-color: var(--color-danger-bg);
+  border-color: var(--color-danger-border);
+}
+
+.option.is-wrong::before {
+  color: var(--color-bg-surface);
+  background-color: var(--color-danger);
+  border-color: var(--color-danger);
+}
+
+.option-result {
+  flex-shrink: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.option.is-answer .option-result {
+  color: var(--color-success);
+}
+
+.option.is-wrong .option-result {
+  color: var(--color-danger);
+}
+
+/* ───── 댓글 ───── */
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.comment-list > .comment:last-child {
+  border-bottom: 0;
+}
+
+.comment-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.comment-author {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.comment-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.comment-body {
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* 접힌 긴 댓글: 3줄 */
+.comment-body.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: -8px;
+}
+
+.comment-actions > .btn {
+  height: 24px;
+  padding: 0 8px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-regular);
+}
+
+.comment-replies {
+  margin-top: 4px;
+  padding-left: 16px;
+  border-left: 2px solid var(--color-border-light);
+}
+
+.comment-replies > .comment {
+  padding: 8px 0;
+}
+
+/* 댓글 · 제출 입력: textarea + 오른쪽 버튼 줄 (btn-group btn-group-end) */
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.comment-form > textarea {
+  min-height: 64px;
+}
+
+/* ───── 인용 ───── */
+.quote {
+  margin: 0;
+  padding: 12px 16px;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-subtle);
+  border-left: 3px solid var(--color-border-strong);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.quote > p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.quote > footer {
+  margin-top: 6px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.quote > footer::before {
+  content: "— ";
+}
+
+/* ───── 세로 키-값 (라벨 위 · 값 아래, 여러 열) ───── */
+.desc-list-stacked {
+  display: grid;
+  grid-template-columns: repeat(var(--desc-columns, 3), minmax(0, 1fr));
+  gap: 14px 20px;
+  margin: 0;
+}
+
+.desc-list-stacked > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.desc-list-stacked dt {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.desc-list-stacked dd {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 768px) {
+  .desc-list-stacked {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ───── 상자 목록 ───── */
+.list-boxed {
+  max-height: var(--list-max-height, none);
+  margin: 0;
+  padding: 10px 14px 10px 30px;
+  overflow-y: auto;
+  font-size: var(--font-size-md);
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-subtle);
+  border-radius: var(--radius);
+}
+
+.list-boxed > li::marker {
+  color: var(--color-text-placeholder);
+}
+
+/* ───── 두 목록 사이 옮기기 (TransferList) ─────
+ *   transfer > transfer-list(왼쪽) + transfer-actions(가운데 버튼) + transfer-list(오른쪽)
+ *   transfer-head(모두 체크 · 제목 · 건수) · transfer-search · transfer-items > li > label.transfer-item
+ */
+.transfer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.transfer-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+}
+
+/* 색 있는 목록 (TransferList leftTone · rightTone): 허용 · 미허용처럼 양쪽 뜻이 반대일 때 */
+.transfer-list-danger {
+  border-color: var(--color-danger-border);
+}
+
+.transfer-list-danger > .transfer-head {
+  background-color: var(--color-danger-bg);
+  border-bottom-color: var(--color-danger-border);
+}
+
+.transfer-list-danger .transfer-title {
+  color: var(--color-danger);
+}
+
+.transfer-list-danger .transfer-item-body {
+  color: var(--color-text-muted);
+}
+
+.transfer-list-success {
+  border-color: var(--color-success-border);
+}
+
+.transfer-list-success > .transfer-head {
+  background-color: var(--color-success-bg);
+  border-bottom-color: var(--color-success-border);
+}
+
+.transfer-list-success .transfer-title {
+  color: var(--color-success);
+}
+
+.transfer-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: var(--font-size-md);
+  background-color: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.transfer-title {
+  color: var(--color-text);
+}
+
+.transfer-count {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.transfer-summary {
+  margin-left: auto;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.transfer-search {
+  padding: 8px 12px 0;
+}
+
+.transfer-items {
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.transfer-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 8px;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+}
+
+.transfer-item:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.transfer-item:has(> input:checked) {
+  background-color: var(--color-primary-light);
+}
+
+.transfer-item > input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: var(--color-primary);
+}
+
+.transfer-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.transfer-empty {
+  padding: 24px 8px;
+  font-size: var(--font-size-md);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.transfer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 버튼 안 visually-hidden(체크한 개수) 기준점 */
+.transfer-actions > .btn {
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .transfer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .transfer-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+/* ───── 반복 입력 행 (ListEditor) ───── */
+.list-editor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.list-editor-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list-editor-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.list-editor-row > .form-control {
+  flex: 1;
+}
+
+.list-editor-no {
+  flex-shrink: 0;
+  min-width: 18px;
+  font-size: var(--font-size-sm);
+  text-align: right;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 줄 앞 표시 (ListEditor renderMarker): 시험 보기의 정답 동그라미 · 네모. 고른 줄은 입력 칸이 초록 */
+.list-editor-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: var(--control-height-sm);
+  cursor: pointer;
+}
+
+.list-editor-mark > input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--color-success);
+  cursor: pointer;
+}
+
+.list-editor-row:has(.list-editor-mark > input:checked) > .form-control {
+  border-color: var(--color-success-border);
+  background-color: var(--color-success-bg);
+}
+
+/* ───── 답안 상자 (채점 · 문제 보기) ─────
+ *   <div class="answer-box answer-box-model"><span class="answer-box-label">모범 답안</span>…</div>
+ *   answer-box-model: 정답 · 모범 답안 (초록) · answer-box-empty: 미제출 (점선 · 흐림)
+ */
+.answer-box {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background-color: var(--color-bg-subtle);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+}
+
+.answer-box-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+  white-space: normal;
+}
+
+.answer-box-model {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success-border);
+}
+
+.answer-box-model .answer-box-label {
+  color: var(--color-success);
+}
+
+.answer-box-empty {
+  color: var(--color-text-muted);
+  background-color: transparent;
+  border-style: dashed;
+}
+
+.answer-box-code {
+  font-family: var(--font-mono);
+}
+
+/* ───── 문항 번호 이동 (시험 응시) ───── */
+/* 모달 본문 위에 붙어서 스크롤해도 보임. 음수 여백 = .modal-body 안쪽 여백 (16px 20px) */
+.question-nav-bar {
+  position: sticky;
+  top: -16px;
+  z-index: 1;
+  margin: -16px -20px 0;
+  padding: 12px 20px;
+  background-color: var(--color-bg-raised);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.question-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.question-nav-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.question-nav-item:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.question-nav-item.is-done {
+  color: var(--color-primary-text);
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+}
+
+.question-nav-item[aria-current="step"] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.question-nav-item:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

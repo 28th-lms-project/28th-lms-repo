@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.attendance.dao.AttendanceDao">
+	<select id="selectCourseStudentIdForUpdate" resultType="string">
+		SELECT ID
+		  FROM COURSE_STUDENT
+		 WHERE COURSE_ID = #{courseId}
+		   AND USER_ID = #{userId}
+		   FOR UPDATE
+	</select>
+	
+	<!-- 오늘 내 출결 조회용 수강생 확인 (출석 체크와 달리 잠금 없음) -->
+	<select id="selectCourseStudentId" resultType="string">
+		SELECT ID
+		  FROM COURSE_STUDENT
+		 WHERE COURSE_ID = #{courseId}
+		   AND USER_ID = #{userId}
+	</select>
+	
+	<!-- 오늘이 수업일인지 (수업일 기준은 CourseDaoMapper의 courseClassDays 하나로 같이 씀) -->
+	<select id="selectTodayClassDayCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM (<include refid="com.learningworks.course.dao.CourseDao.courseClassDays"/>) D
+		 WHERE D.CLASS_DAY = TRUNC(SYSDATE)
+	</select>
+	
+	<insert id="insertTodayAttendance">
+		INSERT INTO ATTENDANCE
+			   (ID
+			 , LGN_DT
+			 , ATTEND_STATUS
+			 , USER_ID
+			 , COURSE_ID)
+	    VALUES 
+	           ('AD-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_ATTENDANCE_PK.NEXTVAL, 6, '0')
+	         , SYSDATE
+	         , CASE
+	         	 WHEN TO_CHAR(SYSDATE, 'HH24:MI') <![CDATA[<=]]> #{lateTime} THEN
+	         	   'Y'
+                 WHEN TO_CHAR(SYSDATE, 'HH24:MI') <![CDATA[<=]]> #{absentTime} THEN
+                   'L'
+	         	 ELSE
+	         	   'N'
+	           END
+	         , #{userId}
+	         , #{courseId})
+	</insert>
+	
+	<select id="selectTodayAttendance"
+            resultType="com.learningworks.attendance.vo.response.AttendanceVO">
+        SELECT TO_CHAR(LGN_DT, 'YYYY-MM-DD') AS ATTEND_DATE
+             , ATTEND_STATUS
+             , TO_CHAR(LGN_DT, 'YYYY-MM-DD HH24:MI') AS LGN_DT
+          FROM ATTENDANCE
+         WHERE USER_ID = #{userId}
+           AND COURSE_ID = #{courseId}
+           AND LGN_DT <![CDATA[ >= ]]> TRUNC(SYSDATE)
+           AND LGN_DT <![CDATA[ < ]]> TRUNC(SYSDATE) + 1
+    </select>
+</mapper>

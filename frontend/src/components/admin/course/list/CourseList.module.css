@@ -1,0 +1,6 @@
+/* 과정 목록: 화면 배치만. 색 · 크기는 표준 클래스(toolbar · form-row · form-control · Table)와 토큰 */
+
+/* 검색 영역: 툴바 전체 폭을 쓰고, 칸 4개 + [초기화]가 한 줄에 들어가게 */
+.filters {
+    flex: 1 1 auto;
+}

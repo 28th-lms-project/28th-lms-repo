@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.courseData.dao.CourseDataDao">
+
+	<resultMap id="courseDataDetailMap" type="com.learningworks.courseData.vo.response.CourseDataResponseVO">
+		<id     property="id"        column="ID" />
+		<result property="courseId"  column="COURSE_ID" />
+		<result property="dataName"  column="DATA_NAME" />
+		<result property="crtDt"     column="CRT_DT" />
+		<result property="mdfyDt"    column="MDFY_DT" />
+		<result property="content"   column="CONTENT" javaType="string" jdbcType="CLOB" />
+	</resultMap>
+
+	<!-- 검색 조건: 현재 과정 + 자료명 부분 일치 (검색어의 %, _, \ 는 서비스에서 이스케이프) -->
+	<sql id="searchCondition">
+		   AND CD.COURSE_ID = #{courseId}
+		<if test="dataNameKeyword != null and dataNameKeyword != ''">
+		   AND CD.DATA_NAME LIKE '%' || #{dataNameKeyword} || '%' ESCAPE '\'
+		</if>
+	</sql>
+
+	<!-- 교육 자료 목록 (생성일 내림차순, 페이징) -->
+	<select id="selectCourseDataList"
+	        parameterType="com.learningworks.courseData.vo.request.CourseDataSearchRequestVO"
+	        resultType="com.learningworks.courseData.vo.response.CourseDataResponseVO">
+		SELECT CD.ID
+		     , CD.COURSE_ID
+		     , CD.DATA_NAME
+		     , TO_CHAR(CD.CRT_DT, 'YYYY-MM-DD HH24:MI') AS CRT_DT
+		     , TO_CHAR(CD.MDFY_DT, 'YYYY-MM-DD HH24:MI') AS MDFY_DT
+		  FROM COURSE_DATA CD
+		 WHERE CD.DEL_YN = 'N'
+		<include refid="searchCondition" />
+		 ORDER BY CD.CRT_DT DESC
+		        , CD.ID DESC
+		OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
+	</select>
+
+	<!-- 교육 자료 전체 건수 -->
+	<select id="countCourseData"
+	        parameterType="com.learningworks.courseData.vo.request.CourseDataSearchRequestVO"
+	        resultType="_long">
+		SELECT COUNT(CD.ID)
+		  FROM COURSE_DATA CD
+		 WHERE CD.DEL_YN = 'N'
+		<include refid="searchCondition" />
+	</select>
+
+	<!-- 교육 자료 상세 -->
+	<select id="selectCourseData" resultMap="courseDataDetailMap">
+		SELECT CD.ID
+		     , CD.COURSE_ID
+		     , CD.DATA_NAME
+		     , TO_CHAR(CD.CRT_DT, 'YYYY-MM-DD HH24:MI') AS CRT_DT
+		     , TO_CHAR(CD.MDFY_DT, 'YYYY-MM-DD HH24:MI') AS MDFY_DT
+		     , CD.CONTENT
+		  FROM COURSE_DATA CD
+		 WHERE CD.ID = #{id}
+		   AND CD.COURSE_ID = #{courseId}
+		   AND CD.DEL_YN = 'N'
+	</select>
+
+	<!-- 교육 자료 등록 (CRT_DT, MDFY_DT 는 등록 시점으로 저장) -->
+	<insert id="insertCourseData" parameterType="com.learningworks.courseData.vo.request.CourseDataRequestVO">
+		<selectKey order="BEFORE" keyProperty="id" resultType="string">
+		SELECT 'CR-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_DATA_PK.NEXTVAL, 6, '0')
+		  FROM DUAL
+		</selectKey>
+		INSERT INTO COURSE_DATA
+		     ( ID
+		     , DATA_NAME
+		     , CRT_DT
+		     , MDFY_DT
+		     , CONTENT
+		     , COURSE_ID
+			 , DEL_YN )
+		VALUES
+		     ( #{id}
+		     , #{dataName}
+		     , SYSDATE
+		     , SYSDATE
+		     , #{content, jdbcType=CLOB}
+		     , #{courseId}
+			 , 'N' )
+	</insert>
+
+	<!-- 교육 자료 수정 (ID + COURSE_ID 조건, CRT_DT 는 변경하지 않음) -->
+	<update id="updateCourseData" parameterType="com.learningworks.courseData.vo.request.CourseDataRequestVO">
+		UPDATE COURSE_DATA
+		   SET DATA_NAME = #{dataName}
+		     , CONTENT   = #{content, jdbcType=CLOB}
+		     , MDFY_DT   = SYSDATE
+		 WHERE ID        = #{id}
+		   AND COURSE_ID = #{courseId}
+	</update>
+
+	<!-- 교육 자료 삭제 -->
+	<delete id="deleteCourseData" parameterType="com.learningworks.courseData.vo.request.CourseDataRequestVO">
+		UPDATE COURSE_DATA
+		   SET DEL_YN 	 = 'Y'
+		 WHERE ID        = #{id}
+		   AND COURSE_ID = #{courseId}
+	</delete>
+
+	<!-- 과정 존재 여부 -->
+	<select id="countCourse" parameterType="string" resultType="_int">
+		SELECT COUNT(1)
+		  FROM COURSE C
+		 WHERE C.ID = #{_parameter}
+	</select>
+
+	<!-- 과정의 교육 자료 본문에서 파일 ID 참조 여부 (fileId 는 서비스에서 형식 검증) -->
+	<select id="countFileReference" resultType="_int">
+		SELECT COUNT(1)
+		  FROM COURSE_DATA CD
+		 WHERE CD.COURSE_ID = #{courseId}
+		   AND DBMS_LOB.INSTR(CD.CONTENT, #{fileId}) > 0
+	</select>
+</mapper>

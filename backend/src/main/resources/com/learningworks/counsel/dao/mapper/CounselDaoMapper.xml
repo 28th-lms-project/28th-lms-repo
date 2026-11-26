@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.counsel.dao.CounselDao">
+
+
+	<!-- 과정의 수강생-종합의견 목록 (상담 정보가 없는 수강생도 포함) -->
+	<select id="selectCounselList"
+	        parameterType="string"
+	        resultType="com.learningworks.counsel.vo.response.CounselListResponseVO">
+		SELECT CS.ID AS COURSE_STUDENT_ID
+		     , U.NAME AS STUDENT_NAME
+		     , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
+		     , CC.OPINION
+		  FROM COURSE_STUDENT CS
+		 INNER JOIN "USER" U
+		    ON CS.USER_ID = U.ID
+		  LEFT JOIN COURSE_CONSULT CC
+		    ON CC.COURSE_STUDENT_ID = CS.ID
+		 WHERE CS.COURSE_ID = #{_parameter}
+		   AND U.DEL_YN = 'N'
+		 ORDER BY U.NAME ASC
+		        , CS.ID ASC
+	</select>
+
+	<!-- 수강생의 과정 참여 여부 -->
+	<select id="countCourseStudent" resultType="_int">
+		SELECT COUNT(1)
+		  FROM COURSE_STUDENT CS
+		 INNER JOIN "USER" U
+		    ON CS.USER_ID = U.ID
+		 WHERE CS.ID = #{courseStudentId}
+		   AND CS.COURSE_ID = #{courseId}
+		   AND U.DEL_YN = 'N'
+	</select>
+
+	<!-- 상담 기본 정보(COURSE_CONSULT) 존재 여부 -->
+	<select id="countCounsel" parameterType="string" resultType="_int">
+		SELECT COUNT(1)
+		  FROM COURSE_CONSULT CC
+		 WHERE CC.COURSE_STUDENT_ID = #{_parameter}
+	</select>
+
+	<!-- 교육생 기본 정보 (상담 정보가 없으면 GENDER, CONTACT 는 NULL) -->
+	<select id="selectCounselDetail"
+	        parameterType="string"
+	        resultType="com.learningworks.counsel.vo.response.CounselDetailResponseVO">
+		SELECT CS.ID AS COURSE_STUDENT_ID
+		     , C."NO" AS COURSE_NO
+		     , C.COURSE_NAME
+		     , TO_CHAR(C.START_DATE, 'YYYY-MM-DD') AS START_DATE
+		     , TO_CHAR(C.END_DATED, 'YYYY-MM-DD') AS END_DATE
+		     , U.NAME AS STUDENT_NAME
+		     , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
+		     , CC.GENDER
+		     <!-- 연락처는 DB 함수 AES_ENCRYPTION 으로 저장된 암호문(16진수, 32자 단위)이면 AES_DECRYPTION 으로 복호화.
+		          암호화 적용 전에 저장된 평문은 복호화하면 오류가 나므로 그대로 둔다 -->
+		     , CASE
+		         WHEN REGEXP_LIKE(CC.CONTACT, '^[0-9a-f]+$')
+		          AND MOD(LENGTH(CC.CONTACT), 32) = 0 THEN AES_DECRYPTION(CC.CONTACT)
+		         ELSE CC.CONTACT
+		       END AS CONTACT
+		  FROM COURSE_STUDENT CS
+		 INNER JOIN COURSE C
+		    ON CS.COURSE_ID = C.ID
+		 INNER JOIN "USER" U
+		    ON CS.USER_ID = U.ID
+		  LEFT JOIN COURSE_CONSULT CC
+		    ON CC.COURSE_STUDENT_ID = CS.ID
+		 WHERE CS.ID = #{_parameter}
+	</select>
+
+	<!-- 상담 기본 정보 등록 (역량 진단 · 종합의견은 이후 수정). 연락처는 DB 함수 AES_ENCRYPTION 으로 암호화해서 저장 -->
+	<insert id="insertCounsel" parameterType="com.learningworks.counsel.vo.request.CounselRequestVO">
+		INSERT INTO COURSE_CONSULT
+		     ( COURSE_STUDENT_ID
+		     , GENDER
+		     , CONTACT )
+		VALUES
+		     ( #{courseStudentId}
+		     , #{gender}
+		     , AES_ENCRYPTION(#{contact}) )
+	</insert>
+
+	<!-- 역량 수준 진단 -->
+	<select id="selectCapability"
+	        parameterType="string"
+	        resultType="com.learningworks.counsel.vo.response.CapabilityResponseVO">
+		SELECT CC.CAPABILITY_START_LEVEL
+		     , CC.CAPABILITY_START_DESC
+		     , CC.CAPABILITY_MID_LEVEL
+		     , CC.CAPABILITY_MID_DESC
+		     , CC.CAPABILITY_END_LEVEL
+		     , CC.CAPABILITY_END_DESC
+		  FROM COURSE_CONSULT CC
+		 WHERE CC.COURSE_STUDENT_ID = #{_parameter}
+	</select>
+
+	<update id="updateCapability" parameterType="com.learningworks.counsel.vo.request.CapabilityRequestVO">
+		UPDATE COURSE_CONSULT
+		   SET CAPABILITY_START_LEVEL = #{capabilityStartLevel}
+		     , CAPABILITY_START_DESC = #{capabilityStartDesc}
+		     , CAPABILITY_MID_LEVEL = #{capabilityMidLevel}
+		     , CAPABILITY_MID_DESC = #{capabilityMidDesc}
+		     , CAPABILITY_END_LEVEL = #{capabilityEndLevel}
+		     , CAPABILITY_END_DESC = #{capabilityEndDesc}
+		 WHERE COURSE_STUDENT_ID = #{courseStudentId}
+	</update>
+
+	<!--
+		과목별 성적: 성적 탭(ScoreDaoMapper.selectCourseScoreList)과 같은 규칙으로 TEST_ANSWERS에서 계산한다.
+		(TEST_SCORE_FOR_CHART는 작성처가 없어 항상 비어 있음)
+		TEST_ANSWERS.COURSE_STUDENT_ID에는 USER.ID가 저장되므로 CS.USER_ID로 연결한다.
+	-->
+	<select id="selectScoreList"
+	        parameterType="string"
+	        resultType="com.learningworks.counsel.vo.response.ScoreResponseVO">
+		SELECT TS.ID AS TEST_SET_ID
+		     , TS.SET_NAME
+		     , TS.TEST_TYPE
+		     , TP.TOTAL_POINT
+		     , SA.SCORE
+		     , SA.PENDING_COUNT
+		  FROM COURSE_STUDENT CS
+		 INNER JOIN TEST_SET TS
+		    ON TS.COURSE_ID = CS.COURSE_ID
+		 INNER JOIN (SELECT TST.TEST_SET_ID
+		                  , SUM(NVL(T.POINT_ALLOC, 0)) AS TOTAL_POINT
+		               FROM TEST_SET_TESTS TST
+		              INNER JOIN TESTS T
+		                 ON TST.TEST_ID = T.ID
+		              WHERE T.DEL_YN = 'N'
+		              GROUP BY TST.TEST_SET_ID) TP
+		    ON TP.TEST_SET_ID = TS.ID
+		  LEFT OUTER JOIN (SELECT TA.COURSE_STUDENT_ID
+		                        , TA.TEST_SET_ID
+		                        , <include refid="com.learningworks.score.dao.ScoreDao.gradedScoreSum" /> AS SCORE
+		                        , <include refid="com.learningworks.score.dao.ScoreDao.pendingCountSum" /> AS PENDING_COUNT
+		                     FROM TEST_ANSWERS TA
+		                    INNER JOIN TESTS T
+		                       ON TA.TEST_ID = T.ID
+		                    WHERE T.DEL_YN = 'N'
+		                    GROUP BY TA.COURSE_STUDENT_ID
+		                        , TA.TEST_SET_ID) SA
+		    ON SA.COURSE_STUDENT_ID = CS.USER_ID
+		   AND SA.TEST_SET_ID = TS.ID
+		 WHERE CS.ID = #{_parameter}
+		 ORDER BY TS.ID ASC
+	</select>
+
+	<!--
+		평균 점수: 채점이 끝난(채점 중 문항 없는) 응시 시험의 100점 환산 점수 평균.
+		시험마다 총점이 달라 원점수 평균은 의미가 없으므로 환산한다. 성적이 없으면 NULL.
+	-->
+	<select id="selectAverageScore" parameterType="string" resultType="double">
+		SELECT ROUND(AVG(SA.SCORE * 100 / TP.TOTAL_POINT), 1) AS AVG_SCORE
+		  FROM COURSE_STUDENT CS
+		 INNER JOIN TEST_SET TS
+		    ON TS.COURSE_ID = CS.COURSE_ID
+		 INNER JOIN (SELECT TST.TEST_SET_ID
+		                  , SUM(NVL(T.POINT_ALLOC, 0)) AS TOTAL_POINT
+		               FROM TEST_SET_TESTS TST
+		              INNER JOIN TESTS T
+		                 ON TST.TEST_ID = T.ID
+		              WHERE T.DEL_YN = 'N'
+		              GROUP BY TST.TEST_SET_ID) TP
+		    ON TP.TEST_SET_ID = TS.ID
+		 INNER JOIN (SELECT TA.COURSE_STUDENT_ID
+		                  , TA.TEST_SET_ID
+		                  , <include refid="com.learningworks.score.dao.ScoreDao.gradedScoreSum" /> AS SCORE
+		                  , <include refid="com.learningworks.score.dao.ScoreDao.pendingCountSum" /> AS PENDING_COUNT
+		               FROM TEST_ANSWERS TA
+		              INNER JOIN TESTS T
+		                 ON TA.TEST_ID = T.ID
+		              WHERE T.DEL_YN = 'N'
+		              GROUP BY TA.COURSE_STUDENT_ID
+		                  , TA.TEST_SET_ID) SA
+		    ON SA.COURSE_STUDENT_ID = CS.USER_ID
+		   AND SA.TEST_SET_ID = TS.ID
+		 WHERE CS.ID = #{_parameter}
+		   AND SA.PENDING_COUNT = 0
+		   AND TP.TOTAL_POINT > 0
+	</select>
+
+	<!-- 상담내용 목록 (상담일자 오름차순) -->
+	<select id="selectConsultDataList"
+	        parameterType="string"
+	        resultType="com.learningworks.counsel.vo.response.ConsultDataResponseVO">
+		SELECT CCD.ID
+		     , TO_CHAR(CCD.CONSULT_DATE, 'YYYY-MM-DD HH24:MI') AS CONSULT_DATE
+		     , CCD.CONSULT_TYPE
+		     , CCD.CONSULT_DESC
+		  FROM COURSE_CONSULT_DATA CCD
+		 WHERE CCD.COURSE_STUDENT_ID = #{_parameter}
+		 ORDER BY CCD.CONSULT_DATE ASC
+		        , CCD.ID ASC
+	</select>
+
+	<!-- 상담내용 등록 -->
+	<insert id="insertConsultData" parameterType="com.learningworks.counsel.vo.request.ConsultDataRequestVO">
+		<selectKey order="BEFORE" keyProperty="id" resultType="string">
+		SELECT 'CC-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_CONSULT_DATA_PK.NEXTVAL, 6, '0')
+		  FROM DUAL
+		</selectKey>
+		INSERT INTO COURSE_CONSULT_DATA
+		     ( ID
+		     , CONSULT_DATE
+		     , CONSULT_DESC
+		     , CONSULT_USER
+		     , CONSULT_TYPE
+		     , COURSE_STUDENT_ID )
+		VALUES
+		     ( #{id}
+		     , SYSDATE
+		     , #{consultDesc}
+		     , #{consultUser}
+		     , #{consultType}
+		     , #{courseStudentId} )
+	</insert>
+
+	<!-- 종합의견 -->
+	<select id="selectOpinion" parameterType="string" resultType="string">
+		SELECT CC.OPINION
+		  FROM COURSE_CONSULT CC
+		 WHERE CC.COURSE_STUDENT_ID = #{_parameter}
+	</select>
+
+	<update id="updateOpinion" parameterType="com.learningworks.counsel.vo.request.OpinionRequestVO">
+		UPDATE COURSE_CONSULT
+		   SET OPINION = #{opinion}
+		 WHERE COURSE_STUDENT_ID = #{courseStudentId}
+	</update>
+</mapper>

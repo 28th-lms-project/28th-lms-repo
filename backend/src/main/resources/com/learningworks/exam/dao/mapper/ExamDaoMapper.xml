@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.exam.dao.ExamDao">
+
+	<select id="selectQuestionsCount"
+		parameterType="string"
+		resultType="_long">
+		SELECT COUNT(ID)
+		FROM TESTS
+		WHERE DEL_YN = 'N'
+		  AND SUBJECT_ID = #{subjectId}
+	</select>
+
+	<select id="selectAllQuestions"
+		resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
+		SELECT ID
+			 , SUBJECT_ID
+			 , QUESTION
+			 , ANSWER_TYPE
+			 , ANSWER_SHEET_1
+			 , ANSWER_SHEET_2
+			 , ANSWER_SHEET_3
+			 , ANSWER_SHEET_4
+			 , ANSWER_SHEET_5
+			 , ANSWER_COUNT
+			 , POINT_ALLOC
+			 , CRT_DT
+			 , MDFY_DT
+			 , CRTR_ID
+			 , MDFYR_ID
+			 , CORRECT_ANSWER
+			 , SUB_QUESTION
+			FROM TESTS
+		   WHERE SUBJECT_ID = #{subjectId}
+			 AND DEL_YN = 'N'
+		   ORDER BY CRT_DT DESC, ID DESC
+	</select>
+
+	<select id="selectQuestionById"
+		parameterType="string"
+		resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
+		SELECT T.ID
+			 , T.SUBJECT_ID
+			 , T.QUESTION
+			 , T.ANSWER_TYPE
+			 , T.ANSWER_SHEET_1
+			 , T.ANSWER_SHEET_2
+			 , T.ANSWER_SHEET_3
+			 , T.ANSWER_SHEET_4
+			 , T.ANSWER_SHEET_5
+			 , T.ANSWER_COUNT
+			 , T.POINT_ALLOC
+			 , T.CRT_DT
+			 , T.MDFY_DT
+			 , T.CRTR_ID
+			 , T.MDFYR_ID
+			 , T.DEL_YN
+			 , T.CORRECT_ANSWER
+			 , T.SUB_QUESTION
+			 <!-- 이 문제로 제출된 답안 수: 수정 화면에서 경고용 -->
+			 , (SELECT COUNT(*)
+			      FROM TEST_ANSWERS TA
+			     WHERE TA.TEST_ID = T.ID) AS SUBMITTED_ANSWER_COUNT
+		FROM TESTS T
+		WHERE T.ID = #{_parameter}
+		AND T.DEL_YN = 'N'
+	</select>
+
+	<!-- 시험 과목이 공통 코드(TEST_SUBJECT)에 있고 사용 중인지 -->
+	<select id="countTestSubject" resultType="_int">
+		SELECT COUNT(*)
+		  FROM CODE
+		 WHERE ID = #{subjectId}
+		   AND PARENT_ID = 'TEST_SUBJECT'
+		   AND USE_YN = 'Y'
+	</select>
+
+	<select id="selectAllExamInExamSet"
+		resultMap="ExamSetVOMap">
+		SELECT TS.ID AS SET_ID
+			 , TS.COURSE_ID
+			 , TS.TEST_TYPE
+			 , TS.SET_NAME
+			 , TS.SHOW_YN
+			 <!-- 로그인 사용자의 응시 여부: countSubmittedAnswers 와 같은 조건 -->
+			 , CASE WHEN EXISTS (SELECT 1
+			                       FROM TEST_ANSWERS TA
+			                      WHERE TA.TEST_SET_ID = TS.ID
+			                        AND TA.COURSE_STUDENT_ID = #{userId})
+			        THEN 'Y' ELSE 'N' END AS SUBMITTED_YN
+			 , T.ID AS TEST_ID
+			 , T.SUBJECT_ID
+			 , T.QUESTION
+			 , T.ANSWER_TYPE
+			 , T.ANSWER_SHEET_1
+			 , T.ANSWER_SHEET_2
+			 , T.ANSWER_SHEET_3
+			 , T.ANSWER_SHEET_4
+			 , T.ANSWER_SHEET_5
+			 , T.ANSWER_COUNT
+			 , T.POINT_ALLOC
+			 , T.CRT_DT
+			 , T.MDFY_DT
+			 , T.CRTR_ID
+			 , T.MDFYR_ID
+			 <!-- 정답(CORRECT_ANSWER)은 넣지 않는다: 수강생도 이 목록을 받는다.
+			      정답이 필요한 문제 보기 · 채점은 viewTestSetQuestions 로 따로 조회 -->
+			 , T.SUB_QUESTION
+		FROM TEST_SET TS
+		INNER JOIN TEST_SET_TESTS TST
+		ON TS.ID = TST.TEST_SET_ID
+		INNER JOIN TESTS T
+		ON TST.TEST_ID = T.ID
+		<!-- 문제 은행에서 지운(DEL_YN = 'Y') 문제도 이미 낸 시험에는 그대로 남긴다 -->
+		WHERE TS.COURSE_ID = #{courseId}
+		ORDER BY TS.ID DESC
+	</select>
+
+	<resultMap type="com.learningworks.exam.vo.response.ExamSetVO"
+		id="ExamSetVOMap"
+		autoMapping="true">
+		<id column="SET_ID" property="id" />
+		<!--  <result property="courseId" column="COURSE_ID"/>
+	 <result property="testType" column="TEST_TYPE"/>
+	 <result property="setName" column="SET_NAME"/> -->
+
+		<association property="questionList"
+			javaType="com.learningworks.exam.vo.response.ExamQuestionListVO">
+			<id column="SET_ID" />
+			<collection property="examList"
+				ofType="com.learningworks.exam.vo.response.ExamQuestionVO"
+				javaType="list"
+				autoMapping="true">
+				<id column="TEST_ID" property="id" />
+				<!-- <result property="subjectId" column="SUBJECT_ID"/>
+	 			  <result property="question" column="QUESTION"/>
+	 			  <result property="answerType" column="ANSWER_TYPE"/>
+	 			  <result property="answerSheet1" column="ANSWER_SHEET_1"/>
+	 			  <result property="answerSheet2" column="ANSWER_SHEET_2"/>
+	 			  <result property="answerSheet3" column="ANSWER_SHEET_3"/>
+	 			  <result property="answerSheet4" column="ANSWER_SHEET_4"/>
+	 			  <result property="answerSheet5" column="ANSWER_SHEET_5"/>
+	 			  <result property="answerCount" column="ANSWER_COUNT"/>
+	 			  <result property="pointAlloc" column="POINT_ALLOC"/>
+	 			  <result property="crtDt" column="CRT_DT"/>
+	 			  <result property="mdfyDt" column="MDFY_DT"/>
+	 			  <result property="crtrId" column="CRTR_ID"/>
+	 			  <result property="mdfyrId" column="MDFYR_ID"/>
+	 			  <result property="correctAnswer" column="CORRECT_ANSWER"/>
+	 			  <result property="subQuestion" column="SUB_QUESTION"/> -->
+			</collection>
+		</association>
+	</resultMap>
+
+
+	<!-- 파라미터: question(RegistExamQuestionVO), userId(로그인 사용자 = 생성자 · 수정자) -->
+	<insert id="insertNewExam">
+		<selectKey order="BEFORE" keyProperty="question.id" resultType="string">
+			SELECT ('TT-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') ||
+		LPAD(SEQ_TESTS_PK.NEXTVAL, 6, '0'))
+			FROM DUAL
+		</selectKey>
+		INSERT INTO TESTS 
+		(ID 
+		, SUBJECT_ID 
+		, QUESTION 
+		, ANSWER_TYPE 
+		, ANSWER_SHEET_1 
+		, ANSWER_SHEET_2 
+		, ANSWER_SHEET_3 
+		, ANSWER_SHEET_4 
+		, ANSWER_SHEET_5 
+		, ANSWER_COUNT 
+		, POINT_ALLOC 
+		, CRT_DT 
+		, MDFY_DT 
+		, CRTR_ID
+		, MDFYR_ID 
+		, DEL_YN 
+		, CORRECT_ANSWER 
+		, SUB_QUESTION) 
+		VALUES 
+		( #{question.id} 
+		, #{question.subjectId} 
+		, #{question.question} 
+		, #{question.answerType} 
+		, #{question.answerSheet1} 
+		, #{question.answerSheet2} 
+		, #{question.answerSheet3} 
+		, #{question.answerSheet4} 
+		, #{question.answerSheet5} 
+		, #{question.answerCount} 
+		, #{question.pointAlloc} 
+		, SYSDATE 
+		, SYSDATE 
+		, #{userId} 
+		, #{userId} 
+		, 'N' 
+		, #{question.correctAnswer} 
+		, #{question.subQuestion} ) 
+		</insert>
+
+	<delete id="deleteExamQuestion">
+		UPDATE TESTS
+		SET DEL_YN = 'Y'
+		, MDFY_DT = SYSDATE
+		, MDFYR_ID = #{userId}
+		WHERE ID = #{examId}
+		AND DEL_YN = 'N'
+	</delete>
+
+	<update id="updateExamQuestion">
+		UPDATE TESTS
+		SET QUESTION = #{modifyExamQuestionVO.question}
+			 , ANSWER_TYPE = #{modifyExamQuestionVO.answerType}
+			 , ANSWER_SHEET_1 = #{modifyExamQuestionVO.answerSheet1}
+			 , ANSWER_SHEET_2 = #{modifyExamQuestionVO.answerSheet2}
+			 , ANSWER_SHEET_3 = #{modifyExamQuestionVO.answerSheet3}
+			 , ANSWER_SHEET_4 = #{modifyExamQuestionVO.answerSheet4}
+			 , ANSWER_SHEET_5 = #{modifyExamQuestionVO.answerSheet5}
+			 , ANSWER_COUNT = #{modifyExamQuestionVO.answerCount}
+			 , POINT_ALLOC = #{modifyExamQuestionVO.pointAlloc}
+			 , MDFY_DT = SYSDATE
+			 , MDFYR_ID = #{userId}
+			 , CORRECT_ANSWER = #{modifyExamQuestionVO.correctAnswer}
+			 , SUB_QUESTION = #{modifyExamQuestionVO.subQuestion}
+		WHERE ID = #{examId}
+		AND DEL_YN = 'N'
+	</update>
+    
+    
+    <insert id="makeNewTestSet" parameterType="com.learningworks.exam.vo.request.RegistTestSetVO">
+        <selectKey keyProperty="RegistTestSetVO.id" order="BEFORE" resultType="string">
+        SELECT ('TS-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TEST_SET_PK.NEXTVAL, 6, '0'))
+          FROM DUAL
+        </selectKey>
+        INSERT INTO TEST_SET
+             (ID
+            , COURSE_ID
+            , TEST_TYPE
+            , SET_NAME
+            , SHOW_YN)
+        VALUES
+            ( #{RegistTestSetVO.id}
+            , #{courseId}
+            , #{RegistTestSetVO.testType}
+            , #{RegistTestSetVO.setName}
+            , #{RegistTestSetVO.showYn})
+    </insert>
+    
+   
+    
+    <insert id="makeNewTestSetTest" parameterType="string">
+        <selectKey keyProperty="id" order="BEFORE" resultType="string">
+        SELECT ('TE-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TEST_SET_TESTS_PK.NEXTVAL, 6, '0'))
+          FROM DUAL
+        </selectKey>
+        INSERT INTO TEST_SET_TESTS
+            ( ID
+            , TEST_SET_ID
+            , TEST_ID)
+        VALUES
+            (#{id}
+            ,#{testSetId}
+            ,#{questionId})
+    </insert>
+   
+    <select id="selectExamsetById"
+     parameterType="string"
+      resultType="com.learningworks.exam.vo.request.RegistTestSetVO">
+       SELECT ID
+            , COURSE_ID
+            , TEST_TYPE
+            , SET_NAME
+            , SHOW_YN
+         FROM TEST_SET
+        WHERE ID = #{parameter}
+      </select>
+
+    <!-- 채점 중(R) 답안 수 (성적 계산과 같이 삭제된 문제 답안은 제외) -->
+    <select id="countPendingAnswers" parameterType="string" resultType="_int">
+        SELECT COUNT(*)
+          FROM TEST_ANSWERS TA
+         INNER JOIN TESTS T
+            ON TA.TEST_ID = T.ID
+         WHERE TA.TEST_SET_ID = #{_parameter}
+           AND TA.IS_CORRECT = 'R'
+           AND T.DEL_YN = 'N'
+    </select>
+
+    <!-- 답안이 속한 시험의 상태 (SHOW_YN: Y 공개 · N 마감 · C 채점 완료) -->
+    <select id="selectShowYnByAnswerId" parameterType="string" resultType="string">
+        SELECT TS.SHOW_YN
+          FROM TEST_ANSWERS TA
+         INNER JOIN TEST_SET TS
+            ON TS.ID = TA.TEST_SET_ID
+         WHERE TA.ID = #{_parameter}
+    </select>
+
+    <update id="updateTestSetShowYn">
+        UPDATE TEST_SET
+           SET SHOW_YN = #{showYn}
+         WHERE ID = #{testSetId}
+    </update>
+    
+    <delete id="deleteTestSet" parameterType="string">
+       DELETE TEST_SET
+       WHERE ID = #{parameter}
+    </delete>
+    
+    
+    
+    <select id="viewTestSetQuestions"
+            parameterType="string"
+             resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
+        SELECT T.ID
+             , T.SUBJECT_ID
+             , T.QUESTION
+             , T.ANSWER_TYPE
+             , T.ANSWER_SHEET_1
+             , T.ANSWER_SHEET_2
+             , T.ANSWER_SHEET_3
+             , T.ANSWER_SHEET_4
+             , T.ANSWER_SHEET_5
+             , T.ANSWER_COUNT
+             , T.POINT_ALLOC
+             , T.CRT_DT
+             , T.MDFY_DT
+             , T.CRTR_ID
+             , T.MDFYR_ID
+             , T.DEL_YN
+             , T.CORRECT_ANSWER
+             , T.SUB_QUESTION
+          FROM TESTS T
+         <!-- 문제 은행에서 지운 문제도 이미 낸 시험에는 그대로 보인다 -->
+         WHERE T.ID IN (SELECT TST.TEST_ID
+                          FROM TEST_SET_TESTS TST
+                         WHERE TST.TEST_SET_ID = #{parameter})
+         ORDER BY T.ID
+     </select>
+
+    <!-- 응시용 문제 조회: viewTestSetQuestions 와 같지만 정답(CORRECT_ANSWER)을 뺀다 (수강생에게 정답이 내려가지 않도록) -->
+    <select id="viewTestSetQuestionsForTake"
+            parameterType="string"
+            resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
+        SELECT T.ID
+             , T.SUBJECT_ID
+             , T.QUESTION
+             , T.ANSWER_TYPE
+             , T.ANSWER_SHEET_1
+             , T.ANSWER_SHEET_2
+             , T.ANSWER_SHEET_3
+             , T.ANSWER_SHEET_4
+             , T.ANSWER_SHEET_5
+             , T.ANSWER_COUNT
+             , T.POINT_ALLOC
+             , T.SUB_QUESTION
+          FROM TESTS T
+         WHERE DEL_YN = 'N'
+           AND T.ID IN (SELECT TST.TEST_ID
+                          FROM TEST_SET_TESTS TST
+                         WHERE TST.TEST_SET_ID = #{parameter})
+         ORDER BY T.ID
+     </select>
+
+    <!-- 채점용 정답 조회: 답안 저장 반복문 안에서 문제마다 SELECT 하지 않도록 한 번에 가져온다 -->
+    <select id="selectAnswerKeysByTestSetId"
+            parameterType="string"
+            resultType="com.learningworks.exam.vo.response.ExamQuestionVO">
+        SELECT T.ID
+             , T.ANSWER_TYPE
+             , T.CORRECT_ANSWER
+          FROM TEST_SET_TESTS TST
+         INNER JOIN TESTS T
+            ON T.ID = TST.TEST_ID
+         WHERE TST.TEST_SET_ID = #{_parameter}
+           <!-- 지운 문제도 채점해야 제출이 막히지 않는다 (DEL_YN 조건 없음) -->
+    </select>
+
+    <select id="countSubmittedAnswers" resultType="int">
+        SELECT COUNT(*)
+          FROM TEST_ANSWERS
+         WHERE TEST_SET_ID = #{testSetId}
+           AND COURSE_STUDENT_ID = #{courseStudentId}
+    </select>
+
+    <insert id="insertTestAnswer"
+            parameterType="com.learningworks.exam.vo.request.RegistTestAnswersVO">
+        <selectKey keyProperty="id" order="BEFORE" resultType="string">
+        SELECT ('TN-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_TEST_ANSWERS_PK.NEXTVAL, 6, '0'))
+          FROM DUAL
+        </selectKey>
+        INSERT INTO TEST_ANSWERS
+             ( ID
+             , TEST_SET_ID
+             , TEST_ID
+             , COURSE_STUDENT_ID
+             , ANSWER
+             , IS_CORRECT
+             , CRT_DT )
+        VALUES
+             ( #{id}
+             , #{testSetId}
+             , #{testId}
+             , #{courseStudentId}
+             , #{answer}
+             , #{isCorrect}
+             , SYSDATE )
+    </insert>
+    
+    
+    <select id="correctStudentAnswer" parameterType="string" resultType="com.learningworks.exam.vo.response.ExamQuestionAnswerVO">
+    SELECT COURSE_STUDENT_ID
+         , TEST_SET_ID
+         , ANSWER
+         , CRT_DT
+         , IS_CORRECT
+         , ETC
+         , TEST_ID
+         , ID
+      FROM TEST_ANSWERS  
+     WHERE TEST_SET_ID = #{testSetId}
+       AND COURSE_STUDENT_ID = #{userId}
+    </select>
+
+    <!-- 강사 수동 채점: 답안 1건의 채점 결과 수정 -->
+    <!-- 답안이 속한 시험 세트의 과정 ID (채점 권한 확인용) -->
+    <select id="selectCourseIdByAnswerId" parameterType="string" resultType="string">
+        SELECT TS.COURSE_ID
+          FROM TEST_ANSWERS TA
+         INNER JOIN TEST_SET TS
+            ON TS.ID = TA.TEST_SET_ID
+         WHERE TA.ID = #{_parameter}
+    </select>
+
+    <update id="updateAnswerGrade">
+        UPDATE TEST_ANSWERS
+           SET IS_CORRECT = #{isCorrect}
+         WHERE ID = #{answerId}
+    </update>
+</mapper>

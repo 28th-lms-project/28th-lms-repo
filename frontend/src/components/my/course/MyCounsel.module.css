@@ -1,0 +1,11 @@
+/* 상담 기록: 화면 배치만. 색 · 글자 크기는 전역 클래스(panel · content · table) 토큰 */
+
+/* 성적: 왼쪽 평균 점수 카드 폭 */
+.scoreSplit {
+    --layout-aside-width: 200px;
+}
+
+/* 진단 · 상담 내용은 입력한 줄바꿈 그대로 */
+.preLine {
+    white-space: pre-line;
+}

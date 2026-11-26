@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.learningworks.interview.dao.InterviewDao">
+
+	<!-- 과정의 면접 일정 목록 (면접일시 오름차순) -->
+	<!-- 과정의 면접 일정. userId가 있으면 그 수강생 본인 것만 (수강생이 볼 때) -->
+	<select id="selectInterviewList"
+	        resultType="com.learningworks.interview.vo.response.InterviewResponseVO">
+		SELECT CSI.ID
+		     , CSI.COURSE_STUDENT_ID
+		     , U.NAME AS STUDENT_NAME
+		     , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
+		     , CSI.INTERVIEW_COMPANY
+		     , TO_CHAR(CSI.INTERVIEW_DATE_TIME, 'YYYY-MM-DD HH24:MI') AS INTERVIEW_DATE_TIME
+		  FROM COURSE_STUDENT_INTERVIEWS CSI
+		 INNER JOIN COURSE_STUDENT CS
+		    ON CSI.COURSE_STUDENT_ID = CS.ID
+		 INNER JOIN "USER" U
+		    ON CS.USER_ID = U.ID
+		 WHERE CS.COURSE_ID = #{courseId}
+		<if test="userId != null">
+		   AND CS.USER_ID = #{userId}
+		</if>
+		 ORDER BY CSI.INTERVIEW_DATE_TIME ASC
+		        , CSI.ID ASC
+	</select>
+
+	<!-- 과정에 참여 중인 수강생 목록 (탈퇴 회원 제외) -->
+	<select id="selectCourseStudentList"
+	        parameterType="string"
+	        resultType="com.learningworks.interview.vo.response.InterviewStudentResponseVO">
+		SELECT CS.ID AS COURSE_STUDENT_ID
+		     , U.NAME AS STUDENT_NAME
+		     , <include refid="Commons.nameSuffix" /> AS NAME_SUFFIX
+		  FROM COURSE_STUDENT CS
+		 INNER JOIN "USER" U
+		    ON CS.USER_ID = U.ID
+		 WHERE CS.COURSE_ID = #{_parameter}
+		   AND U.DEL_YN = 'N'
+		 ORDER BY U.NAME ASC
+		        , CS.ID ASC
+	</select>
+
+	<!-- 수강생의 과정 참여 여부 -->
+	<select id="countCourseStudent" resultType="_int">
+		SELECT COUNT(1)
+		  FROM COURSE_STUDENT CS
+		 INNER JOIN "USER" U
+		    ON CS.USER_ID = U.ID
+		 WHERE CS.ID = #{courseStudentId}
+		   AND CS.COURSE_ID = #{courseId}
+		   AND U.DEL_YN = 'N'
+	</select>
+
+	<!-- 면접 일정 등록 (PASS_YN, HIRE_YN 은 DB 기본값 'N', HIRE_DATE 는 NULL) -->
+	<insert id="insertInterview" parameterType="com.learningworks.interview.vo.request.InterviewRequestVO">
+		<selectKey order="BEFORE" keyProperty="id" resultType="string">
+		SELECT 'SI-' || TO_CHAR(SYSDATE, 'YYYYMMDD-') || LPAD(SEQ_COURSE_STUDENT_INTERVIEWS_PK.NEXTVAL, 6, '0')
+		  FROM DUAL
+		</selectKey>
+		INSERT INTO COURSE_STUDENT_INTERVIEWS
+		     ( ID
+		     , INTERVIEW_DATE_TIME
+		     , INTERVIEW_COMPANY
+		     , COURSE_STUDENT_ID )
+		VALUES
+		     ( #{id}
+		     , #{interviewDateTime}
+		     , #{interviewCompany}
+		     , #{courseStudentId} )
+	</insert>
+</mapper>

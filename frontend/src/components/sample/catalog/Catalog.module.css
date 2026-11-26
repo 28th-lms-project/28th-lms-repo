@@ -1,0 +1,2532 @@
+/*
+ * UI 카탈로그 (샘플 페이지 전용)
+ * 각 화면에 흩어진 UI를 "현재 값 그대로" 옮겨 와 한 곳에서 비교하기 위한 스타일.
+ * 클래스 주석의 경로가 원본. 공통 스타일(index.css)로 확정되면 이 파일의 값을 정리해서 옮긴다.
+ * 가이드: frontend/docs/ui-style-guide.md
+ */
+
+/* ───────── 카탈로그 틀 (토큰 사용 → 다크 모드를 따름) ───────── */
+.toc {
+  position: sticky;
+  top: -24px;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 12px 10px;
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+}
+
+.toc button.tocLink {
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background-color: var(--color-bg-surface);
+  font-family: inherit;
+  font-size: var(--font-size-md);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.toc button.tocLink:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.tocEnd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* 목차 줄의 작은 이름표 (강조색 후보) */
+
+/* 한 줄: 구역 탭 + 다크 모드 버튼 / 이 구역 목차 */
+.tocRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 구역 탭: 목차 상자 안에서 크게 */
+/* 구역 탭은 밑줄 없음 (.tabs의 밑줄은 inset 그림자) */
+.partTabs {
+  flex: 1;
+  box-shadow: none;
+}
+
+.partTabs :global(.tab) {
+  height: 46px;
+  font-size: var(--font-size-lg);
+}
+
+/* 목차 버튼으로 이동할 때 sticky 목차에 가리지 않도록 */
+.anchor {
+  /* 기본값. 목차 버튼은 실제 목차 높이 + 16px로 덮어씀 (Sample.jsx scrollToSection) */
+  scroll-margin-top: 140px;
+}
+
+/* 다크 모드를 따르는 영역: 공통 Section(흰 배경 고정)도 토큰 색으로 */
+/* 사이드바 예시 틀: 실제 .sideMenu와 같은 폭 · 여백 · 색 (높이 · 서랍 · 접기 동작은 뺌). 안쪽은 SideMenu.module.css 클래스 */
+.sidebarPreview {
+  width: 260px;
+  max-width: 100%;
+  padding: 1.5rem 1rem;
+  box-sizing: border-box;
+  color: var(--color-sidebar-text);
+  background-color: var(--color-sidebar-bg);
+  border-radius: var(--radius-lg);
+  color-scheme: dark;
+}
+
+/* 섹션 틀 (CatalogSection). 옛 Section과 같은 크기 · 여백 */
+.section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin: 1rem 0;
+  padding: 0 2rem 2rem;
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+}
+
+.sectionTitle {
+  margin: 0 0 10px;
+  padding: 2rem 0 1rem;
+  font-size: 1.2rem;
+}
+
+.sectionContent {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+  .section {
+    margin: 0 0 1rem;
+    padding: 0 1rem 1rem;
+  }
+
+  .sectionTitle {
+    padding: 1rem 0;
+    font-size: 1rem;
+  }
+}
+
+/* 목차의 구역 이름 (누르면 구역 머리로 이동) */
+/* ───── 큰 구역 머리 (표준 / 통일 전 / 기존 샘플) ───── */
+.partHeader {
+  margin: 8px 0 8px;
+  padding: 24px 28px;
+  color: var(--color-text);
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-left: 8px solid var(--part-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.partLabel {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 10px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  color: var(--part-color);
+  background-color: var(--part-bg);
+  border-radius: var(--radius-pill);
+}
+
+.partTitle {
+  margin: 0;
+  font-size: 30px;
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+.partDesc {
+  margin: 8px 0 0;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+}
+
+.partStandard {
+  --part-color: var(--color-primary-text);
+  --part-bg: var(--color-primary-light);
+}
+
+.partLegacy {
+  --part-color: var(--color-warning);
+  --part-bg: var(--color-warning-bg);
+}
+
+.partOld {
+  --part-color: var(--color-text-muted);
+  --part-bg: var(--color-bg-hover);
+}
+
+@media screen and (max-width: 768px) {
+  .partHeader {
+    padding: 16px 18px;
+  }
+
+  .partTitle {
+    font-size: 24px;
+  }
+}
+
+.variants {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+.variantsWide {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.variant {
+  min-width: 0;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius);
+}
+
+.variantHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 8px 12px;
+  background-color: var(--color-bg-subtle);
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: var(--font-size-md);
+}
+
+.variantName {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.variantRemaining {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.variantHead code {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  word-break: break-all;
+}
+
+.variantNote {
+  margin: 0;
+  padding: 6px 12px 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  white-space: pre-line;
+}
+
+.variantBody {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  min-width: 0;
+}
+
+.variantBodyBlock {
+  display: block;
+}
+
+.codeSample {
+  margin: 0;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-subtle);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.standardIntro {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-line;
+  color: var(--color-info);
+  background-color: var(--color-info-bg);
+  border: 1px solid var(--color-info-border);
+  border-radius: var(--radius);
+}
+
+.groupTitle {
+  margin: 24px 0 10px;
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.groupTitle:first-child {
+  margin-top: 0;
+}
+
+/* 카탈로그 설명 문구 */
+.note {
+  margin: 0 0 8px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* ───────── 토큰 ───────── */
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.swatch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.swatchChip {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+.swatchText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.swatchText code {
+  font-size: 12px;
+  color: var(--color-text);
+}
+
+.swatchText span {
+  color: var(--color-text-muted);
+  font-size: 11px;
+}
+
+.tokenTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tokenTable th,
+.tokenTable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--color-border-light);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.tokenTable th {
+  background-color: var(--color-bg-subtle);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.radiusBox {
+  width: 80px;
+  height: 40px;
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+}
+
+.heightBox {
+  display: inline-block;
+  width: 120px;
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-primary);
+}
+
+/* ───────── 버튼 ───────── */
+/* admin/system/member/MemberManagement.module.css */
+.btnSearch,
+.btnCreate,
+.btnReset {
+  height: 36px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnSearch {
+  padding: 0 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #3b5bdb;
+  border: 1px solid #3b5bdb;
+}
+
+.btnSearch:hover {
+  background-color: #364fc7;
+}
+
+.btnCreate {
+  padding: 0 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #2b8a3e;
+  border: 1px solid #2b8a3e;
+}
+
+.btnCreate:hover {
+  background-color: #237032;
+}
+
+.btnReset {
+  padding: 0 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #495057;
+  background-color: #f1f3f5;
+  border: 1px solid #ced4da;
+}
+
+.btnReset:hover {
+  background-color: #e9ecef;
+}
+
+/* admin/system/member/MemberDetail.module.css */
+.btnSecondary,
+.btnDanger {
+  height: 34px;
+  min-width: 70px;
+  padding: 0 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 4px;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.btnSecondary {
+  color: #495057;
+  border: 1px solid #ced4da;
+}
+
+.btnSecondary:hover {
+  background-color: #f1f3f5;
+  border-color: #adb5bd;
+}
+
+.btnSecondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnDanger {
+  color: #e03131;
+  border: 1px solid #ffc9c9;
+}
+
+.btnDanger:hover {
+  background-color: #fff5f5;
+  border-color: #ffa8a8;
+}
+
+.btnSmall {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #495057;
+  background-color: #f1f3f5;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* admin/system/access-role/AccessRole.module.css */
+.btnFlat {
+  height: 29px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 4px;
+  background-color: #eee;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btnFlat:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* admin/system/access/Access.module.css */
+.btnBordered {
+  height: 35px;
+  min-width: 65px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  background-color: #f5f5f5;
+  color: #555;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btnBordered:hover {
+  background-color: #e8e8e8;
+}
+
+.btnBordered:active {
+  background-color: #ddd;
+}
+
+/* login/Login.module.css, my/info/MyInfoForm.module.css */
+.btnSubmit {
+  width: 100%;
+  height: 38px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #495057;
+  background-color: #e9ecef;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnSubmit:hover {
+  background-color: #dee2e6;
+  border-color: #adb5bd;
+}
+
+/* my/course/MyCounsel.module.css */
+.btnBack {
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btnBack:hover {
+  background-color: #f2f2f2;
+}
+
+/* admin/course/CourseTableComponent/ConfirmModal.jsx (인라인 스타일) */
+.btnDark,
+.btnLight {
+  min-width: 72px;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnDark {
+  color: #fff;
+  background-color: #333;
+  border: 1px solid #333;
+}
+
+.btnLight {
+  color: #333;
+  background-color: #fff;
+  border: 1px solid #ccc;
+}
+
+/* admin/course/CourseTableComponent/ExamGradeModal.jsx (인라인 스타일) */
+.btnGrade {
+  min-width: 72px;
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #333;
+  cursor: pointer;
+}
+
+/* my/course/MyTimetable.module.css */
+.btnText {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #24518b;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* menu/SideMenu.module.css */
+.btnRetryDark {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #495057;
+  border-radius: 4px;
+  background: transparent;
+  color: #ced4da;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.btnRetryDark:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.darkBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background-color: #212529;
+  border-radius: 4px;
+  color: #f1f3f5;
+}
+
+.collapseBtn {
+  border: 0;
+  background: none;
+  color: #f1f3f5;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+/* ───────── 입력 ───────── */
+/* MemberManagement.module.css */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+}
+
+.toolbarLeft {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.selectMember,
+.inputMember {
+  height: 36px;
+  font-size: 0.9rem;
+  color: #495057;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  outline: 0;
+  background-color: #fff;
+}
+
+.selectMember {
+  padding: 0 10px;
+}
+
+.inputMember {
+  width: 240px;
+  padding: 0 12px;
+}
+
+.inputMember::placeholder {
+  color: #adb5bd;
+  font-size: 0.85rem;
+}
+
+.selectMember:focus,
+.inputMember:focus {
+  border-color: #495057;
+}
+
+/* login/Login.module.css 외 (.field) */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  margin-bottom: 1.25rem;
+}
+
+.field > span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #495057;
+}
+
+.field input,
+.field select {
+  height: 38px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  color: #333;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  outline: 0;
+  background-color: #fff;
+}
+
+.field input::placeholder {
+  color: #adb5bd;
+  font-size: 0.85rem;
+}
+
+.field input:focus,
+.field select:focus {
+  border-color: #495057;
+}
+
+.formCard {
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem 2rem;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+}
+
+.formCardTitle {
+  margin: 0 0 1.5rem;
+  padding-bottom: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #212529;
+  border-bottom: 2px solid #212529;
+}
+
+/* admin/system/role/Role.module.css (13px 계열) */
+.createForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 12px;
+  width: 100%;
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+}
+
+.smallField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.smallLabel {
+  font-size: 13px;
+  color: #666;
+}
+
+.smallInput,
+.smallSelect {
+  height: 35px;
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #333;
+  outline: 0;
+  background-color: #fff;
+  min-width: 0;
+}
+
+.smallInput:focus,
+.smallSelect:focus {
+  border-color: #888;
+}
+
+.smallInput:disabled,
+.smallSelect:disabled {
+  background-color: #f2f2f2;
+  color: #aaa;
+  border-color: #ddd;
+  cursor: not-allowed;
+}
+
+.createButtonCell {
+  padding-top: 22px;
+}
+
+.inputGroup {
+  display: flex;
+}
+
+.prefix {
+  display: flex;
+  align-items: center;
+  height: 35px;
+  padding: 0 8px;
+  border: 1px solid #ccc;
+  border-right: 0;
+  border-radius: 4px 0 0 4px;
+  background-color: #f2f2f2;
+  font-family: monospace;
+  font-size: 13px;
+  color: #666;
+}
+
+.inputGroup .smallInput {
+  flex: 1;
+  border-radius: 0 4px 4px 0;
+  font-family: monospace;
+}
+
+/* admin/system/access/Access.module.css */
+.codeView {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f7f7f7;
+  font-size: 13px;
+  min-width: 0;
+  width: 100%;
+}
+
+.codeLabel {
+  color: #888;
+  flex-shrink: 0;
+}
+
+.codeValue {
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cascade {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.cascade select {
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: #fff;
+}
+
+.cascade select:disabled {
+  background-color: #f2f2f2;
+  color: #aaa;
+  border-color: #ddd;
+}
+
+/* my/course/MyInterview.module.css */
+.registerForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+.inlineField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 180px;
+  font-size: 13px;
+}
+
+.inlineField label {
+  font-weight: 700;
+}
+
+.inlineField select,
+.inlineField input {
+  height: 34px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: #fff;
+}
+
+.formButtons {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* my/course/MyCounsel.module.css */
+.textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: 0;
+  font-family: inherit;
+}
+
+.textarea:focus {
+  border-color: #3f6fb5;
+}
+
+.textareaWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.counter {
+  align-self: flex-end;
+  color: #888;
+  font-size: 11px;
+}
+
+/* admin/course/CourseTableComponent/HomeworkForm.jsx (인라인 스타일) */
+.textareaInline {
+  width: 100%;
+  min-height: 80px;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 7px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+/* ExamTakeModal.jsx (인라인 스타일) */
+.textareaCode {
+  width: 100%;
+  min-height: 160px;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+}
+
+/* my/course/MyTimetable.module.css */
+.uploadArea {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 275px;
+  min-height: 44px;
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.fileButton {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid #888;
+  background-color: #f5f5f5;
+  cursor: pointer;
+}
+
+.fileButton input {
+  display: none;
+}
+
+.fileName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #555;
+}
+
+/* my/course/MyCounsel.module.css (.typeGroup) */
+.pillGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pillOption {
+  position: relative;
+  padding: 4px 12px;
+  border: 1px solid #ccc;
+  border-radius: 14px;
+  background-color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pillOption input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pillOption:focus-within {
+  outline: 2px solid #3f6fb5;
+  outline-offset: 1px;
+}
+
+.pillSelected {
+  border-color: #3f6fb5;
+  background-color: #3f6fb5;
+  color: #fff;
+}
+
+.nativeGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 14px;
+}
+
+.nativeGroup label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fieldset {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* admin/system/menu/Menu.module.css (.checkRow) */
+.checkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.disabledCheck {
+  opacity: 0.55;
+}
+
+.selectWrap {
+  display: inline-block;
+  width: 300px;
+  vertical-align: middle;
+}
+
+.selectWrapWide {
+  display: inline-block;
+  width: 400px;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+/* ───────── 리스트 · 표 ───────── */
+/* admin/system/role/Role.module.css */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+}
+
+.roleTable {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 13px;
+  color: #333;
+}
+
+.roleTable th {
+  height: 40px;
+  padding: 0 10px;
+  background-color: #f7f7f7;
+  border-bottom: 1px solid #ddd;
+  font-weight: 600;
+  color: #555;
+  text-align: left;
+}
+
+.roleTable td {
+  height: 48px;
+  padding: 0 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.handle {
+  font-size: 18px;
+  color: #999;
+  cursor: grab;
+}
+
+.dropAbove {
+  box-shadow: inset 0 2px 0 #4a7fd8;
+}
+
+.dragging {
+  opacity: 0.4;
+}
+
+.protectedRow {
+  background-color: #f2f2f2;
+  color: rgba(0, 0, 0, 0.4);
+  cursor: not-allowed;
+}
+
+.actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.actions > * + * {
+  margin-left: 6px;
+}
+
+.tdEmpty {
+  padding: 24px 10px !important;
+  color: #999;
+  text-align: center;
+}
+
+.mono {
+  font-family: monospace;
+}
+
+/* ExamSetTable.jsx (인라인 스타일) */
+.zebraTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.zebraTable th {
+  padding: 10px 12px;
+  font-weight: bold;
+  text-align: center;
+  border-left: 1px dashed #e5e5e5;
+  border-right: 1px dashed #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.zebraTable td {
+  padding: 12px;
+  text-align: center;
+  border: 1px dashed #e5e5e5;
+}
+
+.zebraTable tbody tr:nth-child(odd) {
+  background-color: #f7f7f7;
+}
+
+.cellAction {
+  color: #333;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* my/course/MyTimetable.module.css */
+.tableScroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.timetable {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.timetable thead th {
+  height: 36px;
+  background-color: #bfd4fa;
+  font-weight: 600;
+  border: 1px dashed #d2d2d2;
+}
+
+.timetable td {
+  height: 50px;
+  text-align: center;
+  background-color: #f7f7f7;
+  border: 1px dashed #d2d2d2;
+}
+
+.timetable .breakCell {
+  background-color: #fff;
+}
+
+.timetable .todayRow td {
+  background-color: #e3f6d0;
+}
+
+.timetable .subjectRow td {
+  background-color: #fff4f4;
+}
+
+/* admin/system/menu/Menu.module.css (컬럼 리스트) */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.column {
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 12px;
+  background-color: #f7f7f7;
+  border-bottom: 1px solid #ddd;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.list {
+  height: 200px;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.listItem:hover {
+  background-color: #fafafa;
+}
+
+.listItemSelected {
+  background-color: #eef3fd;
+  font-weight: 600;
+}
+
+.listItemSelected:hover {
+  background-color: #eef3fd;
+}
+
+.selectedMark {
+  margin-left: auto;
+  font-size: 11px;
+  color: #4a7fd8;
+}
+
+.unused {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.warning {
+  color: #d68a00;
+  cursor: help;
+}
+
+.listEmpty {
+  padding: 24px 12px;
+  color: #999;
+  text-align: center;
+}
+
+/* MemberDetail.module.css (.detailList) */
+.detailList {
+  margin: 0;
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.detailList > div {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  border-bottom: 1px dashed #e9ecef;
+}
+
+.detailList dt,
+.detailList dd {
+  margin: 0;
+  padding: 10px 16px;
+}
+
+.detailList dt {
+  font-weight: 600;
+  color: #495057;
+}
+
+.detailList dd {
+  color: #212529;
+}
+
+.link {
+  color: #1c7ed6;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* MyInfoForm.module.css (.infoList) */
+.infoList {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 0.75rem 1rem;
+  width: 100%;
+  margin: 0;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+.infoList dt {
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.infoList dd {
+  margin: 0;
+}
+
+/* MyCounsel.module.css (.infoList, 3열) */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+}
+
+.infoGrid dt {
+  font-size: 12px;
+  color: #777;
+}
+
+.infoGrid dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+}
+
+/* MyCounsel.module.css (.timeline) */
+.timeline {
+  margin: 0;
+  padding-left: 16px;
+  list-style: none;
+  border-left: 2px solid #d6dfec;
+  width: 100%;
+}
+
+.timelineItem {
+  position: relative;
+  padding-bottom: 14px;
+}
+
+.timelineItem::before {
+  content: "";
+  position: absolute;
+  left: -23px;
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #3f6fb5;
+  border-radius: 50%;
+  background-color: #fff;
+}
+
+.timelineDate {
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+}
+
+.timelineDesc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Role.module.css (.userList) */
+.userList {
+  max-height: 200px;
+  margin: 0;
+  padding: 8px 12px 8px 28px;
+  overflow-y: auto;
+  background-color: #f7f7f7;
+  border-radius: 4px;
+  list-style: disc;
+  font-size: 13px;
+  width: 100%;
+}
+
+/* Test.module.css (.answerList) */
+.answerList {
+  width: 100%;
+}
+
+.answerList li {
+  margin: 0.5rem 1rem;
+  padding: 10px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.answerList li.answerActive {
+  background-color: #bbfdbb;
+}
+
+/* ExamQuestionViewModal.jsx (인라인 스타일) */
+.question {
+  width: 100%;
+  padding: 20px 0;
+  border-bottom: 1px dashed #e5e5e5;
+}
+
+.questionTitle {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #222;
+}
+
+.questionMeta {
+  font-size: 13px;
+  font-weight: normal;
+  color: #666;
+}
+
+.subQuestion {
+  margin-top: 10px;
+  padding: 12px;
+  background-color: #f7f7f7;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.answerBox {
+  margin-top: 10px;
+  padding: 12px;
+  background-color: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+/* HomeworkReply.jsx (인라인 스타일) */
+.reply {
+  width: 100%;
+  padding: 6px 0;
+  border-bottom: 0.1px solid #333;
+  cursor: pointer;
+}
+
+.replyName {
+  font-size: 12px;
+}
+
+.replyMeta {
+  font-size: 10px;
+  color: #777;
+}
+
+.replyBody {
+  margin: 4px 0 0;
+  font-size: 12px;
+}
+
+.replyBody a {
+  color: #1a73e8;
+}
+
+/* ───────── 내비게이션 ───────── */
+/* Survey.module.css (.surveyContainer / .surveyHeader) */
+.tabContainer {
+  width: 100%;
+  border: 1px solid #aaa;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+}
+
+.tabBar {
+  display: flex;
+  justify-content: space-between;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+}
+
+.tabBar li {
+  padding: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tabBar li.tabActive {
+  background-color: #fff;
+}
+
+.tabBody {
+  padding: 12px;
+  font-size: 13px;
+  color: #777;
+}
+
+/* Survey.module.css (.surveyList) */
+.segmented {
+  display: inline-flex;
+  background-color: #ccc;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+}
+
+.segmented li {
+  padding: 10px 50px;
+  cursor: pointer;
+}
+
+.segmented li.tabActive {
+  background-color: #fff;
+}
+
+/* ExamGradeModal.jsx (인라인 스타일) */
+.folderTabs {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 24px 0;
+  border-bottom: 1px solid #e5e5e5;
+  overflow-x: auto;
+}
+
+.folderTab {
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #666;
+  background-color: #f7f7f7;
+  border: 1px solid #e5e5e5;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.folderTabActive {
+  color: #fff;
+  background-color: #333;
+  font-weight: bold;
+}
+
+/* my/course/MyCourse.jsx (ul.tab-list — 정의된 CSS 없음) */
+.unstyledTabs {
+  display: flex;
+  gap: 4px;
+}
+
+/* menu/SideMenu.module.css */
+.sideMenu {
+  width: 260px;
+  padding: 1.5rem 1rem;
+  background-color: #212529;
+  color: #f1f3f5;
+  border-radius: 4px;
+}
+
+.sideLogo {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #adb5bd;
+  letter-spacing: 0.08em;
+}
+
+.sideListTitle {
+  margin: 1rem 0 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #868e96;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sideGroup {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.5rem 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ced4da;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sideGroup:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  color: #fff;
+}
+
+.sideArrowOpen {
+  transform: rotate(90deg);
+}
+
+.sideLink {
+  display: block;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
+  color: #adb5bd;
+  border-radius: 4px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sideLink:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.sideLinkActive {
+  color: #ff5252;
+  font-weight: 700;
+  background-color: rgba(255, 82, 82, 0.08);
+}
+
+.sideUnused {
+  opacity: 0.45;
+}
+
+/* UserProfile.module.css */
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #343a40;
+}
+
+.profileRole {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #adb5bd;
+}
+
+.profileName {
+  font-size: 1.1rem;
+  color: #f1f3f5;
+}
+
+/* PageContainer.module.css (헤더 재현용) */
+.pageHeader {
+  width: 100%;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #d0d0d0;
+}
+
+.pageHeaderTitle {
+  margin: 8px 0 0;
+  font-size: 22px;
+}
+
+/* Access.module.css (.pageTitle — 정의만 있고 쓰지 않음) */
+.pageTitleUnderline {
+  width: 100%;
+  margin: 0;
+  padding-bottom: 15px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+}
+
+/* CourseMain.jsx (IconButton 세로 탭) */
+.verticalTabs {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  border: 1px solid #ddd;
+}
+
+/* ───────── 피드백 ───────── */
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.badgeNormal {
+  color: #2b8a3e;
+  background-color: #ebfbee;
+  border-color: #b2f2bb;
+}
+
+.badgeLocked {
+  color: #e03131;
+  background-color: #fff5f5;
+  border-color: #ffc9c9;
+}
+
+/* MyCounsel.module.css (.levelBadge) */
+.levelBadge {
+  display: inline-block;
+  min-width: 44px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.levelHigh {
+  background-color: #e3f2e6;
+  color: #1e7b34;
+}
+
+.levelMid {
+  background-color: #fff4d6;
+  color: #8a6100;
+}
+
+.levelLow {
+  background-color: #fde4e4;
+  color: #b42318;
+}
+
+.levelNone {
+  background-color: #eee;
+  color: #777;
+}
+
+/* MyCounsel.module.css (.typeTag) */
+.tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background-color: #e8eef7;
+  color: #3f6fb5;
+  font-size: 11px;
+}
+
+/* ExamGradeModal.jsx 채점 라벨 색 */
+.gradeY {
+  color: #1a7f37;
+  font-weight: bold;
+}
+
+.gradeN {
+  color: #d1242f;
+  font-weight: bold;
+}
+
+.gradeH {
+  color: #0969da;
+  font-weight: bold;
+}
+
+.gradeR {
+  color: #9a6700;
+  font-weight: bold;
+}
+
+/* Role · Menu · Access · AccessRole · MenuGuard (.notice) */
+.notice {
+  width: 100%;
+  margin: 0;
+  padding: 40px 20px;
+  background-color: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 14px;
+  color: #777;
+}
+
+/* MemberManagement.module.css (.emptyNotice) */
+.emptyDashed {
+  width: 100%;
+  padding: 40px 16px;
+  text-align: center;
+  color: #868e96;
+  background-color: #fff;
+  border: 1px dashed #ced4da;
+  border-radius: 6px;
+}
+
+/* AccessRole.module.css (.empty) */
+.emptyFlex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 100px;
+  font-size: 13px;
+  color: #999;
+}
+
+/* MyCourseData · MyInterview (.emptyMessage, .loading) */
+.smallMessage {
+  margin: 0;
+  font-size: 12px;
+  color: #777;
+}
+
+/* MyInfoForm.module.css (.loadingText) */
+.loadingText {
+  width: 100%;
+  padding: 3rem 0;
+  text-align: center;
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+/* Menu · Role (.listErrorTitle / .listErrorMessage) */
+.errorBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 20px;
+  text-align: center;
+}
+
+.errorTitle {
+  margin: 0;
+  color: #555;
+}
+
+.errorDetail {
+  margin: 0;
+  font-size: 12px;
+  color: #d64545;
+  white-space: pre-line;
+}
+
+/* 필드 오류 문구 (화면마다 다름) */
+.errorRem {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #dc3545;
+}
+
+.errorAlert {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #b42318;
+}
+
+.errorSmall {
+  margin: 0;
+  font-size: 12px;
+  color: #c62828;
+}
+
+.error13 {
+  margin: 0;
+  font-size: 13px;
+  color: #c62828;
+}
+
+.errorInline {
+  margin: 0;
+  font-size: 12px;
+  color: #d93025;
+}
+
+/* MyInfoForm.module.css (.successMessage) */
+.success {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  background-color: #d1e7dd;
+  border: 1px solid #badbcc;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #0f5132;
+}
+
+/* 힌트 문구 */
+.hint13 {
+  margin: 0;
+  font-size: 13px;
+  color: #777;
+}
+
+.hint12 {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+}
+
+.guide13 {
+  margin: 0;
+  font-size: 13px;
+  color: #555;
+}
+
+/* Menu.module.css (.selfLockNotice) */
+.callout {
+  width: 100%;
+  padding: 8px 10px;
+  background-color: #fff8e6;
+  border: 1px solid #f0d79a;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #7a5b00;
+}
+
+/* MyCounsel.module.css (.notice) */
+.calloutDashed {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: #fffbea;
+  border: 1px dashed #d8a800;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* Role.module.css (.orderBar) */
+.actionBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 20px;
+  background-color: #f3f7ff;
+  border: 1px solid #c9d9f5;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #335;
+}
+
+/* MyCourseData.module.css (.toast) */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 1000;
+  max-width: calc(100vw - 32px);
+  padding: 10px 18px;
+  border-radius: 6px;
+  background: rgba(33, 33, 33, 0.92);
+  color: #fff;
+  font-size: 13px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transform: translateX(-50%);
+  animation: toastIn 0.18s ease-out;
+}
+
+.toastError {
+  background: rgba(198, 40, 40, 0.95);
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* 건수 표시 */
+.countFooter {
+  width: 100%;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+  font-size: 12px;
+  color: #888;
+}
+
+.totalCount {
+  font-size: 12px;
+  color: #555;
+}
+
+/* ───────── 레이아웃 ───────── */
+/* MemberDetail.module.css (.panel) */
+.panel {
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e4e4e4;
+}
+
+.panelTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.panelFooter {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e4e4e4;
+}
+
+.panelFooter > * {
+  flex: 1;
+}
+
+/* AccessRole.module.css (.panel) */
+.panelPlain {
+  width: 100%;
+  padding: 30px;
+  background-color: #fff;
+  border: 1px solid #eee;
+}
+
+.panelPlainTitle {
+  margin: 0 0 12px;
+  padding-bottom: 25px;
+  font-size: 17px;
+  font-weight: bold;
+  border-bottom: 1px solid #ccc;
+}
+
+/* my/course 공통 (.page > .content) */
+.coursePage {
+  width: 100%;
+  padding: 10px 14px;
+  background-color: #fff;
+  color: #222;
+}
+
+.courseContent {
+  min-height: 120px;
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+
+/* MyCounsel.module.css (.section) */
+.cardSection {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.cardSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cardSectionTitle {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* MyCounsel.module.css (.infoCard) */
+.infoCard {
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid #ccc;
+  border-left: 4px solid #3f6fb5;
+  border-radius: 4px;
+  background-color: #f8fafd;
+}
+
+.infoCardTitle {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+/* MyCounsel.module.css (.averageCard) */
+.statCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 180px;
+  padding: 18px 12px;
+  border-radius: 4px;
+  background-color: #3f6fb5;
+  color: #fff;
+}
+
+.statLabel {
+  font-size: 13px;
+}
+
+.statValue {
+  font-size: 30px;
+}
+
+.statHint {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* MyCounsel.module.css (.stageGrid / .stageCard) */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.stageCard {
+  padding: 12px;
+  border: 1px solid #e4e4e4;
+  border-radius: 4px;
+  background-color: #fafafa;
+}
+
+.stageCardEditing {
+  border-color: #3f6fb5;
+  background-color: #fff;
+}
+
+.stageCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* MyCounsel.module.css (.opinionBox) */
+.quote {
+  width: 100%;
+  padding: 12px 14px;
+  border-left: 4px solid #8a6100;
+  background-color: #fdf8ec;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* MyCourseData.module.css (.detailHeader 등) */
+.detailHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.detailHeader h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.rowActions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.detailMeta {
+  width: 100%;
+  margin: 4px 0 8px;
+  font-size: 12px;
+  color: #777;
+}
+
+.detailContent {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  border-top: 1px solid #eee;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.fileChip {
+  display: inline-block;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f7f7f7;
+  color: #1a5fb4;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+/* 2열 레이아웃 예시 (MemberManagement .layout, AccessRole 3패널) */
+.masterDetail {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  width: 100%;
+}
+
+.threePanel {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr 1.1fr;
+  gap: 15px;
+  width: 100%;
+}
+
+.layoutBlock {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+  background-color: #f3f7ff;
+  border: 1px dashed #c9d9f5;
+  font-size: 12px;
+  color: #335;
+}
+
+/* main/Main.module.css */
+.dashboardCard {
+  width: 100%;
+  padding: 0 2rem 2rem;
+  background-color: #fff;
+  border: 1px solid #eee;
+}
+
+.dashboardCardTitle {
+  margin: 0;
+  padding: 2rem 0 1rem;
+  font-size: 1.2rem;
+}
+
+.dashboardItem {
+  padding: 1rem;
+  background-color: rgb(245, 245, 245);
+  border-radius: 0.5rem;
+}
+
+/* ───────── 오버레이 ───────── */
+/* MemberModal.module.css */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal {
+  width: 100%;
+  max-width: 460px;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modalTitle {
+  margin: 0;
+  padding: 14px 16px;
+  font-weight: 800;
+  border-bottom: 1px solid #e4e4e4;
+}
+
+.modalContent {
+  padding: 16px;
+}
+
+.modalDescription {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #e4e4e4;
+}
+
+/* ConfirmModal.jsx (인라인 스타일) */
+.confirmBox {
+  min-width: 300px;
+  padding: 24px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.confirmMessage {
+  margin: 0 0 20px;
+  font-size: 15px;
+  color: #333;
+}
+
+.confirmButtons {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ExamQuestionViewModal.jsx (인라인 스타일) */
+.largeModal {
+  display: flex;
+  flex-direction: column;
+  width: 800px;
+  max-width: 92vw;
+  max-height: 88vh;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.largeModalHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.largeModalTitle {
+  margin: 0;
+  font-size: 18px;
+  color: #222;
+}
+
+.largeModalSummary {
+  font-size: 13px;
+  color: #666;
+}
+
+.largeModalBody {
+  padding: 8px 24px 24px;
+  overflow-y: auto;
+}
+
+.largeModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 24px;
+  border-top: 1px solid #e5e5e5;
+}
+
+/* ───────── 과정 · 설문 (admin/survey/survey/Survey.module.css 값 그대로. 원본은 전역 body 규칙이 있어 직접 import하지 않음) ───────── */
+.legacySurveyContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  border: 1px solid #aaa;
+  border-radius: 10px 10px 0 0;
+  overflow: auto;
+}
+
+.legacySurveyHeader {
+  display: flex;
+  overflow: hidden;
+}
+
+.legacySurveyHeader > ul {
+  display: flex;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #ccc;
+}
+
+.legacySurveyCourseList > li {
+  flex-shrink: 0;
+  padding: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.legacySurveyCourseList > li.legacySurveyActive {
+  background-color: #fff;
+}
+
+.legacySurveyBody {
+  display: flex;
+  flex-direction: column;
+  padding: 5px;
+}
+
+.legacySurveyList {
+  width: 100%;
+  border: 1px solid #aaa;
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+}
+
+.legacySurvey {
+  border: 1px solid #aaa;
+}
+
+/* 원본은 &.active가 li가 아니라 ul에 붙어 있어 선택된 사전/사후 탭에 표시가 없다. 그대로 옮김 */
+.legacySurveyList > ul {
+  display: flex;
+  justify-content: space-around;
+  background-color: #ccc;
+  cursor: pointer;
+}
+
+.legacySurveyList > ul.legacySurveyActive {
+  background-color: #fff;
+}
+
+.legacySurveyList > ul > li {
+  padding: 10px 50px 10px 50px;
+}
+
+.legacySurveyForm {
+  padding: 10px 5px 10px 5px;
+}
+
+.legacySurveySubject,
+.legacySurveyData {
+  height: 30px;
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+.legacySurveyForm > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.legacySurveyForm > div > label {
+  margin-right: 1rem;
+}
+
+.legacySurveyForm > div > input {
+  width: 30%;
+}
+
+.legacySurveyType {
+  width: 30%;
+}
+
+.legacySurveyPreview label {
+  order: 1;
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+/* ───────── 과정 설문 추가 폼 (admin/course/CourseTableComponent/CourseSurveyForm.module.css 값 그대로) ───────── */
+.legacyCourseSurveyForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.legacyCourseSurveyInput {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 7px;
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: 0;
+}
+
+.legacyCourseSurveyReadOnly {
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+.legacyCourseSurveyButtons {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ───────── 설문 응답 · 결과 팝업 (admin/course/CourseTableComponent/CourseSurveyAns.module.css 값 그대로. 결과 팝업도 같은 파일을 씀) ───────── */
+.legacyCourseSurveyAns {
+  overflow: auto;
+}
+
+/* ───────── 반응형 ───────── */
+@media screen and (max-width: 768px) {
+  .variants {
+    grid-template-columns: 1fr;
+  }
+
+  .createForm,
+  .cascade,
+  .columns,
+  .infoGrid,
+  .cardGrid,
+  .masterDetail,
+  .threePanel {
+    grid-template-columns: 1fr;
+  }
+
+  .createButtonCell {
+    padding-top: 0;
+  }
+}

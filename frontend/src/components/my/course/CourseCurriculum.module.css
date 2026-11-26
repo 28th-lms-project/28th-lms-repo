@@ -1,0 +1,24 @@
+/* 요약 카드 줄 */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* 한 칸에 과목 여러 개 (과목 칸 · 내용 칸 줄 맞춤) */
+.cellStack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.muted {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}

@@ -1,0 +1,22 @@
+/* 교육 자료: 화면 배치만. 본문 글자 · 첨부 파일 모양은 editorContent.css(lw-editor-content) */
+
+/* 목록 위 검색 칸 폭 */
+.search {
+    width: 280px;
+    max-width: 100%;
+}
+
+/* 상세 본문: 짧은 글도 영역이 접히지 않게, 이미지는 패널 폭 안으로 */
+.detailContent {
+    min-height: 160px;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius);
+    background: var(--color-bg-surface);
+    word-break: break-word;
+}
+
+.detailContent img {
+    max-width: 100%;
+    height: auto;
+}

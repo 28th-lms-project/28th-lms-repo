@@ -1,0 +1,25 @@
+/* 역할 칸: select 와 [역할 변경] 을 한 줄에 (form-control 은 폭 100% 라 감싸는 줄이 필요) */
+.roleRow {
+  display: flex;
+  gap: 8px;
+  margin: calc(
+      (
+          var(--font-size-md) * var(--line-height-base) -
+            var(--control-height-sm)
+        ) /
+        2
+    )
+    0;
+}
+
+/* GitHub 주소: 팀 링크 색 토큰 (다크에서도 읽히게), 긴 주소 줄바꿈 */
+.link {
+  color: var(--color-link);
+  overflow-wrap: anywhere;
+}
+
+/* 상세 목록: 패널은 flush(여백 0)로 두고 좌우만 패널 본문과 같은 16px.
+   위아래는 desc-list 줄 여백(10px)만 남겨 머리 · 바닥 선에 줄이 붙어 보이게 */
+.detail {
+  padding: 0 16px;
+}

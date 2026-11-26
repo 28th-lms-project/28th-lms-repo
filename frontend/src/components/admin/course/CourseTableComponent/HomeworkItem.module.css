@@ -1,0 +1,30 @@
+/* 머리: 과제명 아래 마감일 줄 */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* 수정 중 머리의 날짜 칸: 줄 전체로 늘어나지 않게 */
+.dateInput {
+  width: auto;
+}
+
+/* 본문 | 댓글: 댓글 쪽 폭 */
+.split {
+  --layout-aside-width: 360px;
+}
+
+/* 본문 보기 · 수정 칸 높이 */
+.content {
+  min-height: 240px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 패널 바닥(오른쪽 정렬)에서 폼 · 안내를 전체 폭으로 */
+.footerFill {
+  width: 100%;
+}

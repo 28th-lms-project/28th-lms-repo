@@ -1,0 +1,10 @@
+/* 시간표: 화면 배치(칸 폭)만. 색 · 글자 크기는 전역 table.css 토큰 */
+
+/* 전체 시간표는 교시가 많아 좁은 화면에서는 table-wrap 안에서 가로 스크롤 */
+.allTable {
+    min-width: 1150px;
+}
+
+.dateColumn {
+    width: 120px;
+}

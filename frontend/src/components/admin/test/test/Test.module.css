@@ -1,0 +1,67 @@
+/* 문제 카드 버튼 줄: 왼쪽 펼치기 | 오른쪽 수정 · 삭제 */
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+/* 펼친 보기 · 정답 */
+.answerArea {
+  margin-top: 8px;
+}
+
+/* 문제 목록 (제목만, 누르면 펼침) */
+.questionList {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.questionRow {
+  min-height: 48px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.questionRow:hover,
+.questionRow[aria-expanded="true"] {
+  background-color: var(--color-bg-subtle);
+}
+
+/* 제목은 남는 폭을 모두 쓰고, 길면 말줄임 */
+.questionTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-bold);
+}
+
+.chevron {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+/* 펼친 문제: 내용 · 보기 · 정답 · 수정/삭제 */
+.questionDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px 16px;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+@media (max-width: 768px) {
+  .questionRow {
+    flex-wrap: wrap;
+  }
+
+  .questionTitle {
+    flex-basis: 100%;
+    white-space: normal;
+  }
+}

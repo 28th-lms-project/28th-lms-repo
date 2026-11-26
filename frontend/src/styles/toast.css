@@ -1,0 +1,101 @@
+/*
+ * 토스트 (frontend/docs/ui-style-guide.md 8장)
+ * React: useToast() — FeedbackProvider(main.jsx)가 화면 아래 가운데에 띄운다.
+ * 원본: my/course/MyCourseData.module.css (.toast)
+ */
+
+.toast-region {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 10px 16px;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-base);
+  white-space: pre-line;
+  color: var(--color-text-inverse);
+  background-color: var(--color-toast-bg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  pointer-events: auto;
+  animation: toast-in 0.18s ease-out;
+}
+
+.toast-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+/* 두 영역(안내 · 오류)이 모두 있을 때만 사이 간격. 빈 영역도 숨기지 않음 (숨긴 live 영역은 안 읽히는 화면 낭독기가 있음) */
+.toast-stack + .toast-stack:not(:empty) {
+  margin-top: 8px;
+}
+
+.toast-message {
+  min-width: 0;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  margin: -4px -6px -4px 4px;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.toast-close:hover {
+  opacity: 1;
+}
+
+.toast-close:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+  opacity: 1;
+}
+
+.toast > svg {
+  flex-shrink: 0;
+  fill: currentColor;
+}
+
+.toast-error {
+  background-color: var(--color-toast-error-bg);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}

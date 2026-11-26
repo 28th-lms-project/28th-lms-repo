@@ -1,0 +1,234 @@
+/*
+ * 내비게이션 (frontend/docs/ui-style-guide.md 8장)
+ *
+ *   <header class="page-header">
+ *     <div class="page-header-main">
+ *       <nav aria-label="현재 위치"><ol class="breadcrumb">
+ *         <li><a href="/">홈</a></li> <li><a>시스템 관리</a></li>
+ *         <li aria-current="page">회원 관리</li>
+ *       </ol></nav>
+ *       <h2 class="page-title">회원 관리</h2>
+ *       <p class="page-description">...</p>          (선택)
+ *     </div>
+ *     <div class="page-actions">버튼</div>            (선택)
+ *   </header>
+ *
+ *   sidebar-btn     사이드바(어두운 배경) 안 버튼: 로그아웃 · 다시 시도. 사이드바 자체는 menu/SideMenu (앱에 하나)
+ *
+ *   auth-page > auth-card: 로그인 · 비밀번호 다시 확인처럼 한 가지만 하는 가운데 카드
+ *     auth-title · auth-description · (form-stack) · auth-footer
+ *
+ * React: common/ui/PageHeader.jsx · 사이드바는 components/menu/SideMenu.jsx
+ */
+
+/* ───── 화면 머리 ───── */
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.page-header-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.page-title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text);
+}
+
+.page-description {
+  margin: 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ───── 브레드크럼 ───── */
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+}
+
+.breadcrumb > li {
+  display: inline-flex;
+  align-items: center;
+}
+
+.breadcrumb > li + li::before {
+  content: "›";
+  padding: 0 8px;
+  color: var(--color-text-placeholder);
+}
+
+/* 링크 항목(열 수 있는 화면)은 평소에도 글자 항목보다 진하게 → 올리기 전에도 누를 수 있는 것이 보임.
+   URL이 없는 대 · 중메뉴는 <a> 없이 글자라 올려도 반응 없음 */
+.breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: 2px;
+}
+
+.breadcrumb a:hover {
+  color: var(--color-link);
+  text-decoration: underline;
+}
+
+.breadcrumb a:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.breadcrumb a > svg {
+  fill: currentColor;
+}
+
+.breadcrumb [aria-current="page"] {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-secondary);
+}
+
+/* ───── 사이드바 안 버튼 (어두운 배경, 다크 모드와 무관) ─────
+ * 사이드바 색 토큰(--color-sidebar-*)을 쓰는 테두리 버튼. 밝은 배경의 .btn은 사이드바 위에서 색이 맞지 않음
+ */
+.sidebar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-height-sm);
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  line-height: 1;
+  color: var(--color-sidebar-text-secondary);
+  white-space: nowrap;
+  background: none;
+  border: 1px solid var(--color-sidebar-border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.sidebar-btn:hover {
+  color: var(--color-sidebar-text-strong);
+  background-color: var(--color-sidebar-hover);
+}
+
+.sidebar-btn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ───── 팝업 창 화면 (사이드바 없는 화면 틀) ─────
+ *   <div class="popup-page">
+ *     <header class="popup-header"><h1 class="popup-title">…</h1><div class="popup-actions">버튼 · 닫기</div></header>
+ *     <main class="popup-body">…</main>
+ *   </div>
+ *   window.open으로 연 창 · 인쇄용 화면. 머리는 위에 붙어 있고 본문만 스크롤
+ */
+.popup-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  color: var(--color-text);
+  background-color: var(--color-bg-page);
+}
+
+.popup-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 12px 20px;
+  background-color: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
+}
+
+.popup-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.popup-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.popup-body {
+  flex: 1;
+  padding: 20px;
+}
+
+/* ───── 가운데 카드 (로그인 · 비밀번호 다시 확인) ───── */
+.auth-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 40px 16px;
+  background-color: var(--color-bg-page);
+}
+
+.auth-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: 380px;
+  padding: 32px 28px;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.auth-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.auth-description {
+  margin: -12px 0 0;
+  font-size: var(--font-size-sm);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.auth-footer {
+  font-size: var(--font-size-sm);
+  text-align: center;
+  color: var(--color-text-muted);
+}

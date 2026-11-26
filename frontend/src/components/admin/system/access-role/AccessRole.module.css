@@ -1,0 +1,8 @@
+/** @format */
+
+/* 권한별 접근 권한 관리: 화면 배치만 */
+
+/* 왼쪽 역할 목록 폭 */
+.layout {
+    --layout-aside-width: 200px;
+}

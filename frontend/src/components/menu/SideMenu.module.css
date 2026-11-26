@@ -1,11 +1,12 @@
-/* 사이드메뉴 컨테이너 */
+/* 사이드메뉴 컨테이너. 색은 모두 --color-sidebar-* 토큰 (테마 brand를 따름, index.css · 가이드 7장) */
 .sideMenu {
   position: relative;
   width: 260px;
   min-width: 260px;
   height: 100vh;
-  background-color: #212529; /* 다크 배경 */
-  color: #f1f3f5;
+  flex-shrink: 0;
+  background-color: var(--color-sidebar-bg);
+  color: var(--color-sidebar-text);
   padding: 1.5rem 1rem;
   overflow-y: auto;
   box-sizing: border-box;
@@ -14,58 +15,117 @@
     min-width 0.25s ease;
 }
 
-/* 스크롤바 디자인 (다크 테마 맞춤) */
+/* 스크롤바 디자인 */
 .sideMenu::-webkit-scrollbar {
   width: 6px;
 }
 .sideMenu::-webkit-scrollbar-thumb {
-  background-color: #495057;
+  background-color: var(--color-sidebar-border);
   border-radius: 3px;
 }
 .sideMenu::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* 사이드바를 접었을 때 (Collapsed) */
+/* 사이드바를 접었을 때 */
 .sideMenu.collapsed {
   width: 60px;
   min-width: 60px;
   overflow: hidden;
 }
-.sideMenu.collapsed .menuBody {
+.sideMenu.collapsed .menuBody,
+.sideMenu.collapsed .logo {
   opacity: 0;
   pointer-events: none;
 }
 
-/* 메뉴 본문 래퍼 */
+.logo:hover {
+  color: var(--color-sidebar-text-strong);
+}
+
+.logo:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* 접으면 로고 자리를 비우고 버튼을 세로로: [접기] 위, [다크 모드] 아래 */
+.sideMenu.collapsed .header {
+  padding-left: 0;
+}
+.sideMenu.collapsed .logo {
+  display: none;
+}
+.sideMenu.collapsed .headerActions {
+  flex-direction: column-reverse;
+  width: 100%;
+}
+
+/* 메뉴 본문 */
 .menuBody {
   transition: opacity 0.15s ease;
 }
 
 /* 접기/펼치기 토글 버튼 */
+/* 머리 오른쪽 버튼 묶음: [다크 모드] [접기] (작은 화면은 [닫기]) */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.headerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  color: var(--color-sidebar-text-secondary);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.headerBtn:hover {
+  color: var(--color-sidebar-text-strong);
+  background-color: var(--color-sidebar-hover);
+}
+
+.headerBtn:focus-visible,
+.collapseBtn:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
 .collapseBtn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
   background: none;
   border: none;
-  color: #f1f3f5;
-  font-size: 1.5rem;
+  border-radius: var(--radius);
+  color: var(--color-sidebar-text);
+  font-size: var(--font-size-2xl);
   line-height: 1;
-  padding: 0.25rem;
   cursor: pointer;
-  z-index: 10;
 }
 
 .collapseBtn:hover {
-  color: #ced4da;
+  color: var(--color-sidebar-text-secondary);
 }
 
 /* 대분류 제목 (Main, My Page, System Management) */
 .listTitle {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #868e96;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-sidebar-subtle);
   text-transform: uppercase;
   margin-top: 1.75rem;
   margin-bottom: 0.5rem;
@@ -73,7 +133,7 @@
   letter-spacing: 0.05em;
 }
 
-.listTitle:first-of-type {
+.menuBody > div:first-child .listTitle {
   margin-top: 0;
 }
 
@@ -87,23 +147,32 @@
   border: none;
   text-align: left;
   cursor: pointer;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #ced4da;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-sidebar-text-secondary);
   padding: 0.5rem 0.5rem 0.25rem 0.5rem;
-  border-radius: 4px;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  border-radius: var(--radius);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .listItemTitle:hover {
-  background-color: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
+  background-color: var(--color-sidebar-hover);
+  color: var(--color-sidebar-text-strong);
+}
+
+/* 키보드 포커스 (메뉴 링크는 접히는 목록 안이라 안쪽에 그림) */
+.listItemTitle:focus-visible,
+.listItem a:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
 }
 
 /* 아코디언 화살표 */
 .arrow {
   display: inline-block;
-  font-size: 0.85rem;
+  font-size: var(--font-size-md);
   transition: transform 0.2s ease;
 }
 
@@ -111,7 +180,7 @@
   transform: rotate(90deg);
 }
 
-/* 아코디언 서브메뉴 감싸개 (Grid 높이 애니메이션) */
+/* 아코디언 서브메뉴 래퍼 */
 .submenuWrap {
   display: grid;
   grid-template-rows: 0fr;
@@ -141,24 +210,169 @@
 /* 서브메뉴 링크 a (NavLink) */
 .listItem a {
   display: block;
-  font-size: 0.85rem;
-  color: #adb5bd;
+  font-size: var(--font-size-md);
+  color: var(--color-sidebar-muted);
   text-decoration: none;
   padding: 0.45rem 0.75rem;
-  border-radius: 4px;
+  border-radius: var(--radius);
   transition:
     background-color 0.15s ease,
     color 0.15s ease;
 }
 
 .listItem a:hover {
-  background-color: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  background-color: var(--color-sidebar-hover);
+  color: var(--color-sidebar-text-strong);
 }
 
-/* 현재 선택된 메뉴 활성화 (스크린샷의 붉은 폰트) */
+/* 현재 선택된 메뉴 활성화 */
 .listItem a:global(.active) {
-  color: #ff5252;
-  font-weight: 700;
-  background-color: rgba(255, 82, 82, 0.08);
+  color: var(--color-sidebar-active);
+  font-weight: var(--font-weight-bold);
+  background-color: var(--color-sidebar-active-bg);
+}
+
+/* 상단 로고 & 헤더 */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-left: 0.5rem;
+}
+
+.logo {
+  display: block;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.3;
+  color: var(--color-sidebar-muted);
+  letter-spacing: 0.08em;
+  transition: opacity 0.15s ease;
+}
+
+/* 미사용 메뉴 (SUPER_ADMIN에게만 보임) */
+.unused {
+  opacity: 0.45;
+}
+
+/* 내 메뉴 조회 실패 */
+.menuError {
+  padding: 0.75rem 0.5rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-sidebar-muted);
+}
+
+.menuError p {
+  margin: 0 0 0.5rem;
+}
+
+/* 비로그인 게스트 영역 */
+.guestSection {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* ───── 작은 화면 (768px 이하): 서랍 ─────
+ * 사이드바는 화면 밖(왼쪽)에 두고 [☰ 메뉴]로 위에 덮어 연다. 접기(collapsed)는 쓰지 않음.
+ * z-index: --z-drawer (모달보다 아래, 본문보다 위)
+ */
+.drawerToggle,
+.drawerClose,
+.drawerBackdrop {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .sideMenu,
+  .sideMenu.collapsed {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: calc(var(--z-drawer) + 1);
+    width: min(280px, 85vw);
+    min-width: 0;
+    overflow-y: auto;
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform 0.25s ease,
+      visibility 0s linear 0.25s;
+  }
+
+  .sideMenu.drawerOpen {
+    transform: translateX(0);
+    visibility: visible;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.25s ease;
+  }
+
+  .sideMenu.collapsed .menuBody,
+  .sideMenu.collapsed .logo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .collapseBtn {
+    display: none;
+  }
+
+  .drawerClose {
+    display: block;
+    padding: 0.25rem 0.5rem;
+    font-size: var(--font-size-2xl);
+    line-height: 1;
+    color: var(--color-sidebar-text);
+    background: none;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+  }
+
+  .drawerClose:focus-visible,
+  .drawerToggle:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .drawerToggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: var(--z-drawer);
+    height: var(--control-height-md);
+    padding: 0 12px;
+    font: inherit;
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-sidebar-text-strong);
+    background-color: var(--color-sidebar-bg);
+    border: 0;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+  }
+
+  .drawerBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-drawer);
+    background-color: var(--color-overlay);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sideMenu,
+  .sideMenu.drawerOpen {
+    transition: none;
+  }
 }
